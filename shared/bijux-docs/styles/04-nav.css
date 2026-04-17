@@ -424,19 +424,22 @@
   align-items: center;
   background: var(--bijux-panel);
   border: 1px solid var(--bijux-border);
-  border-radius: 999px;
+  border-radius: 0.78rem;
   color: var(--bijux-ink);
-  display: inline-flex;
-  font-size: 0.68rem;
+  display: block;
+  font-size: 0.74rem;
   font-weight: 700;
-  min-height: 2rem;
-  padding: 0.3rem 0.64rem;
+  min-height: 2.45rem;
+  padding: 0.56rem 0.78rem;
   text-decoration: none;
+  width: 100%;
 }
 
 .bijux-mobile-hub__item--active .bijux-mobile-hub__link {
-  background: var(--bijux-detail-link-active-bg);
+  background: color-mix(in srgb, var(--bijux-detail-link-active-bg) 70%, var(--bijux-panel));
   border-color: var(--bijux-detail-border);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--bijux-detail-border) 70%, transparent);
+  color: var(--bijux-ink);
 }
 
 .bijux-mobile-context {
