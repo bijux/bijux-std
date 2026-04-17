@@ -62,11 +62,14 @@
   }
 
   function revealMobileDrawerContext() {
+    const fallbackPhoneMatch =
+      typeof window.matchMedia === "function" &&
+      window.matchMedia("(max-width: 47.9375em)").matches;
     const viewportMode =
       window.bijuxViewportProfile &&
       typeof window.bijuxViewportProfile.current === "function"
         ? window.bijuxViewportProfile.current()
-        : window.matchMedia("(max-width: 76.2344em)").matches
+        : fallbackPhoneMatch
           ? "phone"
           : "normal";
 
