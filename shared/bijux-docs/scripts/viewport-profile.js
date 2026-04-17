@@ -159,6 +159,20 @@
     bindViewportUpdates();
   }
 
+  function initWithFallback() {
+    if (typeof document$ !== "undefined" && document$ && typeof document$.subscribe === "function") {
+      document$.subscribe(init);
+      return;
+    }
+
+    if (document.readyState === "loading") {
+      document.addEventListener("DOMContentLoaded", init, { once: true });
+      return;
+    }
+
+    init();
+  }
+
   window.bijuxViewportProfile = {
     current: resolveViewportProfile,
     apply: applyViewportProfile,
@@ -202,5 +216,5 @@
     },
   };
 
-  document$.subscribe(init);
+  initWithFallback();
 })();
