@@ -33,6 +33,7 @@
 {% if not header_page_title %}
   {% set header_page_title = header_site_title %}
 {% endif %}
+{% set show_page_topic = header_page_title and header_page_title != header_site_title %}
 {% import "partials/bijux-nav.html" as bijux_nav with context %}
 {% macro site_label(title) -%}
   {% if title == "Repository Handbook" -%}
@@ -68,12 +69,12 @@
     <div class="md-header__title" data-md-component="header-title" data-bijux-header-zone="title" data-bijux-header-title="primary">
       <div class="md-header__ellipsis">
         <div class="md-header__topic" data-bijux-header-topic="site" data-bijux-phone-compact="keep">
-          <span class="md-ellipsis">
-            {{ config.site_name }}
+          <span class="md-ellipsis" title="{{ header_site_title | e }}">
+            {{ header_site_title }}
           </span>
         </div>
-        <div class="md-header__topic" data-md-component="header-topic" data-bijux-header-topic="page" data-bijux-phone-compact="hide">
-          <span class="md-ellipsis">
+        <div class="md-header__topic" data-md-component="header-topic" data-bijux-header-topic="page" data-bijux-topic-visible="{{ "true" if show_page_topic else "false" }}" data-bijux-phone-compact="hide" {{ "" if show_page_topic else "hidden" }}>
+          <span class="md-ellipsis" title="{{ header_page_title | e }}">
             {{ header_page_title }}
           </span>
         </div>
