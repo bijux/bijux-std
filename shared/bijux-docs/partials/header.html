@@ -16,17 +16,22 @@
 {% set allow_flattened_detail_rows = is_bijux_hub_site %}
 {% set desktop_normal_row_scope = "desktop-normal" %}
 {% set compact_control_band = "normal-tablet" %}
-{% set drawer_control_id = "__drawer" %}
-{% set search_control_id = "__search" %}
+{% set drawer_control_id = bijux.drawer_control_id if bijux and bijux.drawer_control_id else "__drawer" %}
+{% set search_control_id = bijux.search_control_id if bijux and bijux.search_control_id else "__search" %}
 {% set drawer_control_label = "Open navigation drawer" %}
 {% set search_control_label = "Open search" %}
-{% set header_page_title = config.site_name %}
+{% set header_site_title = config.site_name if config and config.site_name else "" %}
+{% set header_page_title = header_site_title %}
 {% if current_page %}
   {% if current_page.meta and current_page.meta.title %}
     {% set header_page_title = current_page.meta.title %}
   {% elif current_page.title %}
     {% set header_page_title = current_page.title %}
   {% endif %}
+{% endif %}
+{% set header_page_title = header_page_title | trim if header_page_title else header_site_title %}
+{% if not header_page_title %}
+  {% set header_page_title = header_site_title %}
 {% endif %}
 {% import "partials/bijux-nav.html" as bijux_nav with context %}
 {% macro site_label(title) -%}
