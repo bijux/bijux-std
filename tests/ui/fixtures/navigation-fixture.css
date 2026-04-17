@@ -1,0 +1,14 @@
+.md-sidebar--primary {
+  display: none;
+  inline-size: min(18.75rem, 90vw);
+}
+
+#__drawer:checked ~ .md-main .md-sidebar--primary {
+  display: block;
+}
+
+@media screen and (min-width: 48em) {
+  .md-sidebar--primary {
+    display: block;
+  }
+}

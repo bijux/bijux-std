@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Project Empty Scoped Fixture</title>
+    <link rel="stylesheet" href="../../../shared/bijux-docs/styles/extra.css" />
+    <link rel="stylesheet" href="./navigation-fixture.css" />
+  </head>
+  <body>
+    <input id="__drawer" type="checkbox" hidden />
+
+    <header class="md-header" data-md-component="header" data-bijux-phone-nav="drawer" data-bijux-phone-compact="true">
+      <nav class="md-header__inner md-grid" aria-label="Header">
+        <label class="md-header__button md-icon" for="__drawer" role="button" tabindex="0" aria-controls="__drawer" aria-label="Open navigation drawer" data-bijux-header-control="drawer-toggle">☰</label>
+        <div class="md-header__title" data-bijux-header-title="primary"><div class="md-header__ellipsis"><span class="md-ellipsis">Empty Scoped</span></div></div>
+      </nav>
+    </header>
+
+    <main class="md-main">
+      <div class="md-main__inner">
+        <aside class="md-sidebar md-sidebar--primary">
+          <div class="md-sidebar__scrollwrap"><div class="md-sidebar__inner">
+            <nav class="md-nav md-nav--primary bijux-nav bijux-nav--mobile" data-bijux-nav-variant="mobile">
+              <section class="bijux-mobile-local" data-bijux-mobile-order="1-top-directories">
+                <div class="bijux-mobile-local__label">Directories</div>
+                <ul class="md-nav__list" data-md-scrollfix><li class="md-nav__item"><a class="md-nav__link" href="#">Bootstrap</a></li></ul>
+              </section>
+            </nav>
+            <nav class="md-nav md-nav--primary bijux-nav bijux-nav--scoped" data-bijux-nav-variant="scoped" data-bijux-nav-empty="true"></nav>
+          </div></div>
+        </aside>
+        <article class="md-content"><div class="md-content__inner"><h1>Empty Scoped</h1></div></article>
+      </div>
+    </main>
+
+    <script src="../../../shared/bijux-docs/scripts/viewport-profile.js"></script>
+  </body>
+</html>
