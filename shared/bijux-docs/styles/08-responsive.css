@@ -370,16 +370,17 @@
   }
 
   .md-sidebar--primary .bijux-nav--mobile {
-    display: block;
+    display: none;
   }
 
+  .bijux-mobile-local,
   .bijux-mobile-hub,
   .bijux-mobile-context {
-    display: block;
+    display: none;
   }
 
   .md-sidebar--primary .bijux-nav--scoped {
-    display: none;
+    display: block;
   }
 
   .md-sidebar--primary:has(.bijux-nav--mobile) {
@@ -387,8 +388,16 @@
   }
 
   .md-sidebar--primary .bijux-nav--mobile[data-bijux-nav-empty="true"] {
-    display: block;
+    display: none;
   }
+}
+
+[data-bijux-viewport="normal"] .md-sidebar--primary .bijux-nav--mobile {
+  display: none;
+}
+
+[data-bijux-viewport="normal"] .md-sidebar--primary .bijux-nav--scoped {
+  display: block;
 }
 
 @media screen and (max-width: 44.9375em) {
