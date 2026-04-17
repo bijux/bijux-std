@@ -1,5 +1,7 @@
 (function () {
-  const PHONE_MAX_MEDIA = "(max-width: 76.2344em)";
+  // phone < 48em, normal 48em–76.2344em, desktop > 76.2344em, wide >= 120em
+  const PHONE_MAX_MEDIA = "(max-width: 47.9375em)";
+  const NORMAL_MAX_MEDIA = "(max-width: 76.2344em)";
   const WIDE_MIN_MEDIA = "(min-width: 120em)";
 
   function resolveViewportProfile() {
