@@ -97,10 +97,22 @@
     </section>
   {% endif %}
   <ul class="md-nav__list" data-md-scrollfix>
-    {% for nav_item in nav %}
-      {% set path = "__nav_mobile_" ~ loop.index %}
-      {{ item.render(nav_item, path, 1) }}
-    {% endfor %}
+    {% if is_bijux_hub_site %}
+      {% for nav_item in nav %}
+        {% set item_class = "md-nav__item" %}
+        {% if nav_item.active %}
+          {% set item_class = item_class ~ " md-nav__item--active" %}
+        {% endif %}
+        <li class="{{ item_class }}">
+          <a href="{{ nav_item.url | url }}" class="md-nav__link">{{ nav_item.title }}</a>
+        </li>
+      {% endfor %}
+    {% else %}
+      {% for nav_item in nav %}
+        {% set path = "__nav_mobile_" ~ loop.index %}
+        {{ item.render(nav_item, path, 1) }}
+      {% endfor %}
+    {% endif %}
   </ul>
 </nav>
 {% set bijux_primary_section_nav = true %}
