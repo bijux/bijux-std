@@ -320,6 +320,18 @@
 }
 
 @media screen and (max-width: 44.9375em) {
+  .md-header__topic[data-md-component="header-topic"] {
+    display: none;
+  }
+
+  .md-header__inner {
+    padding-block: 0.24rem;
+  }
+
+  .md-main__inner {
+    margin-top: 0.34rem;
+  }
+
   .bijux-header-tools .md-source {
     display: none;
   }
