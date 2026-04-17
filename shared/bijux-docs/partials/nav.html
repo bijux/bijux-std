@@ -207,42 +207,25 @@
     </section>
     {{ mobile_sites_block }}
   {% else %}
-    {{ mobile_sites_block }}
-    <ul class="md-nav__list" data-md-scrollfix data-bijux-mobile-order="2-tree">
-      {% set mobile_tree_items = namespace(values=[]) %}
-      {% for nav_item in nav %}
-        {% set first_child = nav_item.children[0] if nav_item.children else none %}
-        {% set nav_path = (nav_item.url | trim("/")) if nav_item.url else "" %}
-        {% set first_path = (first_child.url | trim("/")) if first_child and first_child.url else "" %}
-        {% set flatten_wrapper_home = first_child and first_child.title == "Home" and first_child.children and first_path == nav_path %}
-        {% if flatten_wrapper_home %}
-          {% for child in first_child.children %}
-            {% set child_path = (child.url | trim("/")) if child.url else "" %}
-            {% if child_path != nav_path %}
-              {% set _ = mobile_tree_items.values.append(child) %}
-            {% endif %}
-          {% endfor %}
-        {% else %}
-          {% set _ = mobile_tree_items.values.append(nav_item) %}
-        {% endif %}
-      {% endfor %}
-      {% if mobile_tree_items.values | length == 0 %}
-        {% for nav_item in nav %}
-          {% set nav_path = (nav_item.url | trim("/")) if nav_item.url else "" %}
-          {% if nav_item.children %}
-            {% for child in nav_item.children %}
-              {% set child_path = (child.url | trim("/")) if child.url else "" %}
-              {% if child_path != nav_path %}
-                {% set _ = mobile_tree_items.values.append(child) %}
-              {% endif %}
-            {% endfor %}
+    {% set top_directories = namespace(list=[]) %}
+    {% for nav_item in nav %}
+      {% set nav_path = (nav_item.url | trim("/")) if nav_item.url else "" %}
+      {% set first_child = nav_item.children[0] if nav_item.children else none %}
+      {% set first_path = (first_child.url | trim("/")) if first_child and first_child.url else "" %}
+      {% set flatten_wrapper_home = first_child and first_child.title in ["Home", "Overview"] and first_child.children and first_path == nav_path %}
+      {% if flatten_wrapper_home %}
+        {% for child in first_child.children %}
+          {% set child_path = (child.url | trim("/")) if child.url else "" %}
+          {% if child_path != nav_path %}
+            {% set _ = top_directories.list.append(child) %}
           {% endif %}
         {% endfor %}
+      {% else %}
+        {% set _ = top_directories.list.append(nav_item) %}
       {% endif %}
-      {% for mobile_item in mobile_tree_items.values %}
-        {{ item.render(mobile_item, "__nav_mobile_" ~ loop.index, 1) }}
-      {% endfor %}
-    </ul>
+    {% endfor %}
+    {{ mobile_row("Top Directories", top_directories.list, "1-top-directories") }}
+    {{ mobile_sites_block }}
   {% endif %}
 </nav>
 {% set bijux_primary_section_nav = true %}
