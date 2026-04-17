@@ -165,6 +165,7 @@
     window.__bijuxViewportBound = true;
 
     let rafId = 0;
+    let settleTimerId = 0;
     const scheduleApply = () => {
       if (rafId !== 0) {
         return;
@@ -175,10 +176,41 @@
         applyViewportProfile();
       });
     };
+    const scheduleApplyAfterSettle = () => {
+      scheduleApply();
+      if (settleTimerId !== 0) {
+        window.clearTimeout(settleTimerId);
+      }
+      // Some phone browsers update final width a moment after orientation events.
+      settleTimerId = window.setTimeout(() => {
+        settleTimerId = 0;
+        scheduleApply();
+      }, 140);
+    };
+    const clearPendingUpdates = () => {
+      if (rafId !== 0) {
+        window.cancelAnimationFrame(rafId);
+        rafId = 0;
+      }
+      if (settleTimerId !== 0) {
+        window.clearTimeout(settleTimerId);
+        settleTimerId = 0;
+      }
+    };
 
     window.addEventListener("resize", scheduleApply, { passive: true });
-    window.addEventListener("orientationchange", scheduleApply, { passive: true });
-    window.addEventListener("pageshow", scheduleApply, { passive: true });
+    window.addEventListener("orientationchange", scheduleApplyAfterSettle, { passive: true });
+    window.addEventListener("pageshow", scheduleApplyAfterSettle, { passive: true });
+    window.addEventListener(
+      "visibilitychange",
+      () => {
+        if (document.visibilityState === "visible") {
+          scheduleApply();
+        }
+      },
+      { passive: true }
+    );
+    window.addEventListener("pagehide", clearPendingUpdates, { passive: true });
 
     if (window.visualViewport && typeof window.visualViewport.addEventListener === "function") {
       window.visualViewport.addEventListener("resize", scheduleApply, { passive: true });
