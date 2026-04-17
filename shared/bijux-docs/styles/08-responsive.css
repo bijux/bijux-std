@@ -426,6 +426,12 @@
   display: none;
 }
 
+[data-bijux-viewport="normal"] .bijux-mobile-local,
+[data-bijux-viewport="normal"] .bijux-mobile-hub,
+[data-bijux-viewport="normal"] .bijux-mobile-context {
+  display: none;
+}
+
 [data-bijux-viewport="normal"] .md-sidebar--primary .bijux-nav--scoped {
   display: block;
 }
