@@ -57,51 +57,78 @@ Without a canonical standards repository, shared behavior drifts quietly:
 `bijux-std` prevents that by making the shared layer explicit, reviewable, and
 machine-checkable.
 
+## Repository Layout
+
+```text
+shared/
+├── bijux-checks/          # shared compliance and update flows
+├── bijux-docs/            # shared docs and website shell assets
+├── bijux-makes-py/        # shared Python-oriented make modules
+└── shared-dir-sha256.txt  # canonical content-hash manifest
+```
+
 ## Consumption Model
 
-Sibling repositories vendor the shared directories into their own `shared/`
-tree and expose standard commands through their `Makefile` or `makes/`
-modules.
+Consuming repositories vendor the shared directories from `bijux-std` into
+their own `shared/` tree.
 
 The expected flow is:
 
 1. Update canonical shared files in `bijux-std`.
 2. Propagate the changed shared directories into consuming repositories.
-3. Run `make bijux-std-checks` in each repository to verify that local shared
-   copies still match this standard.
-4. Commit the propagated changes in each repository.
+3. Commit synchronized changes in each consuming repository.
+4. Run the standard verification target in CI.
+5. Fail CI if vendored shared directories drift from the canonical standard.
 
-Repositories may extend their own local automation, but they must not silently
-fork the shared standard surfaces.
+This keeps repositories autonomous in domain behavior while preserving a stable
+shared platform layer across the ecosystem.
+
+## Verification Model
+
+`bijux-std` is designed to answer one concrete question:
+
+> Does this repository still match the canonical Bijux shared standard?
+
+The verification contract is intentionally strict:
+
+- standard directories are declared explicitly in policy
+- each standard directory has a canonical content hash
+- downstream repositories carry vendored shared directories
+- checks verify both:
+  - the manifest matches `bijux-std`
+  - directory contents match the recorded hashes
 
 ## Standard Commands
 
 This repository exposes the same standard commands that consuming repositories
 use:
 
-- `make bijux-std-checks`
-  Verifies the configured shared directories against the canonical manifest.
-- `make bijux-std-update`
-  Refreshes shared directories from the canonical `bijux-std` source, using
-  either a branch ref or the latest matching tag.
-- `make bijux-std`
-  Backward-compatible alias for `make bijux-std-checks`.
+### Verify compliance
+
+```bash
+make bijux-std-checks
+```
+
+Verifies configured shared directories against the canonical manifest.
+
+### Update shared standard surfaces
+
+```bash
+make bijux-std-update
+```
+
+Refreshes shared directories from canonical `bijux-std`.
+
+### Compatibility alias
+
+```bash
+make bijux-std
+```
+
+Backward-compatible alias for `make bijux-std-checks`.
 
 The shared policy for these commands lives in
 [`shared/bijux-checks/bijux-std-checks.yml`](shared/bijux-checks/bijux-std-checks.yml).
-
-## Verification Model
-
-The standard contract is intentionally simple:
-
-- a fixed list of shared directories is declared in the policy file
-- each directory has a canonical tree SHA in `shared/shared-dir-sha256.txt`
-- consuming repositories verify both:
-  - their manifest matches `bijux-std`
-  - their actual directory contents match the recorded SHA
-
-This gives Bijux one durable, machine-checkable answer to the question:
-"does this repository still match the shared standard?"
 
 ## Release Model
 
