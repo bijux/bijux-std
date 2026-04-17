@@ -9,6 +9,8 @@ This test workspace validates responsive UI/UX behavior for
 - normal/tablet behavior (`1024px`)
 - wide desktop behavior (`1920px`)
 - viewport profile contract in `scripts/viewport-profile.js`
+- navigation regression flows in `ui/specs/navigation-regression.spec.js`:
+  - 10 responsive navigation contract tests from `TODO.md`
 
 ## Run
 

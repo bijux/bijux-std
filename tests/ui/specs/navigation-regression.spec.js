@@ -81,3 +81,83 @@ test.describe("hub mobile navigation", () => {
     await expect(page.locator('.bijux-mobile-hub__item--active .bijux-mobile-hub__link', { hasText: "Core" })).toBeVisible();
   });
 });
+
+test.describe("project mobile navigation", () => {
+  test("5) project root phone drawer opens on bijux-core", async ({ page }, testInfo) => {
+    test.skip(testInfo.project.name !== "phone", "phone-only assertions");
+
+    await page.goto(FIXTURE.PROJECT_ROOT);
+    await openDrawer(page);
+
+    await expect(page.locator(".md-sidebar--primary")).toBeVisible();
+    await expect(page.locator('[data-bijux-mobile-order=\"1-top-directories\"]')).toBeVisible();
+    await expect(page.locator('[data-bijux-mobile-order=\"1-top-directories\"] .md-nav__item')).toHaveCount(2);
+  });
+
+  test("6) project phone drawer shows local top-level directories before Sites", async ({ page }, testInfo) => {
+    test.skip(testInfo.project.name !== "phone", "phone-only assertions");
+
+    await page.goto(FIXTURE.PROJECT_ROOT);
+    await openDrawer(page);
+
+    const localIndex = await indexInNavOrder(page, '[data-bijux-mobile-order=\"1-top-directories\"]');
+    const sitesIndex = await indexInNavOrder(page, '[data-bijux-mobile-order=\"5-sites\"]');
+    expect(localIndex).toBeGreaterThanOrEqual(0);
+    expect(sitesIndex).toBeGreaterThan(localIndex);
+  });
+
+  test("7) project phone row progression works: row2 -> row3 -> row4 -> files", async ({ page }, testInfo) => {
+    test.skip(testInfo.project.name !== "phone", "phone-only assertions");
+
+    await page.goto(FIXTURE.PROJECT_DEEP);
+    await openDrawer(page);
+
+    await expect(page.locator('[data-bijux-mobile-order=\"1-top-directories\"]')).toContainText("Directories");
+    await expect(page.locator('[data-bijux-mobile-order=\"2-subdirectories\"]')).toContainText("Subdirectories");
+    await expect(page.locator('[data-bijux-mobile-order=\"3-third-level-directories\"]')).toContainText("Nested Directories");
+    await expect(page.locator('[data-bijux-mobile-order=\"4-pages\"]')).toContainText("Contracts");
+    await expect(page.locator('[data-bijux-mobile-order=\"4-pages\"]')).toContainText("Checks");
+  });
+
+  test("8) empty-scoped project root does not hide drawer", async ({ page }, testInfo) => {
+    test.skip(testInfo.project.name !== "phone", "phone-only assertions");
+
+    await page.goto(FIXTURE.PROJECT_EMPTY_SCOPED);
+    await openDrawer(page);
+
+    const sidebarWidth = await page.locator(".md-sidebar--primary").evaluate((el) => el.getBoundingClientRect().width);
+    expect(sidebarWidth).toBeGreaterThan(0);
+    await expect(page.locator(".md-sidebar--primary")).toBeVisible();
+    await expect(page.locator('[data-bijux-mobile-order=\"1-top-directories\"]')).toBeVisible();
+    await expect(page.locator('.bijux-nav--scoped[data-bijux-nav-empty=\"true\"]')).toBeHidden();
+  });
+});
+
+test.describe("responsive navigation regressions", () => {
+  test("9) tablet keeps compact top navigation and does not fall into phone mode", async ({ page }, testInfo) => {
+    test.skip(testInfo.project.name !== "normal", "normal/tablet-only assertions");
+
+    await page.goto(FIXTURE.HUB_HOME);
+
+    await expect(page.locator("html")).toHaveAttribute("data-bijux-viewport", "normal");
+    await expect(page.locator(".bijux-hub-strip")).toBeVisible();
+    await expect(page.locator(".bijux-site-tabs")).toBeVisible();
+    await expect(page.locator(".bijux-detail-tabs")).toBeVisible();
+    await expect(page.locator(".bijux-nav--mobile")).toBeHidden();
+  });
+
+  test("10) desktop keeps full shell and top-row navigation still works", async ({ page }, testInfo) => {
+    test.skip(testInfo.project.name !== "wide", "wide-only assertions");
+
+    await page.goto(FIXTURE.HUB_HOME);
+
+    await expect(page.locator("html")).toHaveAttribute("data-bijux-viewport", "wide");
+    await expect(page.locator(".bijux-hub-strip")).toBeVisible();
+    await expect(page.locator(".bijux-site-tabs")).toBeVisible();
+    await expect(page.locator(".bijux-detail-tabs")).toBeVisible();
+    await expect(page.locator(".bijux-nav--mobile")).toBeHidden();
+
+    await page.getByRole("link", { name: "Platform", exact: true }).click();
+    await expect(page).toHaveURL(/navigation-hub-platform\.html/);
+  });
+});
