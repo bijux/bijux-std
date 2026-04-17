@@ -35,7 +35,7 @@
     {% set active_root.item = nav_item %}
   {% endif %}
 {% endfor %}
-<header class="{{ class }}" data-md-component="header" data-bijux-nav-mode="{{ nav_mode }}" data-bijux-theme-key="{{ theme_key }}" data-bijux-phone-nav="drawer">
+<header class="{{ class }}" data-md-component="header" data-bijux-nav-mode="{{ nav_mode }}" data-bijux-theme-key="{{ theme_key }}" data-bijux-phone-nav="drawer" data-bijux-phone-compact="true">
   <nav class="md-header__inner md-grid" aria-label="{{ lang.t('header') }}">
     <a href="{{ config.extra.homepage | d(nav.homepage.url, true) | url }}" title="{{ config.site_name | e }}" class="md-header__button md-logo" aria-label="{{ config.site_name }}" data-md-component="logo">
       {% include "partials/logo.html" %}
@@ -44,14 +44,14 @@
       {% set icon = config.theme.icon.menu or "material/menu" %}
       {% include ".icons/" ~ icon ~ ".svg" %}
     </label>
-    <div class="md-header__title" data-md-component="header-title">
+    <div class="md-header__title" data-md-component="header-title" data-bijux-header-title="primary">
       <div class="md-header__ellipsis">
-        <div class="md-header__topic" data-bijux-header-topic="site">
+        <div class="md-header__topic" data-bijux-header-topic="site" data-bijux-phone-compact="keep">
           <span class="md-ellipsis">
             {{ config.site_name }}
           </span>
         </div>
-        <div class="md-header__topic" data-md-component="header-topic" data-bijux-header-topic="page">
+        <div class="md-header__topic" data-md-component="header-topic" data-bijux-header-topic="page" data-bijux-phone-compact="hide">
           <span class="md-ellipsis">
             {% if page.meta and page.meta.title %}
               {{ page.meta.title }}
