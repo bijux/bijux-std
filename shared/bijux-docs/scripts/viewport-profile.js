@@ -13,7 +13,11 @@
       return "wide";
     }
 
-    return "normal";
+    if (window.matchMedia(NORMAL_MAX_MEDIA).matches) {
+      return "normal";
+    }
+
+    return "desktop";
   }
 
   function applyViewportProfile() {
