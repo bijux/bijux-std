@@ -7,6 +7,8 @@
   const PHONE_MAX_MEDIA = "(max-width: 47.9375em)";
   const NORMAL_MAX_MEDIA = "(max-width: 76.2344em)";
   const WIDE_MIN_MEDIA = "(min-width: 120em)";
+  const VIEWPORT_PROFILE_SOURCE = "shared/bijux-docs/scripts/viewport-profile.js";
+  const VIEWPORT_PROFILE_REVISION = "2026-04-17";
   const VIEWPORT_PROFILES = Object.freeze({
     PHONE: "phone",
     NORMAL: "normal",
@@ -154,6 +156,12 @@
     if (target.getAttribute("data-bijux-viewport") !== profile) {
       target.setAttribute("data-bijux-viewport", profile);
     }
+    if (target.getAttribute("data-bijux-viewport-source") !== VIEWPORT_PROFILE_SOURCE) {
+      target.setAttribute("data-bijux-viewport-source", VIEWPORT_PROFILE_SOURCE);
+    }
+    if (target.getAttribute("data-bijux-viewport-revision") !== VIEWPORT_PROFILE_REVISION) {
+      target.setAttribute("data-bijux-viewport-revision", VIEWPORT_PROFILE_REVISION);
+    }
   }
 
   function applyViewportProfile() {
@@ -281,6 +289,9 @@
       normalMax: NORMAL_MAX_MEDIA,
       wideMin: WIDE_MIN_MEDIA,
     },
+    source: VIEWPORT_PROFILE_SOURCE,
+    revision: VIEWPORT_PROFILE_REVISION,
+    signature: `${VIEWPORT_PROFILE_SOURCE}@${VIEWPORT_PROFILE_REVISION}`,
     verifyReferenceWidths: resolveReferenceProfiles,
     verifyContract: verifyReferenceContract,
     referenceExpectations: () => ({ ...REFERENCE_PROFILE_EXPECTATIONS }),
