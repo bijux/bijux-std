@@ -44,30 +44,51 @@
     return em * MEDIA_QUERY_BASE_FONT_PX;
   }
 
+  function normalizeViewportWidth(width) {
+    if (!Number.isFinite(width) || width <= 0) {
+      return Number.NaN;
+    }
+    return Math.round(width * 100) / 100;
+  }
+
   function currentViewportWidth() {
-    if (typeof document.documentElement?.clientWidth === "number" && document.documentElement.clientWidth > 0) {
-      return document.documentElement.clientWidth;
+    const documentWidth = normalizeViewportWidth(document.documentElement?.clientWidth);
+    const visualViewportWidth = normalizeViewportWidth(window.visualViewport?.width);
+    const innerWidth = normalizeViewportWidth(window.innerWidth);
+
+    if (Number.isFinite(documentWidth) && Number.isFinite(visualViewportWidth)) {
+      // On mobile browsers during URL-bar transitions, the two values can diverge briefly.
+      // Using the narrower width avoids classifying as a larger layout band too early.
+      return Math.min(documentWidth, visualViewportWidth);
     }
-    if (typeof window.innerWidth === "number") {
-      return window.innerWidth;
+
+    if (Number.isFinite(documentWidth)) {
+      return documentWidth;
     }
-    if (window.visualViewport && typeof window.visualViewport.width === "number") {
-      return window.visualViewport.width;
+
+    if (Number.isFinite(visualViewportWidth)) {
+      return visualViewportWidth;
     }
+
+    if (Number.isFinite(innerWidth)) {
+      return innerWidth;
+    }
+
     return Number.NaN;
   }
 
   function classifyViewportWidth(width) {
-    if (!Number.isFinite(width) || width <= 0) {
+    const normalizedWidth = normalizeViewportWidth(width);
+    if (!Number.isFinite(normalizedWidth)) {
       return VIEWPORT_PROFILES.DESKTOP;
     }
-    if (width <= toPixelsFromEm(PROFILE_BOUNDARIES_EM.PHONE_MAX)) {
+    if (normalizedWidth <= toPixelsFromEm(PROFILE_BOUNDARIES_EM.PHONE_MAX)) {
       return VIEWPORT_PROFILES.PHONE;
     }
-    if (width >= toPixelsFromEm(PROFILE_BOUNDARIES_EM.WIDE_MIN)) {
+    if (normalizedWidth >= toPixelsFromEm(PROFILE_BOUNDARIES_EM.WIDE_MIN)) {
       return VIEWPORT_PROFILES.WIDE;
     }
-    if (width <= toPixelsFromEm(PROFILE_BOUNDARIES_EM.NORMAL_MAX)) {
+    if (normalizedWidth <= toPixelsFromEm(PROFILE_BOUNDARIES_EM.NORMAL_MAX)) {
       return VIEWPORT_PROFILES.NORMAL;
     }
     return VIEWPORT_PROFILES.DESKTOP;
