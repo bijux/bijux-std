@@ -224,7 +224,49 @@
         {% set _ = top_directories.list.append(nav_item) %}
       {% endif %}
     {% endfor %}
+    {% set active_top = namespace(item=top_directories.list[0] if top_directories.list else none) %}
+    {% for entry in top_directories.list %}
+      {% if entry.active %}
+        {% set active_top.item = entry %}
+      {% endif %}
+    {% endfor %}
+    {% set second_level_dirs = namespace(list=[]) %}
+    {% if active_top.item and active_top.item.children %}
+      {% set active_top_path = (active_top.item.url | trim("/")) if active_top.item.url else "" %}
+      {% set top_first_child = active_top.item.children[0] if active_top.item.children else none %}
+      {% set top_first_path = (top_first_child.url | trim("/")) if top_first_child and top_first_child.url else "" %}
+      {% set flatten_top_wrapper = top_first_child and top_first_child.title in ["Home", "Overview"] and top_first_child.children and top_first_path == active_top_path %}
+      {% set second_source = top_first_child.children if flatten_top_wrapper else active_top.item.children %}
+      {% for child in second_source %}
+        {% set child_path = (child.url | trim("/")) if child.url else "" %}
+        {% if child.children and child_path != active_top_path %}
+          {% set _ = second_level_dirs.list.append(child) %}
+        {% endif %}
+      {% endfor %}
+    {% endif %}
+    {% set active_second = namespace(item=second_level_dirs.list[0] if second_level_dirs.list else none) %}
+    {% for entry in second_level_dirs.list %}
+      {% if entry.active %}
+        {% set active_second.item = entry %}
+      {% endif %}
+    {% endfor %}
+    {% set third_level_dirs = namespace(list=[]) %}
+    {% if active_second.item and active_second.item.children %}
+      {% set active_second_path = (active_second.item.url | trim("/")) if active_second.item.url else "" %}
+      {% set second_first_child = active_second.item.children[0] if active_second.item.children else none %}
+      {% set second_first_path = (second_first_child.url | trim("/")) if second_first_child and second_first_child.url else "" %}
+      {% set flatten_second_wrapper = second_first_child and second_first_child.title in ["Home", "Overview"] and second_first_child.children and second_first_path == active_second_path %}
+      {% set third_source = second_first_child.children if flatten_second_wrapper else active_second.item.children %}
+      {% for child in third_source %}
+        {% set child_path = (child.url | trim("/")) if child.url else "" %}
+        {% if child.children and child_path != active_second_path %}
+          {% set _ = third_level_dirs.list.append(child) %}
+        {% endif %}
+      {% endfor %}
+    {% endif %}
     {{ mobile_row("Top Directories", top_directories.list, "1-top-directories") }}
+    {{ mobile_row("Subdirectories", second_level_dirs.list, "2-subdirectories") }}
+    {{ mobile_row("Third-Level Directories", third_level_dirs.list, "3-third-level-directories") }}
     {{ mobile_sites_block }}
   {% endif %}
 </nav>
