@@ -146,6 +146,18 @@
     display: block;
   }
 
+  .bijux-mobile-local,
+  .bijux-mobile-hub {
+    margin-block: 0.24rem 0.32rem;
+  }
+
+  .bijux-mobile-local__label,
+  .bijux-mobile-hub__label {
+    font-size: 0.58rem;
+    letter-spacing: 0.07em;
+    margin-bottom: 0.22rem;
+  }
+
   .bijux-mobile-hub__list {
     display: grid;
     gap: 0.32rem;
@@ -161,11 +173,6 @@
   .bijux-mobile-hub__item--active .bijux-mobile-hub__link {
     box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--md-accent-fg-color) 52%, transparent);
     font-weight: 700;
-  }
-
-  .bijux-mobile-hub,
-  .bijux-mobile-local {
-    margin-block: 0.35rem 0.45rem;
   }
 
   .bijux-nav--mobile > .md-nav__list,
