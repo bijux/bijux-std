@@ -150,7 +150,7 @@
     {% endif %}
     {% if detail_items and detail_items.list and (detail_items.list | length > 1 or show_detail_home) %}
       {% set is_hidden = "" if nav_item.active else "hidden" %}
-      <nav class="bijux-detail-tabs" aria-label="{{ nav_item.title }} sections" data-bijux-nav-row="program" data-bijux-detail-strip data-bijux-detail-root-path="{{ bijux_nav.first_page_path(nav_item) | trim }}" {{ is_hidden }}>
+      <nav class="bijux-detail-tabs" aria-label="{{ nav_item.title }} sections" data-bijux-nav-row="program" data-bijux-row-scope="desktop-normal" data-bijux-detail-strip data-bijux-detail-root-path="{{ bijux_nav.first_page_path(nav_item) | trim }}" {{ is_hidden }}>
         <div class="md-grid">
           <div class="bijux-detail-select-wrap">
             <label class="bijux-detail-select-label" for="bijux-detail-select-program-{{ loop.index }}">Section</label>
@@ -233,7 +233,7 @@
         {% if course_item.children and course_detail_items.list and (allow_flattened_detail_rows and course_detail_items.list | length > 1 or (not allow_flattened_detail_rows and course_detail_items.list | length > 0)) %}
           {% set course_active = course_item.active or (current_page and course_item.pages and current_page in course_item.pages) %}
           {% set is_hidden = "" if nav_item.active and course_active else "hidden" %}
-          <nav class="bijux-detail-tabs bijux-course-tabs" aria-label="{{ course_item.title }} course sections" data-bijux-nav-row="course" data-bijux-course-strip data-bijux-course-root-path="{{ bijux_nav.first_page_path(course_item) | trim }}" data-bijux-course-title="{{ course_item.title }}" {{ is_hidden }}>
+          <nav class="bijux-detail-tabs bijux-course-tabs" aria-label="{{ course_item.title }} course sections" data-bijux-nav-row="course" data-bijux-row-scope="desktop-normal" data-bijux-course-strip data-bijux-course-root-path="{{ bijux_nav.first_page_path(course_item) | trim }}" data-bijux-course-title="{{ course_item.title }}" {{ is_hidden }}>
             <div class="md-grid">
               <div class="bijux-detail-select-wrap">
                 <label class="bijux-detail-select-label" for="bijux-detail-select-course-{{ program_index }}-{{ loop.index }}">Section</label>
