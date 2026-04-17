@@ -154,6 +154,7 @@
     display: block;
   }
 
+  .bijux-mobile-local,
   .bijux-mobile-hub,
   .bijux-mobile-context {
     display: block;
@@ -179,6 +180,7 @@
   .bijux-mobile-hub__label {
     font-size: 0.58rem;
     letter-spacing: 0.07em;
+    line-height: 1.12;
     margin-bottom: 0.22rem;
   }
 
