@@ -477,6 +477,22 @@
   border-style: dashed;
 }
 
+.bijux-nav--mobile [data-bijux-mobile-order] + [data-bijux-mobile-order] {
+  margin-top: 0.32rem;
+  position: relative;
+}
+
+.bijux-nav--mobile [data-bijux-mobile-order] + [data-bijux-mobile-order]::before {
+  background: color-mix(in srgb, var(--bijux-border) 72%, transparent);
+  content: "";
+  display: block;
+  height: 1px;
+  left: 0.5rem;
+  position: absolute;
+  right: 0.5rem;
+  top: -0.16rem;
+}
+
 .bijux-mobile-hub {
   background: var(--bijux-panel);
   border: 1px solid var(--bijux-border);
@@ -587,12 +603,12 @@
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
-  .bijux-nav--mobile > .md-nav__list {
-    padding-bottom: 0.52rem;
+  .bijux-nav--mobile {
+    padding-bottom: 0.58rem;
     position: relative;
   }
 
-  .bijux-nav--mobile > .md-nav__list::after {
+  .bijux-nav--mobile::after {
     background: linear-gradient(
       180deg,
       color-mix(in srgb, var(--md-default-bg-color) 0%, transparent),
@@ -600,8 +616,10 @@
     );
     content: "";
     display: block;
+    inset-inline: 0;
     height: 0.56rem;
-    margin-top: 0.06rem;
+    position: absolute;
+    bottom: 0;
     pointer-events: none;
   }
 }
