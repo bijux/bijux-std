@@ -75,7 +75,7 @@ test.describe("bijux docs shell responsive behavior", () => {
     expect(await displayValue(page, ".md-header__title")).toBe("none");
   });
 
-  test("14) tablet keeps compact ribbons while course strip stays hidden", async ({ page }, testInfo) => {
+  test("tablet keeps compact ribbons while course strip stays hidden", async ({ page }, testInfo) => {
     test.skip(testInfo.project.name !== "normal", "normal-only assertions");
 
     await expect(page.locator("html")).toHaveAttribute("data-bijux-viewport", "normal");
@@ -87,7 +87,7 @@ test.describe("bijux docs shell responsive behavior", () => {
     await expect(page.locator(".bijux-mobile-hub").first()).toBeHidden();
   });
 
-  test("15) desktop prevents phone row-model leakage", async ({ page }, testInfo) => {
+  test("desktop prevents phone row-model leakage", async ({ page }, testInfo) => {
     test.skip(testInfo.project.name !== "wide", "wide-only assertions");
 
     await expect(page.locator("html")).toHaveAttribute("data-bijux-viewport", "wide");
