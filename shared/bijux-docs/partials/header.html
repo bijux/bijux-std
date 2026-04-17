@@ -52,14 +52,14 @@
 {% endfor %}
 <header class="{{ class }}" data-md-component="header" data-bijux-nav-mode="{{ nav_mode }}" data-bijux-theme-key="{{ theme_key }}" data-bijux-phone-nav="drawer" data-bijux-phone-compact="true">
   <nav class="md-header__inner md-grid" aria-label="{{ lang.t('header') }}">
-    <a href="{{ config.extra.homepage | d(nav.homepage.url, true) | url }}" title="{{ config.site_name | e }}" class="md-header__button md-logo" aria-label="{{ config.site_name }}" data-md-component="logo">
+    <a href="{{ config.extra.homepage | d(nav.homepage.url, true) | url }}" title="{{ config.site_name | e }}" class="md-header__button md-logo" aria-label="{{ config.site_name }}" data-bijux-header-zone="brand" data-md-component="logo">
       {% include "partials/logo.html" %}
     </a>
-    <label class="md-header__button md-icon" for="{{ drawer_control_id }}" aria-controls="{{ drawer_control_id }}" aria-label="{{ drawer_control_label }}" title="{{ drawer_control_label }}" data-bijux-header-control="drawer-toggle" data-bijux-phone-compact="keep">
+    <label class="md-header__button md-icon" for="{{ drawer_control_id }}" role="button" tabindex="0" aria-controls="{{ drawer_control_id }}" aria-label="{{ drawer_control_label }}" title="{{ drawer_control_label }}" data-bijux-header-zone="primary-control" data-bijux-header-control="drawer-toggle" data-bijux-phone-compact="keep">
       {% set icon = config.theme.icon.menu or "material/menu" %}
       {% include ".icons/" ~ icon ~ ".svg" %}
     </label>
-    <div class="md-header__title" data-md-component="header-title" data-bijux-header-title="primary">
+    <div class="md-header__title" data-md-component="header-title" data-bijux-header-zone="title" data-bijux-header-title="primary">
       <div class="md-header__ellipsis">
         <div class="md-header__topic" data-bijux-header-topic="site" data-bijux-phone-compact="keep">
           <span class="md-ellipsis">
@@ -91,7 +91,7 @@
         </ul>
       </nav>
     {% endif %}
-    <div class="bijux-header-tools">
+    <div class="bijux-header-tools" data-bijux-header-zone="tools">
       {% if not config.theme.palette is mapping %}
         {% include "partials/palette.html" %}
         {% include "partials/javascripts/palette.html" %}
@@ -99,7 +99,7 @@
       {% if config.extra.alternate %}
         {% include "partials/alternate.html" %}
       {% endif %}
-      <label class="md-header__button md-icon" for="{{ search_control_id }}" aria-controls="{{ search_control_id }}" aria-label="{{ search_control_label }}" title="{{ search_control_label }}">
+      <label class="md-header__button md-icon" for="{{ search_control_id }}" role="button" tabindex="0" aria-controls="{{ search_control_id }}" aria-label="{{ search_control_label }}" title="{{ search_control_label }}">
         {% set icon = config.theme.icon.search or "material/magnify" %}
         {% include ".icons/" ~ icon ~ ".svg" %}
       </label>
