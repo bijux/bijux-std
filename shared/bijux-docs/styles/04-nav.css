@@ -294,8 +294,8 @@
 .bijux-nav--mobile > .md-nav__list {
   display: flex;
   flex-direction: column;
-  gap: 0.55rem;
-  padding-top: 0.6rem;
+  gap: 0.48rem;
+  padding-top: 0.52rem;
 }
 
 .bijux-nav--mobile > .md-nav__list > .md-nav__item {
@@ -309,7 +309,7 @@
   border-radius: 0.95rem;
   box-shadow: 0 10px 24px rgba(30, 41, 89, 0.08);
   font-weight: 700;
-  padding-block: 0.45rem;
+  padding-block: 0.5rem;
   padding-inline: 0.8rem;
 }
 
@@ -335,8 +335,8 @@
 .bijux-nav--mobile .md-nav__link,
 .bijux-nav--mobile .md-nav__container > .md-nav__link,
 .bijux-nav--mobile .md-nav__title {
-  min-height: 2.85rem;
-  padding-block: 0.62rem;
+  min-height: 2.7rem;
+  padding-block: 0.56rem;
 }
 
 .bijux-nav--mobile .md-nav__link .md-ellipsis,
@@ -401,6 +401,14 @@
   margin-bottom: 0.75rem;
   margin-top: 0.72rem;
   padding: 0.66rem 0.7rem 0.74rem;
+}
+
+.bijux-nav--mobile [data-bijux-mobile-order="1-sites"] {
+  margin-bottom: 0.86rem;
+}
+
+.bijux-nav--mobile > .md-nav__list[data-bijux-mobile-order="2-tree"] {
+  margin-top: 0.02rem;
 }
 
 .bijux-mobile-hub__label {
