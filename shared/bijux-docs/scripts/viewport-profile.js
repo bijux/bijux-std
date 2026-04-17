@@ -63,6 +63,19 @@
   window.bijuxViewportProfile = {
     current: resolveViewportProfile,
     apply: applyViewportProfile,
+    media: {
+      phoneMax: PHONE_MAX_MEDIA,
+      normalMax: NORMAL_MAX_MEDIA,
+      wideMin: WIDE_MIN_MEDIA,
+    },
+    describe: () => ({
+      profile: resolveViewportProfile(),
+      matches: {
+        phone: mediaMatches(PHONE_MAX_MEDIA),
+        normal: mediaMatches(NORMAL_MAX_MEDIA),
+        wide: mediaMatches(WIDE_MIN_MEDIA),
+      },
+    }),
   };
 
   document$.subscribe(init);
