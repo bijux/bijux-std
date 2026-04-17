@@ -4,16 +4,20 @@
   const NORMAL_MAX_MEDIA = "(max-width: 76.2344em)";
   const WIDE_MIN_MEDIA = "(min-width: 120em)";
 
+  function mediaMatches(query) {
+    return typeof window.matchMedia === "function" && window.matchMedia(query).matches;
+  }
+
   function resolveViewportProfile() {
-    if (window.matchMedia(PHONE_MAX_MEDIA).matches) {
+    if (mediaMatches(PHONE_MAX_MEDIA)) {
       return "phone";
     }
 
-    if (window.matchMedia(WIDE_MIN_MEDIA).matches) {
+    if (mediaMatches(WIDE_MIN_MEDIA)) {
       return "wide";
     }
 
-    if (window.matchMedia(NORMAL_MAX_MEDIA).matches) {
+    if (mediaMatches(NORMAL_MAX_MEDIA)) {
       return "normal";
     }
 
