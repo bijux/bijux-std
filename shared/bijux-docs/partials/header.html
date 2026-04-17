@@ -46,12 +46,12 @@
     </label>
     <div class="md-header__title" data-md-component="header-title">
       <div class="md-header__ellipsis">
-        <div class="md-header__topic">
+        <div class="md-header__topic" data-bijux-header-topic="site">
           <span class="md-ellipsis">
             {{ config.site_name }}
           </span>
         </div>
-        <div class="md-header__topic" data-md-component="header-topic">
+        <div class="md-header__topic" data-md-component="header-topic" data-bijux-header-topic="page">
           <span class="md-ellipsis">
             {% if page.meta and page.meta.title %}
               {{ page.meta.title }}
