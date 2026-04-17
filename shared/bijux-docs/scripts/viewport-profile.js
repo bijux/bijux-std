@@ -95,11 +95,21 @@
 
   function applyViewportProfile() {
     const profile = resolveViewportProfile();
+    const previousProfile = currentProfile;
+    const width = currentViewportWidth();
     // Keep both targets in sync because CSS and JS hooks read from each in different contexts.
     writeViewportAttribute(document.documentElement, profile);
     writeViewportAttribute(document.body, profile);
     if (profile !== currentProfile) {
-      window.dispatchEvent(new CustomEvent("bijux:viewport-change", { detail: { profile } }));
+      window.dispatchEvent(
+        new CustomEvent("bijux:viewport-change", {
+          detail: {
+            profile,
+            previousProfile,
+            width,
+          },
+        })
+      );
       currentProfile = profile;
     }
     return profile;
