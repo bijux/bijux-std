@@ -16,10 +16,12 @@
 {% set allow_flattened_detail_rows = is_bijux_hub_site %}
 {% set desktop_normal_row_scope = "desktop-normal" %}
 {% set compact_control_band = "normal-tablet" %}
-{% set drawer_control_id = bijux.drawer_control_id if bijux and bijux.drawer_control_id else "__drawer" %}
+{% set drawer_control_id = "__drawer" %}
 {% set search_control_id = bijux.search_control_id if bijux and bijux.search_control_id else "__search" %}
 {% set drawer_control_label = "Open navigation drawer" %}
 {% set search_control_label = "Open search" %}
+{% set header_contract = "drawer-first-ribbons-desktop-normal" %}
+{% set header_site_mode = "hub" if is_bijux_hub_site else "project" %}
 {% set header_site_title = config.site_name if config and config.site_name else "" %}
 {% set header_page_title = header_site_title %}
 {% if current_page %}
@@ -56,7 +58,7 @@
     {% set active_root.item = nav_item %}
   {% endif %}
 {% endfor %}
-<header class="{{ class }}" data-md-component="header" data-bijux-nav-mode="{{ nav_mode }}" data-bijux-theme-key="{{ theme_key }}" data-bijux-phone-nav="drawer" data-bijux-phone-compact="true">
+<header class="{{ class }}" data-md-component="header" data-bijux-nav-mode="{{ nav_mode }}" data-bijux-theme-key="{{ theme_key }}" data-bijux-phone-nav="drawer" data-bijux-phone-compact="true" data-bijux-drawer-target="{{ drawer_control_id }}" data-bijux-header-contract="{{ header_contract }}" data-bijux-header-site-mode="{{ header_site_mode }}" data-bijux-active-repository="{{ active_repository if active_repository else "unknown" }}">
   <nav class="md-header__inner md-grid" aria-label="{{ lang.t('header') }}">
     <a href="{{ config.extra.homepage | d(nav.homepage.url, true) | url }}" title="{{ config.site_name | e }}" class="md-header__button md-logo" aria-label="{{ config.site_name }}" data-bijux-header-zone="brand" data-md-component="logo">
       {% include "partials/logo.html" %}
