@@ -99,9 +99,8 @@
       {% include "partials/source.html" %}
     </div>
   {% endif %}
-  {{ mobile_sites_block }}
   {% if is_bijux_hub_site %}
-    <section class="bijux-mobile-local" aria-label="Hub sections" data-bijux-mobile-order="2-tree">
+    <section class="bijux-mobile-local" aria-label="Hub sections" data-bijux-mobile-order="1-tree">
       <div class="bijux-mobile-local__label">Sections</div>
       <ul class="md-nav__list" data-md-scrollfix>
         {% set hub_seen_paths = namespace(values=[]) %}
@@ -173,7 +172,9 @@
         {% endfor %}
       </ul>
     </section>
+    {{ mobile_sites_block }}
   {% else %}
+    {{ mobile_sites_block }}
     <ul class="md-nav__list" data-md-scrollfix data-bijux-mobile-order="2-tree">
       {% for nav_item in nav %}
         {% set path = "__nav_mobile_" ~ loop.index %}
