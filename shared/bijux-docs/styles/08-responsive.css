@@ -89,6 +89,19 @@
 }
 
 @media screen and (max-width: 47.9375em) {
+  html {
+    scroll-padding-top: 4.3rem;
+  }
+
+  .md-typeset h1,
+  .md-typeset h2,
+  .md-typeset h3,
+  .md-typeset h4,
+  .md-typeset h5,
+  .md-typeset h6 {
+    scroll-margin-top: 4.3rem;
+  }
+
   [data-bijux-row-scope="desktop-normal"] {
     display: none !important;
   }
@@ -130,7 +143,7 @@
   }
 
   .md-main__inner {
-    margin-top: 0.42rem;
+    margin-top: 0.3rem;
   }
 
   .bijux-nav--mobile .md-nav__source {
@@ -234,6 +247,10 @@
   .md-sidebar--primary .md-sidebar__inner {
     -webkit-overflow-scrolling: touch;
     overflow-y: auto;
+  }
+
+  .md-sidebar--primary .md-sidebar__inner {
+    padding-top: 0.1rem;
   }
 }
 
