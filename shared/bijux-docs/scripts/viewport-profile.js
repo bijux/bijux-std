@@ -1,8 +1,18 @@
 (function () {
-  // phone < 48em, normal 48em–76.2344em, desktop > 76.2344em, wide >= 120em
+  // Breakpoint contract:
+  // - phone: < 48em
+  // - normal: 48em to 76.2344em
+  // - desktop: > 76.2344em and < 120em
+  // - wide: >= 120em
   const PHONE_MAX_MEDIA = "(max-width: 47.9375em)";
   const NORMAL_MAX_MEDIA = "(max-width: 76.2344em)";
   const WIDE_MIN_MEDIA = "(min-width: 120em)";
+  const VIEWPORT_PROFILES = Object.freeze({
+    PHONE: "phone",
+    NORMAL: "normal",
+    DESKTOP: "desktop",
+    WIDE: "wide",
+  });
 
   function mediaMatches(query) {
     return typeof window.matchMedia === "function" && window.matchMedia(query).matches;
@@ -10,18 +20,18 @@
 
   function resolveViewportProfile() {
     if (mediaMatches(PHONE_MAX_MEDIA)) {
-      return "phone";
+      return VIEWPORT_PROFILES.PHONE;
     }
 
     if (mediaMatches(WIDE_MIN_MEDIA)) {
-      return "wide";
+      return VIEWPORT_PROFILES.WIDE;
     }
 
     if (mediaMatches(NORMAL_MAX_MEDIA)) {
-      return "normal";
+      return VIEWPORT_PROFILES.NORMAL;
     }
 
-    return "desktop";
+    return VIEWPORT_PROFILES.DESKTOP;
   }
 
   function applyViewportProfile() {
