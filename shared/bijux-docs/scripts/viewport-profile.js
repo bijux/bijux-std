@@ -16,6 +16,13 @@
   const PHONE_MAX_EM = 47.9375;
   const NORMAL_MAX_EM = 76.2344;
   const WIDE_MIN_EM = 120;
+  const REFERENCE_WIDTHS = Object.freeze({
+    phone390: 390,
+    normal768: 768,
+    normal1024: 1024,
+    desktop1280: 1280,
+    wide1920: 1920,
+  });
 
   function mediaMatches(query) {
     return typeof window.matchMedia === "function" && window.matchMedia(query).matches;
@@ -134,11 +141,25 @@
       normalMax: NORMAL_MAX_MEDIA,
       wideMin: WIDE_MIN_MEDIA,
     },
+    verifyReferenceWidths: () => ({
+      390: classifyViewportWidth(REFERENCE_WIDTHS.phone390),
+      768: classifyViewportWidth(REFERENCE_WIDTHS.normal768),
+      1024: classifyViewportWidth(REFERENCE_WIDTHS.normal1024),
+      1280: classifyViewportWidth(REFERENCE_WIDTHS.desktop1280),
+      1920: classifyViewportWidth(REFERENCE_WIDTHS.wide1920),
+    }),
     describe: () => {
       const profile = resolveViewportProfile();
       return {
         profile,
         width: currentViewportWidth(),
+        references: {
+          390: classifyViewportWidth(REFERENCE_WIDTHS.phone390),
+          768: classifyViewportWidth(REFERENCE_WIDTHS.normal768),
+          1024: classifyViewportWidth(REFERENCE_WIDTHS.normal1024),
+          1280: classifyViewportWidth(REFERENCE_WIDTHS.desktop1280),
+          1920: classifyViewportWidth(REFERENCE_WIDTHS.wide1920),
+        },
         matches: {
           phone: profile === VIEWPORT_PROFILES.PHONE,
           normalBand: profile === VIEWPORT_PROFILES.NORMAL,
