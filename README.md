@@ -30,6 +30,12 @@ across repositories.
 - `shared/bijux-checks`
   Shared standard checks, update flows, and the policy file that defines the
   standard contract.
+- `shared/bijux-docs-tooling`
+  Shared docs synchronization and docs-contract/source-of-truth verification
+  tooling used by consuming repositories.
+- `shared/bijux-gh-py`
+  Shared GitHub policy artifacts (for example required status checks and
+  branch protection ruleset sources).
 - `shared/shared-dir-sha256.txt`
   Canonical SHA manifest for the shared directories above.
 
@@ -63,6 +69,8 @@ machine-checkable.
 shared/
 ├── bijux-checks/          # shared compliance and update flows
 ├── bijux-docs/            # shared docs and website shell assets
+├── bijux-docs-tooling/    # shared docs sync and verification tooling
+├── bijux-gh-py/           # shared GitHub policy/ruleset artifacts
 ├── bijux-makes-py/        # shared Python-oriented make modules
 └── shared-dir-sha256.txt  # canonical content-hash manifest
 ```
@@ -82,6 +90,9 @@ The expected flow is:
 
 This keeps repositories autonomous in domain behavior while preserving a stable
 shared platform layer across the ecosystem.
+
+The current standard directory contract is declared in
+[`shared/bijux-checks/bijux-std-checks.yml`](shared/bijux-checks/bijux-std-checks.yml).
 
 ## Verification Model
 
@@ -215,8 +226,9 @@ else.
 ## In One Sentence
 
 `bijux-std` is the canonical, CI-verifiable shared standards distribution
-repository for Bijux documentation shell assets, Python-oriented make
-automation, and cross-repository compliance.
+repository for Bijux documentation shell assets, docs verification tooling,
+GitHub policy artifacts, Python-oriented make automation, and cross-repository
+compliance.
 
 ## License
 
