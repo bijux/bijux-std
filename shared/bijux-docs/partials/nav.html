@@ -61,7 +61,7 @@
 {% endif %}
 {% import "partials/nav-item.html" as item with context %}
 {% set hub_mobile_titles = ["Home", "Platform", "Projects", "Learning", "Reading Paths"] %}
-{% set mobile_sites_order = "2-sites" if is_bijux_hub_site else "1-sites" %}
+{% set mobile_sites_order = "3-sites" if is_bijux_hub_site else "5-sites" %}
 {% macro mobile_row_item(entry) -%}
   {% if entry and entry.url %}
     {% set item_class = "md-nav__item" %}
@@ -80,8 +80,13 @@
     <section class="bijux-mobile-local" aria-label="{{ label }}" data-bijux-mobile-order="{{ row_key }}">
       <div class="bijux-mobile-local__label">{{ label }}</div>
       <ul class="md-nav__list"{% if scrollfix %} data-md-scrollfix{% endif %}>
+        {% set seen_paths = namespace(values=[]) %}
         {% for entry in items %}
-          {{ mobile_row_item(entry) }}
+          {% set entry_path = (entry.url | trim("/")) if entry and entry.url else "" %}
+          {% if entry_path and entry_path not in seen_paths.values %}
+            {% set _ = seen_paths.values.append(entry_path) %}
+            {{ mobile_row_item(entry) }}
+          {% endif %}
         {% endfor %}
       </ul>
     </section>
@@ -205,6 +210,17 @@
         {% endfor %}
       </ul>
     </section>
+    {% set hub_home_highlights = namespace(list=[]) %}
+    {% for nav_item in nav %}
+      {% if nav_item.title == "Home" and nav_item.children %}
+        {% for child in nav_item.children %}
+          {% if not child.children and child.title in ["Overview", "Reading Paths"] %}
+            {% set _ = hub_home_highlights.list.append(child) %}
+          {% endif %}
+        {% endfor %}
+      {% endif %}
+    {% endfor %}
+    {{ mobile_row("Pages", hub_home_highlights.list, "2-pages") }}
     {{ mobile_sites_block }}
   {% else %}
     {% set top_directories = namespace(list=[]) %}
