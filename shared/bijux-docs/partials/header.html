@@ -128,11 +128,12 @@
     </div>
   </nav>
   {% for nav_item in nav %}
+    {% set detail_items = namespace(list=[]) %}
+    {% set detail_root_path = bijux_nav.first_page_path(nav_item) | trim %}
     {% if nav_item.children %}
       {% set promoted_home_wrapper = not allow_flattened_detail_rows and nav_item.children | length == 1 and nav_item.children[0].title == "Home" and nav_item.children[0].children %}
       {% set detail_source = nav_item.children[0].children if promoted_home_wrapper else nav_item.children %}
       {% set detail_root_path = bijux_nav.first_page_path(nav_item.children[0]) | trim if promoted_home_wrapper else bijux_nav.first_page_path(nav_item) | trim %}
-      {% set detail_items = namespace(list=[]) %}
       {% for child in detail_source %}
         {% set child_src_uri = child.file.src_uri if child.file else "" %}
         {% set child_is_index = child.is_index or child_src_uri.endswith('/index.md') or child_src_uri == 'index.md' %}
@@ -206,10 +207,12 @@
     {% endif %}
   {% endfor %}
   {% for nav_item in nav %}
+    {% set detail_source = nav_item.children if nav_item.children else [] %}
+    {% set promoted_home_wrapper = false %}
+    {% set program_index = loop.index %}
     {% if nav_item.children %}
       {% set promoted_home_wrapper = not allow_flattened_detail_rows and nav_item.children | length == 1 and nav_item.children[0].title == "Home" and nav_item.children[0].children %}
       {% set detail_source = nav_item.children[0].children if promoted_home_wrapper else nav_item.children %}
-      {% set program_index = loop.index %}
       {% for course_item in detail_source %}
         {% set course_detail_items = namespace(list=[]) %}
         {% if course_item.children %}
