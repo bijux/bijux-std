@@ -170,6 +170,15 @@
 }
 
 @media screen and (min-width: 48em) and (max-width: 76.2344em) {
+  [data-bijux-phone-compact="true"] .md-header__inner {
+    gap: 0.4rem;
+    padding-block: 0.32rem;
+  }
+
+  [data-bijux-phone-compact="true"] [data-bijux-header-title="primary"] {
+    min-width: 0;
+  }
+
   .bijux-hub-strip {
     display: none;
   }
@@ -206,6 +215,17 @@
     min-height: 2.1rem;
     padding: 0.34rem 0.66rem;
   }
+
+  .bijux-detail-select-wrap[data-bijux-compact-control="normal-tablet"] .bijux-detail-select {
+    font-size: 0.78rem;
+    min-height: 2.3rem;
+    padding: 0.42rem 0.68rem;
+  }
+
+  .md-main__inner {
+    margin-top: 0.62rem;
+  }
+
   [data-md-component="header"][data-bijux-detail-visible="true"] .bijux-site-tabs .md-tabs__list.bijux-tabs__list--site {
     transform: none;
   }
