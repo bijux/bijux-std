@@ -428,7 +428,9 @@
   font-size: 0.76rem;
   font-weight: 700;
   min-height: 2.34rem;
+  overflow-wrap: anywhere;
   padding: 0.42rem 0.64rem;
+  word-break: normal;
 }
 
 .bijux-mobile-local > .md-nav__list > .md-nav__item > .md-nav__link:hover,
@@ -592,6 +594,7 @@
   font-weight: 700;
   line-height: 1.24;
   min-height: 2.1rem;
+  overflow-wrap: anywhere;
   padding: 0.34rem 0.5rem;
   text-decoration: none;
   transition: background-color 0.16s ease, border-color 0.16s ease, box-shadow 0.16s ease;
@@ -667,6 +670,11 @@
     position: absolute;
     bottom: 0;
     pointer-events: none;
+  }
+
+  .md-sidebar--primary .md-sidebar__inner {
+    scrollbar-color: color-mix(in srgb, var(--bijux-border) 76%, transparent) transparent;
+    scrollbar-width: thin;
   }
 }
 
