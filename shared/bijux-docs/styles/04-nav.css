@@ -389,18 +389,21 @@
 }
 
 .bijux-mobile-hub {
+  background: var(--bijux-panel);
   border: 1px solid var(--bijux-border);
   border-radius: 0.95rem;
+  box-shadow: 0 8px 20px rgba(15, 23, 42, 0.05);
+  margin-bottom: 0.75rem;
   margin-top: 0.72rem;
-  padding: 0.62rem 0.65rem 0.68rem;
+  padding: 0.66rem 0.7rem 0.74rem;
 }
 
 .bijux-mobile-hub__label {
   color: var(--bijux-muted);
-  font-size: 0.67rem;
+  font-size: 0.68rem;
   font-weight: 800;
   letter-spacing: 0.08em;
-  margin: 0 0 0.48rem;
+  margin: 0 0 0.54rem;
   text-transform: uppercase;
 }
 
