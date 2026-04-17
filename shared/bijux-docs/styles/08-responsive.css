@@ -149,6 +149,45 @@
   display: none;
 }
 
+@media screen and (min-width: 48em) and (max-width: 76.2344em) {
+  .bijux-hub-strip {
+    display: none;
+  }
+
+  .bijux-site-tabs,
+  .bijux-detail-tabs {
+    display: block;
+  }
+
+  .bijux-site-tabs,
+  .bijux-detail-tabs {
+    backdrop-filter: blur(10px);
+    border-top-width: 0;
+  }
+
+  .bijux-detail-select-wrap[data-bijux-compact-control="normal-tablet"] {
+    align-items: center;
+    display: grid;
+    gap: 0.32rem;
+    grid-template-columns: 1fr;
+    padding: 0.4rem 0;
+  }
+
+  .bijux-site-tabs .bijux-tabs__list,
+  .bijux-detail-tabs .bijux-tabs__list {
+    -webkit-overflow-scrolling: touch;
+    padding-block: 0.4rem;
+    scroll-padding-inline: var(--md-default-spacing);
+  }
+
+  .bijux-site-tabs .bijux-tabs__link,
+  .bijux-detail-tabs .bijux-tabs__link {
+    font-size: 0.7rem;
+    min-height: 2.1rem;
+    padding: 0.34rem 0.66rem;
+  }
+}
+
 @media screen and (max-width: 76.2344em) {
   .bijux-site-tabs,
   .bijux-detail-tabs {
