@@ -124,8 +124,15 @@
             <li class="{{ item_class }}">
               <a href="{{ section.item.url | url }}" class="md-nav__link" {{ current }}>{{ section.item.title }}</a>
               {% if section.item.active and section.item.children %}
+                {% set section_children = namespace(list=section.item.children) %}
+                {% set first_child = section.item.children[0] if section.item.children else none %}
+                {% set first_path = (first_child.url | trim("/")) if first_child and first_child.url else "" %}
+                {% set flatten_landing_wrapper = first_child and first_child.title in ["Home", "Overview"] and first_child.children and first_path == nav_path %}
+                {% if flatten_landing_wrapper %}
+                  {% set section_children.list = first_child.children %}
+                {% endif %}
                 {% set section_child_count = namespace(value=0) %}
-                {% for child in section.item.children %}
+                {% for child in section_children.list %}
                   {% set section_path = (section.item.url | trim("/")) if section.item.url else "" %}
                   {% set child_path = (child.url | trim("/")) if child.url else "" %}
                   {% if child_path != section_path %}
@@ -135,7 +142,7 @@
                 {% if section_child_count.value > 0 %}
                   <nav class="md-nav" aria-label="{{ section.item.title }}">
                     <ul class="md-nav__list">
-                      {% for child in section.item.children %}
+                      {% for child in section_children.list %}
                         {% set section_path = (section.item.url | trim("/")) if section.item.url else "" %}
                         {% set child_path = (child.url | trim("/")) if child.url else "" %}
                         {% if child_path != section_path %}
