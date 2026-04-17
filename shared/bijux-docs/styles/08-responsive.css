@@ -93,6 +93,14 @@
     display: none !important;
   }
 
+  [data-bijux-phone-compact="true"] [data-bijux-header-title="primary"] {
+    min-width: 0;
+  }
+
+  [data-bijux-phone-compact="true"] [data-bijux-phone-compact="hide"] {
+    display: none;
+  }
+
   .bijux-hub-strip {
     display: none !important;
   }
@@ -147,6 +155,10 @@
 
 [data-bijux-viewport="phone"] [data-bijux-row-scope="desktop-normal"] {
   display: none !important;
+}
+
+[data-bijux-viewport="phone"] [data-bijux-phone-compact="hide"] {
+  display: none;
 }
 
 [data-bijux-viewport="phone"] .md-sidebar--primary .bijux-nav--mobile {
