@@ -117,7 +117,7 @@
   }
 
   .md-main__inner {
-    margin-top: 0.5rem;
+    margin-top: 0.42rem;
   }
 
   .bijux-nav--mobile .md-nav__source {
@@ -131,6 +131,26 @@
   .bijux-mobile-hub,
   .bijux-mobile-context {
     display: block;
+  }
+
+  .bijux-mobile-hub,
+  .bijux-mobile-local {
+    margin-block: 0.35rem 0.45rem;
+  }
+
+  .bijux-nav--mobile > .md-nav__list,
+  .bijux-mobile-local > .md-nav__list,
+  .bijux-mobile-local .md-nav > .md-nav__list {
+    margin-block: 0.2rem 0;
+    padding-block: 0.1rem 0.2rem;
+  }
+
+  .bijux-nav--mobile .md-nav__item {
+    margin-block: 0.04rem;
+  }
+
+  .bijux-nav--mobile .md-nav__link {
+    padding-block: 0.32rem;
   }
 
   .md-sidebar--primary .bijux-nav--scoped {
