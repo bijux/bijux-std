@@ -5,6 +5,7 @@
   {% set class = class ~ " md-header--shadow" %}
 {% endif %}
 {% set bijux = config.extra.bijux if config.extra and config.extra.bijux else {} %}
+{# SSOT cross-site links source. Phone rendering happens in nav.html drawer, not here. #}
 {% set hub_links = bijux.hub_links if bijux and bijux.hub_links else [] %}
 {% set active_repository = bijux.repository if bijux and bijux.repository else "" %}
 {% set nav_mode = bijux.nav_mode if bijux and bijux.nav_mode else "default" %}
@@ -62,7 +63,8 @@
       </div>
     </div>
     {% if hub_links %}
-      <nav class="bijux-hub-strip" aria-label="Bijux sites">
+      {# Keep hub strip in header; responsive CSS controls visibility by viewport profile. #}
+      <nav class="bijux-hub-strip" aria-label="Bijux sites" data-bijux-row-scope="desktop-normal">
         <ul class="bijux-tabs__list bijux-tabs__list--hub">
           {% for entry in hub_links %}
             {% set item_class = "bijux-tabs__item" %}
@@ -101,7 +103,7 @@
       {% endif %}
     </div>
   </nav>
-  <nav class="md-tabs bijux-site-tabs" aria-label="{{ config.site_name }} navigation" data-bijux-nav-row="site" data-md-component="tabs">
+  <nav class="md-tabs bijux-site-tabs" aria-label="{{ config.site_name }} navigation" data-bijux-nav-row="site" data-bijux-row-scope="desktop-normal" data-md-component="tabs">
     <div class="md-grid">
       <ul class="md-tabs__list bijux-tabs__list bijux-tabs__list--site">
         {% for nav_item in nav %}
