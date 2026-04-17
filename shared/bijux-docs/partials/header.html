@@ -79,11 +79,13 @@
         <ul class="bijux-tabs__list bijux-tabs__list--hub">
           {% for entry in hub_links %}
             {% set item_class = "bijux-tabs__item" %}
+            {% set current = "" %}
             {% if entry.key == active_repository %}
               {% set item_class = item_class ~ " bijux-tabs__item--active" %}
+              {% set current = 'aria-current="page"' %}
             {% endif %}
             <li class="{{ item_class }}">
-              <a href="{{ entry.url }}" class="bijux-tabs__link bijux-tabs__link--hub">{{ entry.label }}</a>
+              <a href="{{ entry.url }}" class="bijux-tabs__link bijux-tabs__link--hub" {{ current }}>{{ entry.label }}</a>
             </li>
           {% endfor %}
         </ul>
