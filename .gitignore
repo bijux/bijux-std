@@ -1,0 +1,10 @@
+# macOS
+.DS_Store
+
+# Node test workspace
+tests/node_modules/
+
+# Playwright artifacts
+tests/test-results/
+tests/playwright-report/
+tests/.playwright/
