@@ -335,7 +335,7 @@
 .bijux-nav--mobile .md-nav__link,
 .bijux-nav--mobile .md-nav__container > .md-nav__link,
 .bijux-nav--mobile .md-nav__title {
-  min-height: 2.7rem;
+  min-height: 2.58rem;
   padding-block: 0.56rem;
 }
 
@@ -491,6 +491,31 @@
   color: var(--bijux-ink);
   font-size: 0.82rem;
   line-height: 1.3;
+}
+
+@media screen and (max-width: 47.99em) {
+  .bijux-mobile-hub__list {
+    gap: 0.38rem;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .bijux-nav--mobile > .md-nav__list {
+    padding-bottom: 0.52rem;
+    position: relative;
+  }
+
+  .bijux-nav--mobile > .md-nav__list::after {
+    background: linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--md-default-bg-color) 0%, transparent),
+      color-mix(in srgb, var(--md-default-bg-color) 88%, transparent)
+    );
+    content: "";
+    display: block;
+    height: 0.56rem;
+    margin-top: 0.06rem;
+    pointer-events: none;
+  }
 }
 
 @media screen and (min-width: 76.25em) {
