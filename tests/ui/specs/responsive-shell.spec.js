@@ -49,6 +49,18 @@ test.describe("bijux docs shell responsive behavior", () => {
       return hit === el || el.contains(hit);
     });
     expect(toggleHitTarget).toBeTruthy();
+
+    const viewportMetrics = await page.evaluate(() => ({
+      clientWidth: document.documentElement.clientWidth,
+      scrollWidth: document.documentElement.scrollWidth,
+      scrollX: window.scrollX,
+    }));
+    expect(viewportMetrics.scrollWidth).toBeLessThanOrEqual(viewportMetrics.clientWidth);
+    expect(viewportMetrics.scrollX).toBe(0);
+
+    await expect(page.locator(".bijux-header-tools .md-search")).toBeHidden();
+    await page.locator('[data-bijux-header-control="search-toggle"]').click();
+    await expect(page.locator(".bijux-header-tools .md-search")).toBeVisible();
   });
 
   test("normal keeps compact ribbons and hides phone row model", async ({ page }, testInfo) => {
