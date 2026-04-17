@@ -66,11 +66,26 @@
     return VIEWPORT_PROFILES.DESKTOP;
   }
 
+  let currentProfile = null;
+
+  function writeViewportAttribute(target, profile) {
+    if (!target || typeof target.setAttribute !== "function") {
+      return;
+    }
+    if (target.getAttribute("data-bijux-viewport") !== profile) {
+      target.setAttribute("data-bijux-viewport", profile);
+    }
+  }
+
   function applyViewportProfile() {
     const profile = resolveViewportProfile();
     // Keep both targets in sync because CSS and JS hooks read from each in different contexts.
-    document.documentElement.setAttribute("data-bijux-viewport", profile);
-    document.body?.setAttribute("data-bijux-viewport", profile);
+    writeViewportAttribute(document.documentElement, profile);
+    writeViewportAttribute(document.body, profile);
+    if (profile !== currentProfile) {
+      window.dispatchEvent(new CustomEvent("bijux:viewport-change", { detail: { profile } }));
+      currentProfile = profile;
+    }
     return profile;
   }
 
