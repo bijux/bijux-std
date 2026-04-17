@@ -503,14 +503,17 @@
   padding: 0.42rem 0.48rem 0.46rem;
 }
 
-.bijux-nav--mobile [data-bijux-mobile-order="1-sites"] {
-  margin-bottom: 0.62rem;
+.bijux-nav--mobile [data-bijux-mobile-order$="-sites"] {
+  margin-top: 0.46rem;
 }
 
-.bijux-nav--mobile > .md-nav__list[data-bijux-mobile-order="2-tree"] {
-  border-top: 1px solid color-mix(in srgb, var(--bijux-border) 82%, transparent);
-  margin-top: 0;
-  padding-top: 0.44rem;
+.bijux-nav--mobile [data-bijux-mobile-order$="-sites"] .bijux-mobile-hub__label {
+  margin-bottom: 0.24rem;
+}
+
+.bijux-nav--mobile [data-bijux-mobile-order] + [data-bijux-mobile-order$="-sites"] {
+  border-top: 1px solid color-mix(in srgb, var(--bijux-border) 78%, transparent);
+  padding-top: 0.4rem;
 }
 
 .bijux-mobile-hub__label {
