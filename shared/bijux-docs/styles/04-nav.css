@@ -400,11 +400,13 @@
 }
 
 .bijux-nav--mobile [data-bijux-mobile-order="1-sites"] {
-  margin-bottom: 0.86rem;
+  margin-bottom: 0.62rem;
 }
 
 .bijux-nav--mobile > .md-nav__list[data-bijux-mobile-order="2-tree"] {
-  margin-top: 0.02rem;
+  border-top: 1px solid color-mix(in srgb, var(--bijux-border) 82%, transparent);
+  margin-top: 0;
+  padding-top: 0.44rem;
 }
 
 .bijux-mobile-hub__label {
@@ -458,10 +460,12 @@
 }
 
 .bijux-mobile-hub__item--active .bijux-mobile-hub__link {
-  background: color-mix(in srgb, var(--bijux-detail-link-active-bg) 70%, var(--bijux-panel));
-  border-color: var(--bijux-detail-border);
-  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--bijux-detail-border) 70%, transparent);
-  color: var(--bijux-ink);
+  background: color-mix(in srgb, var(--bijux-detail-border) 78%, var(--bijux-panel));
+  border-color: color-mix(in srgb, var(--bijux-detail-border) 88%, #0b5f65);
+  box-shadow:
+    inset 0 0 0 1px color-mix(in srgb, var(--bijux-detail-border) 72%, transparent),
+    0 5px 10px rgba(15, 23, 42, 0.12);
+  color: #fff;
   font-weight: 800;
 }
 
