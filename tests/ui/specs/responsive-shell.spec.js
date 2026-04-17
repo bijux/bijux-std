@@ -6,6 +6,21 @@ async function displayValue(page, selector) {
   return page.locator(selector).first().evaluate((el) => window.getComputedStyle(el).display);
 }
 
+function parseTranslateX(transformValue) {
+  if (!transformValue || transformValue === "none") return 0;
+  const matrix3dMatch = transformValue.match(/^matrix3d\((.+)\)$/);
+  if (matrix3dMatch) {
+    const parts = matrix3dMatch[1].split(",").map((value) => Number.parseFloat(value.trim()));
+    return Number.isFinite(parts[12]) ? parts[12] : 0;
+  }
+  const matrixMatch = transformValue.match(/^matrix\((.+)\)$/);
+  if (matrixMatch) {
+    const parts = matrixMatch[1].split(",").map((value) => Number.parseFloat(value.trim()));
+    return Number.isFinite(parts[4]) ? parts[4] : 0;
+  }
+  return 0;
+}
+
 test.describe("bijux docs shell responsive behavior", () => {
   test.beforeEach(async ({ page }) => {
     await page.goto(FIXTURE_PATH);
@@ -49,10 +64,14 @@ test.describe("bijux docs shell responsive behavior", () => {
     expect(closedSidebarLeft).toBeLessThan(0);
 
     await page.locator('[data-bijux-header-control="drawer-toggle"]').click();
+    const openSidebarTransform = await page
+      .locator(".md-sidebar--primary")
+      .evaluate((el) => window.getComputedStyle(el).transform || "none");
     const openSidebarLeft = await page
       .locator(".md-sidebar--primary")
       .evaluate((el) => Number.parseFloat(window.getComputedStyle(el).left || "0"));
     expect(openSidebarLeft).toBeGreaterThanOrEqual(0);
+    expect(Math.abs(parseTranslateX(openSidebarTransform))).toBeLessThanOrEqual(0.5);
 
     const toggleHitTarget = await page.locator('[data-bijux-header-control="drawer-toggle"]').evaluate((el) => {
       const rect = el.getBoundingClientRect();
