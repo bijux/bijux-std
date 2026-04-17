@@ -134,6 +134,21 @@
   }
 }
 
+[data-bijux-viewport="phone"] .bijux-hub-strip,
+[data-bijux-viewport="phone"] .bijux-site-tabs,
+[data-bijux-viewport="phone"] .bijux-detail-tabs,
+[data-bijux-viewport="phone"] .bijux-course-tabs {
+  display: none !important;
+}
+
+[data-bijux-viewport="phone"] .md-sidebar--primary .bijux-nav--mobile {
+  display: block;
+}
+
+[data-bijux-viewport="phone"] .md-sidebar--primary .bijux-nav--scoped {
+  display: none;
+}
+
 @media screen and (max-width: 76.2344em) {
   .bijux-site-tabs,
   .bijux-detail-tabs {
