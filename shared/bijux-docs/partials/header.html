@@ -8,11 +8,14 @@
 {# SSOT cross-site links source. Phone rendering happens in nav.html drawer, not here. #}
 {% set hub_links = bijux.hub_links if bijux and bijux.hub_links else [] %}
 {% set active_repository = bijux.repository if bijux and bijux.repository else "" %}
+{% set repo_name = config.repo_name if config and config.repo_name else "" %}
 {% set nav_mode = bijux.nav_mode if bijux and bijux.nav_mode else "default" %}
 {% set theme_key = bijux.theme_key if bijux and bijux.theme_key else "bijux:theme" %}
 {% set current_page = page if page is defined else none %}
 {% set is_bijux_hub_site = repo_name == "bijux/bijux.github.io" or active_repository in ["bijux", "bijux.github.io"] %}
 {% set allow_flattened_detail_rows = is_bijux_hub_site %}
+{% set desktop_normal_row_scope = "desktop-normal" %}
+{% set compact_control_band = "normal-tablet" %}
 {% import "partials/bijux-nav.html" as bijux_nav with context %}
 {% macro site_label(title) -%}
   {% if title == "Repository Handbook" -%}
