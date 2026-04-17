@@ -191,6 +191,15 @@
         {% set active_top.item = entry %}
       {% endif %}
     {% endfor %}
+    {% if active_top.item and not active_top.item.children %}
+      {% set top_fallback_selected = namespace(value=false) %}
+      {% for entry in top_directories.list %}
+        {% if not top_fallback_selected.value and entry.children %}
+          {% set active_top.item = entry %}
+          {% set top_fallback_selected.value = true %}
+        {% endif %}
+      {% endfor %}
+    {% endif %}
     {% set second_level_dirs = namespace(list=[]) %}
     {% set second_level_pages = namespace(list=[]) %}
     {% set second_source = namespace(list=[]) %}
