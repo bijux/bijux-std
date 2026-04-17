@@ -164,6 +164,18 @@ To run the full navigation release gate (contract + deep quality checks):
 make ui-test-release-gate
 ```
 
+To run live-site navigation gates against real synced sites:
+
+```bash
+BIJUX_LIVE_E2E=1 make ui-test-live-navigation
+```
+
+Optionally pin a different hub entry URL:
+
+```bash
+BIJUX_LIVE_E2E=1 BIJUX_LIVE_HUB_URL=https://bijux.io/ make ui-test-live-navigation
+```
+
 ## Update And Release Model
 
 `bijux-std` supports two adoption modes:

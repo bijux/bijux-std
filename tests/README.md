@@ -17,6 +17,9 @@ This test workspace validates responsive UI/UX behavior for
   `ui/specs/navigation-release-quality.spec.js`:
   - 10 deeper drawer, active-state, row-order, and cross-site continuity checks
   - stricter assertions for href integrity and navigation state recovery after toggles
+- live built-site release checks in `ui/specs/navigation-live-e2e.spec.js`:
+  - 10 production-focused tests on real synced sites, not fixture HTML
+  - phone-first drawer behavior plus tablet/desktop regression guards
 
 ## Run
 
@@ -26,10 +29,24 @@ make ui-test-install-browsers
 make ui-test
 make ui-test-navigation
 make ui-test-release-gate
+make ui-test-live-navigation
 ```
 
 Or directly:
 
 ```bash
 npm --prefix tests run test:ui
+```
+
+## Live E2E Environment
+
+Live checks are disabled unless enabled explicitly.
+
+- `BIJUX_LIVE_E2E=1` enables `navigation-live-e2e.spec.js`
+- `BIJUX_LIVE_HUB_URL` overrides the hub URL (default: `https://bijux.io/`)
+
+Example:
+
+```bash
+BIJUX_LIVE_E2E=1 BIJUX_LIVE_HUB_URL=https://bijux.io/ make ui-test-live-navigation
 ```
