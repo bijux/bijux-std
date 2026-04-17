@@ -100,25 +100,81 @@
     </div>
   {% endif %}
   {{ mobile_sites_block }}
-  <ul class="md-nav__list" data-md-scrollfix data-bijux-mobile-order="2-tree">
-    {% if is_bijux_hub_site %}
-      {% set hub_seen_paths = namespace(values=[]) %}
-      {% for nav_item in nav %}
-        {% set nav_path = (nav_item.url | trim("/")) if nav_item.url else "" %}
-        {% if nav_item.title != "Home" and nav_path not in hub_seen_paths.values %}
-          {% set _ = hub_seen_paths.values.append(nav_path) %}
-          {% set item_class = "md-nav__item" %}
-          {% set current = "" %}
-          {% if nav_item.active %}
-            {% set item_class = item_class ~ " md-nav__item--active" %}
-            {% set current = 'aria-current="page"' %}
+  {% if is_bijux_hub_site %}
+    <section class="bijux-mobile-local" aria-label="Hub sections" data-bijux-mobile-order="2-tree">
+      <div class="bijux-mobile-local__label">Sections</div>
+      <ul class="md-nav__list" data-md-scrollfix>
+        {% set hub_seen_paths = namespace(values=[]) %}
+        {% for section_title in hub_mobile_titles %}
+          {% set section = namespace(item=None) %}
+          {% for nav_item in nav %}
+            {% if section.item is none and nav_item.title | lower == section_title | lower %}
+              {% set section.item = nav_item %}
+            {% endif %}
+          {% endfor %}
+          {% if section.item %}
+            {% set nav_path = (section.item.url | trim("/")) if section.item.url else "" %}
+            {% set _ = hub_seen_paths.values.append(nav_path) %}
+            {% set item_class = "md-nav__item" %}
+            {% set current = "" %}
+            {% if section.item.active %}
+              {% set item_class = item_class ~ " md-nav__item--active" %}
+              {% set current = 'aria-current="page"' %}
+            {% endif %}
+            <li class="{{ item_class }}">
+              <a href="{{ section.item.url | url }}" class="md-nav__link" {{ current }}>{{ section.item.title }}</a>
+              {% if section.item.active and section.item.children %}
+                {% set section_child_count = namespace(value=0) %}
+                {% for child in section.item.children %}
+                  {% set section_path = (section.item.url | trim("/")) if section.item.url else "" %}
+                  {% set child_path = (child.url | trim("/")) if child.url else "" %}
+                  {% if child_path != section_path %}
+                    {% set section_child_count.value = section_child_count.value + 1 %}
+                  {% endif %}
+                {% endfor %}
+                {% if section_child_count.value > 0 %}
+                  <nav class="md-nav" aria-label="{{ section.item.title }}">
+                    <ul class="md-nav__list">
+                      {% for child in section.item.children %}
+                        {% set section_path = (section.item.url | trim("/")) if section.item.url else "" %}
+                        {% set child_path = (child.url | trim("/")) if child.url else "" %}
+                        {% if child_path != section_path %}
+                          {% set child_item_class = "md-nav__item" %}
+                          {% set child_current = "" %}
+                          {% if child.active %}
+                            {% set child_item_class = child_item_class ~ " md-nav__item--active" %}
+                            {% set child_current = 'aria-current="page"' %}
+                          {% endif %}
+                          <li class="{{ child_item_class }}">
+                            <a href="{{ child.url | url }}" class="md-nav__link" {{ child_current }}>{{ child.title }}</a>
+                          </li>
+                        {% endif %}
+                      {% endfor %}
+                    </ul>
+                  </nav>
+                {% endif %}
+              {% endif %}
+            </li>
           {% endif %}
-          <li class="{{ item_class }}">
-            <a href="{{ nav_item.url | url }}" class="md-nav__link" {{ current }}>{{ nav_item.title }}</a>
-          </li>
-        {% endif %}
-      {% endfor %}
-    {% else %}
+        {% endfor %}
+        {% for nav_item in nav %}
+          {% set nav_path = (nav_item.url | trim("/")) if nav_item.url else "" %}
+          {% if nav_path not in hub_seen_paths.values %}
+            {% set item_class = "md-nav__item" %}
+            {% set current = "" %}
+            {% if nav_item.active %}
+              {% set item_class = item_class ~ " md-nav__item--active" %}
+              {% set current = 'aria-current="page"' %}
+            {% endif %}
+            <li class="{{ item_class }}">
+              <a href="{{ nav_item.url | url }}" class="md-nav__link" {{ current }}>{{ nav_item.title }}</a>
+            </li>
+          {% endif %}
+        {% endfor %}
+      </ul>
+    </section>
+  {% else %}
+    <ul class="md-nav__list" data-md-scrollfix data-bijux-mobile-order="2-tree">
       {% for nav_item in nav %}
         {% set path = "__nav_mobile_" ~ loop.index %}
         {% set first_child = nav_item.children[0] if nav_item.children else none %}
@@ -136,8 +192,8 @@
           {{ item.render(nav_item, path, 1) }}
         {% endif %}
       {% endfor %}
-    {% endif %}
-  </ul>
+    </ul>
+  {% endif %}
 </nav>
 {% set bijux_primary_section_nav = true %}
 {% if not is_bijux_hub_site %}
