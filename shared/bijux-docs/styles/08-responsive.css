@@ -257,6 +257,7 @@
 
   .md-sidebar--primary {
     inline-size: min(18.75rem, 90vw);
+    min-width: min(17.5rem, 88vw);
     max-width: 90vw;
     max-height: calc(100vh - var(--md-header-height));
     overflow-y: auto;
@@ -307,8 +308,10 @@
 [data-bijux-viewport="phone"] .md-sidebar--primary {
   display: block;
   inline-size: min(18.75rem, 90vw);
+  min-width: min(17.5rem, 88vw);
   max-width: 90vw;
   max-height: calc(100vh - var(--md-header-height));
+  -webkit-overflow-scrolling: touch;
   overflow-y: auto;
   scrollbar-gutter: stable;
 }
