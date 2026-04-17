@@ -222,9 +222,12 @@
   }
 
   .md-sidebar--primary {
+    inline-size: min(18.75rem, 90vw);
+    max-width: 90vw;
     max-height: calc(100vh - var(--md-header-height));
     overflow-y: auto;
     overscroll-behavior: contain;
+    scrollbar-gutter: stable;
   }
 
   .md-sidebar--primary .md-sidebar__scrollwrap,
@@ -259,7 +262,11 @@
 
 [data-bijux-viewport="phone"] .md-sidebar--primary {
   display: block;
+  inline-size: min(18.75rem, 90vw);
+  max-width: 90vw;
   max-height: calc(100vh - var(--md-header-height));
+  overflow-y: auto;
+  scrollbar-gutter: stable;
 }
 
 @media screen and (min-width: 48em) and (max-width: 76.2344em) {
