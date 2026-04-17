@@ -37,3 +37,7 @@ ui-test-install-browsers: ## Install browser runtime for UI regression tests
 .PHONY: ui-test
 ui-test: ## Run responsive UI/UX regression checks (phone/normal/wide)
 	@npm --prefix "$(UI_TESTS_DIR)" run test:ui
+
+.PHONY: ui-test-navigation
+ui-test-navigation: ## Run navigation regression checks only
+	@npm --prefix "$(UI_TESTS_DIR)" run test:ui -- ui/specs/navigation-regression.spec.js

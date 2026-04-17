@@ -152,6 +152,12 @@ The suite validates expected behavior for phone, normal/tablet, and wide
 desktop breakpoints, including drawer-first phone behavior, ribbon visibility
 rules, and viewport profile contracts.
 
+To run only navigation journey regressions:
+
+```bash
+make ui-test-navigation
+```
+
 ## Update And Release Model
 
 `bijux-std` supports two adoption modes:

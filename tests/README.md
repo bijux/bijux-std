@@ -11,6 +11,8 @@ This test workspace validates responsive UI/UX behavior for
 - viewport profile contract in `scripts/viewport-profile.js`
 - navigation regression flows in `ui/specs/navigation-regression.spec.js`:
   - 10 responsive navigation contract tests from `TODO.md`
+  - 5 additional regression guards for switcher completeness, cross-site continuity,
+    wrapper duplication protection, and tablet/desktop mode isolation
 
 ## Run
 
@@ -18,6 +20,7 @@ This test workspace validates responsive UI/UX behavior for
 make ui-test-install
 make ui-test-install-browsers
 make ui-test
+make ui-test-navigation
 ```
 
 Or directly:
