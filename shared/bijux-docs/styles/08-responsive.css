@@ -115,12 +115,17 @@
     min-width: 2.5rem;
     padding: 0.3rem;
     position: relative;
-    z-index: 4;
+    z-index: 5;
   }
 
   [data-bijux-phone-compact="true"] [data-bijux-header-title="primary"] {
     flex: 1 1 auto;
     min-width: 0;
+    pointer-events: none;
+  }
+
+  [data-bijux-phone-compact="true"] .md-header__ellipsis {
+    overflow: hidden;
   }
 
   [data-bijux-phone-compact="true"] [data-bijux-phone-compact="hide"] {
