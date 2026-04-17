@@ -158,6 +158,12 @@ To run only navigation journey regressions:
 make ui-test-navigation
 ```
 
+To run the full navigation release gate (contract + deep quality checks):
+
+```bash
+make ui-test-release-gate
+```
+
 ## Update And Release Model
 
 `bijux-std` supports two adoption modes:

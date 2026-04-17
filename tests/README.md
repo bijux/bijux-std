@@ -13,6 +13,10 @@ This test workspace validates responsive UI/UX behavior for
   - 10 responsive navigation contract tests from `TODO.md`
   - 5 additional regression guards for switcher completeness, cross-site continuity,
     wrapper duplication protection, and tablet/desktop mode isolation
+- release-quality phone navigation regressions in
+  `ui/specs/navigation-release-quality.spec.js`:
+  - 10 deeper drawer, active-state, row-order, and cross-site continuity checks
+  - stricter assertions for href integrity and navigation state recovery after toggles
 
 ## Run
 
@@ -21,6 +25,7 @@ make ui-test-install
 make ui-test-install-browsers
 make ui-test
 make ui-test-navigation
+make ui-test-release-gate
 ```
 
 Or directly:
