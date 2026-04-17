@@ -16,6 +16,7 @@
   const PHONE_MAX_EM = 47.9375;
   const NORMAL_MAX_EM = 76.2344;
   const WIDE_MIN_EM = 120;
+  const MEDIA_QUERY_BASE_FONT_PX = 16;
   const REFERENCE_WIDTHS = Object.freeze({
     phone390: 390,
     normal768: 768,
@@ -29,8 +30,9 @@
   }
 
   function toPixelsFromEm(em) {
-    const rootFontSize = Number.parseFloat(window.getComputedStyle(document.documentElement).fontSize || "16");
-    return em * (Number.isFinite(rootFontSize) ? rootFontSize : 16);
+    // Media-query em units map to the browser's initial font size (16px in our shell assumptions),
+    // not the potentially customized runtime <html> computed font-size.
+    return em * MEDIA_QUERY_BASE_FONT_PX;
   }
 
   function currentViewportWidth() {
@@ -211,6 +213,11 @@
           phoneMax: mediaMatches(PHONE_MAX_MEDIA),
           normalMax: mediaMatches(NORMAL_MAX_MEDIA),
           wideMin: mediaMatches(WIDE_MIN_MEDIA),
+        },
+        thresholdsPx: {
+          phoneMax: toPixelsFromEm(PHONE_MAX_EM),
+          normalMax: toPixelsFromEm(NORMAL_MAX_EM),
+          wideMin: toPixelsFromEm(WIDE_MIN_EM),
         },
       };
     },
