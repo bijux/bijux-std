@@ -20,6 +20,10 @@ async function indexInNavOrder(page, selector) {
   }, selector);
 }
 
+async function linkTexts(locator) {
+  return locator.evaluateAll((nodes) => nodes.map((node) => node.textContent.trim()).filter(Boolean));
+}
+
 test.describe("hub mobile navigation", () => {
   test("1) hub phone drawer opens and shows local navigation first", async ({ page }, testInfo) => {
     test.skip(testInfo.project.name !== "phone", "phone-only assertions");
@@ -164,6 +168,22 @@ test.describe("project mobile navigation", () => {
     await expect(page.locator('[data-bijux-mobile-order="1-top-directories"]')).toBeVisible();
     await expect(page.locator('[data-bijux-mobile-order="1-top-directories"] .md-nav__item')).toHaveCount(2);
     await expect(page.locator('.bijux-mobile-hub__item--active .bijux-mobile-hub__link', { hasText: "Core" })).toBeVisible();
+  });
+
+  test("13) phone drawer navigation has no duplicate wrapper junk entries", async ({ page }, testInfo) => {
+    test.skip(testInfo.project.name !== "phone", "phone-only assertions");
+
+    await page.goto(FIXTURE.HUB_HOME);
+    await openDrawer(page);
+    const hubSectionTexts = await linkTexts(page.locator('[data-bijux-mobile-order="1-sections"] .md-nav__link'));
+    expect(new Set(hubSectionTexts).size).toBe(hubSectionTexts.length);
+    expect(hubSectionTexts).not.toContain("SECTION");
+
+    await page.goto(FIXTURE.PROJECT_ROOT);
+    await openDrawer(page);
+    const projectRowTexts = await linkTexts(page.locator('[data-bijux-mobile-order="1-top-directories"] .md-nav__link'));
+    expect(new Set(projectRowTexts).size).toBe(projectRowTexts.length);
+    expect(projectRowTexts).not.toContain("Home");
   });
 });
 
