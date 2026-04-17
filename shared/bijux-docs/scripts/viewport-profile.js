@@ -131,6 +131,17 @@
     if (window.visualViewport && typeof window.visualViewport.addEventListener === "function") {
       window.visualViewport.addEventListener("resize", scheduleApply, { passive: true });
     }
+
+    if (typeof window.matchMedia === "function") {
+      [PHONE_MAX_MEDIA, NORMAL_MAX_MEDIA, WIDE_MIN_MEDIA].forEach((query) => {
+        const mediaQuery = window.matchMedia(query);
+        if (mediaQuery && typeof mediaQuery.addEventListener === "function") {
+          mediaQuery.addEventListener("change", scheduleApply);
+        } else if (mediaQuery && typeof mediaQuery.addListener === "function") {
+          mediaQuery.addListener(scheduleApply);
+        }
+      });
+    }
   }
 
   function init() {
