@@ -36,19 +36,22 @@
     return document.documentElement.clientWidth;
   }
 
+  function classifyViewportWidth(width) {
+    if (width <= toPixelsFromEm(PHONE_MAX_EM)) {
+      return VIEWPORT_PROFILES.PHONE;
+    }
+    if (width >= toPixelsFromEm(WIDE_MIN_EM)) {
+      return VIEWPORT_PROFILES.WIDE;
+    }
+    if (width <= toPixelsFromEm(NORMAL_MAX_EM)) {
+      return VIEWPORT_PROFILES.NORMAL;
+    }
+    return VIEWPORT_PROFILES.DESKTOP;
+  }
+
   function resolveViewportProfile() {
     if (typeof window.matchMedia !== "function") {
-      const width = currentViewportWidth();
-      if (width <= toPixelsFromEm(PHONE_MAX_EM)) {
-        return VIEWPORT_PROFILES.PHONE;
-      }
-      if (width >= toPixelsFromEm(WIDE_MIN_EM)) {
-        return VIEWPORT_PROFILES.WIDE;
-      }
-      if (width <= toPixelsFromEm(NORMAL_MAX_EM)) {
-        return VIEWPORT_PROFILES.NORMAL;
-      }
-      return VIEWPORT_PROFILES.DESKTOP;
+      return classifyViewportWidth(currentViewportWidth());
     }
 
     if (mediaMatches(PHONE_MAX_MEDIA)) {
@@ -125,6 +128,7 @@
   window.bijuxViewportProfile = {
     current: resolveViewportProfile,
     apply: applyViewportProfile,
+    classifyWidth: classifyViewportWidth,
     media: {
       phoneMax: PHONE_MAX_MEDIA,
       normalMax: NORMAL_MAX_MEDIA,
