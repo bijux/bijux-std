@@ -20,6 +20,14 @@
 {% set search_control_id = "__search" %}
 {% set drawer_control_label = "Open navigation drawer" %}
 {% set search_control_label = "Open search" %}
+{% set header_page_title = config.site_name %}
+{% if current_page %}
+  {% if current_page.meta and current_page.meta.title %}
+    {% set header_page_title = current_page.meta.title %}
+  {% elif current_page.title %}
+    {% set header_page_title = current_page.title %}
+  {% endif %}
+{% endif %}
 {% import "partials/bijux-nav.html" as bijux_nav with context %}
 {% macro site_label(title) -%}
   {% if title == "Repository Handbook" -%}
@@ -60,11 +68,7 @@
         </div>
         <div class="md-header__topic" data-md-component="header-topic" data-bijux-header-topic="page" data-bijux-phone-compact="hide">
           <span class="md-ellipsis">
-            {% if page.meta and page.meta.title %}
-              {{ page.meta.title }}
-            {% else %}
-              {{ page.title }}
-            {% endif %}
+            {{ header_page_title }}
           </span>
         </div>
       </div>
