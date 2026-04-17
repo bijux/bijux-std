@@ -89,6 +89,10 @@
 }
 
 @media screen and (max-width: 47.9375em) {
+  [data-bijux-row-scope="desktop-normal"] {
+    display: none !important;
+  }
+
   .bijux-hub-strip {
     display: none !important;
   }
@@ -138,6 +142,10 @@
 [data-bijux-viewport="phone"] .bijux-site-tabs,
 [data-bijux-viewport="phone"] .bijux-detail-tabs,
 [data-bijux-viewport="phone"] .bijux-course-tabs {
+  display: none !important;
+}
+
+[data-bijux-viewport="phone"] [data-bijux-row-scope="desktop-normal"] {
   display: none !important;
 }
 
@@ -344,7 +352,7 @@
   }
 
   .md-main__inner {
-    margin-top: 0.55rem;
+    margin-top: 0.45rem;
   }
 
   .md-content__inner {
