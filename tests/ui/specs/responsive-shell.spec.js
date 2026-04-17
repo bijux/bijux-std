@@ -43,6 +43,17 @@ test.describe("bijux docs shell responsive behavior", () => {
     const viewportWidth = page.viewportSize().width;
     expect(sidebarWidth).toBeLessThanOrEqual(Math.ceil(viewportWidth * 0.9) + 1);
 
+    const closedSidebarLeft = await page
+      .locator(".md-sidebar--primary")
+      .evaluate((el) => Number.parseFloat(window.getComputedStyle(el).left || "0"));
+    expect(closedSidebarLeft).toBeLessThan(0);
+
+    await page.locator('[data-bijux-header-control="drawer-toggle"]').click();
+    const openSidebarLeft = await page
+      .locator(".md-sidebar--primary")
+      .evaluate((el) => Number.parseFloat(window.getComputedStyle(el).left || "0"));
+    expect(openSidebarLeft).toBeGreaterThanOrEqual(0);
+
     const toggleHitTarget = await page.locator('[data-bijux-header-control="drawer-toggle"]').evaluate((el) => {
       const rect = el.getBoundingClientRect();
       const hit = document.elementFromPoint(rect.left + rect.width / 2, rect.top + rect.height / 2);
