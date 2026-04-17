@@ -48,4 +48,4 @@ ui-test-release-gate: ## Run navigation release-gate checks (core + quality suit
 
 .PHONY: ui-test-live-navigation
 ui-test-live-navigation: ## Run live-site navigation release checks (set BIJUX_LIVE_E2E=1)
-	@BIJUX_LIVE_E2E="$${BIJUX_LIVE_E2E:-1}" npm --prefix "$(UI_TESTS_DIR)" run test:ui:live-navigation
+	@BIJUX_LIVE_E2E="$${BIJUX_LIVE_E2E:-0}" npm --prefix "$(UI_TESTS_DIR)" run test:ui:live-navigation

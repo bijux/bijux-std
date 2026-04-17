@@ -5,7 +5,7 @@
   "description": "UI regression checks for bijux-std shared docs shell",
   "scripts": {
     "test:ui": "playwright test",
-    "test:ui:live-navigation": "playwright test ui/specs/navigation-live-e2e.spec.js",
+    "test:ui:live-navigation": "playwright test ui/specs/navigation-live-e2e.spec.js --workers=1",
     "test:ui:headed": "playwright test --headed",
     "test:ui:debug": "playwright test --debug",
     "install:browsers": "playwright install chromium"

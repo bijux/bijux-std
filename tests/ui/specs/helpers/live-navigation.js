@@ -25,9 +25,12 @@ async function gotoLivePage(page, url) {
 }
 
 async function openLiveDrawer(page) {
-  await ensureDrawerOpen(page);
+  const mobileTree = page.locator(".bijux-nav--mobile [data-bijux-mobile-order]").first();
+  if (!(await mobileTree.isVisible())) {
+    await ensureDrawerOpen(page);
+  }
   await expect(page.locator(".md-sidebar--primary")).toBeVisible();
-  await expect(page.locator(".bijux-nav--mobile")).toBeVisible();
+  await expect(mobileTree).toBeVisible();
 }
 
 function sitesBlock(page) {

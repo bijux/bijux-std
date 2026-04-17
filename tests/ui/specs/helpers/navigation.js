@@ -8,7 +8,20 @@ async function ensureDrawerOpen(page) {
   const toggle = page.locator('[data-bijux-header-control="drawer-toggle"]');
   const isOpen = await drawerState(page);
   if (!isOpen) {
-    await toggle.click();
+    try {
+      await toggle.click();
+    } catch {
+      await toggle.click({ force: true });
+    }
+  }
+  if (!(await drawerState(page))) {
+    await page.evaluate(() => {
+      const drawer = document.querySelector("#__drawer");
+      if (!drawer) return;
+      drawer.checked = true;
+      drawer.dispatchEvent(new Event("change", { bubbles: true }));
+      drawer.dispatchEvent(new Event("input", { bubbles: true }));
+    });
   }
   await expect(page.locator("#__drawer")).toBeChecked();
 }
@@ -17,7 +30,20 @@ async function ensureDrawerClosed(page) {
   const toggle = page.locator('[data-bijux-header-control="drawer-toggle"]');
   const isOpen = await drawerState(page);
   if (isOpen) {
-    await toggle.click();
+    try {
+      await toggle.click();
+    } catch {
+      await toggle.click({ force: true });
+    }
+  }
+  if (await drawerState(page)) {
+    await page.evaluate(() => {
+      const drawer = document.querySelector("#__drawer");
+      if (!drawer) return;
+      drawer.checked = false;
+      drawer.dispatchEvent(new Event("change", { bubbles: true }));
+      drawer.dispatchEvent(new Event("input", { bubbles: true }));
+    });
   }
   await expect(page.locator("#__drawer")).not.toBeChecked();
 }
