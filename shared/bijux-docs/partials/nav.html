@@ -113,6 +113,9 @@
   {% endif %}
 {% endset %}
 {% set bijux_primary_section_nav = false %}
+{# Phone drawer model contract:
+   - Hub: Sections -> Pages -> Sites
+   - Project repos: Directories rows -> Pages fallback -> Sites #}
 <nav class="{{ class }} bijux-nav bijux-nav--mobile" aria-label="{{ lang.t('nav') }}" data-bijux-nav-variant="mobile" data-bijux-mobile-tree-mode="{{ 'hub-simplified' if is_bijux_hub_site else 'default' }}" data-bijux-hub-site="{{ 'true' if is_bijux_hub_site else 'false' }}" data-md-level="0">
   <label class="md-nav__title bijux-nav__title" for="__drawer">
     <a href="{{ config.extra.homepage | d(nav.homepage.url, true) | url }}" title="{{ config.site_name | e }}" class="md-nav__button md-logo" aria-label="{{ config.site_name }}" data-md-component="logo">
@@ -164,7 +167,7 @@
       {% endfor %}
     {% endif %}
     {{ mobile_row("Sections", hub_sections.list, "1-sections") }}
-    {{ mobile_row("Section Pages", hub_section_pages.list, "2-pages") }}
+    {{ mobile_row("Pages", hub_section_pages.list, "2-pages") }}
     {{ mobile_sites_block }}
   {% else %}
     {% set top_directories = namespace(list=[]) %}
@@ -356,8 +359,9 @@
       {% set page_row_items.list = top_level_pages.list %}
     {% endif %}
     {% set first_local_label = "Directories" if top_directories.list | length > 0 else "Pages" %}
+    {% set first_local_row_key = "1-top-directories" if top_directories.list | length > 0 else "1-top-pages" %}
     {% set first_local_items = top_directories.list if top_directories.list | length > 0 else top_level_pages.list %}
-    {{ mobile_row(first_local_label, first_local_items, "1-top-directories") }}
+    {{ mobile_row(first_local_label, first_local_items, first_local_row_key) }}
     {{ mobile_row("Subdirectories", second_level_dirs.list, "2-subdirectories") }}
     {{ mobile_row("Nested Directories", third_level_dirs.list, "3-third-level-directories") }}
     {{ mobile_row("Pages", page_row_items.list, "4-pages") }}
