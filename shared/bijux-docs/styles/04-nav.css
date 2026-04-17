@@ -477,6 +477,24 @@
   border-style: dashed;
 }
 
+.bijux-nav--mobile [data-bijux-mobile-order="1-sections"] .bijux-mobile-local__label,
+.bijux-nav--mobile [data-bijux-mobile-order="1-top-directories"] .bijux-mobile-local__label {
+  color: color-mix(in srgb, var(--bijux-muted) 64%, var(--bijux-detail-border));
+}
+
+.bijux-nav--mobile [data-bijux-mobile-order="2-pages"] .bijux-mobile-local__label,
+.bijux-nav--mobile [data-bijux-mobile-order="4-pages"] .bijux-mobile-local__label {
+  color: color-mix(in srgb, var(--bijux-muted) 60%, var(--bijux-detail-border));
+}
+
+.bijux-nav--mobile [data-bijux-mobile-order="2-pages"] > .md-nav__list > .md-nav__item > .md-nav__link,
+.bijux-nav--mobile [data-bijux-mobile-order="2-pages"] > .md-nav__list > .md-nav__item > .md-nav__container > .md-nav__link,
+.bijux-nav--mobile [data-bijux-mobile-order="4-pages"] > .md-nav__list > .md-nav__item > .md-nav__link,
+.bijux-nav--mobile [data-bijux-mobile-order="4-pages"] > .md-nav__list > .md-nav__item > .md-nav__container > .md-nav__link {
+  font-weight: 760;
+  letter-spacing: 0.002em;
+}
+
 .bijux-nav--mobile [data-bijux-mobile-order] + [data-bijux-mobile-order] {
   margin-top: 0.32rem;
   position: relative;
