@@ -83,8 +83,14 @@
       <div class="bijux-mobile-hub__label">Sites</div>
       <ul class="bijux-mobile-hub__list">
         {% for entry in hub_links %}
-          <li class="bijux-mobile-hub__item">
-            <a href="{{ entry.url }}" class="bijux-mobile-hub__link">{{ entry.label }}</a>
+          {% set item_class = "bijux-mobile-hub__item" %}
+          {% set current = "" %}
+          {% if entry.key == active_repository %}
+            {% set item_class = item_class ~ " bijux-mobile-hub__item--active" %}
+            {% set current = 'aria-current="page"' %}
+          {% endif %}
+          <li class="{{ item_class }}">
+            <a href="{{ entry.url }}" class="bijux-mobile-hub__link" {{ current }}>{{ entry.label }}</a>
           </li>
         {% endfor %}
       </ul>
