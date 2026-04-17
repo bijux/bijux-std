@@ -97,7 +97,7 @@
     window.__bijuxViewportBound = true;
 
     let rafId = 0;
-    const onResize = () => {
+    const scheduleApply = () => {
       if (rafId !== 0) {
         return;
       }
@@ -108,8 +108,13 @@
       });
     };
 
-    window.addEventListener("resize", onResize, { passive: true });
-    window.addEventListener("orientationchange", onResize, { passive: true });
+    window.addEventListener("resize", scheduleApply, { passive: true });
+    window.addEventListener("orientationchange", scheduleApply, { passive: true });
+    window.addEventListener("pageshow", scheduleApply, { passive: true });
+
+    if (window.visualViewport && typeof window.visualViewport.addEventListener === "function") {
+      window.visualViewport.addEventListener("resize", scheduleApply, { passive: true });
+    }
   }
 
   function init() {
