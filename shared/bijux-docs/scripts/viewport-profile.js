@@ -104,6 +104,27 @@
     };
   }
 
+  function verifyReferenceContract() {
+    const actual = resolveReferenceProfiles();
+    const mismatches = Object.keys(REFERENCE_PROFILE_EXPECTATIONS).reduce((result, widthKey) => {
+      const expectedProfile = REFERENCE_PROFILE_EXPECTATIONS[widthKey];
+      const actualProfile = actual[widthKey];
+      if (actualProfile !== expectedProfile) {
+        result[widthKey] = {
+          expected: expectedProfile,
+          actual: actualProfile,
+        };
+      }
+      return result;
+    }, {});
+    return {
+      ok: Object.keys(mismatches).length === 0,
+      expected: { ...REFERENCE_PROFILE_EXPECTATIONS },
+      actual,
+      mismatches,
+    };
+  }
+
   function resolveViewportProfile() {
     if (typeof window.matchMedia !== "function") {
       return classifyViewportWidth(currentViewportWidth());
@@ -231,6 +252,10 @@
   function init() {
     applyViewportProfile();
     bindViewportUpdates();
+    const verification = verifyReferenceContract();
+    if (!verification.ok && typeof console !== "undefined" && typeof console.warn === "function") {
+      console.warn("[bijux][viewport-profile] Reference width contract mismatch", verification);
+    }
   }
 
   function initWithFallback() {
@@ -257,6 +282,7 @@
       wideMin: WIDE_MIN_MEDIA,
     },
     verifyReferenceWidths: resolveReferenceProfiles,
+    verifyContract: verifyReferenceContract,
     referenceExpectations: () => ({ ...REFERENCE_PROFILE_EXPECTATIONS }),
     describe: () => {
       const profile = resolveViewportProfile();
