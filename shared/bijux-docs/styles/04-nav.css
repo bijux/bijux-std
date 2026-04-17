@@ -431,6 +431,34 @@
   padding: 0.42rem 0.64rem;
 }
 
+.bijux-nav--mobile [data-bijux-mobile-order^="1-"] {
+  border-color: color-mix(in srgb, var(--bijux-detail-border) 26%, var(--bijux-border));
+}
+
+.bijux-nav--mobile [data-bijux-mobile-order^="2-"] {
+  border-color: color-mix(in srgb, var(--bijux-detail-border) 18%, var(--bijux-border));
+  margin-top: 0.36rem;
+}
+
+.bijux-nav--mobile [data-bijux-mobile-order^="3-"] {
+  border-color: color-mix(in srgb, var(--bijux-detail-border) 12%, var(--bijux-border));
+  margin-top: 0.28rem;
+}
+
+.bijux-nav--mobile [data-bijux-mobile-order^="4-"] {
+  background: color-mix(in srgb, var(--bijux-panel) 88%, rgba(13, 148, 136, 0.08));
+  border-color: color-mix(in srgb, var(--bijux-detail-border) 34%, var(--bijux-border));
+}
+
+.bijux-nav--mobile [data-bijux-mobile-order^="4-"] .bijux-mobile-local__label {
+  color: color-mix(in srgb, var(--bijux-muted) 72%, var(--bijux-detail-border));
+}
+
+.bijux-nav--mobile [data-bijux-mobile-order^="4-"] > .md-nav__list > .md-nav__item > .md-nav__link,
+.bijux-nav--mobile [data-bijux-mobile-order^="4-"] > .md-nav__list > .md-nav__item > .md-nav__container > .md-nav__link {
+  border-style: dashed;
+}
+
 .bijux-mobile-hub {
   background: var(--bijux-panel);
   border: 1px solid var(--bijux-border);
