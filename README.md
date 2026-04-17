@@ -1,16 +1,26 @@
-# Bijux Standard
+# bijux-std
 
-`bijux-std` is the single source of truth for shared Bijux repository standards.
+`bijux-std` is the canonical standards distribution repository for the Bijux
+ecosystem.
 
-It exists so common repository behavior is edited once, verified once, and then
-consumed consistently across the Bijux ecosystem. Instead of copying shared
-docs shell files, shared make modules, or standard check logic by hand in each
-repository, we keep the canonical versions here and verify downstream copies
-against this repository.
+It defines the shared repository surfaces that should stay aligned across Bijux
+projects, distributes them for downstream use, and makes that alignment
+verifiable in CI.
+
+Its role is simple: edit shared standards once, propagate them deliberately,
+and verify them everywhere.
+
+## What `bijux-std` Is
+
+`bijux-std` is not a product repository and not a general utilities dump.
+
+It owns the cross-repository standards layer for Bijux: the shared assets,
+automation, and checks that should remain consistent across repositories.
 
 ## What This Repository Owns
 
-`bijux-std` owns only cross-repository shared surfaces.
+`bijux-std` owns only shared surfaces that are intended to remain aligned
+across repositories.
 
 - `shared/bijux-docs`
   Shared documentation shell: partials, styles, and scripts used by Bijux
@@ -23,20 +33,29 @@ against this repository.
 - `shared/shared-dir-sha256.txt`
   Canonical SHA manifest for the shared directories above.
 
-This repository does not own project-specific package logic, product docs
-content, repository-specific release notes, or domain implementation code.
+## What This Repository Does Not Own
 
-## Why It Exists
+`bijux-std` does not own:
 
-Without a standards repository, shared behavior drifts quietly:
+- product or domain code
+- repository-specific package logic
+- repository-specific documentation content
+- release behavior unique to a single repository
+- one-off local automation
+
+If a change belongs only to one repository, it should stay there.
+
+## Why This Repository Exists
+
+Without a canonical standards repository, shared behavior drifts quietly:
 
 - one repository fixes a docs shell bug while others keep the old behavior
 - one repository updates a make contract while another keeps stale targets
 - one repository silently forks shared automation and stops behaving like the
   rest of the family
 
-`bijux-std` prevents that by making the shared layer explicit, inspectable, and
-verifiable.
+`bijux-std` prevents that by making the shared layer explicit, reviewable, and
+machine-checkable.
 
 ## Consumption Model
 
@@ -69,7 +88,7 @@ use:
   Backward-compatible alias for `make bijux-std-checks`.
 
 The shared policy for these commands lives in
-[`shared/bijux-checks/bijux-std-checks.yml`](/Users/bijan/bijux/bijux-std/shared/bijux-checks/bijux-std-checks.yml).
+[`shared/bijux-checks/bijux-std-checks.yml`](shared/bijux-checks/bijux-std-checks.yml).
 
 ## Verification Model
 
