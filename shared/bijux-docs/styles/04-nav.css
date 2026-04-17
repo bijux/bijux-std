@@ -527,6 +527,10 @@
   top: -0.16rem;
 }
 
+.bijux-nav--mobile [data-bijux-mobile-order^="1-"] {
+  margin-top: 0.18rem;
+}
+
 .bijux-mobile-hub {
   background: var(--bijux-panel);
   border: 1px solid var(--bijux-border);
@@ -547,7 +551,12 @@
 
 .bijux-nav--mobile [data-bijux-mobile-order] + [data-bijux-mobile-order$="-sites"] {
   border-top: 1px solid color-mix(in srgb, var(--bijux-border) 78%, transparent);
+  margin-top: 0.48rem;
   padding-top: 0.4rem;
+}
+
+.bijux-nav--mobile [data-bijux-mobile-order$="-sites"]::before {
+  background: color-mix(in srgb, var(--bijux-detail-border) 14%, transparent);
 }
 
 .bijux-mobile-hub__label {
