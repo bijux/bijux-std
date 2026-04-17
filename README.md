@@ -130,23 +130,48 @@ Backward-compatible alias for `make bijux-std-checks`.
 The shared policy for these commands lives in
 [`shared/bijux-checks/bijux-std-checks.yml`](shared/bijux-checks/bijux-std-checks.yml).
 
-## Release Model
+## Update And Release Model
 
-`bijux-std` is meant to support both fast and stable adoption paths:
+`bijux-std` supports two adoption modes:
 
-- branch-based updates for active standard development
-- tag-based updates for repositories that want a more stable pinned standard
+- branch-based updates for active standards development
+- tag-based updates for a stable, pinned baseline
 
-That is why the update flow supports both `BIJUX_STD_REF` and
-`BIJUX_STD_UPDATE_CHANNEL=tag`.
+Typical controls include:
 
-## Change Rules
+- `BIJUX_STD_REF`
+- `BIJUX_STD_UPDATE_CHANNEL`
+- `BIJUX_STD_TAG_PATTERN`
 
-Changes belong in `bijux-std` when they affect multiple repositories and should
-remain identical across them over time.
+This allows repositories to choose between faster adoption and stricter
+stability while staying on the same standard contract.
 
-Changes do not belong here when they only describe one repository's domain,
-release stream, package surface, or product behavior.
+## Change Policy
 
-The goal is not to centralize everything. The goal is to centralize only the
-shared layer that must stay consistent.
+A change belongs in `bijux-std` when all of the following are true:
+
+- it affects multiple repositories
+- it should remain identical across those repositories
+- it belongs to shared shell assets, shared automation, or shared compliance
+- it should be centrally updated and centrally verified
+
+A change does not belong in `bijux-std` when it is:
+
+- product-specific
+- domain-specific
+- repository-specific
+- release-specific
+- intended only as a local customization
+
+Keep `bijux-std` narrow. It should own the shared standards layer and nothing
+else.
+
+## In One Sentence
+
+`bijux-std` is the canonical, CI-verifiable shared standards distribution
+repository for Bijux documentation shell assets, Python-oriented make
+automation, and cross-repository compliance.
+
+## License
+
+MIT License. See `LICENSE`.
