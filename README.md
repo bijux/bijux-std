@@ -130,6 +130,28 @@ Backward-compatible alias for `make bijux-std-checks`.
 The shared policy for these commands lives in
 [`shared/bijux-checks/bijux-std-checks.yml`](shared/bijux-checks/bijux-std-checks.yml).
 
+## UI Regression Checks
+
+`bijux-std` also includes viewport-aware UI/UX regression checks for the shared
+docs shell in [`tests/`](tests).
+
+### Install test dependencies
+
+```bash
+make ui-test-install
+make ui-test-install-browsers
+```
+
+### Run UI checks
+
+```bash
+make ui-test
+```
+
+The suite validates expected behavior for phone, normal/tablet, and wide
+desktop breakpoints, including drawer-first phone behavior, ribbon visibility
+rules, and viewport profile contracts.
+
 ## Update And Release Model
 
 `bijux-std` supports two adoption modes:

@@ -9,6 +9,7 @@ BIJUX_STD_REMOTE ?= https://github.com/bijux/bijux-std
 BIJUX_STD_GIT_URL ?= https://github.com/bijux/bijux-std.git
 BIJUX_STD_UPDATE_CHANNEL ?= branch
 BIJUX_STD_TAG_PATTERN ?= v*
+UI_TESTS_DIR ?= tests
 
 .PHONY: help
 help: ## Show available targets
@@ -24,3 +25,15 @@ bijux-std-update: ## Update shared directories from bijux-std (set BIJUX_STD_UPD
 
 .PHONY: bijux-std
 bijux-std: bijux-std-checks ## Backward-compatible alias
+
+.PHONY: ui-test-install
+ui-test-install: ## Install UI regression test dependencies
+	@npm --prefix "$(UI_TESTS_DIR)" install
+
+.PHONY: ui-test-install-browsers
+ui-test-install-browsers: ## Install browser runtime for UI regression tests
+	@npm --prefix "$(UI_TESTS_DIR)" run install:browsers
+
+.PHONY: ui-test
+ui-test: ## Run responsive UI/UX regression checks (phone/normal/wide)
+	@npm --prefix "$(UI_TESTS_DIR)" run test:ui
