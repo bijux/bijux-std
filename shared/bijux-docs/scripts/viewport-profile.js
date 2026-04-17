@@ -34,16 +34,22 @@
   }
 
   function currentViewportWidth() {
-    if (window.visualViewport && typeof window.visualViewport.width === "number") {
-      return window.visualViewport.width;
+    if (typeof document.documentElement?.clientWidth === "number" && document.documentElement.clientWidth > 0) {
+      return document.documentElement.clientWidth;
     }
     if (typeof window.innerWidth === "number") {
       return window.innerWidth;
     }
-    return document.documentElement.clientWidth;
+    if (window.visualViewport && typeof window.visualViewport.width === "number") {
+      return window.visualViewport.width;
+    }
+    return Number.NaN;
   }
 
   function classifyViewportWidth(width) {
+    if (!Number.isFinite(width) || width <= 0) {
+      return VIEWPORT_PROFILES.DESKTOP;
+    }
     if (width <= toPixelsFromEm(PHONE_MAX_EM)) {
       return VIEWPORT_PROFILES.PHONE;
     }
