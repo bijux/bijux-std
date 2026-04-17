@@ -16,7 +16,10 @@
 {% set allow_flattened_detail_rows = is_bijux_hub_site %}
 {% set desktop_normal_row_scope = "desktop-normal" %}
 {% set compact_control_band = "normal-tablet" %}
+{% set drawer_control_id = "__drawer" %}
+{% set search_control_id = "__search" %}
 {% set drawer_control_label = "Open navigation drawer" %}
+{% set search_control_label = "Open search" %}
 {% import "partials/bijux-nav.html" as bijux_nav with context %}
 {% macro site_label(title) -%}
   {% if title == "Repository Handbook" -%}
@@ -44,7 +47,7 @@
     <a href="{{ config.extra.homepage | d(nav.homepage.url, true) | url }}" title="{{ config.site_name | e }}" class="md-header__button md-logo" aria-label="{{ config.site_name }}" data-md-component="logo">
       {% include "partials/logo.html" %}
     </a>
-    <label class="md-header__button md-icon" for="__drawer" aria-controls="__drawer" aria-label="{{ drawer_control_label }}" title="{{ drawer_control_label }}" data-bijux-header-control="drawer-toggle" data-bijux-phone-compact="keep">
+    <label class="md-header__button md-icon" for="{{ drawer_control_id }}" aria-controls="{{ drawer_control_id }}" aria-label="{{ drawer_control_label }}" title="{{ drawer_control_label }}" data-bijux-header-control="drawer-toggle" data-bijux-phone-compact="keep">
       {% set icon = config.theme.icon.menu or "material/menu" %}
       {% include ".icons/" ~ icon ~ ".svg" %}
     </label>
@@ -90,7 +93,7 @@
       {% if config.extra.alternate %}
         {% include "partials/alternate.html" %}
       {% endif %}
-      <label class="md-header__button md-icon" for="__search">
+      <label class="md-header__button md-icon" for="{{ search_control_id }}" aria-controls="{{ search_control_id }}" aria-label="{{ search_control_label }}" title="{{ search_control_label }}">
         {% set icon = config.theme.icon.search or "material/magnify" %}
         {% include ".icons/" ~ icon ~ ".svg" %}
       </label>
