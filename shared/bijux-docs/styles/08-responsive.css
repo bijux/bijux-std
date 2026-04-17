@@ -166,8 +166,9 @@
 
   .bijux-mobile-hub__link {
     border-radius: 0.6rem;
+    font-size: 0.68rem;
     min-height: 2.1rem;
-    padding: 0.34rem 0.48rem;
+    padding: 0.3rem 0.44rem;
   }
 
   .bijux-mobile-hub__item--active .bijux-mobile-hub__link {
@@ -180,6 +181,24 @@
   .bijux-mobile-local .md-nav > .md-nav__list {
     margin-block: 0.2rem 0;
     padding-block: 0.1rem 0.2rem;
+  }
+
+  .bijux-mobile-local > .md-nav__list {
+    gap: 0.16rem;
+  }
+
+  .bijux-mobile-local > .md-nav__list > .md-nav__item > .md-nav__link,
+  .bijux-mobile-local > .md-nav__list > .md-nav__item > .md-nav__container > .md-nav__link {
+    font-size: 0.72rem;
+    line-height: 1.22;
+    overflow-wrap: anywhere;
+    padding-block: 0.28rem;
+    word-break: normal;
+  }
+
+  .bijux-nav--mobile [data-bijux-mobile-order^="4-"] > .md-nav__list > .md-nav__item > .md-nav__link,
+  .bijux-nav--mobile [data-bijux-mobile-order^="4-"] > .md-nav__list > .md-nav__item > .md-nav__container > .md-nav__link {
+    font-size: 0.7rem;
   }
 
   .bijux-nav--mobile .md-nav__item {
