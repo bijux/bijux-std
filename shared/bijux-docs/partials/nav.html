@@ -164,7 +164,7 @@
       {% endfor %}
     {% endif %}
     {{ mobile_row("Sections", hub_sections.list, "1-sections") }}
-    {{ mobile_row("Pages", hub_section_pages.list, "2-pages") }}
+    {{ mobile_row("Section Pages", hub_section_pages.list, "2-pages") }}
     {{ mobile_sites_block }}
   {% else %}
     {% set top_directories = namespace(list=[]) %}
@@ -281,9 +281,9 @@
     {% elif top_level_pages.list | length > 0 %}
       {% set page_row_items.list = top_level_pages.list %}
     {% endif %}
-    {{ mobile_row("Top Directories", top_directories.list, "1-top-directories") }}
+    {{ mobile_row("Directories", top_directories.list, "1-top-directories") }}
     {{ mobile_row("Subdirectories", second_level_dirs.list, "2-subdirectories") }}
-    {{ mobile_row("Third-Level Directories", third_level_dirs.list, "3-third-level-directories") }}
+    {{ mobile_row("Nested Directories", third_level_dirs.list, "3-third-level-directories") }}
     {{ mobile_row("Pages", page_row_items.list, "4-pages") }}
     {{ mobile_sites_block }}
   {% endif %}
