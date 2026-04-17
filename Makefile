@@ -45,3 +45,7 @@ ui-test-navigation: ## Run navigation regression checks only
 .PHONY: ui-test-release-gate
 ui-test-release-gate: ## Run navigation release-gate checks (core + quality suites)
 	@npm --prefix "$(UI_TESTS_DIR)" run test:ui -- ui/specs/navigation-regression.spec.js ui/specs/navigation-release-quality.spec.js
+
+.PHONY: ui-test-live-navigation
+ui-test-live-navigation: ## Run live-site navigation release checks (set BIJUX_LIVE_E2E=1)
+	@BIJUX_LIVE_E2E="$${BIJUX_LIVE_E2E:-1}" npm --prefix "$(UI_TESTS_DIR)" run test:ui:live-navigation
