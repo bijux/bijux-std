@@ -93,7 +93,20 @@
     display: none !important;
   }
 
+  [data-bijux-header-control="drawer-toggle"] {
+    align-items: center;
+    display: inline-flex;
+    flex: 0 0 auto;
+    justify-content: center;
+    min-height: 2.5rem;
+    min-width: 2.5rem;
+    padding: 0.3rem;
+    position: relative;
+    z-index: 4;
+  }
+
   [data-bijux-phone-compact="true"] [data-bijux-header-title="primary"] {
+    flex: 1 1 auto;
     min-width: 0;
   }
 
