@@ -60,9 +60,10 @@
     <a href="{{ config.extra.homepage | d(nav.homepage.url, true) | url }}" title="{{ config.site_name | e }}" class="md-header__button md-logo" aria-label="{{ config.site_name }}" data-bijux-header-zone="brand" data-md-component="logo">
       {% include "partials/logo.html" %}
     </a>
-    <label class="md-header__button md-icon" for="{{ drawer_control_id }}" role="button" tabindex="0" aria-controls="{{ drawer_control_id }}" aria-label="{{ drawer_control_label }}" title="{{ drawer_control_label }}" data-bijux-header-zone="primary-control" data-bijux-header-control="drawer-toggle" data-bijux-phone-compact="keep">
+    <label class="md-header__button md-icon" for="{{ drawer_control_id }}" role="button" tabindex="0" aria-controls="{{ drawer_control_id }}" aria-label="{{ drawer_control_label }}" title="{{ drawer_control_label }}" aria-haspopup="true" data-bijux-header-zone="primary-control" data-bijux-header-control="drawer-toggle" data-bijux-control-target="{{ drawer_control_id }}" data-bijux-hit-area="primary" data-bijux-phone-compact="keep">
       {% set icon = config.theme.icon.menu or "material/menu" %}
       {% include ".icons/" ~ icon ~ ".svg" %}
+      <span class="md-visually-hidden">{{ drawer_control_label }}</span>
     </label>
     <div class="md-header__title" data-md-component="header-title" data-bijux-header-zone="title" data-bijux-header-title="primary">
       <div class="md-header__ellipsis">
@@ -104,9 +105,10 @@
       {% if config.extra.alternate %}
         {% include "partials/alternate.html" %}
       {% endif %}
-      <label class="md-header__button md-icon" for="{{ search_control_id }}" role="button" tabindex="0" aria-controls="{{ search_control_id }}" aria-label="{{ search_control_label }}" title="{{ search_control_label }}">
+      <label class="md-header__button md-icon" for="{{ search_control_id }}" role="button" tabindex="0" aria-controls="{{ search_control_id }}" aria-label="{{ search_control_label }}" title="{{ search_control_label }}" aria-haspopup="true" data-bijux-header-zone="utility-control" data-bijux-header-control="search-toggle" data-bijux-control-target="{{ search_control_id }}">
         {% set icon = config.theme.icon.search or "material/magnify" %}
         {% include ".icons/" ~ icon ~ ".svg" %}
+        <span class="md-visually-hidden">{{ search_control_label }}</span>
       </label>
       {% include "partials/search.html" %}
       {% if config.repo_url %}
