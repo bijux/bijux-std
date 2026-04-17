@@ -98,17 +98,20 @@
   {% endif %}
   <ul class="md-nav__list" data-md-scrollfix data-bijux-mobile-order="2-tree">
     {% if is_bijux_hub_site %}
+      {% set hub_seen_paths = namespace(values=[]) %}
       {% for nav_item in nav %}
-        {% if nav_item.title != "Home" %}
-        {% set item_class = "md-nav__item" %}
-        {% set current = "" %}
-        {% if nav_item.active %}
-          {% set item_class = item_class ~ " md-nav__item--active" %}
-          {% set current = 'aria-current="page"' %}
-        {% endif %}
-        <li class="{{ item_class }}">
-          <a href="{{ nav_item.url | url }}" class="md-nav__link" {{ current }}>{{ nav_item.title }}</a>
-        </li>
+        {% set nav_path = (nav_item.url | trim("/")) if nav_item.url else "" %}
+        {% if nav_item.title != "Home" and nav_path not in hub_seen_paths.values %}
+          {% set _ = hub_seen_paths.values.append(nav_path) %}
+          {% set item_class = "md-nav__item" %}
+          {% set current = "" %}
+          {% if nav_item.active %}
+            {% set item_class = item_class ~ " md-nav__item--active" %}
+            {% set current = 'aria-current="page"' %}
+          {% endif %}
+          <li class="{{ item_class }}">
+            <a href="{{ nav_item.url | url }}" class="md-nav__link" {{ current }}>{{ nav_item.title }}</a>
+          </li>
         {% endif %}
       {% endfor %}
     {% else %}
@@ -120,7 +123,10 @@
         {% set flatten_wrapper_home = first_child and first_child.title == "Home" and first_child.children and first_path == nav_path %}
         {% if flatten_wrapper_home %}
           {% for child in first_child.children %}
-            {{ item.render(child, path ~ "_flat_" ~ loop.index, 1) }}
+            {% set child_path = (child.url | trim("/")) if child.url else "" %}
+            {% if child_path != nav_path %}
+              {{ item.render(child, path ~ "_flat_" ~ loop.index, 1) }}
+            {% endif %}
           {% endfor %}
         {% else %}
           {{ item.render(nav_item, path, 1) }}
