@@ -131,6 +131,40 @@ test.describe("project mobile navigation", () => {
     await expect(page.locator('[data-bijux-mobile-order=\"1-top-directories\"]')).toBeVisible();
     await expect(page.locator('.bijux-nav--scoped[data-bijux-nav-empty=\"true\"]')).toBeHidden();
   });
+
+  test("11) hub phone sites block exposes the seven canonical site entries", async ({ page }, testInfo) => {
+    test.skip(testInfo.project.name !== "phone", "phone-only assertions");
+
+    await page.goto(FIXTURE.HUB_HOME);
+    await openDrawer(page);
+
+    const siteLinks = page.locator('[data-bijux-mobile-order="3-sites"] .bijux-mobile-hub__link');
+    await expect(siteLinks).toHaveCount(7);
+    await expect(siteLinks).toHaveText([
+      "Bijux",
+      "Core",
+      "Canon",
+      "Atlas",
+      "Proteomics",
+      "Pollenomics",
+      "Masterclass",
+    ]);
+  });
+
+  test("12) cross-site transition keeps project phone drawer usable", async ({ page }, testInfo) => {
+    test.skip(testInfo.project.name !== "phone", "phone-only assertions");
+
+    await page.goto(FIXTURE.HUB_HOME);
+    await openDrawer(page);
+    await page.locator('[data-bijux-mobile-order="3-sites"] .bijux-mobile-hub__link', { hasText: "Core" }).click();
+
+    await expect(page).toHaveURL(/navigation-project-root\.html/);
+    await openDrawer(page);
+
+    await expect(page.locator('[data-bijux-mobile-order="1-top-directories"]')).toBeVisible();
+    await expect(page.locator('[data-bijux-mobile-order="1-top-directories"] .md-nav__item')).toHaveCount(2);
+    await expect(page.locator('.bijux-mobile-hub__item--active .bijux-mobile-hub__link', { hasText: "Core" })).toBeVisible();
+  });
 });
 
 test.describe("responsive navigation regressions", () => {
