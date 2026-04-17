@@ -110,7 +110,17 @@
     {% else %}
       {% for nav_item in nav %}
         {% set path = "__nav_mobile_" ~ loop.index %}
-        {{ item.render(nav_item, path, 1) }}
+        {% set first_child = nav_item.children[0] if nav_item.children else none %}
+        {% set nav_path = (nav_item.url | trim("/")) if nav_item.url else "" %}
+        {% set first_path = (first_child.url | trim("/")) if first_child and first_child.url else "" %}
+        {% set flatten_wrapper_home = first_child and first_child.title == "Home" and first_child.children and first_path == nav_path %}
+        {% if flatten_wrapper_home %}
+          {% for child in first_child.children %}
+            {{ item.render(child, path ~ "_flat_" ~ loop.index, 1) }}
+          {% endfor %}
+        {% else %}
+          {{ item.render(nav_item, path, 1) }}
+        {% endif %}
       {% endfor %}
     {% endif %}
   </ul>
