@@ -178,11 +178,19 @@
         {% for child in first_child.children %}
           {% set child_path = (child.url | trim("/")) if child.url else "" %}
           {% if child_path != nav_path %}
-            {% set _ = top_directories.list.append(child) %}
+            {% if child.children %}
+              {% set _ = top_directories.list.append(child) %}
+            {% else %}
+              {% set _ = top_level_pages.list.append(child) %}
+            {% endif %}
           {% endif %}
         {% endfor %}
       {% else %}
-        {% set _ = top_directories.list.append(nav_item) %}
+        {% if nav_item.children %}
+          {% set _ = top_directories.list.append(nav_item) %}
+        {% elif nav_item.url %}
+          {% set _ = top_level_pages.list.append(nav_item) %}
+        {% endif %}
       {% endif %}
     {% endfor %}
     {% if top_directories.list | length == 0 %}
@@ -192,11 +200,15 @@
           {% for child in nav_item.children %}
             {% set child_path = (child.url | trim("/")) if child.url else "" %}
             {% if child_path != nav_path %}
-              {% set _ = top_directories.list.append(child) %}
+              {% if child.children %}
+                {% set _ = top_directories.list.append(child) %}
+              {% else %}
+                {% set _ = top_level_pages.list.append(child) %}
+              {% endif %}
             {% endif %}
           {% endfor %}
         {% elif nav_item.url %}
-          {% set _ = top_directories.list.append(nav_item) %}
+          {% set _ = top_level_pages.list.append(nav_item) %}
         {% endif %}
       {% endfor %}
     {% endif %}
@@ -333,22 +345,19 @@
         {% endif %}
       {% endfor %}
     {% endif %}
-    {% for entry in top_directories.list %}
-      {% if not entry.children %}
-        {% set _ = top_level_pages.list.append(entry) %}
-      {% endif %}
-    {% endfor %}
     {% set page_row_items = namespace(list=[]) %}
-    {% if fourth_level_pages.list | length > 0 %}
+    {% if third_level_dirs.list | length == 0 and fourth_level_pages.list | length > 0 %}
       {% set page_row_items.list = fourth_level_pages.list %}
-    {% elif third_level_pages.list | length > 0 %}
+    {% elif third_level_dirs.list | length == 0 and third_level_pages.list | length > 0 %}
       {% set page_row_items.list = third_level_pages.list %}
-    {% elif second_level_pages.list | length > 0 %}
+    {% elif third_level_dirs.list | length == 0 and second_level_pages.list | length > 0 %}
       {% set page_row_items.list = second_level_pages.list %}
-    {% elif top_level_pages.list | length > 0 %}
+    {% elif third_level_dirs.list | length == 0 and second_level_dirs.list | length == 0 and top_level_pages.list | length > 0 %}
       {% set page_row_items.list = top_level_pages.list %}
     {% endif %}
-    {{ mobile_row("Directories", top_directories.list, "1-top-directories") }}
+    {% set first_local_label = "Directories" if top_directories.list | length > 0 else "Pages" %}
+    {% set first_local_items = top_directories.list if top_directories.list | length > 0 else top_level_pages.list %}
+    {{ mobile_row(first_local_label, first_local_items, "1-top-directories") }}
     {{ mobile_row("Subdirectories", second_level_dirs.list, "2-subdirectories") }}
     {{ mobile_row("Nested Directories", third_level_dirs.list, "3-third-level-directories") }}
     {{ mobile_row("Pages", page_row_items.list, "4-pages") }}
