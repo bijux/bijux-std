@@ -61,9 +61,10 @@
 {% endif %}
 {% import "partials/nav-item.html" as item with context %}
 {% set hub_mobile_titles = ["Home", "Platform", "Projects", "Learning", "Reading Paths"] %}
+{% set mobile_sites_order = "2-sites" if is_bijux_hub_site else "1-sites" %}
 {% set mobile_sites_block %}
   {% if hub_links %}
-    <section class="bijux-mobile-hub" aria-label="Bijux sites" data-bijux-mobile-order="1-sites">
+    <section class="bijux-mobile-hub" aria-label="Bijux sites" data-bijux-mobile-order="{{ mobile_sites_order }}">
       <div class="bijux-mobile-hub__label">Sites</div>
       <ul class="bijux-mobile-hub__list">
         {% for entry in hub_links %}
