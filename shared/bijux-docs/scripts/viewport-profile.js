@@ -13,9 +13,11 @@
     DESKTOP: "desktop",
     WIDE: "wide",
   });
-  const PHONE_MAX_EM = 47.9375;
-  const NORMAL_MAX_EM = 76.2344;
-  const WIDE_MIN_EM = 120;
+  const PROFILE_BOUNDARIES_EM = Object.freeze({
+    PHONE_MAX: 47.9375,
+    NORMAL_MAX: 76.2344,
+    WIDE_MIN: 120,
+  });
   const MEDIA_QUERY_BASE_FONT_PX = 16;
   const REFERENCE_WIDTHS = Object.freeze({
     phone390: 390,
@@ -23,6 +25,13 @@
     normal1024: 1024,
     desktop1280: 1280,
     wide1920: 1920,
+  });
+  const REFERENCE_PROFILE_EXPECTATIONS = Object.freeze({
+    390: VIEWPORT_PROFILES.PHONE,
+    768: VIEWPORT_PROFILES.NORMAL,
+    1024: VIEWPORT_PROFILES.NORMAL,
+    1280: VIEWPORT_PROFILES.DESKTOP,
+    1920: VIEWPORT_PROFILES.WIDE,
   });
 
   function mediaMatches(query) {
@@ -52,16 +61,26 @@
     if (!Number.isFinite(width) || width <= 0) {
       return VIEWPORT_PROFILES.DESKTOP;
     }
-    if (width <= toPixelsFromEm(PHONE_MAX_EM)) {
+    if (width <= toPixelsFromEm(PROFILE_BOUNDARIES_EM.PHONE_MAX)) {
       return VIEWPORT_PROFILES.PHONE;
     }
-    if (width >= toPixelsFromEm(WIDE_MIN_EM)) {
+    if (width >= toPixelsFromEm(PROFILE_BOUNDARIES_EM.WIDE_MIN)) {
       return VIEWPORT_PROFILES.WIDE;
     }
-    if (width <= toPixelsFromEm(NORMAL_MAX_EM)) {
+    if (width <= toPixelsFromEm(PROFILE_BOUNDARIES_EM.NORMAL_MAX)) {
       return VIEWPORT_PROFILES.NORMAL;
     }
     return VIEWPORT_PROFILES.DESKTOP;
+  }
+
+  function resolveReferenceProfiles() {
+    return {
+      390: classifyViewportWidth(REFERENCE_WIDTHS.phone390),
+      768: classifyViewportWidth(REFERENCE_WIDTHS.normal768),
+      1024: classifyViewportWidth(REFERENCE_WIDTHS.normal1024),
+      1280: classifyViewportWidth(REFERENCE_WIDTHS.desktop1280),
+      1920: classifyViewportWidth(REFERENCE_WIDTHS.wide1920),
+    };
   }
 
   function resolveViewportProfile() {
@@ -184,25 +203,14 @@
       normalMax: NORMAL_MAX_MEDIA,
       wideMin: WIDE_MIN_MEDIA,
     },
-    verifyReferenceWidths: () => ({
-      390: classifyViewportWidth(REFERENCE_WIDTHS.phone390),
-      768: classifyViewportWidth(REFERENCE_WIDTHS.normal768),
-      1024: classifyViewportWidth(REFERENCE_WIDTHS.normal1024),
-      1280: classifyViewportWidth(REFERENCE_WIDTHS.desktop1280),
-      1920: classifyViewportWidth(REFERENCE_WIDTHS.wide1920),
-    }),
+    verifyReferenceWidths: resolveReferenceProfiles,
+    referenceExpectations: () => ({ ...REFERENCE_PROFILE_EXPECTATIONS }),
     describe: () => {
       const profile = resolveViewportProfile();
       return {
         profile,
         width: currentViewportWidth(),
-        references: {
-          390: classifyViewportWidth(REFERENCE_WIDTHS.phone390),
-          768: classifyViewportWidth(REFERENCE_WIDTHS.normal768),
-          1024: classifyViewportWidth(REFERENCE_WIDTHS.normal1024),
-          1280: classifyViewportWidth(REFERENCE_WIDTHS.desktop1280),
-          1920: classifyViewportWidth(REFERENCE_WIDTHS.wide1920),
-        },
+        references: resolveReferenceProfiles(),
         matches: {
           phone: profile === VIEWPORT_PROFILES.PHONE,
           normalBand: profile === VIEWPORT_PROFILES.NORMAL,
@@ -215,9 +223,9 @@
           wideMin: mediaMatches(WIDE_MIN_MEDIA),
         },
         thresholdsPx: {
-          phoneMax: toPixelsFromEm(PHONE_MAX_EM),
-          normalMax: toPixelsFromEm(NORMAL_MAX_EM),
-          wideMin: toPixelsFromEm(WIDE_MIN_EM),
+          phoneMax: toPixelsFromEm(PROFILE_BOUNDARIES_EM.PHONE_MAX),
+          normalMax: toPixelsFromEm(PROFILE_BOUNDARIES_EM.NORMAL_MAX),
+          wideMin: toPixelsFromEm(PROFILE_BOUNDARIES_EM.WIDE_MIN),
         },
       };
     },
