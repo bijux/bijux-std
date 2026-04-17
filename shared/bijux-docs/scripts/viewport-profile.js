@@ -26,6 +26,7 @@
 
   function applyViewportProfile() {
     const profile = resolveViewportProfile();
+    // Keep both targets in sync because CSS and JS hooks read from each in different contexts.
     document.documentElement.setAttribute("data-bijux-viewport", profile);
     document.body?.setAttribute("data-bijux-viewport", profile);
     return profile;
@@ -43,6 +44,7 @@
       if (rafId !== 0) {
         return;
       }
+      // Coalesce rapid resize/orientation events into one profile recompute per frame.
       rafId = window.requestAnimationFrame(() => {
         rafId = 0;
         applyViewportProfile();
