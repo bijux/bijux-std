@@ -130,14 +130,24 @@
       normalMax: NORMAL_MAX_MEDIA,
       wideMin: WIDE_MIN_MEDIA,
     },
-    describe: () => ({
-      profile: resolveViewportProfile(),
-      matches: {
-        phone: mediaMatches(PHONE_MAX_MEDIA),
-        normal: mediaMatches(NORMAL_MAX_MEDIA),
-        wide: mediaMatches(WIDE_MIN_MEDIA),
-      },
-    }),
+    describe: () => {
+      const profile = resolveViewportProfile();
+      return {
+        profile,
+        width: currentViewportWidth(),
+        matches: {
+          phone: profile === VIEWPORT_PROFILES.PHONE,
+          normalBand: profile === VIEWPORT_PROFILES.NORMAL,
+          desktopBand: profile === VIEWPORT_PROFILES.DESKTOP,
+          wide: profile === VIEWPORT_PROFILES.WIDE,
+        },
+        mediaMatches: {
+          phoneMax: mediaMatches(PHONE_MAX_MEDIA),
+          normalMax: mediaMatches(NORMAL_MAX_MEDIA),
+          wideMin: mediaMatches(WIDE_MIN_MEDIA),
+        },
+      };
+    },
   };
 
   document$.subscribe(init);
