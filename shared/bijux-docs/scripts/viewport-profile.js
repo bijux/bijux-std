@@ -13,12 +13,44 @@
     DESKTOP: "desktop",
     WIDE: "wide",
   });
+  const PHONE_MAX_EM = 47.9375;
+  const NORMAL_MAX_EM = 76.2344;
+  const WIDE_MIN_EM = 120;
 
   function mediaMatches(query) {
     return typeof window.matchMedia === "function" && window.matchMedia(query).matches;
   }
 
+  function toPixelsFromEm(em) {
+    const rootFontSize = Number.parseFloat(window.getComputedStyle(document.documentElement).fontSize || "16");
+    return em * (Number.isFinite(rootFontSize) ? rootFontSize : 16);
+  }
+
+  function currentViewportWidth() {
+    if (window.visualViewport && typeof window.visualViewport.width === "number") {
+      return window.visualViewport.width;
+    }
+    if (typeof window.innerWidth === "number") {
+      return window.innerWidth;
+    }
+    return document.documentElement.clientWidth;
+  }
+
   function resolveViewportProfile() {
+    if (typeof window.matchMedia !== "function") {
+      const width = currentViewportWidth();
+      if (width <= toPixelsFromEm(PHONE_MAX_EM)) {
+        return VIEWPORT_PROFILES.PHONE;
+      }
+      if (width >= toPixelsFromEm(WIDE_MIN_EM)) {
+        return VIEWPORT_PROFILES.WIDE;
+      }
+      if (width <= toPixelsFromEm(NORMAL_MAX_EM)) {
+        return VIEWPORT_PROFILES.NORMAL;
+      }
+      return VIEWPORT_PROFILES.DESKTOP;
+    }
+
     if (mediaMatches(PHONE_MAX_MEDIA)) {
       return VIEWPORT_PROFILES.PHONE;
     }
