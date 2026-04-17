@@ -157,7 +157,7 @@
                 {% set section_children = namespace(list=section.item.children) %}
                 {% set first_child = section.item.children[0] if section.item.children else none %}
                 {% set first_path = (first_child.url | trim("/")) if first_child and first_child.url else "" %}
-                {% set flatten_landing_wrapper = first_child and first_child.title in ["Home", "Overview"] and first_child.children and first_path == nav_path %}
+                {% set flatten_landing_wrapper = first_child and first_child.children and first_path == nav_path %}
                 {% if flatten_landing_wrapper %}
                   {% set section_children.list = first_child.children %}
                 {% endif %}
@@ -229,7 +229,7 @@
       {% set nav_path = (nav_item.url | trim("/")) if nav_item.url else "" %}
       {% set first_child = nav_item.children[0] if nav_item.children else none %}
       {% set first_path = (first_child.url | trim("/")) if first_child and first_child.url else "" %}
-      {% set flatten_wrapper_home = first_child and first_child.title in ["Home", "Overview"] and first_child.children and first_path == nav_path %}
+      {% set flatten_wrapper_home = first_child and first_child.children and first_path == nav_path %}
       {% if flatten_wrapper_home %}
         {% for child in first_child.children %}
           {% set child_path = (child.url | trim("/")) if child.url else "" %}
@@ -254,7 +254,7 @@
       {% set active_top_path = (active_top.item.url | trim("/")) if active_top.item.url else "" %}
       {% set top_first_child = active_top.item.children[0] if active_top.item.children else none %}
       {% set top_first_path = (top_first_child.url | trim("/")) if top_first_child and top_first_child.url else "" %}
-      {% set flatten_top_wrapper = top_first_child and top_first_child.title in ["Home", "Overview"] and top_first_child.children and top_first_path == active_top_path %}
+      {% set flatten_top_wrapper = top_first_child and top_first_child.children and top_first_path == active_top_path %}
       {% set second_source.list = top_first_child.children if flatten_top_wrapper else active_top.item.children %}
       {% for child in second_source.list %}
         {% set child_path = (child.url | trim("/")) if child.url else "" %}
@@ -280,7 +280,7 @@
       {% set active_second_path = (active_second.item.url | trim("/")) if active_second.item.url else "" %}
       {% set second_first_child = active_second.item.children[0] if active_second.item.children else none %}
       {% set second_first_path = (second_first_child.url | trim("/")) if second_first_child and second_first_child.url else "" %}
-      {% set flatten_second_wrapper = second_first_child and second_first_child.title in ["Home", "Overview"] and second_first_child.children and second_first_path == active_second_path %}
+      {% set flatten_second_wrapper = second_first_child and second_first_child.children and second_first_path == active_second_path %}
       {% set third_source.list = second_first_child.children if flatten_second_wrapper else active_second.item.children %}
       {% for child in third_source.list %}
         {% set child_path = (child.url | trim("/")) if child.url else "" %}
@@ -304,7 +304,7 @@
       {% set active_third_path = (active_third.item.url | trim("/")) if active_third.item.url else "" %}
       {% set third_first_child = active_third.item.children[0] if active_third.item.children else none %}
       {% set third_first_path = (third_first_child.url | trim("/")) if third_first_child and third_first_child.url else "" %}
-      {% set flatten_third_wrapper = third_first_child and third_first_child.title in ["Home", "Overview"] and third_first_child.children and third_first_path == active_third_path %}
+      {% set flatten_third_wrapper = third_first_child and third_first_child.children and third_first_path == active_third_path %}
       {% set fourth_source = third_first_child.children if flatten_third_wrapper else active_third.item.children %}
       {% for child in fourth_source %}
         {% set child_path = (child.url | trim("/")) if child.url else "" %}
