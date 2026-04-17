@@ -315,9 +315,9 @@
 
 .bijux-nav--mobile > .md-nav__list > .md-nav__item > .md-nav {
   border-inline-start: 1px solid var(--bijux-border);
-  margin-inline-start: 0.3rem;
+  margin-inline-start: 0.2rem;
   margin-top: 0.18rem;
-  padding-inline-start: 0.34rem;
+  padding-inline-start: 0.24rem;
 }
 
 .bijux-nav--mobile > .md-nav__list > .md-nav__item > .md-nav .md-nav__title {
@@ -429,6 +429,24 @@
   font-weight: 700;
   min-height: 2.34rem;
   padding: 0.42rem 0.64rem;
+}
+
+.bijux-mobile-local > .md-nav__list > .md-nav__item > .md-nav__link:hover,
+.bijux-mobile-local > .md-nav__list > .md-nav__item > .md-nav__container > .md-nav__link:hover {
+  background: color-mix(in srgb, var(--bijux-panel) 76%, rgba(13, 148, 136, 0.14));
+  border-color: color-mix(in srgb, var(--bijux-border) 48%, var(--bijux-detail-border));
+}
+
+.bijux-mobile-local > .md-nav__list > .md-nav__item--active > .md-nav__link,
+.bijux-mobile-local > .md-nav__list > .md-nav__item--active > .md-nav__container > .md-nav__link,
+.bijux-mobile-local > .md-nav__list > .md-nav__item > .md-nav__link[aria-current="page"] {
+  background: color-mix(in srgb, var(--bijux-detail-border) 70%, var(--bijux-panel));
+  border-color: color-mix(in srgb, var(--bijux-detail-border) 86%, #0b5f65);
+  box-shadow:
+    inset 0 0 0 1px color-mix(in srgb, var(--bijux-detail-border) 68%, transparent),
+    0 5px 10px rgba(15, 23, 42, 0.11);
+  color: #fff;
+  font-weight: 800;
 }
 
 .bijux-nav--mobile [data-bijux-mobile-order^="1-"] {
