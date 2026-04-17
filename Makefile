@@ -41,3 +41,7 @@ ui-test: ## Run responsive UI/UX regression checks (phone/normal/wide)
 .PHONY: ui-test-navigation
 ui-test-navigation: ## Run navigation regression checks only
 	@npm --prefix "$(UI_TESTS_DIR)" run test:ui -- ui/specs/navigation-regression.spec.js
+
+.PHONY: ui-test-release-gate
+ui-test-release-gate: ## Run navigation release-gate checks (core + quality suites)
+	@npm --prefix "$(UI_TESTS_DIR)" run test:ui -- ui/specs/navigation-regression.spec.js ui/specs/navigation-release-quality.spec.js
