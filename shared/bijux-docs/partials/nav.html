@@ -62,6 +62,31 @@
 {% import "partials/nav-item.html" as item with context %}
 {% set hub_mobile_titles = ["Home", "Platform", "Projects", "Learning", "Reading Paths"] %}
 {% set mobile_sites_order = "2-sites" if is_bijux_hub_site else "1-sites" %}
+{% macro mobile_row_item(entry) -%}
+  {% if entry and entry.url %}
+    {% set item_class = "md-nav__item" %}
+    {% set current = "" %}
+    {% if entry.active %}
+      {% set item_class = item_class ~ " md-nav__item--active" %}
+      {% set current = 'aria-current="page"' %}
+    {% endif %}
+    <li class="{{ item_class }}">
+      <a href="{{ entry.url | url }}" class="md-nav__link" {{ current }}>{{ entry.title }}</a>
+    </li>
+  {% endif %}
+{%- endmacro %}
+{% macro mobile_row(label, items, row_key, scrollfix=true) -%}
+  {% if items and items | length > 0 %}
+    <section class="bijux-mobile-local" aria-label="{{ label }}" data-bijux-mobile-order="{{ row_key }}">
+      <div class="bijux-mobile-local__label">{{ label }}</div>
+      <ul class="md-nav__list"{% if scrollfix %} data-md-scrollfix{% endif %}>
+        {% for entry in items %}
+          {{ mobile_row_item(entry) }}
+        {% endfor %}
+      </ul>
+    </section>
+  {% endif %}
+{%- endmacro %}
 {% set mobile_sites_block %}
   {% if hub_links %}
     <section class="bijux-mobile-hub" aria-label="Bijux sites" data-bijux-mobile-order="{{ mobile_sites_order }}">
