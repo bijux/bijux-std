@@ -35,12 +35,12 @@
     {% set active_root.item = nav_item %}
   {% endif %}
 {% endfor %}
-<header class="{{ class }}" data-md-component="header" data-bijux-nav-mode="{{ nav_mode }}" data-bijux-theme-key="{{ theme_key }}">
+<header class="{{ class }}" data-md-component="header" data-bijux-nav-mode="{{ nav_mode }}" data-bijux-theme-key="{{ theme_key }}" data-bijux-phone-nav="drawer">
   <nav class="md-header__inner md-grid" aria-label="{{ lang.t('header') }}">
     <a href="{{ config.extra.homepage | d(nav.homepage.url, true) | url }}" title="{{ config.site_name | e }}" class="md-header__button md-logo" aria-label="{{ config.site_name }}" data-md-component="logo">
       {% include "partials/logo.html" %}
     </a>
-    <label class="md-header__button md-icon" for="__drawer">
+    <label class="md-header__button md-icon" for="__drawer" data-bijux-header-control="drawer-toggle">
       {% set icon = config.theme.icon.menu or "material/menu" %}
       {% include ".icons/" ~ icon ~ ".svg" %}
     </label>
@@ -103,6 +103,7 @@
       {% endif %}
     </div>
   </nav>
+  {# Header rows remain desktop/normal; phone navigation is owned by the drawer tree. #}
   <nav class="md-tabs bijux-site-tabs" aria-label="{{ config.site_name }} navigation" data-bijux-nav-row="site" data-bijux-row-scope="desktop-normal" data-md-component="tabs">
     <div class="md-grid">
       <ul class="md-tabs__list bijux-tabs__list bijux-tabs__list--site">
