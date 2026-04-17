@@ -191,7 +191,7 @@
   .bijux-mobile-hub__list {
     display: grid;
     gap: 0.3rem;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: 1fr;
   }
 
   .bijux-mobile-hub__link {
@@ -276,9 +276,9 @@
   }
 }
 
-@media screen and (max-width: 25em) {
+@media screen and (min-width: 26em) and (max-width: 47.9375em) {
   .bijux-mobile-hub__list {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 
@@ -332,7 +332,18 @@
   }
 
   .bijux-hub-strip {
-    display: none;
+    display: block;
+  }
+
+  .bijux-hub-strip .bijux-tabs__list--hub {
+    gap: 0.24rem 0.3rem;
+    padding-block: 0.24rem;
+  }
+
+  .bijux-hub-strip .bijux-tabs__link--hub {
+    font-size: 0.66rem;
+    min-height: 2rem;
+    padding: 0.3rem 0.56rem;
   }
 
   .bijux-site-tabs,
