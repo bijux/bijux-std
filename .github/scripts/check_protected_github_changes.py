@@ -56,6 +56,8 @@ def workflow_paths_from_manifest() -> set[str]:
         runtime = entry.get("consumer_runtime")
         if isinstance(source, str) and source:
             paths.add(source)
+            if source.startswith("shared/"):
+                paths.add(f".bijux/{source}")
         if isinstance(runtime, str) and runtime:
             paths.add(runtime)
     return paths
