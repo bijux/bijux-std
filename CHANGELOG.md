@@ -14,6 +14,10 @@ multiple Bijux repositories verify, synchronize, and consume shared contracts.
 
 - Refreshed `shared/shared-dir-sha256.txt` so the canonical digest entry for
   `shared/bijux-gh` matches the current shared governance content.
+- Promoted a shared `release-pypi.yml` workflow template under
+  `shared/bijux-gh/workflows` with one configuration surface
+  (`.github/release-pypi.env` plus repository variables) and dual-mode
+  publication support (`maturin` and artifact-based trusted publishing).
 
 ## 0.1.1 - 2026-04-18
 
