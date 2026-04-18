@@ -214,10 +214,8 @@ Ownership mapping for governance-sensitive paths is defined in:
 
 `automerge-pr.yml` enables auto-merge only when policy allows and either a
 trusted CODEOWNER approval exists or the trusted PR author is a CODEOWNER.
-The workflow waits for pull requests to reach a stable mergeable state before
-attempting to enable auto-merge.
-If GitHub reports an unstable state during enablement, the workflow retries
-for a bounded window before giving up.
+The workflow attempts enablement on pull-request/review events and re-runs
+after a successful `bijux-std` `workflow_run` to cover unstable early states.
 
 ## UI Regression Checks
 
