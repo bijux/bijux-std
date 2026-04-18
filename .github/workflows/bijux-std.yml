@@ -31,7 +31,8 @@ jobs:
               sha256sum --check .github/bijux-std-shared.sha256
               python3 .github/scripts/check_pinned_actions.py \
                 --manifest-managed .github/standards/repo-config.manifest.json \
-                .github/workflows/bijux-std.yml
+                .github/workflows/bijux-std.yml \
+                .github/workflows/automerge-pr.yml
               make bijux-std-checks
               ;;
             report)
