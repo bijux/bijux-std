@@ -171,6 +171,10 @@ Backward-compatible alias for `make bijux-std-checks`.
 The shared policy for these commands lives in
 [`shared/bijux-checks/bijux-std-checks.yml`](shared/bijux-checks/bijux-std-checks.yml).
 
+For workspace setups where `bijux-std` is not a sibling directory, standards
+scripts that consume repository manifests can be pointed explicitly with
+`BIJUX_STD_REPO=/absolute/path/to/bijux-std`.
+
 
 ## GitHub Workflow Contract
 

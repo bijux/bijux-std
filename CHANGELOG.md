@@ -77,6 +77,16 @@ multiple Bijux repositories verify, synchronize, and consume shared contracts.
 - `automerge-pr.yml` now requires trusted approval from a user listed in
   `.github/CODEOWNERS`, and ignores stale approvals superseded by newer review
   states.
+- Standards sync now includes `automerge-pr.yml` in the managed baseline file
+  set for consumer repositories, so automerge policy updates propagate through
+  normal sync flows.
+- Standards scripts `build_repo_manifest.py` and
+  `sync_github_standards.py` now resolve `bijux-std` root more robustly and
+  support `BIJUX_STD_REPO` override for non-sibling workspace layouts.
+- Manifest generation now reports actionable YAML parser errors when Ruby is
+  unavailable or parsing fails.
+- Sync cleanup now handles stale runtime workflow directories safely when
+  removing non-allowlisted managed workflows.
 
 ## 0.1.1 - 2026-04-18
 
