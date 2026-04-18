@@ -33,7 +33,7 @@ across repositories.
 - `shared/bijux-docs-tooling`
   Shared docs synchronization and docs-contract/source-of-truth verification
   tooling used by consuming repositories.
-- `shared/bijux-gh-py`
+- `shared/bijux-gh`
   Shared GitHub policy artifacts (for example required status checks and
   branch protection ruleset sources).
 - `shared/shared-dir-sha256.txt`

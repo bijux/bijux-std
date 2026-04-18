@@ -12,7 +12,7 @@ multiple Bijux repositories verify, synchronize, and consume shared contracts.
 
 ### Added
 
-- New shared GitHub governance tooling under `shared/bijux-gh-py`, including
+- New shared GitHub governance tooling under `shared/bijux-gh`, including
   generated Dependabot configuration rendering from discovered Python
   manifests.
 - New shared make surfaces for governance sync and drift checks that consume
