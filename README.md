@@ -30,7 +30,7 @@ across repositories.
 - `shared/bijux-checks`
   Shared standard checks, update flows, and the policy file that defines the
   standard contract.
-- `shared/bijux-docs-tooling`
+- `shared/bijux-docs/tooling`
   Shared docs synchronization and docs-contract/source-of-truth verification
   tooling used by consuming repositories.
 - `shared/bijux-gh`
@@ -69,7 +69,7 @@ machine-checkable.
 shared/
 ├── bijux-checks/          # shared compliance and update flows
 ├── bijux-docs/            # shared docs and website shell assets
-├── bijux-docs-tooling/    # shared docs sync and verification tooling
+├── bijux-docs/tooling/    # shared docs sync and verification tooling
 ├── bijux-gh-py/           # shared GitHub policy/ruleset artifacts
 ├── bijux-makes-py/        # shared Python-oriented make modules
 └── shared-dir-sha256.txt  # canonical content-hash manifest
