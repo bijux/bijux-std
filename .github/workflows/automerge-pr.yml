@@ -138,6 +138,35 @@ jobs:
               return;
             }
 
+            const waitForStablePullRequest = async () => {
+              const maxAttempts = 24;
+              const sleepMs = 5000;
+              for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
+                const currentPrResponse = await github.rest.pulls.get({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  pull_number: pr.number,
+                });
+                const currentPr = currentPrResponse.data;
+                if (currentPr.state !== "open") {
+                  core.info(`PR #${pr.number} is no longer open; skipping auto-merge enablement.`);
+                  return null;
+                }
+                if (currentPr.mergeable_state !== "unstable") {
+                  return currentPr;
+                }
+                core.info(`PR #${pr.number} is unstable (attempt ${attempt}/${maxAttempts}); waiting ${sleepMs / 1000}s.`);
+                await new Promise((resolve) => setTimeout(resolve, sleepMs));
+              }
+              return null;
+            };
+
+            const stablePr = await waitForStablePullRequest();
+            if (!stablePr) {
+              core.info(`PR #${pr.number} did not reach a stable mergeable state in time; skipping.`);
+              return;
+            }
+
             try {
               await github.graphql(
                 `mutation EnablePullRequestAutoMerge($pullRequestId: ID!) {
