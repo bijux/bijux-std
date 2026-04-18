@@ -24,9 +24,11 @@ read_directories() {
 
 resolve_local_rel() {
   local rel="$1"
-  if [[ "${rel}" == shared/* && -d "${repo_root}/.bijux/shared" && ! -d "${repo_root}/shared" ]]; then
-    printf '.bijux/%s\n' "${rel}"
-    return
+  if [[ "${rel}" == shared/* && -d "${repo_root}/.bijux/shared" ]]; then
+    if [[ ! -d "${repo_root}/${rel}" ]]; then
+      printf '.bijux/%s\n' "${rel}"
+      return
+    fi
   fi
   printf '%s\n' "${rel}"
 }
@@ -152,7 +154,7 @@ if [[ "${should_use_self_repo_mode}" == "1" ]]; then
   for remote_dir_rel in "${update_dirs[@]}"; do
     local_dir_rel="$(resolve_local_rel "${remote_dir_rel}")"
     dir_sha="$(directory_tree_sha256 "${repo_root}/${local_dir_rel}")"
-    set_manifest_sha_for_dir "${manifest_path}" "${local_dir_rel}" "${dir_sha}"
+    set_manifest_sha_for_dir "${manifest_path}" "${remote_dir_rel}" "${dir_sha}"
     echo "→ refreshed manifest hash for ${local_dir_rel}"
   done
 
@@ -242,7 +244,7 @@ for remote_dir_rel in "${update_dirs[@]}"; do
   fi
 
   dir_sha="$(directory_tree_sha256 "${dst}")"
-  set_manifest_sha_for_dir "${manifest_path}" "${local_dir_rel}" "${dir_sha}"
+  set_manifest_sha_for_dir "${manifest_path}" "${remote_dir_rel}" "${dir_sha}"
 done
 
 if (( ${#skipped_dirs[@]} > 0 )); then
