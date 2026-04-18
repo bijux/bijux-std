@@ -9,7 +9,7 @@ BIJUX_STD_REMOTE ?= https://github.com/bijux/bijux-std
 BIJUX_STD_GIT_URL ?= https://github.com/bijux/bijux-std.git
 BIJUX_STD_UPDATE_CHANNEL ?= branch
 BIJUX_STD_TAG_PATTERN ?= v*
-UI_TESTS_DIR ?= tests
+UI_TESTS_DIR ?= tests/bijux-docs
 
 .PHONY: help
 help: ## Show available targets

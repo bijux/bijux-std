@@ -2,11 +2,11 @@ const { test, expect } = require("@playwright/test");
 const { ensureDrawerOpen, ensureDrawerClosed, extractLinkTexts, navOrderIndex } = require("./helpers/navigation");
 
 const FIXTURE = {
-  HUB_HOME: "/tests/ui/fixtures/navigation-hub-home.html",
-  HUB_PLATFORM: "/tests/ui/fixtures/navigation-hub-platform.html",
-  PROJECT_ROOT: "/tests/ui/fixtures/navigation-project-root.html",
-  PROJECT_DEEP: "/tests/ui/fixtures/navigation-project-deep.html",
-  PROJECT_EMPTY_SCOPED: "/tests/ui/fixtures/navigation-project-empty-scoped.html",
+  HUB_HOME: "/tests/bijux-docs/ui/fixtures/navigation-hub-home.html",
+  HUB_PLATFORM: "/tests/bijux-docs/ui/fixtures/navigation-hub-platform.html",
+  PROJECT_ROOT: "/tests/bijux-docs/ui/fixtures/navigation-project-root.html",
+  PROJECT_DEEP: "/tests/bijux-docs/ui/fixtures/navigation-project-deep.html",
+  PROJECT_EMPTY_SCOPED: "/tests/bijux-docs/ui/fixtures/navigation-project-empty-scoped.html",
 };
 
 function unique(values) {
@@ -68,7 +68,7 @@ test.describe("phone release-quality navigation", () => {
 
     const hrefs = await siteLinks.evaluateAll((nodes) => nodes.map((node) => node.getAttribute("href") || ""));
     expect(unique(hrefs)).toBeTruthy();
-    expect(hrefs.every((href) => href.startsWith("/tests/ui/fixtures/navigation-"))).toBeTruthy();
+    expect(hrefs.every((href) => href.startsWith("/tests/bijux-docs/ui/fixtures/navigation-"))).toBeTruthy();
   });
 
   test("hub to Canon transition marks Canon as active site and keeps project local tree", async ({ page }, testInfo) => {

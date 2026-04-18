@@ -35,8 +35,16 @@ make ui-test-live-navigation
 Or directly:
 
 ```bash
-npm --prefix tests run test:ui
+npm --prefix tests/bijux-docs run test:ui
 ```
+
+## Artifacts
+
+Playwright outputs are written under:
+
+- `artifacts/bijux-docs/playwright/test-results/`
+- `artifacts/bijux-docs/playwright/html-report/`
+- `artifacts/bijux-docs/playwright/junit.xml`
 
 ## Live E2E Environment
 

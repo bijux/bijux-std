@@ -3,8 +3,13 @@
 
 # Node test workspace
 tests/node_modules/
+tests/bijux-docs/node_modules/
 
 # Playwright artifacts
 tests/test-results/
 tests/playwright-report/
 tests/.playwright/
+tests/bijux-docs/test-results/
+tests/bijux-docs/playwright-report/
+tests/bijux-docs/.playwright/
+artifacts/bijux-docs/

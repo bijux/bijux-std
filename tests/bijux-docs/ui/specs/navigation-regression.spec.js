@@ -7,11 +7,11 @@ const {
 } = require("./helpers/navigation");
 
 const FIXTURE = {
-  HUB_HOME: "/tests/ui/fixtures/navigation-hub-home.html",
-  HUB_PLATFORM: "/tests/ui/fixtures/navigation-hub-platform.html",
-  PROJECT_ROOT: "/tests/ui/fixtures/navigation-project-root.html",
-  PROJECT_DEEP: "/tests/ui/fixtures/navigation-project-deep.html",
-  PROJECT_EMPTY_SCOPED: "/tests/ui/fixtures/navigation-project-empty-scoped.html",
+  HUB_HOME: "/tests/bijux-docs/ui/fixtures/navigation-hub-home.html",
+  HUB_PLATFORM: "/tests/bijux-docs/ui/fixtures/navigation-hub-platform.html",
+  PROJECT_ROOT: "/tests/bijux-docs/ui/fixtures/navigation-project-root.html",
+  PROJECT_DEEP: "/tests/bijux-docs/ui/fixtures/navigation-project-deep.html",
+  PROJECT_EMPTY_SCOPED: "/tests/bijux-docs/ui/fixtures/navigation-project-empty-scoped.html",
 };
 
 test.describe("hub mobile navigation", () => {

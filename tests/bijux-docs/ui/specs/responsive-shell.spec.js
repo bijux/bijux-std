@@ -1,6 +1,6 @@
 const { test, expect } = require("@playwright/test");
 
-const FIXTURE_PATH = "/tests/ui/fixtures/responsive-shell.html";
+const FIXTURE_PATH = "/tests/bijux-docs/ui/fixtures/responsive-shell.html";
 
 async function displayValue(page, selector) {
   return page.locator(selector).first().evaluate((el) => window.getComputedStyle(el).display);
