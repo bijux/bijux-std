@@ -16,15 +16,15 @@ multiple Bijux repositories verify, synchronize, and consume shared contracts.
   `shared/bijux-gh` matches the current shared governance content.
 - Promoted a shared `release-pypi.yml` workflow template under
   `shared/bijux-gh/workflows` with one configuration surface
-  (`.github/release-pypi.env` plus repository variables) and dual-mode
+  (`.github/release.env` plus repository variables) and dual-mode
   publication support (`maturin` and artifact-based trusted publishing).
 - Promoted a shared `release-crates.yml` workflow template under
   `shared/bijux-gh/workflows` with one configuration surface
-  (`.github/release-crates.env` plus repository variables) and per-repository
+  (`.github/release.env` plus repository variables) and per-repository
   enable/disable controls.
 - Promoted a shared `release-ghcr.yml` workflow template under
   `shared/bijux-gh/workflows` with one configuration surface
-  (`.github/release-ghcr.env` plus repository variables), plus matrix-based
+  (`.github/release.env` plus repository variables), plus matrix-based
   package publication controls for repositories that publish release bundles to
   GHCR.
 
