@@ -62,6 +62,21 @@ multiple Bijux repositories verify, synchronize, and consume shared contracts.
 - Added shared release helper script `shared/bijux-gh/scripts/wait_for_ci.py`
   and synchronized consuming repositories to use one canonical CI wait
   implementation through `.github/scripts/wait_for_ci.py`.
+- Standard policy now treats `.bijux/shared/*` as the only valid consumer
+  managed layout and actively flags legacy root `shared/` in consuming
+  repositories as drift.
+- Standards sync/update flows now remove legacy root `shared/*` managed
+  directories after migration to `.bijux/shared/*`, including cleanup of empty
+  legacy `shared/`.
+- Pinned-action verification now scans workflow directories recursively and is
+  run against full workflow trees (not single-file subsets) to eliminate
+  coverage blind spots.
+- Protected `.github` change policy now includes `automerge-pr.yml` and
+  managed `.bijux/shared/*` paths so governance changes cannot bypass approved
+  control paths.
+- `automerge-pr.yml` now requires trusted approval from a user listed in
+  `.github/CODEOWNERS`, and ignores stale approvals superseded by newer review
+  states.
 
 ## 0.1.1 - 2026-04-18
 
