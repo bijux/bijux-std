@@ -70,7 +70,7 @@ shared/
 ├── bijux-checks/          # shared compliance and update flows
 ├── bijux-docs/            # shared docs and website shell assets
 ├── bijux-docs/tooling/    # shared docs sync and verification tooling
-├── bijux-gh-py/           # shared GitHub policy/ruleset artifacts
+├── bijux-gh/              # shared GitHub policy/ruleset artifacts
 ├── bijux-makes-py/        # shared Python-oriented make modules
 └── shared-dir-sha256.txt  # canonical content-hash manifest
 ```
@@ -78,7 +78,10 @@ shared/
 ## Consumption Model
 
 Consuming repositories vendor the shared directories from `bijux-std` into
-their own `shared/` tree.
+their own `.bijux/shared/` tree.
+
+Some repositories may still carry `shared/` paths during migration windows; the
+checks tooling supports both locations while standards are converged.
 
 The expected flow is:
 
@@ -93,6 +96,24 @@ shared platform layer across the ecosystem.
 
 The current standard directory contract is declared in
 [`shared/bijux-checks/bijux-std-checks.yml`](shared/bijux-checks/bijux-std-checks.yml).
+
+## Shared Inventory And Check Inputs
+
+The canonical shared inventory currently includes:
+
+- `shared/bijux-docs`
+- `shared/bijux-makes-py`
+- `shared/bijux-checks`
+- `shared/bijux-gh`
+
+Checks and updates are driven by these standard inputs:
+
+- Inventory and source policy:
+  [`shared/bijux-checks/bijux-std-checks.yml`](shared/bijux-checks/bijux-std-checks.yml)
+- Canonical inventory digests:
+  [`shared/shared-dir-sha256.txt`](shared/shared-dir-sha256.txt)
+- Canonical CI workflow template for consumers:
+  [`shared/bijux-checks/workflows/bijux-std.yml`](shared/bijux-checks/workflows/bijux-std.yml)
 
 ## Verification Model
 
