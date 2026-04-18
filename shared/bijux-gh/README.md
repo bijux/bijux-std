@@ -176,7 +176,7 @@ The shared workflow is placeholder-driven. Consumers can override behavior throu
 
 - repository variables (`Settings -> Secrets and variables -> Actions -> Variables`)
 - optional `.github/docs-deploy.env` in the repository
-- example template: `workflows/docs-deploy.env.example`
+- example template: `workflows/deploy-docs.env.example`
 - adoption checklist for Bijux repositories: `workflows/deploy-docs-adoption.md`
 
 Environment values in `.github/docs-deploy.env` override repository variables.
