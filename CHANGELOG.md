@@ -10,11 +10,33 @@ multiple Bijux repositories verify, synchronize, and consume shared contracts.
 
 ## Unreleased
 
+### Added
+
+- New shared GitHub governance tooling under `shared/bijux-gh-py`, including
+  generated Dependabot configuration rendering from discovered Python
+  manifests.
+- New shared make surfaces for governance sync and drift checks that consume
+  the canonical shared tooling tree.
+- New standards tests and live navigation release-gate coverage for the shared
+  docs shell behavior across phone, tablet, and desktop profiles.
+
 ### Changed
 
+- Shared standards directory contracts and manifest digests were refreshed
+  repeatedly as canonical docs shell, checks, and governance assets evolved.
+- Shared internal tooling layout now uses durable naming and directory
+  ownership, including migration away from transitional internal naming.
 - Bookkeeping update: synchronized consuming repositories now document explicit
   contributor and automation identity boundaries for `bijux`,
   `dependabot[bot]`, and `github-actions[bot]` under their governance docs.
+
+### Fixed
+
+- Shared docs shell now restores canonical Mermaid initializer sync behavior.
+- Shared docs navigation behavior was stabilized for scoped sidebars and mobile
+  drawer interactions, including hub/project continuity across viewports.
+- Shared manifest comparison logic now validates required directory entries
+  deterministically against canonical standards inputs.
 
 ## 0.1.0 - 2026-04-16
 
