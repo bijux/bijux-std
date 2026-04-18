@@ -125,6 +125,15 @@ def has_changes(repo_name: str) -> bool:
     return bool(status)
 
 
+def stage_managed_paths(repo_dir: Path) -> None:
+    paths: list[str] = [".github"]
+    if (repo_dir / ".bijux/shared").exists():
+        paths.append(".bijux/shared")
+    if (repo_dir / "shared").exists():
+        paths.append("shared")
+    run(["git", "add", *paths], cwd=repo_dir)
+
+
 def ensure_branch(repo_dir: Path, branch_name: str) -> None:
     existing = run(["git", "branch", "--list", branch_name], cwd=repo_dir)
     if existing:
@@ -229,7 +238,7 @@ def main() -> None:
         if args.create_branch:
             ensure_branch(repo_dir, branch_name)
 
-        run(["git", "add", ".github", "shared"], cwd=repo_dir)
+        stage_managed_paths(repo_dir)
         run(["git", "commit", "-m", args.commit_message], cwd=repo_dir)
 
         pr_info = create_pr(repo_dir, args, branch_name)
