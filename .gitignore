@@ -4,6 +4,7 @@
 # Node test workspace
 tests/node_modules/
 tests/bijux-docs/node_modules/
+tests/bijux-docs/node_modules
 
 # Playwright artifacts
 tests/test-results/

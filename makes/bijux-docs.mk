@@ -7,12 +7,22 @@ UI_TESTS_PACKAGE_JSON ?= $(UI_TESTS_DIR)/package.json
 UI_TESTS_PACKAGE_LOCK ?= $(UI_TESTS_DIR)/package-lock.json
 UI_TESTS_RUNTIME_PACKAGE_JSON ?= $(UI_TESTS_RUNTIME_DIR)/package.json
 UI_TESTS_RUNTIME_PACKAGE_LOCK ?= $(UI_TESTS_RUNTIME_DIR)/package-lock.json
+UI_TESTS_NODE_MODULES_LINK ?= $(UI_TESTS_DIR)/node_modules
 
 .PHONY: ui-test-prepare-runtime
 ui-test-prepare-runtime:
 	@mkdir -p "$(UI_TESTS_RUNTIME_DIR)" "$(UI_TESTS_NPM_CACHE_DIR)" "$(UI_TESTS_PLAYWRIGHT_BROWSERS_DIR)"
 	@cp "$(UI_TESTS_PACKAGE_JSON)" "$(UI_TESTS_RUNTIME_PACKAGE_JSON)"
 	@cp "$(UI_TESTS_PACKAGE_LOCK)" "$(UI_TESTS_RUNTIME_PACKAGE_LOCK)"
+	@if [ -d "$(UI_TESTS_NODE_MODULES_LINK)" ] && [ ! -L "$(UI_TESTS_NODE_MODULES_LINK)" ]; then \
+		rm -rf "$(UI_TESTS_NODE_MODULES_LINK)"; \
+	fi
+	@if [ -L "$(UI_TESTS_NODE_MODULES_LINK)" ] && [ "$$(readlink "$(UI_TESTS_NODE_MODULES_LINK)")" != "../../$(UI_TESTS_RUNTIME_DIR)/node_modules" ]; then \
+		rm -f "$(UI_TESTS_NODE_MODULES_LINK)"; \
+	fi
+	@if [ ! -e "$(UI_TESTS_NODE_MODULES_LINK)" ]; then \
+		ln -s "../../$(UI_TESTS_RUNTIME_DIR)/node_modules" "$(UI_TESTS_NODE_MODULES_LINK)"; \
+	fi
 
 .PHONY: ui-test-install
 ui-test-install: ui-test-prepare-runtime ## Install UI regression test dependencies
