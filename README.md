@@ -212,8 +212,8 @@ Ownership mapping for governance-sensitive paths is defined in:
 
 - `.github/CODEOWNERS`
 
-`automerge-pr.yml` enables auto-merge only when policy allows and a trusted
-approval exists from a user listed in `.github/CODEOWNERS`.
+`automerge-pr.yml` enables auto-merge only when policy allows and either a
+trusted CODEOWNER approval exists or the trusted PR author is a CODEOWNER.
 
 ## UI Regression Checks
 
