@@ -30,6 +30,14 @@ multiple Bijux repositories verify, synchronize, and consume shared contracts.
 - Added allowlist gates across shared release workflows so `.github/release.env`
   can explicitly constrain which crate/package slugs are publishable for
   crates.io, PyPI artifact mode, and GHCR.
+- Added shared artifact release orchestration templates:
+  `shared/bijux-gh/workflows/build-release-artifacts.yml` and
+  `shared/bijux-gh/workflows/release-artifacts.yml`, so repositories can run
+  build, GHCR, PyPI artifact mode, and GitHub release publication from one
+  standardized workflow contract.
+- Extended `release-github.yml` with explicit enable/disable control
+  (`BIJUX_RELEASE_ENABLED`) so repositories can avoid duplicate direct tag
+  release runs when using orchestrated release lanes.
 
 ## 0.1.1 - 2026-04-18
 
