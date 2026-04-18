@@ -24,6 +24,7 @@ The shared workflow is placeholder-driven. Consumers can override behavior throu
 - repository variables (`Settings -> Secrets and variables -> Actions -> Variables`)
 - optional `.github/docs-deploy.env` in the repository
 - example template: `workflows/docs-deploy.env.example`
+- adoption checklist for Bijux repositories: `workflows/deploy-docs-adoption.md`
 
 Environment values in `.github/docs-deploy.env` override repository variables.
 
@@ -41,3 +42,12 @@ Supported keys:
 - `BIJUX_DOCS_PYTHON_VERSION` (default: `3.11`)
 - `BIJUX_DOCS_NODE_VERSION` (default: `22`)
 - `BIJUX_DOCS_RUST_TOOLCHAIN` (default: `stable`)
+
+The workflow validates and uploads the first detected directory containing
+`index.html` from this priority list:
+
+1. `BIJUX_DOCS_SITE_DIR` (if set)
+2. `artifacts/root/docs/build-site`
+3. `artifacts/site/bijux-masterclass`
+4. `artifacts/docs/site`
+5. `artifacts/root/docs/site`
