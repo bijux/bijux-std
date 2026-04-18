@@ -20,7 +20,7 @@ ui-test-prepare-runtime:
 	@if [ -L "$(UI_TESTS_NODE_MODULES_LINK)" ] && [ "$$(readlink "$(UI_TESTS_NODE_MODULES_LINK)")" != "../../$(UI_TESTS_RUNTIME_DIR)/node_modules" ]; then \
 		rm -f "$(UI_TESTS_NODE_MODULES_LINK)"; \
 	fi
-	@if [ ! -e "$(UI_TESTS_NODE_MODULES_LINK)" ]; then \
+	@if [ ! -e "$(UI_TESTS_NODE_MODULES_LINK)" ] && [ ! -L "$(UI_TESTS_NODE_MODULES_LINK)" ]; then \
 		ln -s "../../$(UI_TESTS_RUNTIME_DIR)/node_modules" "$(UI_TESTS_NODE_MODULES_LINK)"; \
 	fi
 
