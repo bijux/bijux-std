@@ -77,10 +77,6 @@ jobs:
               allowedAssociations.has(review.author_association) &&
               review.commit_id === pr.head.sha,
             );
-            if (trustedApprovals.length === 0) {
-              core.info("No trusted approval present yet; skipping auto-merge enablement.");
-              return;
-            }
 
             const codeownersPath = ".github/CODEOWNERS";
             let codeownersContent = "";
@@ -119,8 +115,21 @@ jobs:
             const hasCodeownerApproval = trustedApprovals.some((review) =>
               review.user && review.user.login && codeownerUsers.has(review.user.login.toLowerCase()),
             );
-            if (!hasCodeownerApproval) {
-              core.info("Trusted approvals found, but none from CODEOWNERS users; skipping auto-merge enablement.");
+
+            const authorLogin = (pr.user && pr.user.login ? pr.user.login : "").toLowerCase();
+            const authorIsTrustedCodeowner = Boolean(
+              authorLogin &&
+              codeownerUsers.has(authorLogin) &&
+              allowedAssociations.has(pr.author_association),
+            );
+
+            const hasTrustedCodeownerApproval = hasCodeownerApproval || authorIsTrustedCodeowner;
+            if (!hasTrustedCodeownerApproval) {
+              if (trustedApprovals.length === 0) {
+                core.info("No trusted approval present yet; skipping auto-merge enablement.");
+              } else {
+                core.info("Trusted approvals found, but none from CODEOWNERS users; skipping auto-merge enablement.");
+              }
               return;
             }
 
