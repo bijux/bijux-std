@@ -10,6 +10,10 @@ multiple Bijux repositories verify, synchronize, and consume shared contracts.
 
 ## Unreleased
 
+No unreleased changes.
+
+## 0.1.1 - 2026-04-18
+
 ### Added
 
 - New shared GitHub governance tooling under `shared/bijux-gh`, including
@@ -42,6 +46,8 @@ multiple Bijux repositories verify, synchronize, and consume shared contracts.
   drawer interactions, including hub/project continuity across viewports.
 - Shared manifest comparison logic now validates required directory entries
   deterministically against canonical standards inputs.
+- Root README now documents the canonical shared inventory and check inputs,
+  including workflow-template and manifest contract references.
 
 ## 0.1.0 - 2026-04-16
 
