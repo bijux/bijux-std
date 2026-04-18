@@ -176,5 +176,26 @@ jobs:
               );
               core.info(`Auto-merge enabled for #${pr.number}.`);
             } catch (error) {
-              core.warning(`Auto-merge was not enabled for #${pr.number}: ${error.message}`);
+              const message = String(error.message || error);
+              if (message.includes("in unstable status")) {
+                core.info(`PR #${pr.number} is still unstable; will retry on later events.`);
+                return;
+              }
+
+              if (message.includes("in clean status")) {
+                try {
+                  await github.rest.pulls.merge({
+                    owner: context.repo.owner,
+                    repo: context.repo.repo,
+                    pull_number: pr.number,
+                    merge_method: "merge",
+                  });
+                  core.info(`PR #${pr.number} merged directly from clean status.`);
+                } catch (mergeError) {
+                  core.warning(`Direct merge failed for #${pr.number}: ${mergeError.message}`);
+                }
+                return;
+              }
+
+              core.warning(`Auto-merge was not enabled for #${pr.number}: ${message}`);
             }
