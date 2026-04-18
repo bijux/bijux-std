@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - main
+      - master
     paths:
       - ".github/workflows/deploy-docs.yml"
       - ".github/docs-deploy.env"
@@ -222,18 +223,52 @@ jobs:
           SITE_URL: ${{ steps.config.outputs.site_url }}
         run: ${{ steps.config.outputs.build_command }}
 
+      - name: Resolve docs artifact directory
+        id: artifact
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          explicit="${{ steps.config.outputs.site_dir }}"
+          candidates=(
+            "$explicit"
+            "artifacts/root/docs/build-site"
+            "artifacts/site/bijux-masterclass"
+            "artifacts/docs/site"
+            "artifacts/root/docs/site"
+          )
+
+          selected=""
+          for dir in "${candidates[@]}"; do
+            if [[ -n "$dir" && -d "$dir" && -f "$dir/index.html" ]]; then
+              selected="$dir"
+              break
+            fi
+          done
+
+          if [[ -z "$selected" ]]; then
+            echo "Unable to resolve docs artifact directory. Checked:" >&2
+            for dir in "${candidates[@]}"; do
+              [[ -n "$dir" ]] && echo "  - $dir" >&2
+            done
+            echo "Set BIJUX_DOCS_SITE_DIR in repository variables or .github/docs-deploy.env." >&2
+            exit 1
+          fi
+
+          echo "site_dir=$selected" >> "$GITHUB_OUTPUT"
+
       - name: Verify docs site
         if: ${{ steps.config.outputs.verify_command != '' }}
         env:
           DOCS_BUILD_SITE_URL: ${{ steps.config.outputs.site_url }}
-          DOCS_SITE_DIR: ${{ steps.config.outputs.site_dir }}
+          DOCS_SITE_DIR: ${{ steps.artifact.outputs.site_dir }}
         run: ${{ steps.config.outputs.verify_command }}
 
       - name: Validate Pages bundle
         shell: bash
         run: |
           set -euo pipefail
-          site_dir="${{ steps.config.outputs.site_dir }}"
+          site_dir="${{ steps.artifact.outputs.site_dir }}"
           test -d "${site_dir}"
           test -f "${site_dir}/index.html"
 
@@ -243,12 +278,12 @@ jobs:
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@7b1f4a764d45c48632c6b24a0339c27f5614fb0b # v3.0.1
         with:
-          path: ${{ steps.config.outputs.site_dir }}
+          path: ${{ steps.artifact.outputs.site_dir }}
 
   deploy:
     name: Deploy docs site
     needs: build
-    if: ${{ github.ref == 'refs/heads/main' }}
+    if: ${{ github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master' }}
     runs-on: ubuntu-latest
     environment:
       name: github-pages
