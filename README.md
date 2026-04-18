@@ -81,8 +81,9 @@ shared/
 Consuming repositories vendor the shared directories from `bijux-std` into
 their own `.bijux/shared/` tree.
 
-Some repositories may still carry `shared/` paths during migration windows; the
-checks tooling supports both locations while standards are converged.
+The current standard is `.bijux`-only for consumers. Root-level `shared/`
+content in consuming repositories is treated as legacy layout drift and fails
+standard verification.
 
 The expected flow is:
 
@@ -177,8 +178,10 @@ The canonical standards workflow is [`.github/workflows/bijux-std.yml`](.github/
 
 Repository-local filter policy:
 
-- `bijux-std` keeps only the standards verification workflow active under
-  `.github/workflows`.
+- `bijux-std` keeps only standards governance workflows active under
+  `.github/workflows`:
+  - `bijux-std.yml`
+  - `automerge-pr.yml`
 - Shared release/docs/reusable workflow templates live under
   `shared/bijux-gh/workflows` and are synchronized into consumer repositories
   under `.github/workflows`.
@@ -204,6 +207,9 @@ When workflow or job names change, update these files in the same change:
 Ownership mapping for governance-sensitive paths is defined in:
 
 - `.github/CODEOWNERS`
+
+`automerge-pr.yml` enables auto-merge only when policy allows and a trusted
+approval exists from a user listed in `.github/CODEOWNERS`.
 
 ## UI Regression Checks
 
