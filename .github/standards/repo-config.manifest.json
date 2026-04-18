@@ -1,5 +1,5 @@
 {
-  "version": 1,
+  "version": 2,
   "repositories": [
     {
       "name": "bijux-atlas",
@@ -124,7 +124,7 @@
             "schedule": {
               "interval": "weekly",
               "day": "monday",
-              "time": "05:00"
+              "time": 18000
             },
             "open-pull-requests-limit": 3,
             "commit-message": {
@@ -150,7 +150,7 @@
             "schedule": {
               "interval": "weekly",
               "day": "monday",
-              "time": "05:30"
+              "time": 19800
             },
             "open-pull-requests-limit": 3,
             "commit-message": {
@@ -176,7 +176,7 @@
             "schedule": {
               "interval": "weekly",
               "day": "monday",
-              "time": "06:00"
+              "time": 21600
             },
             "open-pull-requests-limit": 3,
             "commit-message": {
@@ -202,7 +202,7 @@
             "schedule": {
               "interval": "weekly",
               "day": "monday",
-              "time": "06:15"
+              "time": 22500
             },
             "open-pull-requests-limit": 3,
             "commit-message": {
@@ -223,7 +223,54 @@
             }
           }
         ]
-      }
+      },
+      "workflow_wrappers": {
+        "ci": {
+          "name": "CI",
+          "true": {
+            "push": {
+              "branches": [
+                "main"
+              ],
+              "tags": [
+                "v*"
+              ]
+            },
+            "pull_request": null
+          },
+          "concurrency": {
+            "group": "${{ github.workflow }}-${{ github.ref }}",
+            "cancel-in-progress": true
+          },
+          "permissions": {
+            "contents": "read"
+          },
+          "jobs": {
+            "run": {
+              "uses": "./.github/workflows/reusable-ci-rust-stack.yml",
+              "with": {
+                "rust_toolchain_version": "1.86.0",
+                "enable_python_toolchain": false,
+                "test_python_versions": "[\"3.11\"]",
+                "use_isolated_temp_roots": true,
+                "security_cargo_target_dir": "${{ github.workspace }}/.cache/cargo/target/security",
+                "security_cargo_home": "${{ github.workspace }}/.cache/cargo/home/security",
+                "security_tmp_relative": "artifacts/isolates/security/tmp",
+                "test_cargo_target_dir": "${{ github.workspace }}/.cache/cargo/target/test",
+                "test_cargo_home": "${{ github.workspace }}/.cache/cargo/home/test",
+                "test_tmp_relative": "artifacts/isolates/test/tmp",
+                "install_test_tools_command": "make gh-test-install-rust-tools",
+                "expose_cargo_bin_path": true,
+                "fmt_command": "make gh-fmt",
+                "lint_command": "make gh-lint",
+                "security_command": "make gh-security",
+                "test_command": "make gh-test"
+              }
+            }
+          }
+        }
+      },
+      "pinned_std_sha": "1f69262f891f11a8fb5ea49ddd4477977228e776"
     },
     {
       "name": "bijux-canon",
@@ -664,7 +711,135 @@
             ]
           }
         ]
-      }
+      },
+      "workflow_wrappers": {
+        "ci": {
+          "name": "ci",
+          "true": {
+            "workflow_call": {
+              "inputs": {
+                "package_slug": {
+                  "required": true,
+                  "type": "string"
+                },
+                "package_dir": {
+                  "required": true,
+                  "type": "string"
+                },
+                "artifacts_dir": {
+                  "required": true,
+                  "type": "string"
+                },
+                "test_python_versions": {
+                  "required": false,
+                  "type": "string",
+                  "default": "[\"3.11\"]"
+                },
+                "check_targets": {
+                  "required": false,
+                  "type": "string",
+                  "default": "[\"quality\", \"security\", \"docs\", \"api\", \"build\", \"sbom\"]"
+                },
+                "api_toolchain_targets": {
+                  "required": false,
+                  "type": "string",
+                  "default": "[\"api\"]"
+                },
+                "post_test_command": {
+                  "required": false,
+                  "type": "string",
+                  "default": ""
+                }
+              }
+            }
+          },
+          "permissions": {
+            "contents": "read"
+          },
+          "concurrency": {
+            "group": "ci-${{ inputs.package_slug }}-${{ github.ref }}",
+            "cancel-in-progress": true
+          },
+          "jobs": {
+            "run": {
+              "uses": "./.github/workflows/reusable-ci-python-packages.yml",
+              "with": {
+                "package_slug": "${{ inputs.package_slug }}",
+                "package_dir": "${{ inputs.package_dir }}",
+                "artifacts_dir": "${{ inputs.artifacts_dir }}",
+                "test_python_versions": "${{ inputs.test_python_versions }}",
+                "check_targets": "${{ inputs.check_targets }}",
+                "api_toolchain_targets": "${{ inputs.api_toolchain_targets }}",
+                "post_test_command": "${{ inputs.post_test_command }}"
+              }
+            }
+          }
+        },
+        "verify": {
+          "name": "verify",
+          "true": {
+            "push": {
+              "branches": [
+                "main"
+              ],
+              "paths": [
+                ".github/workflows/**",
+                "apis/**",
+                "configs/**",
+                "docs/**",
+                "makes/**",
+                "packages/**",
+                "Makefile",
+                "mkdocs.shared.yml",
+                "mkdocs.yml",
+                "pyproject.toml",
+                "tox.ini",
+                "uv.lock"
+              ]
+            },
+            "pull_request": {
+              "branches": [
+                "main"
+              ],
+              "paths": [
+                ".github/workflows/**",
+                "apis/**",
+                "configs/**",
+                "docs/**",
+                "makes/**",
+                "packages/**",
+                "Makefile",
+                "mkdocs.shared.yml",
+                "mkdocs.yml",
+                "pyproject.toml",
+                "tox.ini",
+                "uv.lock"
+              ]
+            },
+            "workflow_dispatch": null
+          },
+          "permissions": {
+            "contents": "read"
+          },
+          "concurrency": {
+            "group": "verify-${{ github.ref }}",
+            "cancel-in-progress": true
+          },
+          "jobs": {
+            "run": {
+              "uses": "./.github/workflows/reusable-verify-python-packages.yml",
+              "with": {
+                "repository_timeout_minutes": 30,
+                "package_matrix_json": "[\n  {\"package_slug\":\"bijux-canon-runtime\",\"package_dir\":\"packages/bijux-canon-runtime\",\"artifacts_dir\":\"artifacts/bijux-canon-runtime\",\"check_targets\":\"[\\\"quality\\\", \\\"security\\\", \\\"docs\\\", \\\"build\\\", \\\"sbom\\\", \\\"api\\\", \\\"openapi-drift\\\"]\",\"api_toolchain_targets\":\"[\\\"api\\\", \\\"openapi-drift\\\"]\",\"post_test_command\":\"set -euo pipefail && venv_python=\\\"${ARTIFACTS_DIR}/venv/bin/python\\\" && if compgen -G \\\"packages/bijux-canon-runtime/src/bijux_canon_runtime/providers/*\\\" > /dev/null; then \\\"${venv_python}\\\" -m coverage report --rcfile configs/coveragerc.ini --data-file \\\"${ARTIFACTS_DIR}/test/.coverage\\\" --include \\\"packages/bijux-canon-runtime/src/bijux_canon_runtime/providers/*\\\" --fail-under=65; fi && if [ -f \\\"packages/bijux-canon-runtime/src/bijux_canon_runtime/interfaces/cli.py\\\" ]; then \\\"${venv_python}\\\" -m coverage report --rcfile configs/coveragerc.ini --data-file \\\"${ARTIFACTS_DIR}/test/.coverage\\\" --include \\\"packages/bijux-canon-runtime/src/bijux_canon_runtime/interfaces/cli.py\\\" --fail-under=60; fi && if compgen -G \\\"packages/bijux-canon-runtime/src/bijux_canon_runtime/api/*\\\" > /dev/null; then \\\"${venv_python}\\\" -m coverage report --rcfile configs/coveragerc.ini --data-file \\\"${ARTIFACTS_DIR}/test/.coverage\\\" --include \\\"packages/bijux-canon-runtime/src/bijux_canon_runtime/api/*\\\" --fail-under=75; fi\"},\n  {\"package_slug\":\"bijux-canon-agent\",\"package_dir\":\"packages/bijux-canon-agent\",\"artifacts_dir\":\"artifacts/bijux-canon-agent\"},\n  {\"package_slug\":\"bijux-canon-ingest\",\"package_dir\":\"packages/bijux-canon-ingest\",\"artifacts_dir\":\"artifacts/bijux-canon-ingest\",\"test_python_versions\":\"[\\\"3.11\\\", \\\"3.12\\\", \\\"3.13\\\"]\"},\n  {\"package_slug\":\"bijux-canon-reason\",\"package_dir\":\"packages/bijux-canon-reason\",\"artifacts_dir\":\"artifacts/bijux-canon-reason\"},\n  {\"package_slug\":\"bijux-canon-index\",\"package_dir\":\"packages/bijux-canon-index\",\"artifacts_dir\":\"artifacts/bijux-canon-index\"},\n  {\"package_slug\":\"bijux-canon-dev\",\"package_dir\":\"packages/bijux-canon-dev\",\"artifacts_dir\":\"artifacts/bijux-canon-dev\",\"check_targets\":\"[\\\"quality\\\", \\\"security\\\", \\\"build\\\", \\\"sbom\\\"]\"}\n]",
+                "default_test_python_versions": "[\"3.11\"]",
+                "default_check_targets": "[\"quality\", \"security\", \"docs\", \"api\", \"build\", \"sbom\"]",
+                "default_api_toolchain_targets": "[\"api\"]"
+              }
+            }
+          }
+        }
+      },
+      "pinned_std_sha": "1f69262f891f11a8fb5ea49ddd4477977228e776"
     },
     {
       "name": "bijux-core",
@@ -927,7 +1102,47 @@
             ]
           }
         ]
-      }
+      },
+      "workflow_wrappers": {
+        "ci": {
+          "name": "CI",
+          "true": {
+            "push": {
+              "branches": [
+                "main"
+              ]
+            },
+            "pull_request": null
+          },
+          "concurrency": {
+            "group": "${{ github.workflow }}-${{ github.ref }}",
+            "cancel-in-progress": true
+          },
+          "permissions": {
+            "contents": "read"
+          },
+          "jobs": {
+            "run": {
+              "uses": "./.github/workflows/reusable-ci-rust-stack.yml",
+              "with": {
+                "rust_toolchain_version": "1.85.0",
+                "enable_python_toolchain": true,
+                "python_setup_version": "3.11",
+                "python_cache_dependency_path": "crates/bijux-cli-python/pyproject.toml",
+                "test_python_versions": "[\"3.11\", \"3.12\"]",
+                "install_security_tools_command": "make gh-security-install-rust-tools",
+                "install_test_tools_command": "make gh-test-install-rust-tools",
+                "fmt_command": "make gh-fmt",
+                "lint_command": "make gh-lint",
+                "security_command": "make gh-security",
+                "test_command": "make gh-test",
+                "bijuxcli_api_guard": "1"
+              }
+            }
+          }
+        }
+      },
+      "pinned_std_sha": "1f69262f891f11a8fb5ea49ddd4477977228e776"
     },
     {
       "name": "bijux-masterclass",
@@ -1046,7 +1261,8 @@
             ]
           }
         ]
-      }
+      },
+      "pinned_std_sha": "1f69262f891f11a8fb5ea49ddd4477977228e776"
     },
     {
       "name": "bijux-pollenomics",
@@ -1257,7 +1473,136 @@
             ]
           }
         ]
-      }
+      },
+      "workflow_wrappers": {
+        "ci": {
+          "name": "ci",
+          "true": {
+            "workflow_call": {
+              "inputs": {
+                "package_slug": {
+                  "required": true,
+                  "type": "string"
+                },
+                "package_dir": {
+                  "required": true,
+                  "type": "string"
+                },
+                "artifacts_dir": {
+                  "required": true,
+                  "type": "string"
+                },
+                "test_python_versions": {
+                  "required": false,
+                  "type": "string",
+                  "default": "[\"3.11\"]"
+                },
+                "check_targets": {
+                  "required": false,
+                  "type": "string",
+                  "default": "[\"quality\", \"security\", \"docs\", \"api\", \"build\", \"sbom\"]"
+                },
+                "api_toolchain_targets": {
+                  "required": false,
+                  "type": "string",
+                  "default": "[\"api\"]"
+                },
+                "post_test_command": {
+                  "required": false,
+                  "type": "string",
+                  "default": ""
+                }
+              }
+            }
+          },
+          "permissions": {
+            "contents": "read"
+          },
+          "concurrency": {
+            "group": "ci-${{ inputs.package_slug }}-${{ github.ref }}",
+            "cancel-in-progress": true
+          },
+          "jobs": {
+            "run": {
+              "uses": "./.github/workflows/reusable-ci-python-packages.yml",
+              "with": {
+                "package_slug": "${{ inputs.package_slug }}",
+                "package_dir": "${{ inputs.package_dir }}",
+                "artifacts_dir": "${{ inputs.artifacts_dir }}",
+                "test_python_versions": "${{ inputs.test_python_versions }}",
+                "check_targets": "${{ inputs.check_targets }}",
+                "api_toolchain_targets": "${{ inputs.api_toolchain_targets }}",
+                "post_test_command": "${{ inputs.post_test_command }}"
+              }
+            }
+          }
+        },
+        "verify": {
+          "name": "verify",
+          "true": {
+            "push": {
+              "branches": [
+                "main"
+              ],
+              "paths": [
+                ".github/workflows/**",
+                "apis/**",
+                "configs/**",
+                "docs/**",
+                "makes/**",
+                "packages/**",
+                "Makefile",
+                "mkdocs.shared.yml",
+                "mkdocs.yml",
+                "pyproject.toml",
+                "tox.ini",
+                "uv.lock"
+              ]
+            },
+            "pull_request": {
+              "branches": [
+                "main"
+              ],
+              "paths": [
+                ".github/workflows/**",
+                "apis/**",
+                "configs/**",
+                "docs/**",
+                "makes/**",
+                "packages/**",
+                "Makefile",
+                "mkdocs.shared.yml",
+                "mkdocs.yml",
+                "pyproject.toml",
+                "tox.ini",
+                "uv.lock"
+              ]
+            },
+            "workflow_dispatch": null
+          },
+          "permissions": {
+            "contents": "read"
+          },
+          "concurrency": {
+            "group": "verify-${{ github.ref }}",
+            "cancel-in-progress": true
+          },
+          "jobs": {
+            "run": {
+              "uses": "./.github/workflows/reusable-verify-python-packages.yml",
+              "with": {
+                "repository_timeout_minutes": 45,
+                "fail_on_dirty_worktree": true,
+                "package_matrix_json": "[\n  {\"package_slug\":\"bijux-pollenomics\",\"package_dir\":\"packages/bijux-pollenomics\",\"artifacts_dir\":\"artifacts/bijux-pollenomics\",\"check_targets\":\"[\\\"quality\\\", \\\"security\\\", \\\"api\\\", \\\"openapi-drift\\\", \\\"build\\\", \\\"sbom\\\"]\"},\n  {\"package_slug\":\"pollenomics\",\"package_dir\":\"packages/pollenomics\",\"artifacts_dir\":\"artifacts/pollenomics\",\"check_targets\":\"[\\\"quality\\\", \\\"security\\\", \\\"build\\\", \\\"sbom\\\"]\"},\n  {\"package_slug\":\"bijux-pollenomics-dev\",\"package_dir\":\"packages/bijux-pollenomics-dev\",\"artifacts_dir\":\"artifacts/bijux-pollenomics-dev\",\"check_targets\":\"[\\\"quality\\\", \\\"security\\\", \\\"build\\\", \\\"sbom\\\"]\"}\n]",
+                "default_test_python_versions": "[\"3.11\"]",
+                "default_check_targets": "[\"quality\", \"security\", \"docs\", \"api\", \"build\", \"sbom\"]",
+                "default_api_toolchain_targets": "[\"api\", \"openapi-drift\"]"
+              }
+            }
+          }
+        }
+      },
+      "pinned_std_sha": "1f69262f891f11a8fb5ea49ddd4477977228e776"
     },
     {
       "name": "bijux-proteomics",
@@ -1568,7 +1913,135 @@
             ]
           }
         ]
-      }
+      },
+      "workflow_wrappers": {
+        "ci": {
+          "name": "ci",
+          "true": {
+            "workflow_call": {
+              "inputs": {
+                "package_slug": {
+                  "required": true,
+                  "type": "string"
+                },
+                "package_dir": {
+                  "required": true,
+                  "type": "string"
+                },
+                "artifacts_dir": {
+                  "required": true,
+                  "type": "string"
+                },
+                "test_python_versions": {
+                  "required": false,
+                  "type": "string",
+                  "default": "[\"3.11\"]"
+                },
+                "check_targets": {
+                  "required": false,
+                  "type": "string",
+                  "default": "[\"quality\", \"security\", \"docs\", \"api\", \"build\", \"sbom\"]"
+                },
+                "api_toolchain_targets": {
+                  "required": false,
+                  "type": "string",
+                  "default": "[\"api\"]"
+                },
+                "post_test_command": {
+                  "required": false,
+                  "type": "string",
+                  "default": ""
+                }
+              }
+            }
+          },
+          "permissions": {
+            "contents": "read"
+          },
+          "concurrency": {
+            "group": "ci-${{ inputs.package_slug }}-${{ github.ref }}",
+            "cancel-in-progress": true
+          },
+          "jobs": {
+            "run": {
+              "uses": "./.github/workflows/reusable-ci-python-packages.yml",
+              "with": {
+                "package_slug": "${{ inputs.package_slug }}",
+                "package_dir": "${{ inputs.package_dir }}",
+                "artifacts_dir": "${{ inputs.artifacts_dir }}",
+                "test_python_versions": "${{ inputs.test_python_versions }}",
+                "check_targets": "${{ inputs.check_targets }}",
+                "api_toolchain_targets": "${{ inputs.api_toolchain_targets }}",
+                "post_test_command": "${{ inputs.post_test_command }}"
+              }
+            }
+          }
+        },
+        "verify": {
+          "name": "verify",
+          "true": {
+            "push": {
+              "branches": [
+                "main"
+              ],
+              "paths": [
+                ".github/workflows/**",
+                "apis/**",
+                "configs/**",
+                "docs/**",
+                "makes/**",
+                "packages/**",
+                "Makefile",
+                "mkdocs.shared.yml",
+                "mkdocs.yml",
+                "pyproject.toml",
+                "tox.ini",
+                "uv.lock"
+              ]
+            },
+            "pull_request": {
+              "branches": [
+                "main"
+              ],
+              "paths": [
+                ".github/workflows/**",
+                "apis/**",
+                "configs/**",
+                "docs/**",
+                "makes/**",
+                "packages/**",
+                "Makefile",
+                "mkdocs.shared.yml",
+                "mkdocs.yml",
+                "pyproject.toml",
+                "tox.ini",
+                "uv.lock"
+              ]
+            },
+            "workflow_dispatch": null
+          },
+          "permissions": {
+            "contents": "read"
+          },
+          "concurrency": {
+            "group": "verify-${{ github.ref }}",
+            "cancel-in-progress": true
+          },
+          "jobs": {
+            "run": {
+              "uses": "./.github/workflows/reusable-verify-python-packages.yml",
+              "with": {
+                "repository_timeout_minutes": 30,
+                "package_matrix_json": "[\n  {\"package_slug\":\"agentic-proteins\",\"package_dir\":\"packages/agentic-proteins\",\"artifacts_dir\":\"artifacts/agentic-proteins\"},\n  {\"package_slug\":\"bijux-proteomics-foundation\",\"package_dir\":\"packages/bijux-proteomics-foundation\",\"artifacts_dir\":\"artifacts/bijux-proteomics-foundation\"},\n  {\"package_slug\":\"bijux-proteomics-core\",\"package_dir\":\"packages/bijux-proteomics-core\",\"artifacts_dir\":\"artifacts/bijux-proteomics-core\"},\n  {\"package_slug\":\"bijux-proteomics-intelligence\",\"package_dir\":\"packages/bijux-proteomics-intelligence\",\"artifacts_dir\":\"artifacts/bijux-proteomics-intelligence\"},\n  {\"package_slug\":\"bijux-proteomics-knowledge\",\"package_dir\":\"packages/bijux-proteomics-knowledge\",\"artifacts_dir\":\"artifacts/bijux-proteomics-knowledge\"},\n  {\"package_slug\":\"bijux-proteomics-lab\",\"package_dir\":\"packages/bijux-proteomics-lab\",\"artifacts_dir\":\"artifacts/bijux-proteomics-lab\"},\n  {\"package_slug\":\"bijux-proteomics-dev\",\"package_dir\":\"packages/bijux-proteomics-dev\",\"artifacts_dir\":\"artifacts/bijux-proteomics-dev\",\"check_targets\":\"[\\\"quality\\\", \\\"security\\\", \\\"build\\\", \\\"sbom\\\"]\"}\n]",
+                "default_test_python_versions": "[\"3.11\"]",
+                "default_check_targets": "[\"quality\", \"security\", \"docs\", \"api\", \"openapi-drift\", \"build\", \"sbom\"]",
+                "default_api_toolchain_targets": "[\"api\", \"openapi-drift\"]"
+              }
+            }
+          }
+        }
+      },
+      "pinned_std_sha": "1f69262f891f11a8fb5ea49ddd4477977228e776"
     },
     {
       "name": "bijux-std",
@@ -1598,7 +2071,8 @@
           "type": "bool",
           "value": false
         }
-      ]
+      ],
+      "pinned_std_sha": "1f69262f891f11a8fb5ea49ddd4477977228e776"
     },
     {
       "name": "bijux.github.io",
@@ -1657,7 +2131,8 @@
             ]
           }
         ]
-      }
+      },
+      "pinned_std_sha": "1f69262f891f11a8fb5ea49ddd4477977228e776"
     }
   ]
 }

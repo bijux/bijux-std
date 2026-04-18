@@ -51,7 +51,7 @@ def parse_release_env(path: Path) -> list[dict]:
     return entries
 
 
-def parse_dependabot(path: Path) -> dict | None:
+def parse_yaml(path: Path) -> dict | None:
     if not path.exists():
         return None
 
@@ -71,17 +71,39 @@ def parse_dependabot(path: Path) -> dict | None:
     return json.loads(result.stdout)
 
 
+def parse_text(path: Path) -> str | None:
+    if not path.exists():
+        return None
+    return path.read_text(encoding="utf-8").strip()
+
+
 def main() -> None:
-    manifest: dict = {"version": 1, "repositories": []}
+    manifest: dict = {"version": 2, "repositories": []}
 
     for repo_name in REPOS:
         repo_path = ROOT / repo_name
         repo_entry: dict = {"name": repo_name}
         repo_entry["release_env"] = parse_release_env(repo_path / ".github/release.env")
 
-        dependabot = parse_dependabot(repo_path / ".github/dependabot.yml")
+        dependabot = parse_yaml(repo_path / ".github/dependabot.yml")
         if dependabot is not None:
             repo_entry["dependabot"] = dependabot
+
+        wrappers: dict = {}
+        ci_wrapper = parse_yaml(repo_path / ".github/workflows/ci.yml")
+        if ci_wrapper is not None:
+            wrappers["ci"] = ci_wrapper
+
+        verify_wrapper = parse_yaml(repo_path / ".github/workflows/verify.yml")
+        if verify_wrapper is not None:
+            wrappers["verify"] = verify_wrapper
+
+        if wrappers:
+            repo_entry["workflow_wrappers"] = wrappers
+
+        pinned_sha = parse_text(repo_path / ".github/standards/bijux-std.sha")
+        if pinned_sha:
+            repo_entry["pinned_std_sha"] = pinned_sha
 
         manifest["repositories"].append(repo_entry)
 

@@ -81,6 +81,10 @@ def render_release_env(entries: list[dict]) -> str:
     return "\n".join(lines)
 
 
+def render_yaml_document(data: Any) -> str:
+    return "\n".join(dump_yaml(data)) + "\n"
+
+
 def find_repo_config(manifest: dict, repo_name: str) -> dict:
     for repo in manifest["repositories"]:
         if repo["name"] == repo_name:
@@ -91,6 +95,7 @@ def find_repo_config(manifest: dict, repo_name: str) -> dict:
 def write_if_needed(path: Path, content: str) -> None:
     if path.exists() and path.read_text(encoding="utf-8") == content:
         return
+    path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(content, encoding="utf-8")
 
 
@@ -105,12 +110,26 @@ def render_repo(repo_name: str, manifest: dict) -> None:
     dependabot_data = repo.get("dependabot")
     if dependabot_data is not None:
         dependabot_path = repo_root / ".github/dependabot.yml"
-        dependabot_content = "\n".join(dump_yaml(dependabot_data)) + "\n"
+        dependabot_content = render_yaml_document(dependabot_data)
         write_if_needed(dependabot_path, dependabot_content)
+
+    wrappers = repo.get("workflow_wrappers", {})
+    if "ci" in wrappers:
+        ci_path = repo_root / ".github/workflows/ci.yml"
+        write_if_needed(ci_path, render_yaml_document(wrappers["ci"]))
+
+    if "verify" in wrappers:
+        verify_path = repo_root / ".github/workflows/verify.yml"
+        write_if_needed(verify_path, render_yaml_document(wrappers["verify"]))
+
+    pinned_sha = repo.get("pinned_std_sha")
+    if pinned_sha:
+        pin_path = repo_root / ".github/standards/bijux-std.sha"
+        write_if_needed(pin_path, f"{pinned_sha}\n")
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Render release.env and dependabot.yml from manifest")
+    parser = argparse.ArgumentParser(description="Render release.env, dependabot.yml, and workflow wrappers from manifest")
     parser.add_argument("--manifest", default=str(MANIFEST_PATH), help="Path to manifest JSON")
     parser.add_argument("--repo", action="append", default=[], help="Repository name (repeatable)")
     args = parser.parse_args()
