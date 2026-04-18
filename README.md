@@ -114,6 +114,8 @@ Checks and updates are driven by these standard inputs:
   [`shared/shared-dir-sha256.txt`](shared/shared-dir-sha256.txt)
 - Canonical CI workflow template for consumers:
   [`shared/bijux-checks/workflows/bijux-std.yml`](shared/bijux-checks/workflows/bijux-std.yml)
+- Canonical GitHub Pages docs deploy workflow template for consumers:
+  [`shared/bijux-gh/workflows/deploy-docs.yml`](shared/bijux-gh/workflows/deploy-docs.yml)
 
 ## Verification Model
 
