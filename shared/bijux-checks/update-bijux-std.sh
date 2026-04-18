@@ -28,6 +28,7 @@ update_channel="${BIJUX_STD_UPDATE_CHANNEL:-branch}"
 std_ref="${BIJUX_STD_REF:-${default_ref}}"
 tag_pattern="${BIJUX_STD_TAG_PATTERN:-${tag_pattern_default}}"
 allow_missing_dirs="${BIJUX_STD_UPDATE_ALLOW_MISSING_DIRS:-0}"
+self_repo_mode="${BIJUX_STD_SELF_REPO_MODE:-auto}"
 
 resolve_ref() {
   if [[ "${update_channel}" == "tag" ]]; then
@@ -57,23 +58,6 @@ clone_from_ref() {
   local ref_name="$1"
   git clone --depth 1 --branch "${ref_name}" "${std_git_url}" "${tmp_dir}/bijux-std" >/dev/null 2>&1
 }
-
-if ! clone_from_ref "${resolved_ref}"; then
-  head_ref="$(git ls-remote --symref "${std_git_url}" HEAD 2>/dev/null | awk '/^ref:/ {print $2}' | sed 's#refs/heads/##')"
-  if [[ -n "${head_ref}" && "${head_ref}" != "${resolved_ref}" ]]; then
-    rm -rf "${tmp_dir}/bijux-std"
-    if clone_from_ref "${head_ref}"; then
-      echo "→ requested ref ${resolved_ref} unavailable; using remote HEAD branch ${head_ref}"
-      resolved_ref="${head_ref}"
-    else
-      echo "ERROR: unable to clone ${std_git_url} using ref ${resolved_ref} or HEAD ${head_ref}" >&2
-      exit 1
-    fi
-  else
-    echo "ERROR: unable to clone ${std_git_url} using ref ${resolved_ref}" >&2
-    exit 1
-  fi
-fi
 
 directory_tree_sha256() {
   local target_dir="$1"
@@ -113,6 +97,76 @@ fi
 declare -a missing_dirs=()
 declare -a update_dirs=()
 declare -a skipped_dirs=()
+
+in_bijux_std_repo=0
+if [[ "$(basename "${repo_root}")" == "bijux-std" ]]; then
+  in_bijux_std_repo=1
+fi
+
+should_use_self_repo_mode=0
+if [[ "${self_repo_mode}" == "on" ]]; then
+  should_use_self_repo_mode=1
+elif [[ "${self_repo_mode}" == "auto" && "${in_bijux_std_repo}" == "1" ]]; then
+  should_use_self_repo_mode=1
+fi
+
+if [[ "${should_use_self_repo_mode}" == "1" ]]; then
+  while IFS= read -r dir_rel; do
+    local_dir="${repo_root}/${dir_rel}"
+    if [[ ! -d "${local_dir}" ]]; then
+      if [[ "${allow_missing_dirs}" == "1" ]]; then
+        skipped_dirs+=("${dir_rel}")
+        echo "⚠ missing local directory in bijux-std: ${dir_rel}; skipping because BIJUX_STD_UPDATE_ALLOW_MISSING_DIRS=1"
+        continue
+      fi
+      missing_dirs+=("${dir_rel}")
+      continue
+    fi
+    update_dirs+=("${dir_rel}")
+  done < <(read_directories)
+
+  if (( ${#missing_dirs[@]} > 0 )); then
+    echo "ERROR: local refresh aborted; required directory missing in bijux-std:" >&2
+    for dir_rel in "${missing_dirs[@]}"; do
+      echo "  - ${dir_rel}" >&2
+    done
+    echo "Hint: rerun with BIJUX_STD_UPDATE_ALLOW_MISSING_DIRS=1 to skip missing directories." >&2
+    exit 1
+  fi
+
+  for dir_rel in "${update_dirs[@]}"; do
+    dir_sha="$(directory_tree_sha256 "${repo_root}/${dir_rel}")"
+    set_manifest_sha_for_dir "${manifest_path}" "${dir_rel}" "${dir_sha}"
+    echo "→ refreshed manifest hash for ${dir_rel}"
+  done
+
+  if (( ${#skipped_dirs[@]} > 0 )); then
+    for dir_rel in "${skipped_dirs[@]}"; do
+      echo "→ kept local ${dir_rel}"
+    done
+  fi
+
+  echo "→ refreshed ${manifest_rel}"
+  echo "✔ bijux-std local shared manifest refresh complete"
+  exit 0
+fi
+
+if ! clone_from_ref "${resolved_ref}"; then
+  head_ref="$(git ls-remote --symref "${std_git_url}" HEAD 2>/dev/null | awk '/^ref:/ {print $2}' | sed 's#refs/heads/##')"
+  if [[ -n "${head_ref}" && "${head_ref}" != "${resolved_ref}" ]]; then
+    rm -rf "${tmp_dir}/bijux-std"
+    if clone_from_ref "${head_ref}"; then
+      echo "→ requested ref ${resolved_ref} unavailable; using remote HEAD branch ${head_ref}"
+      resolved_ref="${head_ref}"
+    else
+      echo "ERROR: unable to clone ${std_git_url} using ref ${resolved_ref} or HEAD ${head_ref}" >&2
+      exit 1
+    fi
+  else
+    echo "ERROR: unable to clone ${std_git_url} using ref ${resolved_ref}" >&2
+    exit 1
+  fi
+fi
 
 while IFS= read -r dir_rel; do
   src="${tmp_dir}/bijux-std/${dir_rel}"
