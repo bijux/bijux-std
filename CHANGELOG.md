@@ -41,6 +41,9 @@ multiple Bijux repositories verify, synchronize, and consume shared contracts.
 - Added canonical issue and pull request template surfaces under
   `shared/bijux-gh/ISSUE_TEMPLATE` and `shared/bijux-gh/PULL_REQUEST_TEMPLATE`
   so consuming repositories can share one durable intake and review structure.
+- Added shared release helper script `shared/bijux-gh/scripts/wait_for_ci.py`
+  and synchronized consuming repositories to use one canonical CI wait
+  implementation through `.github/scripts/wait_for_ci.py`.
 
 ## 0.1.1 - 2026-04-18
 
