@@ -18,6 +18,13 @@ Usage in a repository:
 
 This keeps branch protection and bot update policy consistent across Python repositories.
 
+## Workflow Naming Convention
+
+Use `ci.yml` as the primary CI workflow filename in each repository.
+
+- Reusable CI workflows should also use `ci.yml` when they are the main CI contract.
+- Keep repository-specific workflow names descriptive (for example `ci-canon.yml`) and avoid cross-repository product names in unrelated repositories.
+
 ## `deploy-docs.yml` configuration contract
 
 The shared workflow is placeholder-driven. Consumers can override behavior through:
