@@ -24,9 +24,11 @@ read_directories() {
 
 resolve_local_rel() {
   local rel="$1"
-  if [[ "${rel}" == shared/* && -d "${repo_root}/.bijux/shared" && ! -d "${repo_root}/shared" ]]; then
-    printf '.bijux/%s\n' "${rel}"
-    return
+  if [[ "${rel}" == shared/* && -d "${repo_root}/.bijux/shared" ]]; then
+    if [[ ! -d "${repo_root}/${rel}" ]]; then
+      printf '.bijux/%s\n' "${rel}"
+      return
+    fi
   fi
   printf '%s\n' "${rel}"
 }
@@ -83,11 +85,14 @@ verify_dir_against_manifests() {
   local_dir_rel="$(resolve_local_rel "${remote_dir_rel}")"
   local_dir_abs="${repo_root}/${local_dir_rel}"
 
-  local_expected="$(manifest_sha_for_dir "${manifest_path}" "${local_dir_rel}")"
+  local_expected="$(manifest_sha_for_dir "${manifest_path}" "${remote_dir_rel}")"
+  if [[ -z "${local_expected}" && "${local_dir_rel}" != "${remote_dir_rel}" ]]; then
+    local_expected="$(manifest_sha_for_dir "${manifest_path}" "${local_dir_rel}")"
+  fi
   remote_expected="$(manifest_sha_for_dir "${remote_manifest}" "${remote_dir_rel}")"
 
   if [[ -z "${local_expected}" ]]; then
-    echo "ERROR: local manifest missing entry for ${local_dir_rel}" >&2
+    echo "ERROR: local manifest missing entry for ${remote_dir_rel}" >&2
     exit 1
   fi
   if [[ -z "${remote_expected}" ]]; then
