@@ -7,6 +7,8 @@ Current standards orchestration for consumers is driven from
 
 - typed manifest:
   `.github/standards/repo-config.manifest.json`
+- workflow inventory registry:
+  `.github/standards/workflow-inventory.json`
 - renderer:
   `.github/scripts/render_repo_configs.py`
 - sync orchestrator:
@@ -38,7 +40,9 @@ Usage in a repository (current model):
    `.github/scripts/sync_github_standards.py`.
 2. Render repository-local wrappers and config from the typed manifest via
    `.github/scripts/render_repo_configs.py`.
-3. Enforce drift/policy checks via:
+3. Keep managed runtime workflow copies filtered by repository
+   `workflow_allowlist` from the manifest.
+4. Enforce drift/policy checks via:
    - `.github/workflows/bijux-std.yml`
    - `.github/workflows/github-policy.yml`
 
