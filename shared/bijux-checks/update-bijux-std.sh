@@ -203,12 +203,14 @@ for dir_rel in "${update_dirs[@]}"; do
   dst="${repo_root}/${dir_rel}"
 
   preserve_children=0
-  for skipped_dir in "${skipped_dirs[@]}"; do
-    if [[ "${skipped_dir}" == "${dir_rel}/"* ]]; then
-      preserve_children=1
-      break
-    fi
-  done
+  if (( ${#skipped_dirs[@]} > 0 )); then
+    for skipped_dir in "${skipped_dirs[@]}"; do
+      if [[ "${skipped_dir}" == "${dir_rel}/"* ]]; then
+        preserve_children=1
+        break
+      fi
+    done
+  fi
 
   if [[ "${preserve_children}" == "1" ]]; then
     mkdir -p "${dst}"
