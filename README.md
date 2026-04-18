@@ -141,6 +141,26 @@ Backward-compatible alias for `make bijux-std-checks`.
 The shared policy for these commands lives in
 [`shared/bijux-checks/bijux-std-checks.yml`](shared/bijux-checks/bijux-std-checks.yml).
 
+
+## GitHub Workflow Contract
+
+The canonical standards workflow is [`.github/workflows/bijux-std.yml`](.github/workflows/bijux-std.yml).
+
+It runs one matrix job (`checks`) with two entries on every pull request and push to `main`:
+
+- `standard`: runs `make bijux-std-checks`
+- `report`: runs the check-suite reporter and uploads `bijux-checks-report` artifacts
+
+Branch protection should require both matrix check contexts:
+
+- `checks (standard)`
+- `checks (report)`
+
+When workflow or job names change, update these files in the same change:
+
+- `shared/bijux-gh/required-status-checks.md`
+- `shared/bijux-gh/rulesets/main-branch-protection.json`
+
 ## UI Regression Checks
 
 `bijux-std` also includes viewport-aware UI/UX regression checks for the shared

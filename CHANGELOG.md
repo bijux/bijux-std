@@ -29,6 +29,11 @@ multiple Bijux repositories verify, synchronize, and consume shared contracts.
 - Bookkeeping update: synchronized consuming repositories now document explicit
   contributor and automation identity boundaries for `bijux`,
   `dependabot[bot]`, and `github-actions[bot]` under their governance docs.
+- Standards CI now uses a single matrix workflow at
+  `.github/workflows/bijux-std.yml` that runs both standard checks and checks
+  reporting.
+- Shared branch-protection status-check policy now tracks matrix contexts
+  `checks (standard)` and `checks (report)` for the unified workflow.
 
 ### Fixed
 
@@ -51,7 +56,7 @@ multiple Bijux repositories verify, synchronize, and consume shared contracts.
 - Repository-level make entrypoints:
   `bijux-std-checks`, `bijux-std-update`, and compatibility alias
   `bijux-std`.
-- Standards CI workflow at `.github/workflows/bijux-std-checks.yml`.
+- Standards CI workflow at `.github/workflows/bijux-std.yml`.
 - Root repository `README.md` documenting ownership boundaries, consumption
   model, verification model, and change rules.
 
