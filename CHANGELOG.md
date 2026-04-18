@@ -12,6 +12,16 @@ multiple Bijux repositories verify, synchronize, and consume shared contracts.
 
 ### Changed
 
+- Promoted `.github` as the canonical GitHub standards layer, including
+  reusable CI/verify templates, protected-change policy checks, and centralized
+  standards orchestration scripts.
+- Extended typed manifest coverage to include repository-local wrapper
+  workflows (`.github/workflows/ci.yml`, `.github/workflows/verify.yml`) so
+  wrappers are rendered instead of hand-maintained.
+- Added per-repository standard pin file `.github/standards/bijux-std.sha`
+  and sync orchestration support for advancing this pin.
+- Extended standards checksum scope (`.github/bijux-std-shared.sha256`) to
+  include manifest/generator/policy assets and shared workflow templates.
 - Refreshed `shared/shared-dir-sha256.txt` so the canonical digest entry for
   `shared/bijux-gh` matches the current shared governance content.
 - Promoted a shared `release-pypi.yml` workflow template under

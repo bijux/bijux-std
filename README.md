@@ -33,9 +33,10 @@ across repositories.
 - `shared/bijux-docs/tooling`
   Shared docs synchronization and docs-contract/source-of-truth verification
   tooling used by consuming repositories.
-- `shared/bijux-gh`
-  Shared GitHub policy artifacts (for example required status checks and
-  branch protection ruleset sources).
+- `.github`
+  Canonical GitHub standards surfaces: reusable workflow templates, policy
+  workflows, standards scripts, and manifest-driven generators for
+  repository-local wrapper/config files.
 - `shared/shared-dir-sha256.txt`
   Canonical SHA manifest for the shared directories above.
 
@@ -70,7 +71,7 @@ shared/
 ├── bijux-checks/          # shared compliance and update flows
 ├── bijux-docs/            # shared docs and website shell assets
 ├── bijux-docs/tooling/    # shared docs sync and verification tooling
-├── bijux-gh/              # shared GitHub policy/ruleset artifacts
+├── bijux-gh/              # legacy shared GitHub policy sources
 ├── bijux-makes-py/        # shared Python-oriented make modules
 └── shared-dir-sha256.txt  # canonical content-hash manifest
 ```
@@ -104,7 +105,7 @@ The canonical shared inventory currently includes:
 - `shared/bijux-docs`
 - `shared/bijux-makes-py`
 - `shared/bijux-checks`
-- `shared/bijux-gh`
+- `.github`
 
 Checks and updates are driven by these standard inputs:
 
@@ -112,16 +113,13 @@ Checks and updates are driven by these standard inputs:
   [`shared/bijux-checks/bijux-std-checks.yml`](shared/bijux-checks/bijux-std-checks.yml)
 - Canonical inventory digests:
   [`shared/shared-dir-sha256.txt`](shared/shared-dir-sha256.txt)
-- Canonical CI workflow template for consumers:
-  [`shared/bijux-checks/workflows/bijux-std.yml`](shared/bijux-checks/workflows/bijux-std.yml)
-- Canonical GitHub Pages docs deploy workflow template for consumers:
-  [`shared/bijux-gh/workflows/deploy-docs.yml`](shared/bijux-gh/workflows/deploy-docs.yml)
-- Canonical crates.io release workflow template for consumers:
-  [`shared/bijux-gh/workflows/release-crates.yml`](shared/bijux-gh/workflows/release-crates.yml)
-- Canonical GHCR release workflow template for consumers:
-  [`shared/bijux-gh/workflows/release-ghcr.yml`](shared/bijux-gh/workflows/release-ghcr.yml)
-- Canonical PyPI release workflow template for consumers:
-  [`shared/bijux-gh/workflows/release-pypi.yml`](shared/bijux-gh/workflows/release-pypi.yml)
+- Canonical GitHub standards layer:
+  [`.github/`](.github)
+- Typed repository config manifest:
+  [`.github/standards/repo-config.manifest.json`](.github/standards/repo-config.manifest.json)
+- Canonical renderer/sync tooling:
+  [`.github/scripts/render_repo_configs.py`](.github/scripts/render_repo_configs.py),
+  [`.github/scripts/sync_github_standards.py`](.github/scripts/sync_github_standards.py)
 
 ## Verification Model
 
@@ -187,8 +185,8 @@ Branch protection should require both matrix check contexts:
 
 When workflow or job names change, update these files in the same change:
 
-- `shared/bijux-gh/required-status-checks.md`
-- `shared/bijux-gh/rulesets/main-branch-protection.json`
+- `.github/required-status-checks.md`
+- `.github/rulesets/main-branch-protection.json`
 
 ## UI Regression Checks
 
