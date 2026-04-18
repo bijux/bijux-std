@@ -214,6 +214,8 @@ Ownership mapping for governance-sensitive paths is defined in:
 
 `automerge-pr.yml` enables auto-merge only when policy allows and either a
 trusted CODEOWNER approval exists or the trusted PR author is a CODEOWNER.
+The workflow waits for pull requests to reach a stable mergeable state before
+attempting to enable auto-merge.
 
 ## UI Regression Checks
 
