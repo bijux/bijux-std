@@ -201,6 +201,10 @@ When workflow or job names change, update these files in the same change:
 - `.github/required-status-checks.md`
 - `.github/rulesets/main-branch-protection.json`
 
+Ownership mapping for governance-sensitive paths is defined in:
+
+- `.github/CODEOWNERS`
+
 ## UI Regression Checks
 
 `bijux-std` also includes viewport-aware UI/UX regression checks for the shared
