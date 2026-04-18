@@ -73,7 +73,9 @@ jobs:
             }
 
             const trustedApprovals = Array.from(latestByReviewer.values()).filter((review) =>
-              review.state === "APPROVED" && allowedAssociations.has(review.author_association),
+              review.state === "APPROVED" &&
+              allowedAssociations.has(review.author_association) &&
+              review.commit_id === pr.head.sha,
             );
             if (trustedApprovals.length === 0) {
               core.info("No trusted approval present yet; skipping auto-merge enablement.");
