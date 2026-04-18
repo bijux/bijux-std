@@ -27,6 +27,9 @@ multiple Bijux repositories verify, synchronize, and consume shared contracts.
   (`.github/release.env` plus repository variables), plus matrix-based
   package publication controls for repositories that publish release bundles to
   GHCR.
+- Added allowlist gates across shared release workflows so `.github/release.env`
+  can explicitly constrain which crate/package slugs are publishable for
+  crates.io, PyPI artifact mode, and GHCR.
 
 ## 0.1.1 - 2026-04-18
 
