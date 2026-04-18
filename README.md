@@ -173,6 +173,14 @@ The shared policy for these commands lives in
 
 The canonical standards workflow is [`.github/workflows/bijux-std.yml`](.github/workflows/bijux-std.yml).
 
+Repository-local filter policy:
+
+- `bijux-std` keeps only the standards verification workflow active under
+  `.github/workflows`.
+- Shared release/docs/reusable workflow templates live under
+  `shared/bijux-gh/workflows` and are synchronized into consumer repositories
+  under `.github/workflows`.
+
 It runs one matrix job (`checks`) with two entries on every pull request and push to `main`:
 
 - `standard`: runs `make bijux-std-checks`
