@@ -22,6 +22,7 @@ BASE_PROTECTED_PATHS = {
     ".github/scripts/check_protected_github_changes.py",
     ".github/scripts/wait_for_ci.py",
     ".github/workflows/bijux-std.yml",
+    ".github/workflows/automerge-pr.yml",
     ".github/bijux-std-shared.sha256",
     ".github/release.env",
     ".github/dependabot.yml",
