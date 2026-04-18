@@ -43,7 +43,24 @@ jobs:
               per_page: 100,
             });
 
-            const hasTrustedApproval = reviews.some((review) =>
+            const latestByReviewer = new Map();
+            for (const review of reviews) {
+              if (!review.user || !review.user.login) {
+                continue;
+              }
+              const previous = latestByReviewer.get(review.user.login);
+              if (!previous) {
+                latestByReviewer.set(review.user.login, review);
+                continue;
+              }
+              const previousAt = new Date(previous.submitted_at || 0).getTime();
+              const currentAt = new Date(review.submitted_at || 0).getTime();
+              if (currentAt >= previousAt) {
+                latestByReviewer.set(review.user.login, review);
+              }
+            }
+
+            const hasTrustedApproval = Array.from(latestByReviewer.values()).some((review) =>
               review.state === "APPROVED" && allowedAssociations.has(review.author_association),
             );
             if (!hasTrustedApproval) {
