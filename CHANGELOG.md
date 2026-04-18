@@ -10,7 +10,10 @@ multiple Bijux repositories verify, synchronize, and consume shared contracts.
 
 ## Unreleased
 
-No unreleased changes.
+### Changed
+
+- Refreshed `shared/shared-dir-sha256.txt` so the canonical digest entry for
+  `shared/bijux-gh` matches the current shared governance content.
 
 ## 0.1.1 - 2026-04-18
 
