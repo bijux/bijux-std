@@ -60,11 +60,53 @@ jobs:
               }
             }
 
-            const hasTrustedApproval = Array.from(latestByReviewer.values()).some((review) =>
+            const trustedApprovals = Array.from(latestByReviewer.values()).filter((review) =>
               review.state === "APPROVED" && allowedAssociations.has(review.author_association),
             );
-            if (!hasTrustedApproval) {
+            if (trustedApprovals.length === 0) {
               core.info("No trusted approval present yet; skipping auto-merge enablement.");
+              return;
+            }
+
+            const codeownersPath = ".github/CODEOWNERS";
+            let codeownersContent = "";
+            try {
+              const codeownersResponse = await github.rest.repos.getContent({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                path: codeownersPath,
+                ref: pr.base.ref,
+              });
+              const payload = codeownersResponse.data;
+              if (!("content" in payload) || payload.type !== "file") {
+                core.info("CODEOWNERS file is not a plain file; skipping auto-merge enablement.");
+                return;
+              }
+              codeownersContent = Buffer.from(payload.content, "base64").toString("utf8");
+            } catch (error) {
+              core.info(`Unable to load ${codeownersPath}; skipping auto-merge enablement: ${error.message}`);
+              return;
+            }
+
+            const codeownerUsers = new Set();
+            for (const rawLine of codeownersContent.split(/\r?\n/)) {
+              const line = rawLine.trim();
+              if (!line || line.startsWith("#")) {
+                continue;
+              }
+              const tokens = line.split(/\s+/).slice(1);
+              for (const token of tokens) {
+                if (token.startsWith("@") && !token.includes("/")) {
+                  codeownerUsers.add(token.slice(1).toLowerCase());
+                }
+              }
+            }
+
+            const hasCodeownerApproval = trustedApprovals.some((review) =>
+              review.user && review.user.login && codeownerUsers.has(review.user.login.toLowerCase()),
+            );
+            if (!hasCodeownerApproval) {
+              core.info("Trusted approvals found, but none from CODEOWNERS users; skipping auto-merge enablement.");
               return;
             }
 
