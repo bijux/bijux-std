@@ -22,6 +22,14 @@ multiple Bijux repositories verify, synchronize, and consume shared contracts.
   and sync orchestration support for advancing this pin.
 - Extended standards checksum scope (`.github/bijux-std-shared.sha256`) to
   include manifest/generator/policy assets and shared workflow templates.
+- Applied a repository-local workflow filter in `bijux-std` so shared
+  release/docs/reusable templates are stored under
+  `shared/bijux-gh/workflows` and synchronized to consumer `.github/workflows`,
+  while `bijux-std` itself keeps only standards verification workflow activation.
+- Added a typed workflow inventory registry
+  (`.github/standards/workflow-inventory.json`) and per-repository
+  `workflow_allowlist` entries in the manifest so managed workflow sync is
+  explicit and allowlist-driven.
 - Refreshed `shared/shared-dir-sha256.txt` so the canonical digest entry for
   `shared/bijux-gh` matches the current shared governance content.
 - Promoted a shared `release-pypi.yml` workflow template under

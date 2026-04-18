@@ -4,8 +4,11 @@ from __future__ import annotations
 import json
 import subprocess
 from pathlib import Path
+from typing import Any
 
 ROOT = Path(__file__).resolve().parents[3]
+STD_REPO = ROOT / "bijux-std"
+WORKFLOW_INVENTORY_PATH = STD_REPO / ".github/standards/workflow-inventory.json"
 REPOS = [
     "bijux-atlas",
     "bijux-canon",
@@ -16,6 +19,74 @@ REPOS = [
     "bijux-std",
     "bijux.github.io",
 ]
+
+
+def load_workflow_inventory() -> dict[str, Any]:
+    inventory = json.loads(WORKFLOW_INVENTORY_PATH.read_text(encoding="utf-8"))
+    if inventory.get("version") != 1:
+        raise ValueError("Unsupported workflow inventory version")
+    return inventory
+
+
+def workflow_ids(inventory: dict[str, Any]) -> set[str]:
+    return {entry["id"] for entry in inventory["managed_workflows"]}
+
+
+def release_env_value(entries: list[dict], key: str, default: bool = False) -> bool:
+    for entry in entries:
+        if entry.get("key") == key:
+            if entry.get("type") == "bool":
+                return bool(entry.get("value"))
+            break
+    return default
+
+
+def derive_workflow_allowlist(repo_name: str, release_env: list[dict], wrappers: dict, inventory: dict[str, Any]) -> list[str]:
+    known = workflow_ids(inventory)
+    allow: set[str] = {"github-policy"}
+
+    if repo_name != "bijux-std":
+        allow.add("deploy-docs")
+
+    if release_env_value(release_env, "BIJUX_RELEASE_ENABLED"):
+        allow.add("release-github")
+
+    if release_env_value(release_env, "BIJUX_RELEASE_ARTIFACTS_ENABLED"):
+        allow.update(
+            {
+                "build-release-artifacts",
+                "release-artifacts",
+                "release-ghcr",
+                "release-github",
+                "release-pypi",
+            }
+        )
+
+    if release_env_value(release_env, "BIJUX_CRATES_RELEASE_ENABLED"):
+        allow.add("release-crates")
+    if release_env_value(release_env, "BIJUX_GHCR_RELEASE_ENABLED"):
+        allow.add("release-ghcr")
+    if release_env_value(release_env, "BIJUX_PYPI_ENABLED"):
+        allow.add("release-pypi")
+
+    wrapper_uses_to_workflow_id = {
+        "./.github/workflows/reusable-ci-python-packages.yml": "reusable-ci-python-packages",
+        "./.github/workflows/reusable-verify-python-packages.yml": "reusable-verify-python-packages",
+        "./.github/workflows/reusable-ci-rust-stack.yml": "reusable-ci-rust-stack",
+    }
+    for wrapper in wrappers.values():
+        jobs = wrapper.get("jobs", {}) if isinstance(wrapper, dict) else {}
+        for job in jobs.values():
+            if not isinstance(job, dict):
+                continue
+            uses = job.get("uses")
+            if not isinstance(uses, str):
+                continue
+            workflow_id = wrapper_uses_to_workflow_id.get(uses)
+            if workflow_id:
+                allow.add(workflow_id)
+
+    return sorted(workflow_id for workflow_id in allow if workflow_id in known)
 
 
 def parse_release_env(path: Path) -> list[dict]:
@@ -78,12 +149,14 @@ def parse_text(path: Path) -> str | None:
 
 
 def main() -> None:
-    manifest: dict = {"version": 2, "repositories": []}
+    inventory = load_workflow_inventory()
+    manifest: dict = {"version": 2, "workflow_inventory": inventory, "repositories": []}
 
     for repo_name in REPOS:
         repo_path = ROOT / repo_name
         repo_entry: dict = {"name": repo_name}
-        repo_entry["release_env"] = parse_release_env(repo_path / ".github/release.env")
+        release_env = parse_release_env(repo_path / ".github/release.env")
+        repo_entry["release_env"] = release_env
 
         dependabot = parse_yaml(repo_path / ".github/dependabot.yml")
         if dependabot is not None:
@@ -100,6 +173,7 @@ def main() -> None:
 
         if wrappers:
             repo_entry["workflow_wrappers"] = wrappers
+        repo_entry["workflow_allowlist"] = derive_workflow_allowlist(repo_name, release_env, wrappers, inventory)
 
         pinned_sha = parse_text(repo_path / ".github/standards/bijux-std.sha")
         if pinned_sha:

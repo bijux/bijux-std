@@ -117,6 +117,8 @@ Checks and updates are driven by these standard inputs:
   [`.github/`](.github)
 - Typed repository config manifest:
   [`.github/standards/repo-config.manifest.json`](.github/standards/repo-config.manifest.json)
+- Workflow inventory registry:
+  [`.github/standards/workflow-inventory.json`](.github/standards/workflow-inventory.json)
 - Canonical renderer/sync tooling:
   [`.github/scripts/render_repo_configs.py`](.github/scripts/render_repo_configs.py),
   [`.github/scripts/sync_github_standards.py`](.github/scripts/sync_github_standards.py)
@@ -172,6 +174,17 @@ The shared policy for these commands lives in
 ## GitHub Workflow Contract
 
 The canonical standards workflow is [`.github/workflows/bijux-std.yml`](.github/workflows/bijux-std.yml).
+
+Repository-local filter policy:
+
+- `bijux-std` keeps only the standards verification workflow active under
+  `.github/workflows`.
+- Shared release/docs/reusable workflow templates live under
+  `shared/bijux-gh/workflows` and are synchronized into consumer repositories
+  under `.github/workflows`.
+- Consumer runtime workflow copies are filtered by manifest-driven
+  `workflow_allowlist` entries, so each repository only gets registered
+  allowlisted managed workflows.
 
 It runs one matrix job (`checks`) with two entries on every pull request and push to `main`:
 

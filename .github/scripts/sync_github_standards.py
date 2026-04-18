@@ -6,10 +6,12 @@ import json
 import subprocess
 import time
 from pathlib import Path
+from typing import Any
 
 ROOT = Path(__file__).resolve().parents[3]
 STD_REPO = ROOT / "bijux-std"
 PIN_PATH = ".github/standards/bijux-std.sha"
+MANIFEST_PATH = STD_REPO / ".github/standards/repo-config.manifest.json"
 
 DEFAULT_REPOS = [
     "bijux-atlas",
@@ -21,32 +23,25 @@ DEFAULT_REPOS = [
     "bijux.github.io",
 ]
 
-SHARED_FILES = [
-    ".github/ISSUE_TEMPLATE/bug-report.yml",
-    ".github/ISSUE_TEMPLATE/config.yml",
-    ".github/ISSUE_TEMPLATE/feature-request.yml",
-    ".github/PULL_REQUEST_TEMPLATE/default.md",
-    ".github/PULL_REQUEST_TEMPLATE/release-change.md",
-    ".github/automation-identity.md",
-    ".github/required-status-checks.md",
-    ".github/rulesets/main-branch-protection.json",
-    ".github/scripts/build_repo_manifest.py",
-    ".github/scripts/check_pinned_actions.py",
-    ".github/scripts/check_protected_github_changes.py",
-    ".github/scripts/render_repo_configs.py",
-    ".github/scripts/sync_github_standards.py",
-    ".github/scripts/wait_for_ci.py",
-    ".github/standards/repo-config.manifest.json",
-    ".github/workflows/bijux-std.yml",
-    ".github/workflows/build-release-artifacts.yml",
-    ".github/workflows/deploy-docs.yml",
-    ".github/workflows/release-artifacts.yml",
-    ".github/workflows/release-github.yml",
-    ".github/workflows/reusable-ci-python-packages.yml",
-    ".github/workflows/reusable-verify-python-packages.yml",
-    ".github/workflows/reusable-ci-rust-stack.yml",
-    ".github/workflows/github-policy.yml",
-    ".github/bijux-std-shared.sha256",
+BASE_FILE_MAPPINGS: list[tuple[str, str]] = [
+    (".github/ISSUE_TEMPLATE/bug-report.yml", ".github/ISSUE_TEMPLATE/bug-report.yml"),
+    (".github/ISSUE_TEMPLATE/config.yml", ".github/ISSUE_TEMPLATE/config.yml"),
+    (".github/ISSUE_TEMPLATE/feature-request.yml", ".github/ISSUE_TEMPLATE/feature-request.yml"),
+    (".github/PULL_REQUEST_TEMPLATE/default.md", ".github/PULL_REQUEST_TEMPLATE/default.md"),
+    (".github/PULL_REQUEST_TEMPLATE/release-change.md", ".github/PULL_REQUEST_TEMPLATE/release-change.md"),
+    (".github/automation-identity.md", ".github/automation-identity.md"),
+    (".github/required-status-checks.md", ".github/required-status-checks.md"),
+    (".github/rulesets/main-branch-protection.json", ".github/rulesets/main-branch-protection.json"),
+    (".github/scripts/build_repo_manifest.py", ".github/scripts/build_repo_manifest.py"),
+    (".github/scripts/check_pinned_actions.py", ".github/scripts/check_pinned_actions.py"),
+    (".github/scripts/check_protected_github_changes.py", ".github/scripts/check_protected_github_changes.py"),
+    (".github/scripts/render_repo_configs.py", ".github/scripts/render_repo_configs.py"),
+    (".github/scripts/sync_github_standards.py", ".github/scripts/sync_github_standards.py"),
+    (".github/scripts/wait_for_ci.py", ".github/scripts/wait_for_ci.py"),
+    (".github/standards/workflow-inventory.json", ".github/standards/workflow-inventory.json"),
+    (".github/standards/repo-config.manifest.json", ".github/standards/repo-config.manifest.json"),
+    (".github/workflows/bijux-std.yml", ".github/workflows/bijux-std.yml"),
+    (".github/bijux-std-shared.sha256", ".github/bijux-std-shared.sha256"),
 ]
 
 
@@ -55,12 +50,62 @@ def run(cmd: list[str], cwd: Path | None = None) -> str:
     return result.stdout.strip()
 
 
+def load_manifest() -> dict[str, Any]:
+    return json.loads(MANIFEST_PATH.read_text(encoding="utf-8"))
+
+
+def find_repo_config(manifest: dict[str, Any], repo_name: str) -> dict[str, Any]:
+    for repo in manifest["repositories"]:
+        if repo["name"] == repo_name:
+            return repo
+    raise KeyError(f"Repository '{repo_name}' not found in manifest")
+
+
+def inventory_entries(manifest: dict[str, Any]) -> list[dict[str, str]]:
+    return manifest.get("workflow_inventory", {}).get("managed_workflows", [])
+
+
+def copy_file_mapping(source_relative: str, destination_relative: str, target_repo: str) -> None:
+    source = STD_REPO / source_relative
+    destination = ROOT / target_repo / destination_relative
+    destination.parent.mkdir(parents=True, exist_ok=True)
+    destination.write_bytes(source.read_bytes())
+
+
+def copy_repo_files(target_repo: str, repo_config: dict[str, Any], manifest: dict[str, Any]) -> None:
+    for source_relative, destination_relative in BASE_FILE_MAPPINGS:
+        copy_file_mapping(source_relative, destination_relative, target_repo)
+
+    allowlist = set(repo_config.get("workflow_allowlist", []))
+    managed_runtime_paths: dict[str, str] = {}
+    for workflow in inventory_entries(manifest):
+        workflow_id = workflow["id"]
+        source_relative = workflow["source"]
+        shared_destination = source_relative
+        runtime_destination = workflow["consumer_runtime"]
+
+        copy_file_mapping(source_relative, shared_destination, target_repo)
+        managed_runtime_paths[runtime_destination] = workflow_id
+        if workflow_id in allowlist:
+            copy_file_mapping(source_relative, runtime_destination, target_repo)
+
+    repo_dir = ROOT / target_repo
+    for runtime_path, workflow_id in sorted(managed_runtime_paths.items()):
+        if workflow_id in allowlist:
+            continue
+        path = repo_dir / runtime_path
+        if path.exists():
+            path.unlink()
+
+
+def sync_repo_files(target_repo: str, manifest: dict[str, Any]) -> None:
+    repo_config = find_repo_config(manifest, target_repo)
+    copy_repo_files(target_repo, repo_config, manifest)
+
+
 def copy_shared_files(target_repo: str) -> None:
-    for relative in SHARED_FILES:
-        source = STD_REPO / relative
-        destination = ROOT / target_repo / relative
-        destination.parent.mkdir(parents=True, exist_ok=True)
-        destination.write_bytes(source.read_bytes())
+    manifest = load_manifest()
+    sync_repo_files(target_repo, manifest)
 
 
 def write_std_pin(repo_name: str, std_sha: str) -> None:
@@ -178,7 +223,7 @@ def main() -> None:
         if args.create_branch:
             ensure_branch(repo_dir, branch_name)
 
-        run(["git", "add", ".github"], cwd=repo_dir)
+        run(["git", "add", ".github", "shared"], cwd=repo_dir)
         run(["git", "commit", "-m", args.commit_message], cwd=repo_dir)
 
         pr_info = create_pr(repo_dir, args, branch_name)
