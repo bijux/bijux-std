@@ -38,6 +38,9 @@ multiple Bijux repositories verify, synchronize, and consume shared contracts.
 - Extended `release-github.yml` with explicit enable/disable control
   (`BIJUX_RELEASE_ENABLED`) so repositories can avoid duplicate direct tag
   release runs when using orchestrated release lanes.
+- Added canonical issue and pull request template surfaces under
+  `shared/bijux-gh/ISSUE_TEMPLATE` and `shared/bijux-gh/PULL_REQUEST_TEMPLATE`
+  so consuming repositories can share one durable intake and review structure.
 
 ## 0.1.1 - 2026-04-18
 
