@@ -148,19 +148,25 @@ def parse_yaml(path: Path) -> dict | None:
     if not path.exists():
         return None
 
-    result = subprocess.run(
-        [
-            "ruby",
-            "-ryaml",
-            "-rjson",
-            "-e",
-            "puts JSON.generate(YAML.safe_load(File.read(ARGV[0]), aliases: false))",
-            str(path),
-        ],
-        check=True,
-        capture_output=True,
-        text=True,
-    )
+    try:
+        result = subprocess.run(
+            [
+                "ruby",
+                "-ryaml",
+                "-rjson",
+                "-e",
+                "puts JSON.generate(YAML.safe_load(File.read(ARGV[0]), aliases: false))",
+                str(path),
+            ],
+            check=True,
+            capture_output=True,
+            text=True,
+        )
+    except FileNotFoundError as exc:
+        raise RuntimeError("ruby is required to parse YAML for manifest generation") from exc
+    except subprocess.CalledProcessError as exc:
+        stderr = exc.stderr.strip() if exc.stderr else "unknown parse error"
+        raise RuntimeError(f"failed to parse YAML file {path}: {stderr}") from exc
     return json.loads(result.stdout)
 
 
