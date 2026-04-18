@@ -43,6 +43,7 @@ BASE_FILE_MAPPINGS: list[tuple[str, str]] = [
     (".github/standards/workflow-inventory.json", ".github/standards/workflow-inventory.json"),
     (".github/standards/repo-config.manifest.json", ".github/standards/repo-config.manifest.json"),
     (".github/workflows/bijux-std.yml", ".github/workflows/bijux-std.yml"),
+    (".github/workflows/automerge-pr.yml", ".github/workflows/automerge-pr.yml"),
     (".github/bijux-std-shared.sha256", ".github/bijux-std-shared.sha256"),
 ]
 
