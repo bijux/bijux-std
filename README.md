@@ -216,6 +216,8 @@ Ownership mapping for governance-sensitive paths is defined in:
 trusted CODEOWNER approval exists or the trusted PR author is a CODEOWNER.
 The workflow attempts enablement on pull-request/review events and re-runs
 after a successful `bijux-std` `workflow_run` to cover unstable early states.
+When the follow-up run sees a clean merge-ready pull request, it merges
+directly to complete the automation path.
 
 ## UI Regression Checks
 
