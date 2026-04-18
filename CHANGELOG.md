@@ -8,6 +8,14 @@ cross-repository standards surfaces, not product package release streams.
 The goal of this changelog is to explain standard changes that affect how
 multiple Bijux repositories verify, synchronize, and consume shared contracts.
 
+## Unreleased
+
+### Changed
+
+- Bookkeeping update: synchronized consuming repositories now document explicit
+  contributor and automation identity boundaries for `bijux`,
+  `dependabot[bot]`, and `github-actions[bot]` under their governance docs.
+
 ## 0.1.0 - 2026-04-16
 
 ### Added
