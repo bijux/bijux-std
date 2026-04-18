@@ -19,6 +19,7 @@ cross-repository governance assets that are also promoted into the canonical
 `.github` standards layer.
 
 - `.github/automation-identity.md`
+- `.github/CODEOWNERS`
 - `.github/ISSUE_TEMPLATE/*`
 - `.github/PULL_REQUEST_TEMPLATE/*`
 - `.github/scripts/wait_for_ci.py`
