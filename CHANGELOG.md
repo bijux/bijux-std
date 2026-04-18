@@ -22,6 +22,11 @@ multiple Bijux repositories verify, synchronize, and consume shared contracts.
   `shared/bijux-gh/workflows` with one configuration surface
   (`.github/release-crates.env` plus repository variables) and per-repository
   enable/disable controls.
+- Promoted a shared `release-ghcr.yml` workflow template under
+  `shared/bijux-gh/workflows` with one configuration surface
+  (`.github/release-ghcr.env` plus repository variables), plus matrix-based
+  package publication controls for repositories that publish release bundles to
+  GHCR.
 
 ## 0.1.1 - 2026-04-18
 

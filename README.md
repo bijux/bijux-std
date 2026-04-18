@@ -118,6 +118,8 @@ Checks and updates are driven by these standard inputs:
   [`shared/bijux-gh/workflows/deploy-docs.yml`](shared/bijux-gh/workflows/deploy-docs.yml)
 - Canonical crates.io release workflow template for consumers:
   [`shared/bijux-gh/workflows/release-crates.yml`](shared/bijux-gh/workflows/release-crates.yml)
+- Canonical GHCR release workflow template for consumers:
+  [`shared/bijux-gh/workflows/release-ghcr.yml`](shared/bijux-gh/workflows/release-ghcr.yml)
 - Canonical PyPI release workflow template for consumers:
   [`shared/bijux-gh/workflows/release-pypi.yml`](shared/bijux-gh/workflows/release-pypi.yml)
 
