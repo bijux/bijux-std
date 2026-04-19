@@ -287,7 +287,7 @@
       "workflow_wrappers": {
         "ci": {
           "name": "CI",
-          "true": {
+          "on": {
             "push": {
               "branches": [
                 "main"
@@ -695,7 +695,7 @@
       "workflow_wrappers": {
         "verify": {
           "name": "verify",
-          "true": {
+          "on": {
             "push": {
               "branches": [
                 "main"
@@ -838,9 +838,7 @@
         "release-artifacts",
         "release-ghcr",
         "release-github",
-        "release-pypi",
-        "reusable-ci-python-packages",
-        "reusable-verify-python-packages"
+        "release-pypi"
       ]
     },
     {
@@ -902,7 +900,7 @@
       "workflow_wrappers": {
         "ci": {
           "name": "CI",
-          "true": {
+          "on": {
             "push": {
               "branches": [
                 "main"
@@ -1271,7 +1269,7 @@
       "workflow_wrappers": {
         "verify": {
           "name": "verify",
-          "true": {
+          "on": {
             "push": {
               "branches": [
                 "main"
@@ -1531,7 +1529,7 @@
       "workflow_wrappers": {
         "verify": {
           "name": "verify",
-          "true": {
+          "on": {
             "push": {
               "branches": [
                 "main"
