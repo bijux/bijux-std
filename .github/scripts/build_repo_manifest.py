@@ -92,9 +92,13 @@ def derive_workflow_allowlist(repo_name: str, release_env: list[dict], wrappers:
         allow.add("release-pypi")
 
     wrapper_uses_to_workflow_id = {
+        "./.github/workflows/ci-package.yml": "ci-package",
         "./.github/workflows/reusable-ci-python-packages.yml": "reusable-ci-python-packages",
         "./.github/workflows/reusable-verify-python-packages.yml": "reusable-verify-python-packages",
         "./.github/workflows/reusable-ci-rust-stack.yml": "reusable-ci-rust-stack",
+    }
+    workflow_dependencies = {
+        "ci-package": {"reusable-ci-python-packages"},
     }
     for wrapper in wrappers.values():
         jobs = wrapper.get("jobs", {}) if isinstance(wrapper, dict) else {}
@@ -107,6 +111,7 @@ def derive_workflow_allowlist(repo_name: str, release_env: list[dict], wrappers:
             workflow_id = wrapper_uses_to_workflow_id.get(uses)
             if workflow_id:
                 allow.add(workflow_id)
+                allow.update(workflow_dependencies.get(workflow_id, set()))
 
     return sorted(workflow_id for workflow_id in allow if workflow_id in known)
 
