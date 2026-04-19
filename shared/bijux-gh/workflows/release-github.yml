@@ -103,7 +103,6 @@ on:
 permissions:
   contents: write
   actions: read
-  packages: write
 
 concurrency:
   group: release-github-${{ github.ref }}
