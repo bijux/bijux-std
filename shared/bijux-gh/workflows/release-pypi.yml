@@ -258,6 +258,11 @@ jobs:
           skip_existing="$(bool_from_values "${input_skip_existing}" "${BIJUX_PYPI_SKIP_EXISTING:-}" "${{ vars.BIJUX_PYPI_SKIP_EXISTING || '' }}" "true")"
           allow_token_bootstrap_on_missing="$(bool_from_values "${input_allow_token_bootstrap_on_missing}" "${BIJUX_PYPI_ALLOW_TOKEN_BOOTSTRAP_ON_MISSING:-}" "${{ vars.BIJUX_PYPI_ALLOW_TOKEN_BOOTSTRAP_ON_MISSING || '' }}" "true")"
 
+          if [[ "${enabled}" == "true" && -n "${release_tag}" && "${release_tag}" != v* ]]; then
+            echo "release_tag must start with 'v' when release-pypi is enabled: ${release_tag}" >&2
+            exit 1
+          fi
+
           wait_for_ci_command="$(from_values "" "${BIJUX_PYPI_WAIT_FOR_CI_COMMAND:-}" "${{ vars.BIJUX_PYPI_WAIT_FOR_CI_COMMAND || '' }}" "")"
           plan_command="$(from_values "" "${BIJUX_PYPI_PLAN_COMMAND:-}" "${{ vars.BIJUX_PYPI_PLAN_COMMAND || '' }}" "")"
           prepare_command="$(from_values "" "${BIJUX_PYPI_PREPARE_COMMAND:-}" "${{ vars.BIJUX_PYPI_PREPARE_COMMAND || '' }}" "")"
