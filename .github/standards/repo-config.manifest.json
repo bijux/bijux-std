@@ -679,8 +679,15 @@
         }
       },
       "workflow_allowlist": [
+        "build-release-artifacts",
         "deploy-docs",
-        "github-policy"
+        "github-policy",
+        "release-artifacts",
+        "release-ghcr",
+        "release-github",
+        "release-pypi",
+        "reusable-ci-python-packages",
+        "reusable-verify-python-packages"
       ]
     },
     {
