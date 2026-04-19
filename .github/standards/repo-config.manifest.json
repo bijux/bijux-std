@@ -1437,7 +1437,7 @@
                   ]
                 }
               },
-              "uses": "./.github/workflows/ci-package.yml",
+              "uses": "./.github/workflows/reusable-ci-python-packages.yml",
               "with": {
                 "package_slug": "${{ matrix.package_slug }}",
                 "package_dir": "${{ matrix.package_dir }}",
@@ -1839,6 +1839,7 @@
       "workflow_allowlist": [
         "deploy-docs",
         "github-policy",
+        "reusable-ci-python-packages",
         "release-artifacts",
         "release-ghcr",
         "release-github",
