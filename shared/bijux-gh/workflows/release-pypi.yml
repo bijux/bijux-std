@@ -365,6 +365,8 @@ jobs:
     needs: resolve
     if: ${{ needs.resolve.outputs.enabled == 'true' && needs.resolve.outputs.mode == 'maturin' }}
     runs-on: ubuntu-24.04
+    environment:
+      name: ${{ needs.resolve.outputs.environment_name }}
     timeout-minutes: 30
     permissions:
       contents: read
