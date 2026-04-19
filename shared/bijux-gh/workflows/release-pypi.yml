@@ -432,6 +432,15 @@ jobs:
           user: __token__
           password: ${{ secrets.PYPI_API_TOKEN }}
 
+      - name: Fail on indeterminate PyPI probe
+        if: ${{ steps.auth.outputs.mode != 'token' && steps.trusted_publish.outcome == 'failure' && steps.pypi_project.outputs.probe_status == 'error' }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo "Trusted publish failed and PyPI probe result was indeterminate." >&2
+          echo "Refusing token bootstrap for safety; retry later or force token mode explicitly." >&2
+          exit 1
+
       - name: Validate publish mode resolution
         if: ${{ steps.auth.outputs.mode != 'token' && steps.trusted_publish.outcome == 'failure' && steps.token_publish.outcome != 'success' }}
         shell: bash
