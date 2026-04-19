@@ -345,17 +345,17 @@
         {
           "key": "BIJUX_RELEASE_ENABLED",
           "type": "bool",
-          "value": false
+          "value": true
         },
         {
           "key": "BIJUX_GHCR_RELEASE_ENABLED",
           "type": "bool",
-          "value": false
+          "value": true
         },
         {
           "key": "BIJUX_PYPI_ENABLED",
           "type": "bool",
-          "value": false
+          "value": true
         },
         {
           "key": "BIJUX_RELEASE_ARTIFACTS_ENABLED",
