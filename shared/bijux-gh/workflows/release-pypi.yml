@@ -377,7 +377,18 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          package_name='${{ matrix.package_name || matrix.package_slug }}'
+          package_name='${{ matrix.package_name || '' }}'
+          if [[ -z "${package_name}" ]]; then
+            dist_path="$(find .github/tmp/${{ matrix.package_slug }}-dist -maxdepth 1 -type f \( -name '*.whl' -o -name '*.tar.gz' \) | sort | head -n 1)"
+            if [[ -n "${dist_path}" ]]; then
+              file_name="$(basename "${dist_path}")"
+              package_name="${file_name%%-*}"
+              package_name="${package_name//_/-}"
+            fi
+          fi
+          if [[ -z "${package_name}" ]]; then
+            package_name='${{ matrix.package_slug }}'
+          fi
           if curl --silent --show-error --fail "https://pypi.org/pypi/${package_name}/json" >/dev/null 2>&1; then
             echo "exists=true" >> "$GITHUB_OUTPUT"
             exit 0
