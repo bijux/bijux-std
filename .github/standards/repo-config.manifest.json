@@ -4,9 +4,9 @@
     "version": 1,
     "managed_workflows": [
       {
-        "id": "build-release-artifacts",
-        "source": "shared/bijux-gh/workflows/build-release-artifacts.yml",
-        "consumer_runtime": ".github/workflows/build-release-artifacts.yml"
+        "id": "release-artifacts",
+        "source": "shared/bijux-gh/workflows/release-artifacts.yml",
+        "consumer_runtime": ".github/workflows/release-artifacts.yml"
       },
       {
         "id": "deploy-docs",
@@ -326,9 +326,9 @@
         }
       },
       "workflow_allowlist": [
-        "build-release-artifacts",
         "deploy-docs",
         "github-policy",
+        "release-artifacts",
         "release-crates",
         "release-github",
         "reusable-ci-rust-stack"
@@ -828,9 +828,9 @@
         }
       },
       "workflow_allowlist": [
-        "build-release-artifacts",
         "deploy-docs",
         "github-policy",
+        "release-artifacts",
         "release-ghcr",
         "release-github",
         "release-pypi",
