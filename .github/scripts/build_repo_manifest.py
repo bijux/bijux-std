@@ -167,7 +167,24 @@ def parse_yaml(path: Path) -> dict | None:
     except subprocess.CalledProcessError as exc:
         stderr = exc.stderr.strip() if exc.stderr else "unknown parse error"
         raise RuntimeError(f"failed to parse YAML file {path}: {stderr}") from exc
-    return json.loads(result.stdout)
+    parsed = json.loads(result.stdout)
+    return normalize_yaml_keys(parsed)
+
+
+def normalize_yaml_keys(value: Any) -> Any:
+    if isinstance(value, dict):
+        normalized: dict[Any, Any] = {}
+        for key, item in value.items():
+            normalized_key = key
+            if key == "true":
+                normalized_key = "on"
+            elif key == "false":
+                normalized_key = "off"
+            normalized[normalized_key] = normalize_yaml_keys(item)
+        return normalized
+    if isinstance(value, list):
+        return [normalize_yaml_keys(item) for item in value]
+    return value
 
 
 def parse_text(path: Path) -> str | None:
