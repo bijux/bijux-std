@@ -389,11 +389,21 @@ jobs:
           if [[ -z "${package_name}" ]]; then
             package_name='${{ matrix.package_slug }}'
           fi
-          if curl --silent --show-error --fail "https://pypi.org/pypi/${package_name}/json" >/dev/null 2>&1; then
-            echo "exists=true" >> "$GITHUB_OUTPUT"
-            exit 0
-          fi
-          echo "exists=false" >> "$GITHUB_OUTPUT"
+          status_code="$(curl --silent --show-error --location --retry 2 --retry-delay 1 --output /dev/null --write-out '%{http_code}' "https://pypi.org/pypi/${package_name}/json" || true)"
+          case "${status_code}" in
+            200)
+              echo "exists=true" >> "$GITHUB_OUTPUT"
+              echo "probe_status=exists" >> "$GITHUB_OUTPUT"
+              ;;
+            404)
+              echo "exists=false" >> "$GITHUB_OUTPUT"
+              echo "probe_status=missing" >> "$GITHUB_OUTPUT"
+              ;;
+            *)
+              echo "exists=unknown" >> "$GITHUB_OUTPUT"
+              echo "probe_status=error" >> "$GITHUB_OUTPUT"
+              ;;
+          esac
 
       - name: Publish to PyPI (trusted publisher)
         id: trusted_publish
