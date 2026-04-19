@@ -838,7 +838,8 @@
         "release-artifacts",
         "release-ghcr",
         "release-github",
-        "release-pypi"
+        "release-pypi",
+        "reusable-ci-python-packages"
       ]
     },
     {
@@ -1395,7 +1396,8 @@
       },
       "workflow_allowlist": [
         "deploy-docs",
-        "github-policy"
+        "github-policy",
+        "reusable-ci-python-packages"
       ]
     },
     {
@@ -1668,7 +1670,8 @@
       },
       "workflow_allowlist": [
         "deploy-docs",
-        "github-policy"
+        "github-policy",
+        "reusable-ci-python-packages"
       ]
     },
     {
