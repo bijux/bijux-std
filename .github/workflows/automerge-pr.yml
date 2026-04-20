@@ -1,15 +1,13 @@
 name: automerge-pr
 
 on:
-  pull_request_target:
-    types: [opened, reopened, synchronize, ready_for_review]
+  pull_request:
+    types: [opened, reopened, synchronize, ready_for_review, labeled, unlabeled]
   pull_request_review:
     types: [submitted]
-  check_suite:
-    types: [completed]
 
 permissions:
-  contents: write
+  contents: read
   pull-requests: write
 
 jobs:
@@ -50,6 +48,10 @@ jobs:
 
             if (pr.labels.some((label) => label.name === "no-automerge")) {
               core.info("PR has no-automerge label; skipping.");
+              return;
+            }
+            if (!pr.labels.some((label) => label.name === "automerge")) {
+              core.info("PR is missing automerge label; skipping.");
               return;
             }
 
@@ -168,21 +170,6 @@ jobs:
               const message = String(error.message || error);
               if (message.includes("in unstable status")) {
                 core.info(`PR #${pr.number} is still unstable; will retry on later events.`);
-                return;
-              }
-
-              if (message.includes("in clean status")) {
-                try {
-                  await github.rest.pulls.merge({
-                    owner: context.repo.owner,
-                    repo: context.repo.repo,
-                    pull_number: pr.number,
-                    merge_method: "merge",
-                  });
-                  core.info(`PR #${pr.number} merged directly from clean status.`);
-                } catch (mergeError) {
-                  core.warning(`Direct merge failed for #${pr.number}: ${mergeError.message}`);
-                }
                 return;
               }
 
