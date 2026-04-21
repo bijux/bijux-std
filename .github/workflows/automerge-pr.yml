@@ -61,6 +61,81 @@ jobs:
               return;
             }
 
+            const changedFiles = await github.paginate(github.rest.pulls.listFiles, {
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: pr.number,
+              per_page: 100,
+            });
+            const changedPaths = changedFiles.map((file) => file.filename);
+            const startsWithAny = (path, prefixes) => prefixes.some((prefix) => path.startsWith(prefix));
+
+            const protectedExactPaths = new Set([
+              ".github/CODEOWNERS",
+              "CODEOWNERS",
+              ".github/bijux-std-shared.sha256",
+              ".github/standards/repo-config.manifest.json",
+              ".github/docs-deploy.env",
+            ]);
+            const protectedPrefixes = [
+              ".github/workflows/",
+              ".github/scripts/",
+              ".github/rulesets/",
+              ".github/standards/",
+            ];
+            const releaseSensitivePrefixes = [
+              ".github/workflows/release-",
+              "ops/release/",
+              "release/",
+            ];
+            const safeBotExactPaths = new Set([
+              "Cargo.lock",
+              "package-lock.json",
+              "uv.lock",
+              ".github/dependabot.yml",
+              "dependabot.yml",
+            ]);
+            const safeBotPrefixes = [
+              ".bijux/shared/",
+              ".bijux/checks.consumer.json",
+              ".github/bijux-std-shared.sha256",
+            ];
+
+            const touchesProtectedGovernance = changedPaths.some((path) =>
+              protectedExactPaths.has(path) || startsWithAny(path, protectedPrefixes),
+            );
+            const touchesReleaseSensitive = changedPaths.some((path) =>
+              startsWithAny(path, releaseSensitivePrefixes),
+            );
+            const allPathsSafeForBotAutomerge = changedPaths.length > 0 && changedPaths.every((path) =>
+              safeBotExactPaths.has(path) || startsWithAny(path, safeBotPrefixes),
+            );
+
+            const trustedBotAuthors = new Set([
+              "dependabot[bot]",
+              "renovate[bot]",
+              "github-actions[bot]",
+            ]);
+            const authorLogin = (pr.user && pr.user.login ? pr.user.login : "").toLowerCase();
+            const authorIsTrustedBot = trustedBotAuthors.has(authorLogin);
+
+            let prClass = "product";
+            if (touchesProtectedGovernance || touchesReleaseSensitive) {
+              prClass = "protected-governance";
+            } else if (authorIsTrustedBot && allPathsSafeForBotAutomerge) {
+              prClass = "safe-bot";
+            }
+            core.info(`PR #${pr.number} classified as '${prClass}'.`);
+
+            if (prClass !== "safe-bot") {
+              core.info("Only safe-bot PRs are eligible for automerge; skipping.");
+              return;
+            }
+            if (pr.mergeable_state === "behind") {
+              core.info("PR branch is behind base; skipping auto-merge enablement.");
+              return;
+            }
+
             const allowedAssociations = new Set(["OWNER", "MEMBER", "COLLABORATOR"]);
             const reviews = await github.paginate(github.rest.pulls.listReviews, {
               owner: context.repo.owner,
@@ -156,7 +231,7 @@ jobs:
               await github.graphql(
                 `mutation EnablePullRequestAutoMerge($pullRequestId: ID!) {
                   enablePullRequestAutoMerge(
-                    input: { pullRequestId: $pullRequestId, mergeMethod: MERGE }
+                    input: { pullRequestId: $pullRequestId, mergeMethod: SQUASH }
                   ) {
                     pullRequest {
                       number
