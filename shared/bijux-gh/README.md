@@ -48,6 +48,23 @@ Usage in a repository (current model):
 
 This keeps branch protection and bot update policy consistent across Python repositories.
 
+## Managed vs Repository-Owned Workflows
+
+Standards-managed workflows are synchronized from `bijux-std` into consumers and
+must not be edited directly in product repositories.
+
+Managed workflow families:
+
+- `.github/workflows/automerge-pr.yml`
+- `.github/workflows/bijux-std.yml`
+- `.github/workflows/deploy-docs.yml`
+- `.github/workflows/github-policy.yml`
+- `.github/workflows/release-*.yml`
+- generated wrappers: `.github/workflows/ci.yml`, `.github/workflows/verify.yml`
+
+Repository-owned workflows are extension points and may be edited locally when
+they are not part of the managed inventory or generated wrappers.
+
 ## Issue and Pull Request Templates
 
 Canonical community templates are provided under:

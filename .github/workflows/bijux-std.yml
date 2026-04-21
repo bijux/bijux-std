@@ -13,6 +13,7 @@ permissions:
 
 jobs:
   checks:
+    name: std / ${{ matrix.check }}
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
