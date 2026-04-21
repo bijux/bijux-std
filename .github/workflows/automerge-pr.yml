@@ -73,7 +73,6 @@ jobs:
             const protectedExactPaths = new Set([
               ".github/CODEOWNERS",
               "CODEOWNERS",
-              ".github/bijux-std-shared.sha256",
               ".github/standards/repo-config.manifest.json",
               ".github/docs-deploy.env",
             ]);
@@ -94,6 +93,7 @@ jobs:
               "uv.lock",
               ".github/dependabot.yml",
               "dependabot.yml",
+              ".github/bijux-std-shared.sha256",
             ]);
             const safeBotPrefixes = [
               ".bijux/shared/",
