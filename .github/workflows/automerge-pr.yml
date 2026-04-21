@@ -205,10 +205,10 @@ jobs:
               review.user && review.user.login && codeownerUsers.has(review.user.login.toLowerCase()),
             );
 
-            const authorLogin = (pr.user && pr.user.login ? pr.user.login : "").toLowerCase();
+            const prAuthorLoginForCodeowner = (pr.user && pr.user.login ? pr.user.login : "").toLowerCase();
             const authorIsTrustedCodeowner = Boolean(
-              authorLogin &&
-              codeownerUsers.has(authorLogin) &&
+              prAuthorLoginForCodeowner &&
+              codeownerUsers.has(prAuthorLoginForCodeowner) &&
               allowedAssociations.has(pr.author_association),
             );
 
