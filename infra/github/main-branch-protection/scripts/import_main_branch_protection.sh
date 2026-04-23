@@ -2,7 +2,6 @@
 set -euo pipefail
 
 readonly TFVARS_PATH="terraform.auto.tfvars.json"
-readonly GITHUB_OWNER="${TF_VAR_github_owner:-bijux}"
 readonly IMPORT_LOG_PATH="$(mktemp)"
 
 cleanup() {
@@ -28,7 +27,7 @@ for repo in "${repos[@]}"; do
     continue
   fi
   resource_address="github_branch_protection.main[\"${repo}\"]"
-  import_id="${GITHUB_OWNER}/${repo}:main"
+  import_id="${repo}:main"
 
   echo "Importing ${import_id}"
   if terraform import -input=false "${resource_address}" "${import_id}" >"${IMPORT_LOG_PATH}" 2>&1; then
