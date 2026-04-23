@@ -1,0 +1,41 @@
+name: github-governance-apply
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: github-governance-apply-main
+  cancel-in-progress: false
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: infra/github-branch-protection
+    steps:
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@b9cd54a3c349d3f38e8881555d616ced269862dd # v3.1.2
+
+      - name: Terraform init
+        env:
+          TF_VAR_github_token: ${{ secrets.GH_ADMIN_TOKEN }}
+        run: terraform init
+
+      - name: Import current branch protection state
+        env:
+          TF_VAR_github_token: ${{ secrets.GH_ADMIN_TOKEN }}
+        run: ./scripts/import_branch_protection.sh
+
+      - name: Terraform apply
+        env:
+          TF_VAR_github_token: ${{ secrets.GH_ADMIN_TOKEN }}
+        run: terraform apply -input=false -auto-approve
