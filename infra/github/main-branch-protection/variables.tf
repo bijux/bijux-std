@@ -13,10 +13,6 @@ variable "github_token" {
 variable "protected_repositories" {
   description = "Repository names that must enforce PR-only main branch policy"
   type        = set(string)
-  default = [
-    "bijux-std",
-    "bijux.github.io",
-  ]
 }
 
 variable "required_approving_review_count" {
