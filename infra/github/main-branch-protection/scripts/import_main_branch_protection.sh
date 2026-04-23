@@ -10,7 +10,20 @@ cleanup() {
 }
 trap cleanup EXIT
 
-while IFS= read -r repo; do
+mapfile -t repos < <(
+  IMPORT_TFVARS_PATH="${TFVARS_PATH}" python3 - <<'PY'
+import json
+import os
+
+with open(os.environ["IMPORT_TFVARS_PATH"], encoding="utf-8") as handle:
+    data = json.load(handle)
+
+for repo in data.get("protected_repositories", []):
+    print(repo)
+PY
+)
+
+for repo in "${repos[@]}"; do
   if [[ -z "${repo}" ]]; then
     continue
   fi
@@ -29,15 +42,4 @@ while IFS= read -r repo; do
 
   cat "${IMPORT_LOG_PATH}" >&2
   exit 1
-done < <(
-  TFVARS_PATH="${TFVARS_PATH}" python3 - <<'PY'
-import json
-import os
-
-with open(os.environ["TFVARS_PATH"], encoding="utf-8") as handle:
-    data = json.load(handle)
-
-for repo in data.get("protected_repositories", []):
-    print(repo)
-PY
-)
+done
