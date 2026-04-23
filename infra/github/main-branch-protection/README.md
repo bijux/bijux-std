@@ -1,11 +1,10 @@
-# GitHub Branch Protection IaC
+# GitHub Main Branch Protection Governance
 
-Terraform source for PR-only protection on critical repositories.
+Terraform source for PR-only protection on repositories managed by `bijux-std`.
 
 ## Managed repositories
 
-- `bijux/bijux-std`
-- `bijux/bijux.github.io`
+Repository targets are defined in [`terraform.auto.tfvars.json`](terraform.auto.tfvars.json).
 
 ## Main branch policy
 
@@ -21,7 +20,7 @@ Terraform source for PR-only protection on critical repositories.
 - `.github/workflows/github-governance-plan.yml` on pull requests
 - `.github/workflows/github-governance-apply.yml` on `main` and manual dispatch
 
-CI imports current branch protection resources before plan/apply so governance can run without a separate persistent Terraform backend.
+CI imports current branch protection resources before plan/apply so governance can run without a separate persistent Terraform backend. The import script reads the same repository list as Terraform to avoid configuration drift.
 
 ## Required secret
 
