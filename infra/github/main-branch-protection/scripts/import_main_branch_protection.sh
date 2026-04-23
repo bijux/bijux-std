@@ -2,13 +2,33 @@
 set -euo pipefail
 
 readonly TFVARS_PATH="terraform.auto.tfvars.json"
+readonly GITHUB_OWNER="${TF_VAR_github_owner:-bijux}"
+readonly IMPORT_LOG_PATH="$(mktemp)"
+
+cleanup() {
+  rm -f "${IMPORT_LOG_PATH}"
+}
+trap cleanup EXIT
 
 while IFS= read -r repo; do
   if [[ -z "${repo}" ]]; then
     continue
   fi
-  echo "Importing ${repo}:main"
-  terraform import -input=false "github_branch_protection.main[\"${repo}\"]" "${repo}:main" >/dev/null 2>&1 || true
+  resource_address="github_branch_protection.main[\"${repo}\"]"
+  import_id="${GITHUB_OWNER}/${repo}:main"
+
+  echo "Importing ${import_id}"
+  if terraform import -input=false "${resource_address}" "${import_id}" >"${IMPORT_LOG_PATH}" 2>&1; then
+    continue
+  fi
+
+  if grep -q "Cannot import non-existent remote object" "${IMPORT_LOG_PATH}"; then
+    echo "No existing branch protection for ${import_id}; Terraform will create it."
+    continue
+  fi
+
+  cat "${IMPORT_LOG_PATH}" >&2
+  exit 1
 done < <(
   TFVARS_PATH="${TFVARS_PATH}" python3 - <<'PY'
 import json
