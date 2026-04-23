@@ -10,11 +10,11 @@ resource "github_branch_protection" "main" {
   repository_id = each.value.name
   pattern       = "main"
 
-  enforce_admins                 = true
-  allows_force_pushes            = false
-  allows_deletions               = false
+  enforce_admins                  = true
+  allows_force_pushes             = false
+  allows_deletions                = false
   require_conversation_resolution = true
-  required_linear_history        = false
+  required_linear_history         = false
 
   required_pull_request_reviews {
     dismiss_stale_reviews           = false
