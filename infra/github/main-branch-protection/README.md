@@ -10,7 +10,7 @@ Repository targets are defined in [`terraform.auto.tfvars.json`](terraform.auto.
 
 - pull request required
 - one approving review required
-- admin bypass disabled
+- admin bypass enabled for repository admins
 - force push disabled
 - branch deletion disabled
 - conversation resolution required
