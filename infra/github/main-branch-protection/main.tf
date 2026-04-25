@@ -10,7 +10,7 @@ resource "github_branch_protection" "main" {
   repository_id = each.value.name
   pattern       = "main"
 
-  enforce_admins                  = true
+  enforce_admins                  = var.enforce_admins
   allows_force_pushes             = false
   allows_deletions                = false
   require_conversation_resolution = true

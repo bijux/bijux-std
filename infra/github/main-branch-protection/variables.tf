@@ -20,3 +20,9 @@ variable "required_approving_review_count" {
   type        = number
   default     = 1
 }
+
+variable "enforce_admins" {
+  description = "Whether branch protection is enforced for repository admins"
+  type        = bool
+  default     = false
+}
