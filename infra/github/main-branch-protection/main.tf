@@ -1,13 +1,7 @@
-data "github_repository" "protected" {
+resource "github_branch_protection" "main" {
   for_each = var.protected_repositories
 
-  full_name = "${var.github_owner}/${each.value}"
-}
-
-resource "github_branch_protection" "main" {
-  for_each = data.github_repository.protected
-
-  repository_id = each.value.name
+  repository_id = each.value
   pattern       = "main"
 
   enforce_admins                  = var.enforce_admins
