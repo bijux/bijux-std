@@ -311,4 +311,5 @@ and make the rest of the repos prove they still match it.
 
 ## License
 
-Apache-2.0. See `LICENSE` and `NOTICE`.
+This repository is licensed under the MIT License. Copyright 2026 Bijan
+Mousavi <bijan@bijux.io>. See [`LICENSE`](LICENSE).
