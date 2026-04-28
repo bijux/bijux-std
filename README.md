@@ -3,6 +3,8 @@
 `bijux-std` is the canonical standards distribution repository for the Bijux
 ecosystem.
 
+Workspace policy baseline: [`/Users/bijan/bijux/README.md`](/Users/bijan/bijux/README.md)
+
 It defines the shared repository surfaces that should stay aligned across Bijux
 projects, distributes them for downstream use, and makes that alignment
 verifiable in CI.
@@ -49,6 +51,12 @@ across repositories.
 - repository-specific documentation content
 - release behavior unique to a single repository
 - one-off local automation
+- live GitHub repository settings enforced through the GitHub API
+
+Live GitHub governance now belongs in `bijux-iac`. `bijux-std` owns the
+repository-local standards content that may be synchronized into consumers, but
+it does not own the Terraform control plane that applies branch protection and
+other repo-admin policy.
 
 If a change belongs only to one repository, it should stay there.
 
@@ -218,6 +226,13 @@ The workflow attempts enablement on pull-request/review events and re-runs
 after a successful `bijux-std` `workflow_run` to cover unstable early states.
 When the follow-up run sees a clean merge-ready pull request, it merges
 directly to complete the automation path.
+
+## Live GitHub Governance
+
+Live GitHub settings for Bijux repositories are enforced from `bijux-iac`, not
+from `bijux-std`. That includes the Terraform-owned `main` branch protection
+surface that previously lived under `infra/github/main-branch-protection` in
+this repository.
 
 ## UI Regression Checks
 
