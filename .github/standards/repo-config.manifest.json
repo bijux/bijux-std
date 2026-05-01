@@ -19,6 +19,11 @@
         "consumer_runtime": ".github/workflows/github-policy.yml"
       },
       {
+        "id": "pr-approval-policy",
+        "source": "shared/bijux-gh/workflows/pr-approval-policy.yml",
+        "consumer_runtime": ".github/workflows/pr-approval-policy.yml"
+      },
+      {
         "id": "release-crates",
         "source": "shared/bijux-gh/workflows/release-crates.yml",
         "consumer_runtime": ".github/workflows/release-crates.yml"
@@ -346,6 +351,7 @@
       "workflow_allowlist": [
         "deploy-docs",
         "github-policy",
+        "pr-approval-policy",
         "release-artifacts",
         "release-crates",
         "release-ghcr",
@@ -927,6 +933,7 @@
       "workflow_allowlist": [
         "deploy-docs",
         "github-policy",
+        "pr-approval-policy",
         "release-artifacts",
         "release-ghcr",
         "release-github",
@@ -1299,6 +1306,7 @@
       "workflow_allowlist": [
         "deploy-docs",
         "github-policy",
+        "pr-approval-policy",
         "release-artifacts",
         "release-crates",
         "release-ghcr",
@@ -1542,7 +1550,8 @@
       },
       "workflow_allowlist": [
         "deploy-docs",
-        "github-policy"
+        "github-policy",
+        "pr-approval-policy"
       ],
       "pinned_std_sha": "05d63cd12b4d96afe4b74dbda1cd1e27bee344e5"
     },
@@ -1550,7 +1559,8 @@
       "name": "bijux-iac",
       "release_env": [],
       "workflow_allowlist": [
-        "github-policy"
+        "github-policy",
+        "pr-approval-policy"
       ]
     },
     {
@@ -1647,7 +1657,8 @@
       },
       "workflow_allowlist": [
         "deploy-docs",
-        "github-policy"
+        "github-policy",
+        "pr-approval-policy"
       ],
       "pinned_std_sha": "5d4059e207559a51ed40dac1384693c57347018f"
     },
@@ -2145,6 +2156,7 @@
       "workflow_allowlist": [
         "deploy-docs",
         "github-policy",
+        "pr-approval-policy",
         "release-artifacts",
         "release-ghcr",
         "release-github",
@@ -2646,6 +2658,7 @@
       "workflow_allowlist": [
         "deploy-docs",
         "github-policy",
+        "pr-approval-policy",
         "release-artifacts",
         "release-ghcr",
         "release-github",
@@ -3255,6 +3268,7 @@
       "workflow_allowlist": [
         "deploy-docs",
         "github-policy",
+        "pr-approval-policy",
         "release-artifacts",
         "release-ghcr",
         "release-github",
@@ -3309,7 +3323,8 @@
         ]
       },
       "workflow_allowlist": [
-        "github-policy"
+        "github-policy",
+        "pr-approval-policy"
       ],
       "pinned_std_sha": "5da4225aedcfc2af92bb431875243fa2db2b0ce9"
     },
@@ -3518,7 +3533,8 @@
       },
       "workflow_allowlist": [
         "deploy-docs",
-        "github-policy"
+        "github-policy",
+        "pr-approval-policy"
       ],
       "pinned_std_sha": "44a77e32edc759e92b95feb63b2988ff90f0ca59"
     },
@@ -3556,7 +3572,8 @@
       },
       "workflow_allowlist": [
         "deploy-docs",
-        "github-policy"
+        "github-policy",
+        "pr-approval-policy"
       ],
       "pinned_std_sha": "5d4059e207559a51ed40dac1384693c57347018f"
     }
