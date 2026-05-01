@@ -13,4 +13,6 @@ tests/.playwright/
 tests/bijux-docs/test-results/
 tests/bijux-docs/playwright-report/
 tests/bijux-docs/.playwright/
-artifacts/bijux-docs/
+
+# Repository run artifacts
+artifacts/
