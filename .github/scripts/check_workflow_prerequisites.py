@@ -68,6 +68,11 @@ def _current_head_sha(event: dict) -> str:
 
 
 def _required_workflows(event_name: str) -> list[RequiredWorkflow]:
+    override = os.environ.get("BIJUX_REQUIRED_WORKFLOWS", "").strip()
+    if override:
+        names = [name.strip() for name in override.split(",") if name.strip()]
+        return [RequiredWorkflow(name) for name in names]
+
     if event_name in {"workflow_call", "workflow_dispatch"}:
         return []
     if event_name in {"pull_request", "pull_request_target", "pull_request_review"}:
