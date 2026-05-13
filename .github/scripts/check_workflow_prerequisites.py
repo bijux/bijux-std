@@ -73,7 +73,9 @@ def _required_workflows(event_name: str) -> list[RequiredWorkflow]:
     if event_name in {"pull_request", "pull_request_target", "pull_request_review"}:
         return [
             RequiredWorkflow("bijux-std"),
-            RequiredWorkflow("policy / pr approval", fail_on_non_success=False),
+            # Approval failures should stop downstream work immediately.
+            # A later label or review update creates a new event and a new run.
+            RequiredWorkflow("policy / pr approval"),
         ]
     if event_name in {"merge_group", "push"}:
         return [RequiredWorkflow("bijux-std")]
