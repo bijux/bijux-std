@@ -195,7 +195,7 @@ def inject_policy_gate(
     wrapper_name: str,
     wrapper_definition: dict[str, Any],
 ) -> dict[str, Any]:
-    if wrapper_name != "verify":
+    if wrapper_name not in {"ci", "verify"}:
         return wrapper_definition
 
     jobs = wrapper_definition.get("jobs")
