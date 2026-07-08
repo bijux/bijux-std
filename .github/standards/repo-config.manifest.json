@@ -540,7 +540,7 @@
             "open-pull-requests-limit": 10,
             "labels": [
               "dependencies",
-              "github_actions"
+              "github"
             ]
           },
           {
@@ -1096,7 +1096,7 @@
             "open-pull-requests-limit": 10,
             "labels": [
               "dependencies",
-              "github_actions"
+              "github"
             ]
           },
           {
@@ -1376,7 +1376,7 @@
             "open-pull-requests-limit": 10,
             "labels": [
               "dependencies",
-              "github_actions"
+              "github"
             ]
           },
           {
@@ -1921,7 +1921,7 @@
             "open-pull-requests-limit": 10,
             "labels": [
               "dependencies",
-              "github_actions"
+              "github"
             ]
           },
           {
@@ -2083,7 +2083,7 @@
             "open-pull-requests-limit": 10,
             "labels": [
               "dependencies",
-              "github_actions"
+              "github"
             ]
           },
           {
@@ -2604,7 +2604,7 @@
             "open-pull-requests-limit": 10,
             "labels": [
               "dependencies",
-              "github_actions"
+              "github"
             ]
           },
           {
@@ -3153,7 +3153,7 @@
             "open-pull-requests-limit": 10,
             "labels": [
               "dependencies",
-              "github_actions"
+              "github"
             ]
           },
           {
@@ -3698,7 +3698,7 @@
             "open-pull-requests-limit": 10,
             "labels": [
               "dependencies",
-              "github_actions"
+              "github"
             ]
           }
         ]
@@ -3745,7 +3745,7 @@
             "open-pull-requests-limit": 10,
             "labels": [
               "dependencies",
-              "github_actions"
+              "github"
             ]
           },
           {
@@ -3938,7 +3938,7 @@
             "open-pull-requests-limit": 10,
             "labels": [
               "dependencies",
-              "github_actions"
+              "github"
             ]
           },
           {
