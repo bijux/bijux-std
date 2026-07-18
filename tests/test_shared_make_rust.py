@@ -139,11 +139,14 @@ printf '%s\\n' "$1" >>"${ARTIFACT_ROOT}/fixture/commands.txt"
             """#!/usr/bin/env bash
 set -euo pipefail
 printf '%s\\n' "$*" >>"${FAKE_CARGO_LOG}"
-if [[ -n "${FAKE_CARGO_FAIL_MATCH:-}" && "$*" == *"${FAKE_CARGO_FAIL_MATCH}"* ]]; then
-  exit 17
-fi
 if [[ "$*" == *"nextest run"* ]]; then
-  printf 'Summary [ 1 passed ]\\n'
+  printf 'Summary [ 0.001s] 1 test run: 1 passed, 0 skipped\\n'
+fi
+if [[ -n "${FAKE_CARGO_FAIL_MATCH:-}" && "$*" == *"${FAKE_CARGO_FAIL_MATCH}"* ]]; then
+  if [[ "$*" == *"nextest run"* ]]; then
+    printf 'Summary [ 0.001s] 1 test run: 0 passed, 1 failed, 0 skipped\\n'
+  fi
+  exit 17
 fi
 if [[ "$*" == *"--output-path"* ]]; then
   args=("$@")
@@ -201,6 +204,19 @@ fi
         self.assertTrue(
             (workspace / "artifacts/rust/test/local/nextest.log").is_file()
         )
+
+        failed_test = subprocess.run(
+            [str(executor), "test-all"],
+            cwd=workspace,
+            check=False,
+            text=True,
+            capture_output=True,
+            env={**environment, "FAKE_CARGO_FAIL_MATCH": "nextest run"},
+        )
+        self.assertEqual(failed_test.returncode, 17)
+        self.assertIn("nextest-summary:", failed_test.stdout)
+        self.assertIn("1 test run: 0 passed, 1 failed, 0 skipped", failed_test.stdout)
+        self.assertIn("nextest-mode: all", failed_test.stdout)
 
         failed = subprocess.run(
             [str(executor), "lint"],

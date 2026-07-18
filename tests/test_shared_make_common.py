@@ -115,6 +115,8 @@ fi
             """probe:
 \t@mkdir -p "$(ARTIFACT_ROOT)/probe"
 \t@git rev-parse HEAD >"$(ARTIFACT_ROOT)/probe/commit.txt"
+\t@pwd >"$(ARTIFACT_ROOT)/probe/source.txt"
+\t@printf '%s\\n' "$(PROJECT_ROOT)" >"$(ARTIFACT_ROOT)/probe/project-root.txt"
 """,
         )
         subprocess.run(["git", "init", "-q"], cwd=fixture, check=True)
@@ -150,6 +152,9 @@ fi
                 **os.environ,
                 "PINNED_GATE_TARGET": "probe",
                 "PINNED_ALLOWED_TARGETS": "probe",
+                "PROJECT_ROOT": str(fixture / "mutable-source"),
+                "RS_ARTIFACT_ROOT": str(fixture / "mutable-artifacts"),
+                "NEXTEST_CONFIG_FILE": str(fixture / "mutable-nextest.toml"),
             },
         )
         self.assertIn(f"started probe for {short_sha}", result.stdout)
@@ -166,6 +171,20 @@ fi
             .strip(),
             expected_sha,
         )
+        frozen_source = fixture / f"artifacts/{short_sha}/frozen-repo"
+        self.assertEqual(
+            (fixture / f"artifacts/{short_sha}/probe/source.txt")
+            .read_text(encoding="utf-8")
+            .strip(),
+            str(frozen_source),
+        )
+        self.assertEqual(
+            (fixture / f"artifacts/{short_sha}/probe/project-root.txt")
+            .read_text(encoding="utf-8")
+            .strip(),
+            str(frozen_source),
+        )
+        self.assertFalse((fixture / "mutable-artifacts").exists())
 
 
 if __name__ == "__main__":
