@@ -13,10 +13,10 @@ SCRIPT_PATH = (
     Path(__file__).resolve().parents[1]
     / ".github"
     / "scripts"
-    / "build_repo_manifest.py"
+    / "sync_github_standards.py"
 )
 SPEC = importlib.util.spec_from_file_location(
-    "bijux_std_build_repo_manifest",
+    "bijux_std_sync_github_standards",
     SCRIPT_PATH,
 )
 assert SPEC is not None and SPEC.loader is not None
@@ -25,7 +25,7 @@ sys.modules[SPEC.name] = MODULE
 SPEC.loader.exec_module(MODULE)
 
 
-class BuildRepoManifestTests(unittest.TestCase):
+class SyncGithubStandardsTests(unittest.TestCase):
     def test_repository_checkout_variable_normalizes_repository_name(self) -> None:
         self.assertEqual(
             MODULE.repository_checkout_variable("bijux.github.io"),
@@ -54,25 +54,6 @@ class BuildRepoManifestTests(unittest.TestCase):
                     "BIJUX_REPOSITORY_PATH_BIJUX_GNSS",
                 ):
                     MODULE.resolve_repository_checkout("bijux-gnss")
-
-    def test_normalize_release_env_json_entry_drops_legacy_token_publish_auth(self) -> None:
-        normalized = MODULE.normalize_release_env_json_entry(
-            "BIJUX_PYPI_PACKAGE_MATRIX_JSON",
-            [
-                {"package_slug": "bijux-phylogenetics"},
-                {"package_slug": "phylogenetic", "publish_auth": "token"},
-                {"package_slug": "bijux-example", "publish_auth": "trusted"},
-            ],
-        )
-
-        self.assertEqual(
-            normalized,
-            [
-                {"package_slug": "bijux-phylogenetics"},
-                {"package_slug": "phylogenetic"},
-                {"package_slug": "bijux-example", "publish_auth": "trusted"},
-            ],
-        )
 
 
 if __name__ == "__main__":

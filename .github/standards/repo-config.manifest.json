@@ -3710,7 +3710,7 @@
       "pinned_std_sha": "5da4225aedcfc2af92bb431875243fa2db2b0ce9"
     },
     {
-      "name": "bijux-telecom",
+      "name": "bijux-gnss",
       "release_env": [
         {
           "key": "BIJUX_RELEASE_ENABLED",
