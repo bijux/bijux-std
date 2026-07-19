@@ -48,10 +48,16 @@ class RenderRepoConfigsTests(unittest.TestCase):
             "bijux-gnss",
         ):
             wrapper = repositories[repository_name]["workflow_wrappers"]["ci"]
-            self.assertEqual(wrapper["name"], "repo / ci")
+            self.assertEqual(wrapper["name"], "continuous integration")
             jobs = wrapper["jobs"]
-            for gate in ("fmt", "lint", "audit", "test"):
-                self.assertEqual(jobs[gate]["name"], f"repo / ci / {gate}")
+            expected_job_names = {
+                "fmt": "format",
+                "lint": "lint",
+                "audit": "dependency audit",
+                "test": "test",
+            }
+            for gate, expected_job_name in expected_job_names.items():
+                self.assertEqual(jobs[gate]["name"], expected_job_name)
                 commands = [
                     step.get("run")
                     for step in jobs[gate]["steps"]

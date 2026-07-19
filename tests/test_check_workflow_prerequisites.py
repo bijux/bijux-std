@@ -76,7 +76,7 @@ class CheckWorkflowPrerequisitesTests(unittest.TestCase):
                     allowed_events=("pull_request",),
                 ),
                 MODULE.RequiredWorkflow(
-                    "policy / pr approval",
+                    "pull request approval",
                     allowed_events=("pull_request_target", "pull_request_review"),
                 ),
             ],
