@@ -217,6 +217,12 @@ fi
         self.assertIn("nextest-summary:", failed_test.stdout)
         self.assertIn("1 test run: 0 passed, 1 failed, 0 skipped", failed_test.stdout)
         self.assertIn("nextest-mode: all", failed_test.stdout)
+        cargo_commands = log_path.read_text(encoding="utf-8")
+        self.assertIn(
+            "nextest run --workspace --all-features --locked",
+            cargo_commands,
+        )
+        self.assertIn("--run-ignored all --retries 0 -j 8", cargo_commands)
 
         failed = subprocess.run(
             [str(executor), "lint"],

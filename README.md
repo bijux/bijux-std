@@ -1,315 +1,250 @@
 # bijux-std
 
-This repo is where we keep the shared Bijux standards in one place.
+`bijux-std` is the canonical source for repository engineering standards shared
+across Bijux projects. It publishes versioned documentation infrastructure,
+Make libraries, GitHub governance, and validation tooling so repositories can
+adopt the same contracts without maintaining independent copies.
 
-Policy baseline: repository-local governance files and shared standards sources.
+This repository is infrastructure for repositories, not a product runtime. Its
+purpose is to make a shared engineering decision once, verify it here, and let
+each consumer adopt an immutable, reviewable snapshot.
 
-The working model is straightforward:
+## Why This Repository Exists
 
-1. change the shared thing here
-2. sync it into the repos that consume it
-3. run checks so drift is caught fast
+Repeated repository infrastructure drifts when every project owns a private
+copy. Commands acquire different meanings, CI policies diverge, documentation
+shells behave differently, and a fix in one repository never reaches the
+others. That drift raises review cost and makes local success a poor predictor
+of CI behavior.
 
-That is the whole point of `bijux-std`. We do not want ten repos quietly
-forking the same docs shell, GitHub files, make targets, or compliance checks.
+`bijux-std` replaces copy-and-forget reuse with an explicit contract:
 
-## What this repo is
+- shared behavior has one canonical implementation;
+- every managed directory has a content digest;
+- consumers select capabilities rather than individual files;
+- downstream updates resolve to an exact accepted Git commit;
+- generated content is validated rather than edited by hand;
+- product-specific behavior remains owned by the product repository.
 
-This is not a product repo and not a random utilities bucket.
+The result is consistency without centralizing domain code. A repository keeps
+control of its architecture, release decisions, tests, and product
+documentation while reusing stable engineering foundations.
 
-This is the canonical source for the shared repo surfaces that should stay the
-same across the Bijux repos.
+## Ownership Boundaries
 
-## What lives here
+| Surface | Owner | Responsibility |
+| --- | --- | --- |
+| Shared repository standards | `bijux-std` | Canonical files, capability contracts, checksums, generators, and validation |
+| Product behavior | Consumer repository | Domain code, repository-specific automation, release policy, tests, and content |
+| Live GitHub administration | `bijux-iac` | Applied organization and repository settings managed through provider APIs |
 
-- `shared/bijux-docs`
-  Shared docs shell files: partials, styles, scripts, and assets used by Bijux
-  docs sites.
-- `shared/bijux-makes-py`
-  Shared make building blocks used in Python-oriented repos.
-- `shared/bijux-checks`
-  Shared standards checks, update flows, and the contract that says what the
-  standard is.
-- `shared/bijux-docs/tooling`
-  Shared docs sync and verification tooling.
-- `.github`
-  Canonical GitHub standards content: managed workflows, policy workflows,
-  standards scripts, manifests, and generators for repo-local config.
-- `shared/shared-dir-sha256.txt`
-  The canonical hash manifest for the shared directories above.
+The distinction between declared and applied governance is intentional.
+`bijux-std` owns versioned files such as workflows, ruleset declarations,
+templates, and policy checks. `bijux-iac` owns the live GitHub settings that
+cannot be established merely by committing those files.
 
-## What does not live here
+Do not place product code, domain logic, repository-specific release behavior,
+or one-off automation here. Conversely, do not repair a shared standard
+independently in every consumer. Correct the canonical source, validate it, and
+then refresh consumers from the accepted commit.
 
-Do not use `bijux-std` for:
+## System Model
 
-- product code
-- domain logic
-- repo-specific package behavior
-- repo-specific docs content
-- one-off local automation
-- release behavior that belongs to only one repo
-- live GitHub admin settings applied through the API
-
-Live GitHub governance moved to `bijux-iac`.
-
-So the split is:
-
-- `bijux-std` owns synced repo content
-- `bijux-iac` owns live GitHub admin control
-
-If a change belongs to one repo only, keep it there.
-
-## Why we keep this repo
-
-Without a real source of truth, shared behavior drifts fast.
-
-One repo fixes a docs shell bug. Another repo keeps the old shell.
-One repo changes a make contract. Another repo still exposes the old target.
-One repo hand-edits shared GitHub files and slowly stops behaving like the rest.
-
-`bijux-std` exists so we stop that kind of slow drift.
-
-## Layout
-
-```text
-shared/
-├── bijux-checks/          # shared compliance and update flows
-├── bijux-docs/            # shared docs and website shell assets
-├── bijux-docs/tooling/    # shared docs sync and verification tooling
-├── bijux-gh/              # legacy shared GitHub policy sources
-├── bijux-makes-py/        # shared Python-oriented make modules
-└── shared-dir-sha256.txt  # canonical content-hash manifest
+```mermaid
+flowchart LR
+    A[Canonical sources<br/>shared/] --> B[Contracts and generators]
+    B --> C[Checksums and self-validation]
+    C --> D[Accepted bijux-std commit]
+    D --> E[Capability-selected update]
+    E --> F[Consumer .bijux/shared/]
+    F --> G[Consumer validation and CI]
+    B --> H[Repository-local .github/ policy]
+    H --> C
+    I[bijux-iac] --> J[Live GitHub settings]
+    H -. declares expected policy .-> J
 ```
 
-## How consumer repos use this
+Changes move left to right. Canonical sources must pass their own contracts
+before consumers pin and vendor them. Consumer repositories never depend on a
+developer's local checkout or on the moving state of `main`.
 
-Consumer repos vendor the shared directories from `bijux-std` into their own
-`.bijux/shared/` tree.
+## Shared Packages
 
-The current standard is `.bijux` only for consumers. Root-level `shared/` in a
-consumer repo is treated as legacy drift and should fail verification.
-
-Normal flow:
-
-1. update the canonical shared files here
-2. sync the changed directories into the consumer repos
-3. commit the synced changes there
-4. run the standard checks
-5. let CI fail if the shared layer drifted
-
-That gives each repo freedom in its own domain while the shared platform layer
-stays aligned.
-
-The current shared-directory contract lives in
+The managed inventory is declared in
 [`shared/bijux-checks/bijux-std-checks.yml`](shared/bijux-checks/bijux-std-checks.yml).
 
-## Shared inventory and check inputs
+| Package | Stable responsibility |
+| --- | --- |
+| [`shared/bijux-makes`](shared/bijux-makes) | Language-neutral Make entry points, artifact containment, documentation execution, help, and gate composition |
+| [`shared/bijux-makes-py`](shared/bijux-makes-py) | Python-specific formatting, linting, testing, packaging, and environment targets |
+| [`shared/bijux-makes-rs`](shared/bijux-makes-rs) | Rust and Cargo gates, nextest lanes, slow-test selection, and pinned-source full-suite execution |
+| [`shared/bijux-docs`](shared/bijux-docs) | MkDocs shell, visual assets, navigation registry, synchronization, and documentation checks |
+| [`shared/bijux-checks`](shared/bijux-checks) | Capability selection, remote synchronization, digest validation, and standards reporting |
+| [`shared/bijux-gh`](shared/bijux-gh) | Canonical GitHub workflows, templates, policy scripts, and repository governance sources |
 
-Current shared inventory:
+[`shared/shared-dir-sha256.txt`](shared/shared-dir-sha256.txt) records the
+canonical digest of every managed shared package. The root [`.github/`](.github)
+tree contains this repository's own rendered configuration and policy
+workflows. Consumer-specific GitHub files are selected from the manifest-driven
+sources rather than copied indiscriminately.
 
-- `shared/bijux-docs`
-- `shared/bijux-makes-py`
-- `shared/bijux-checks`
-- `.github`
+## Capability Contract
 
-The main inputs behind checks and sync are:
+Consumers request coherent capabilities. The `common` capability is always
+present because synchronization, checks, GitHub governance, and
+language-neutral Make behavior form the baseline contract.
 
-- Inventory and source policy:
-  [`shared/bijux-checks/bijux-std-checks.yml`](shared/bijux-checks/bijux-std-checks.yml)
-- Canonical shared digests:
-  [`shared/shared-dir-sha256.txt`](shared/shared-dir-sha256.txt)
-- Canonical GitHub standards layer:
-  [`.github/`](.github)
-- Typed repo config manifest:
-  [`.github/standards/repo-config.manifest.json`](.github/standards/repo-config.manifest.json)
-- Workflow inventory:
-  [`.github/standards/workflow-inventory.json`](.github/standards/workflow-inventory.json)
-- Renderer and sync tooling:
-  [`.github/scripts/render_repo_configs.py`](.github/scripts/render_repo_configs.py),
-  [`.github/scripts/sync_github_standards.py`](.github/scripts/sync_github_standards.py)
+| Capability | Managed content |
+| --- | --- |
+| `common` | `bijux-makes`, `bijux-checks`, and `bijux-gh` |
+| `docs` | `bijux-docs` |
+| `python` | `bijux-makes-py` |
+| `rust` | `bijux-makes-rs` |
 
-## How verification works
-
-The check we care about is simple:
-
-> does this repo still match the canonical Bijux shared standard?
-
-The answer is enforced with explicit inventory, explicit hashes, vendored shared
-directories in downstream repos, and checks that compare both the manifest and
-the actual directory contents.
-
-## Standard commands
-
-These are the standard commands consumer repos use too.
-
-### Verify compliance
+For example, a Rust repository with a documentation site adopts:
 
 ```bash
-make bijux-std-checks
-```
-
-This verifies configured shared directories against the canonical manifest.
-
-### Update shared standard surfaces
-
-```bash
+BIJUX_STD_REF=<accepted-commit-sha> \
+BIJUX_STD_CAPABILITIES="docs rust" \
 make bijux-std-update
 ```
 
-This refreshes shared directories from canonical `bijux-std`.
+Explicit selection removes managed packages outside the selected capability
+set. Omitting `BIJUX_STD_CAPABILITIES` retains the complete inventory for
+repositories that consume every package. Unknown capabilities fail closed.
 
-### Compatibility alias
+`BIJUX_STD_REF` accepts a SHA, branch, or tag, but downstream repositories
+should commit updates produced from an accepted full commit SHA. An exact pin
+makes the source auditable, prevents a moving branch from changing the result,
+and allows the same bytes to be reproduced in CI.
 
-```bash
-make bijux-std
+## Consumer Layout
+
+Managed packages are vendored into `.bijux/shared/` in each consumer:
+
+```text
+.bijux/
+├── checks.consumer.json
+└── shared/
+    ├── bijux-checks/
+    ├── bijux-gh/
+    ├── bijux-makes/
+    ├── bijux-makes-rs/
+    └── shared-dir-sha256.txt
 ```
 
-This is just the backward-compatible alias for `make bijux-std-checks`.
+The exact directories depend on selected capabilities. A root-level `shared/`
+tree in a consumer is not a second source of truth and is rejected as layout
+drift. Checkout, staging, report, cache, and validation output belongs under
+the consumer's `artifacts/` directory.
 
-The policy behind these commands lives in
-[`shared/bijux-checks/bijux-std-checks.yml`](shared/bijux-checks/bijux-std-checks.yml).
+Consumer repositories configure the shared contract through their own Make
+files and repository manifests. They may extend shared targets with
+domain-specific gates, but they must not silently change the meaning of a
+standard target such as `test`, `lint`, or `docs-check`.
 
-If your workspace layout is unusual and `bijux-std` is not a sibling
-directory, point the scripts explicitly with
-`BIJUX_STD_REPO=/absolute/path/to/bijux-std`.
+## Change and Adoption Flow
 
-## GitHub workflow contract
+**Author in `bijux-std`.** Change the package that owns the behavior. Update its
+contract, tests, generated surfaces, and canonical digest together.
 
-The canonical standards workflow is
-[`.github/workflows/bijux-std.yml`](.github/workflows/bijux-std.yml).
+**Validate the source.** Run standards checks and contract tests. Generated
+configuration must reproduce a clean worktree, and checksum verification must
+match the committed content.
 
-`bijux-std` itself keeps only the standards governance workflows active under
-`.github/workflows`:
+**Merge through review.** CI validates standards, contracts, reports, pinned
+actions, and repository policy. The accepted commit becomes the immutable
+source for downstream adoption.
 
-- `bijux-std.yml`
-- `automerge-pr.yml`
+**Refresh consumers.** Each consumer updates from that exact commit with its
+declared capabilities, reviews the vendored diff, recomputes its managed
+checksum manifest, and runs its repository gates.
 
-Shared release/docs/reusable workflow templates live under
-`shared/bijux-gh/workflows` and get synced into consumer repos under
-`.github/workflows`.
+**Promote independently.** Consumers merge their own updates only after local
+behavior remains green. A standards merge does not silently mutate downstream
+repositories.
 
-What each consumer repo actually gets is controlled by manifest-driven
-`workflow_allowlist` entries.
+This separation keeps a shared change reviewable both as a platform decision
+and as an adoption decision in every affected product.
 
-The standard workflow runs a matrix with two entries on pull requests and pushes
-to `main`:
+## Commands
 
-- `standard`: runs `make bijux-std-checks`
-- `report`: runs the check-suite reporter and uploads `bijux-checks-report`
-  artifacts
+Run these commands from the repository root.
 
-Branch protection should require both matrix contexts:
+| Command | Purpose |
+| --- | --- |
+| `make bijux-std-checks` | Validate the shared inventory, content digests, consumer contract, and repository policy |
+| `make contract-tests` | Exercise synchronization, capability, checksum, Make, and policy contracts |
+| `make bijux-std-update` | Refresh managed standards from the configured canonical source |
+| `make bijux-std` | Run the standard compliance check entry point |
+| `make ui-test` | Run viewport-aware regression checks for the shared documentation shell |
+| `make ui-test-navigation` | Exercise shared navigation journeys |
+| `make ui-test-release-gate` | Run the complete documentation-shell release gate |
 
-- `checks (standard)`
-- `checks (report)`
-
-If workflow or job names change, update these in the same change:
-
-- `.github/required-status-checks.md`
-- `.github/rulesets/main-branch-protection.json`
-
-Governance-sensitive path ownership is declared in:
-
-- `.github/CODEOWNERS`
-
-`automerge-pr.yml` turns on auto-merge only when policy allows it and the PR is
-already trusted and merge-ready.
-
-## Live GitHub governance
-
-Live GitHub settings for Bijux repos are enforced from `bijux-iac`, not from
-`bijux-std`.
-
-That includes the Terraform-owned `main` branch protection surface that used to
-live under `infra/github/main-branch-protection` here.
-
-## UI regression checks
-
-`bijux-std` also carries viewport-aware UI checks for the shared docs shell in
-[`tests/`](tests).
-
-### Install test dependencies
-
-```bash
-make ui-test-install
-make ui-test-install-browsers
-```
-
-### Run UI checks
-
-```bash
-make ui-test
-```
-
-The suite checks phone, normal/tablet, and wide desktop behavior, including
-drawer-first phone behavior, ribbon visibility rules, and viewport profile
-contracts.
-
-To run only navigation journey regressions:
-
-```bash
-make ui-test-navigation
-```
-
-To run the full navigation release gate:
-
-```bash
-make ui-test-release-gate
-```
-
-To run live-site navigation gates against real synced sites:
+Live documentation navigation can be checked against deployed sites with:
 
 ```bash
 BIJUX_LIVE_E2E=1 make ui-test-live-navigation
 ```
 
-To pin a different hub entry URL:
+The shared Make contracts document additional configuration and extension
+points:
 
-```bash
-BIJUX_LIVE_E2E=1 BIJUX_LIVE_HUB_URL=https://bijux.io/ make ui-test-live-navigation
-```
+- [`shared/bijux-makes/CONTRACT.md`](shared/bijux-makes/CONTRACT.md)
+- [`shared/bijux-makes-rs/CONTRACT.md`](shared/bijux-makes-rs/CONTRACT.md)
+- [`shared/bijux-checks/README.md`](shared/bijux-checks/README.md)
 
-## Update and release model
+## Integrity and Generated Content
 
-`bijux-std` supports two adoption modes:
+There are two distinct integrity layers:
 
-- branch-based updates for active standards work
-- tag-based updates for a stricter pinned baseline
+- [`shared/shared-dir-sha256.txt`](shared/shared-dir-sha256.txt) attests the
+  canonical shared package directories;
+- [`.github/bijux-std-shared.sha256`](.github/bijux-std-shared.sha256) attests
+  managed GitHub files in this repository.
 
-Typical controls:
+Repository configuration is rendered from typed manifests, including
+[`.github/standards/repo-config.manifest.json`](.github/standards/repo-config.manifest.json)
+and
+[`.github/standards/workflow-inventory.json`](.github/standards/workflow-inventory.json).
+Generated output must be changed through its source manifest or generator.
+Hand-editing a synchronized consumer file creates drift and will be rejected by
+the checks.
 
-- `BIJUX_STD_REF`
-- `BIJUX_STD_UPDATE_CHANNEL`
-- `BIJUX_STD_TAG_PATTERN`
+## CI and Review Governance
 
-That gives each repo a choice between faster adoption and stricter stability
-without leaving the shared contract.
+The primary workflow,
+[`.github/workflows/bijux-std.yml`](.github/workflows/bijux-std.yml), runs three
+independent lanes without fail-fast behavior:
 
-## Change policy
+- `std / standard` verifies managed GitHub checksums, pinned actions, and the
+  standards contract;
+- `std / contracts` runs the contract test suite;
+- `std / report` executes the shared check runner and uploads its report even
+  when investigation requires artifact inspection.
 
-A change belongs here when all of this is true:
+Separate policy workflows validate GitHub configuration and pull-request
+approval. An owner-authored pull request requires the
+`owner-self-signoff` label as an explicit review decision. Required status
+contexts and merge behavior are governed by the checked-in ruleset and the live
+settings applied by `bijux-iac`.
 
-- it affects multiple repos
-- it should stay identical across those repos
-- it belongs to shared shell assets, shared automation, or shared compliance
-- it should be updated and verified centrally
+Changes should be split by durable intent. A shared implementation, its tests,
+its generated output, and its checksum update belong together when they are
+inseparable for correctness. Unrelated standards must remain independently
+reviewable.
 
-A change does not belong here when it is:
+## Deciding Where a Change Belongs
 
-- product-specific
-- domain-specific
-- repo-specific
-- release-specific
-- only a local customization
+A change belongs in `bijux-std` when multiple repositories should consume the
+same behavior and divergence would be a defect. It belongs in a consumer when
+the behavior expresses that product's domain, release policy, supported
+toolchain, data model, or operational needs. It belongs in `bijux-iac` when the
+change applies live organization or repository administration through an API.
 
-Keep `bijux-std` narrow. It should own the shared layer and not more than that.
-
-## In one line
-
-`bijux-std` is the place where we define the shared Bijux repo standard once
-and make the rest of the repos prove they still match it.
+When the boundary is uncertain, start with the owner of the invariant. Shared
+mechanics belong here; product decisions do not.
 
 ## License
 
-This repository is licensed under the MIT License. Copyright 2026 Bijan
-Mousavi <bijan@bijux.io>. See [`LICENSE`](LICENSE).
+This repository is licensed under the [MIT License](LICENSE).
