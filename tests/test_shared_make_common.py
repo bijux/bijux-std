@@ -118,8 +118,10 @@ fi
 \t@git rev-parse HEAD >"$(ARTIFACT_ROOT)/probe/commit.txt"
 \t@pwd >"$(ARTIFACT_ROOT)/probe/source.txt"
 \t@printf '%s\\n' "$(PROJECT_ROOT)" >"$(ARTIFACT_ROOT)/probe/project-root.txt"
+\t@printf 'changed by probe\\n' >tracked-input.txt
 """,
         )
+        (fixture / "tracked-input.txt").write_text("pinned input\n", encoding="utf-8")
         rust_gate = (
             fixture
             / ".bijux/shared/bijux-makes-rs/scripts/rust_gate.sh"
@@ -140,7 +142,11 @@ fi
             cwd=fixture,
             check=True,
         )
-        subprocess.run(["git", "add", "Makefile", ".bijux"], cwd=fixture, check=True)
+        subprocess.run(
+            ["git", "add", "Makefile", ".bijux", "tracked-input.txt"],
+            cwd=fixture,
+            check=True,
+        )
         subprocess.run(["git", "commit", "-qm", "test: define pinned probe"], cwd=fixture, check=True)
         expected_sha = subprocess.run(
             ["git", "rev-parse", "HEAD"],
@@ -205,6 +211,57 @@ fi
         )
         self.assertTrue((fixture / f"artifacts/{short_sha}/probe").is_symlink())
         self.assertFalse((fixture / "mutable-artifacts").exists())
+
+        repeated = subprocess.run(
+            [str(launcher)],
+            cwd=fixture,
+            check=True,
+            text=True,
+            capture_output=True,
+            env={
+                **os.environ,
+                "PINNED_GATE_TARGET": "probe",
+                "PINNED_ALLOWED_TARGETS": "probe",
+                "TEST_ALL_FROZEN_REF": expected_sha,
+            },
+        )
+        self.assertIn(f"started probe for {short_sha}", repeated.stdout)
+
+        deadline = time.monotonic() + 10
+        while not status_file.exists() and time.monotonic() < deadline:
+            time.sleep(0.05)
+        self.assertTrue(status_file.is_file())
+        self.assertEqual(status_file.read_text(encoding="utf-8").strip(), "0")
+        pid_file = fixture / f"artifacts/{short_sha}/background/probe.pid"
+        repeated_pid = int(pid_file.read_text(encoding="utf-8").strip())
+        deadline = time.monotonic() + 10
+        while time.monotonic() < deadline:
+            try:
+                os.kill(repeated_pid, 0)
+            except ProcessLookupError:
+                break
+            time.sleep(0.05)
+
+        (frozen_source / "untracked-input.txt").write_text(
+            "must not be deleted\n",
+            encoding="utf-8",
+        )
+        refused = subprocess.run(
+            [str(launcher)],
+            cwd=fixture,
+            check=False,
+            text=True,
+            capture_output=True,
+            env={
+                **os.environ,
+                "PINNED_GATE_TARGET": "probe",
+                "PINNED_ALLOWED_TARGETS": "probe",
+                "TEST_ALL_FROZEN_REF": expected_sha,
+            },
+        )
+        self.assertNotEqual(refused.returncode, 0)
+        self.assertIn("pinned source is dirty", refused.stderr)
+        self.assertTrue((frozen_source / "untracked-input.txt").is_file())
 
 
 if __name__ == "__main__":
