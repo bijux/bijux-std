@@ -26,27 +26,30 @@ SPEC.loader.exec_module(MODULE)
 class CheckWorkflowPrerequisitesTests(unittest.TestCase):
     def test_latest_run_ignores_wrong_event_and_zero_job_run(self) -> None:
         workflow = MODULE.RequiredWorkflow(
-            "bijux-std",
+            ".github/workflows/bijux-std.yml",
             allowed_events=("pull_request",),
         )
         runs = [
             {
                 "id": 30,
-                "name": "bijux-std",
+                "name": "standards verification",
+                "path": ".github/workflows/bijux-std.yml",
                 "event": "push",
                 "created_at": "2026-06-28T12:28:25Z",
                 "run_number": 459,
             },
             {
                 "id": 31,
-                "name": "bijux-std",
+                "name": "standards verification",
+                "path": ".github/workflows/bijux-std.yml",
                 "event": "pull_request",
                 "created_at": "2026-06-28T12:28:26Z",
                 "run_number": 460,
             },
             {
                 "id": 32,
-                "name": "bijux-std",
+                "name": "standards verification",
+                "path": ".github/workflows/bijux-std.yml",
                 "event": "pull_request",
                 "created_at": "2026-06-28T12:28:27Z",
                 "run_number": 461,
@@ -59,11 +62,58 @@ class CheckWorkflowPrerequisitesTests(unittest.TestCase):
             return run["id"] != 31
 
         with mock.patch.object(MODULE, "_run_has_materialized_jobs", side_effect=fake_has_jobs):
-            latest = MODULE._latest_run_for_name(runs, workflow, jobs_cache)
+            latest = MODULE._latest_run_for_identifier(runs, workflow, jobs_cache)
 
         self.assertIsNotNone(latest)
         assert latest is not None
         self.assertEqual(latest["id"], 32)
+
+    def test_workflow_path_survives_display_name_change(self) -> None:
+        workflow = MODULE.RequiredWorkflow(
+            ".github/workflows/pr-approval-policy.yml",
+            allowed_events=("pull_request_target",),
+        )
+        runs = [
+            {
+                "id": 40,
+                "name": "policy / pr approval",
+                "path": ".github/workflows/pr-approval-policy.yml",
+                "event": "pull_request_target",
+                "created_at": "2026-07-19T19:14:35Z",
+                "run_number": 12,
+            }
+        ]
+
+        with mock.patch.object(
+            MODULE,
+            "_run_has_materialized_jobs",
+            return_value=True,
+        ):
+            latest = MODULE._latest_run_for_identifier(runs, workflow, {})
+
+        self.assertEqual(latest, runs[0])
+
+    def test_workflow_name_identifier_remains_supported(self) -> None:
+        workflow = MODULE.RequiredWorkflow("repository policy")
+        runs = [
+            {
+                "id": 50,
+                "name": "repository policy",
+                "path": ".github/workflows/github-policy.yml",
+                "event": "pull_request",
+                "created_at": "2026-07-19T19:14:19Z",
+                "run_number": 18,
+            }
+        ]
+
+        with mock.patch.object(
+            MODULE,
+            "_run_has_materialized_jobs",
+            return_value=True,
+        ):
+            latest = MODULE._latest_run_for_identifier(runs, workflow, {})
+
+        self.assertEqual(latest, runs[0])
 
     def test_pull_request_prerequisites_are_event_scoped(self) -> None:
         workflows = MODULE._required_workflows("pull_request")
@@ -72,11 +122,11 @@ class CheckWorkflowPrerequisitesTests(unittest.TestCase):
             workflows,
             [
                 MODULE.RequiredWorkflow(
-                    "bijux-std",
+                    ".github/workflows/bijux-std.yml",
                     allowed_events=("pull_request",),
                 ),
                 MODULE.RequiredWorkflow(
-                    "pull request approval",
+                    ".github/workflows/pr-approval-policy.yml",
                     allowed_events=("pull_request_target", "pull_request_review"),
                 ),
             ],
