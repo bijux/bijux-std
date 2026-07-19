@@ -59,6 +59,43 @@ class RenderRepoConfigsTests(unittest.TestCase):
                 ]
                 self.assertIn(f"make {gate}", commands)
 
+    def test_genomics_ci_uses_governed_fast_rust_lanes(self) -> None:
+        manifest = json.loads(MANIFEST_PATH.read_text(encoding="utf-8"))
+        repository = next(
+            repository
+            for repository in manifest["repositories"]
+            if repository["name"] == "bijux-genomics"
+        )
+        wrapper = repository["workflow_wrappers"]["ci"]
+
+        self.assertEqual(wrapper["env"]["RUST_TOOLCHAIN_VERSION"], "1.95.0")
+        self.assertEqual(wrapper["on"]["workflow_dispatch"], {})
+        self.assertNotIn("slow-tier", wrapper["jobs"])
+
+        rust_toolchain_action = (
+            "dtolnay/rust-toolchain@"
+            "e97e2d8cc328f1b50210efc529dca0028893a2d9"
+        )
+        for job in wrapper["jobs"].values():
+            for step in job.get("steps", []):
+                if step.get("uses") == rust_toolchain_action:
+                    self.assertEqual(
+                        step["with"]["toolchain"],
+                        "${{ env.RUST_TOOLCHAIN_VERSION }}",
+                    )
+
+        sccache_action = (
+            "mozilla/sccache-action@"
+            "7d986dd989559c6ecdb630a3fd2557667be217ad"
+        )
+        for gate in ("fmt", "lint", "audit", "test"):
+            uses = {
+                step.get("uses")
+                for step in wrapper["jobs"][gate]["steps"]
+                if step.get("uses")
+            }
+            self.assertIn(sccache_action, uses)
+
     def test_repository_checkout_variable_normalizes_repository_name(self) -> None:
         self.assertEqual(
             MODULE.repository_checkout_variable("bijux.github.io"),
