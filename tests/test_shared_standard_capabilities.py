@@ -23,6 +23,13 @@ DIGEST_PATH = (
     REPOSITORY_ROOT
     / "shared/bijux-checks/scripts/directory-tree-sha256.sh"
 )
+CONTRACT_VALIDATOR_PATH = (
+    REPOSITORY_ROOT
+    / "shared/bijux-checks/scripts/validate-shared-contracts.sh"
+)
+STANDARD_WORKFLOW_PATH = (
+    REPOSITORY_ROOT / ".github/workflows/bijux-std.yml"
+)
 TEST_ROOT = (
     REPOSITORY_ROOT
     / "artifacts/tests/shared-standard-capabilities"
@@ -107,6 +114,22 @@ class SharedStandardCapabilityTests(unittest.TestCase):
         ).stdout.strip()
 
         self.assertEqual(actual_digest, expected_digest)
+
+    def test_managed_workflow_uses_consumer_contract_validator(self) -> None:
+        workflow = STANDARD_WORKFLOW_PATH.read_text(encoding="utf-8")
+
+        self.assertTrue(CONTRACT_VALIDATOR_PATH.is_file())
+        self.assertIn(
+            ".bijux/shared/bijux-checks/scripts/validate-shared-contracts.sh",
+            workflow,
+        )
+        consumer_contract, canonical_contract = workflow.split(
+            "elif [[ -x "
+            '"shared/bijux-checks/scripts/validate-shared-contracts.sh"',
+            maxsplit=1,
+        )
+        self.assertNotIn("make contract-tests", consumer_contract)
+        self.assertIn("make contract-tests", canonical_contract)
 
     def test_rust_selection_includes_common_without_python_or_docs(self) -> None:
         result = self.resolve("--select", str(CONFIG_PATH), "rust")
