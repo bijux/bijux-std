@@ -140,6 +140,14 @@ fi
             capture_output=True,
         ).stdout.strip()
         short_sha = expected_sha[:9]
+        with (fixture / "Makefile").open("a", encoding="utf-8") as makefile:
+            makefile.write("\n# Keep HEAD distinct from the requested frozen commit.\n")
+        subprocess.run(["git", "add", "Makefile"], cwd=fixture, check=True)
+        subprocess.run(
+            ["git", "commit", "-qm", "test: distinguish invoking head"],
+            cwd=fixture,
+            check=True,
+        )
 
         launcher = SHARED_ROOT / "bijux-makes/scripts/run_pinned_gate.sh"
         result = subprocess.run(
@@ -152,6 +160,7 @@ fi
                 **os.environ,
                 "PINNED_GATE_TARGET": "probe",
                 "PINNED_ALLOWED_TARGETS": "probe",
+                "TEST_ALL_FROZEN_REF": expected_sha,
                 "PROJECT_ROOT": str(fixture / "mutable-source"),
                 "RS_ARTIFACT_ROOT": str(fixture / "mutable-artifacts"),
                 "NEXTEST_CONFIG_FILE": str(fixture / "mutable-nextest.toml"),
