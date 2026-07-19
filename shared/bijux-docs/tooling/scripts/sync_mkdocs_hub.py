@@ -47,9 +47,7 @@ def leading_spaces(line: str) -> int:
     return len(line) - len(line.lstrip(" "))
 
 
-def synchronize_shared_config(config_path: Path, links: list[dict[str, str]]) -> bool:
-    lines = config_path.read_text(encoding="utf-8").splitlines(keepends=True)
-
+def bijux_mapping_bounds(lines: list[str], config_path: Path) -> tuple[int, int]:
     extra_index = next((index for index, line in enumerate(lines) if line == "extra:\n"), None)
     if extra_index is None:
         raise RuntimeError(f"{config_path}: missing top-level extra mapping")
@@ -81,6 +79,14 @@ def synchronize_shared_config(config_path: Path, links: list[dict[str, str]]) ->
         ),
         extra_end,
     )
+    return bijux_index, bijux_end
+
+
+def hub_mapping_bounds(
+    lines: list[str],
+    bijux_index: int,
+    bijux_end: int,
+) -> tuple[int | None, int]:
     hub_index = next(
         (
             index
@@ -89,6 +95,24 @@ def synchronize_shared_config(config_path: Path, links: list[dict[str, str]]) ->
         ),
         None,
     )
+    if hub_index is None:
+        return None, bijux_end
+
+    hub_end = next(
+        (
+            index
+            for index in range(hub_index + 1, bijux_end)
+            if lines[index].strip() and leading_spaces(lines[index]) <= 4
+        ),
+        bijux_end,
+    )
+    return hub_index, hub_end
+
+
+def synchronize_shared_config(config_path: Path, links: list[dict[str, str]]) -> bool:
+    lines = config_path.read_text(encoding="utf-8").splitlines(keepends=True)
+    bijux_index, bijux_end = bijux_mapping_bounds(lines, config_path)
+    hub_index, hub_end = hub_mapping_bounds(lines, bijux_index, bijux_end)
 
     replacement = render_hub_links(links)
     if hub_index is None:
@@ -102,14 +126,6 @@ def synchronize_shared_config(config_path: Path, links: list[dict[str, str]]) ->
         )
         updated = lines[:insert_index] + replacement + lines[insert_index:]
     else:
-        hub_end = next(
-            (
-                index
-                for index in range(hub_index + 1, bijux_end)
-                if lines[index].strip() and leading_spaces(lines[index]) <= 4
-            ),
-            bijux_end,
-        )
         updated = lines[:hub_index] + replacement + lines[hub_end:]
 
     content = "".join(updated)
@@ -118,6 +134,18 @@ def synchronize_shared_config(config_path: Path, links: list[dict[str, str]]) ->
         return False
 
     config_path.write_text(content, encoding="utf-8")
+    return True
+
+
+def remove_root_hub(config_path: Path) -> bool:
+    lines = config_path.read_text(encoding="utf-8").splitlines(keepends=True)
+    bijux_index, bijux_end = bijux_mapping_bounds(lines, config_path)
+    hub_index, hub_end = hub_mapping_bounds(lines, bijux_index, bijux_end)
+    if hub_index is None:
+        return False
+
+    updated = lines[:hub_index] + lines[hub_end:]
+    config_path.write_text("".join(updated), encoding="utf-8")
     return True
 
 
@@ -130,11 +158,15 @@ def main() -> int:
     else:
         shared_root = repo_root / ".bijux/shared/bijux-docs"
 
-    config_path = repo_root / "mkdocs.shared.yml"
+    shared_config_path = repo_root / "mkdocs.shared.yml"
+    root_config_path = repo_root / "mkdocs.yml"
     links = load_hub_links(shared_root)
-    changed = synchronize_shared_config(config_path, links)
-    status = "updated" if changed else "current"
-    print(f"Bijux MkDocs hub {status}: {config_path}")
+    shared_changed = synchronize_shared_config(shared_config_path, links)
+    root_changed = remove_root_hub(root_config_path)
+    shared_status = "updated" if shared_changed else "current"
+    root_status = "removed duplicate hub" if root_changed else "inherits hub"
+    print(f"Bijux MkDocs shared hub {shared_status}: {shared_config_path}")
+    print(f"Bijux MkDocs root {root_status}: {root_config_path}")
     return 0
 
 

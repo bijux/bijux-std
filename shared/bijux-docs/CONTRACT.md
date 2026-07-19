@@ -24,7 +24,8 @@ Rules:
 
 Projects set `extra.bijux.repository` in `mkdocs.yml`. They must not duplicate
 or override `hub_links` there. Hub membership, labels, URLs, and order change
-only in the shared registry and are synchronized by `make bijux-docs-sync`.
+only in the shared registry. `make bijux-docs-sync` writes the canonical block
+to `mkdocs.shared.yml` and removes the former root-level duplicate.
 
 Shared docs assets are source-of-truth in `assets/`:
 - `assets/bijux_icon.png`

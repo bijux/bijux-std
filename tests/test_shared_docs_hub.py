@@ -41,6 +41,12 @@ site_name: Fixture
 extra:
   bijux:
     repository: fixture
+    hub_links:
+      - key: stale
+        label: Stale
+        url: https://example.invalid/
+nav:
+  - Home: index.md
 """
 
 
@@ -104,7 +110,12 @@ class SharedDocsHubTests(unittest.TestCase):
         self.assertEqual(first_content.count("    hub_links:\n"), 1)
         positions = [first_content.index(f"      - key: {link['key']}\n") for link in CANONICAL_LINKS]
         self.assertEqual(positions, sorted(positions))
-        self.assertIn("current", second.stdout)
+        root_content = (fixture / "mkdocs.yml").read_text(encoding="utf-8")
+        self.assertNotIn("hub_links:", root_content)
+        self.assertIn("repository: fixture", root_content)
+        self.assertIn("nav:", root_content)
+        self.assertIn("shared hub current", second.stdout)
+        self.assertIn("root inherits hub", second.stdout)
 
     def test_validator_accepts_shared_hub_and_root_identity(self) -> None:
         validator = load_validator()

@@ -24,4 +24,5 @@ Consumption model:
 
 `config/hub-links.json` is the canonical cross-repository hub registry.
 Project `mkdocs.yml` files own only repository identity and project-specific
-MkDocs values; they do not carry a second hub list.
+MkDocs values; they do not carry a second hub list. Synchronization removes
+an existing root-level hub block after writing the inherited canonical block.
