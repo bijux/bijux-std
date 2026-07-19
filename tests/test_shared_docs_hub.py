@@ -15,6 +15,10 @@ SHARED_DOCS = REPOSITORY_ROOT / "shared/bijux-docs"
 SYNC_SCRIPT = SHARED_DOCS / "tooling/scripts/sync_mkdocs_hub.py"
 VALIDATOR = SHARED_DOCS / "tooling/quality/validate_bijux_docs_contract.py"
 CANONICAL_LINKS = json.loads((SHARED_DOCS / "config/hub-links.json").read_text(encoding="utf-8"))
+HUB_TEMPLATES = (
+    SHARED_DOCS / "partials/header.html",
+    SHARED_DOCS / "partials/nav.html",
+)
 
 
 SHARED_CONFIG = """\
@@ -116,6 +120,14 @@ class SharedDocsHubTests(unittest.TestCase):
         self.assertIn("nav:", root_content)
         self.assertIn("shared hub current", second.stdout)
         self.assertIn("root inherits hub", second.stdout)
+
+    def test_templates_preserve_registry_order_without_secondary_ordering(self) -> None:
+        for template in HUB_TEMPLATES:
+            with self.subTest(template=template.name):
+                content = template.read_text(encoding="utf-8")
+                self.assertNotIn("canonical_hub_keys", content)
+                self.assertNotIn("ordered_hub_links", content)
+                self.assertEqual(content.count("{% for entry in hub_links %}"), 1)
 
     def test_validator_accepts_shared_hub_and_root_identity(self) -> None:
         validator = load_validator()
