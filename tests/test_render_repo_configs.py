@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import copy
 import importlib.util
+import json
 import os
 import sys
 import tempfile
@@ -16,6 +17,12 @@ SCRIPT_PATH = (
     / "scripts"
     / "render_repo_configs.py"
 )
+MANIFEST_PATH = (
+    Path(__file__).resolve().parents[1]
+    / ".github"
+    / "standards"
+    / "repo-config.manifest.json"
+)
 SPEC = importlib.util.spec_from_file_location(
     "bijux_std_render_repo_configs",
     SCRIPT_PATH,
@@ -27,6 +34,26 @@ SPEC.loader.exec_module(MODULE)
 
 
 class RenderRepoConfigsTests(unittest.TestCase):
+    def test_rust_repositories_expose_foundational_ci_gates(self) -> None:
+        manifest = json.loads(MANIFEST_PATH.read_text(encoding="utf-8"))
+        repositories = {
+            repository["name"]: repository
+            for repository in manifest["repositories"]
+        }
+
+        for repository_name in ("bijux-genomics", "bijux-gnss"):
+            wrapper = repositories[repository_name]["workflow_wrappers"]["ci"]
+            self.assertEqual(wrapper["name"], "repo / ci")
+            jobs = wrapper["jobs"]
+            for gate in ("fmt", "lint", "audit", "test"):
+                self.assertEqual(jobs[gate]["name"], f"repo / ci / {gate}")
+                commands = [
+                    step.get("run")
+                    for step in jobs[gate]["steps"]
+                    if step.get("run")
+                ]
+                self.assertIn(f"make {gate}", commands)
+
     def test_repository_checkout_variable_normalizes_repository_name(self) -> None:
         self.assertEqual(
             MODULE.repository_checkout_variable("bijux.github.io"),
