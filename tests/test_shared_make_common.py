@@ -113,11 +113,21 @@ fi
         fixture = self.write_fixture(
             "pinned",
             """probe:
+\t@test "$(ARTIFACT_ROOT)" = "$(PROJECT_ROOT)/artifacts"
 \t@mkdir -p "$(ARTIFACT_ROOT)/probe"
 \t@git rev-parse HEAD >"$(ARTIFACT_ROOT)/probe/commit.txt"
 \t@pwd >"$(ARTIFACT_ROOT)/probe/source.txt"
 \t@printf '%s\\n' "$(PROJECT_ROOT)" >"$(ARTIFACT_ROOT)/probe/project-root.txt"
 """,
+        )
+        rust_gate = (
+            fixture
+            / ".bijux/shared/bijux-makes-rs/scripts/rust_gate.sh"
+        )
+        rust_gate.parent.mkdir(parents=True)
+        rust_gate.write_text(
+            '#!/usr/bin/env bash\nartifact_boundary="${workspace_root}/artifacts"\n',
+            encoding="utf-8",
         )
         subprocess.run(["git", "init", "-q"], cwd=fixture, check=True)
         subprocess.run(
@@ -130,7 +140,7 @@ fi
             cwd=fixture,
             check=True,
         )
-        subprocess.run(["git", "add", "Makefile"], cwd=fixture, check=True)
+        subprocess.run(["git", "add", "Makefile", ".bijux"], cwd=fixture, check=True)
         subprocess.run(["git", "commit", "-qm", "test: define pinned probe"], cwd=fixture, check=True)
         expected_sha = subprocess.run(
             ["git", "rev-parse", "HEAD"],
@@ -193,6 +203,7 @@ fi
             .strip(),
             str(frozen_source),
         )
+        self.assertTrue((fixture / f"artifacts/{short_sha}/probe").is_symlink())
         self.assertFalse((fixture / "mutable-artifacts").exists())
 
 
