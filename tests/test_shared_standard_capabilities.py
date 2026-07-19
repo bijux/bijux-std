@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import hashlib
 import os
 import shutil
 import subprocess
@@ -19,6 +18,10 @@ RESOLVER_PATH = (
 UPDATER_PATH = (
     REPOSITORY_ROOT
     / "shared/bijux-checks/update-bijux-std.sh"
+)
+DIGEST_PATH = (
+    REPOSITORY_ROOT
+    / "shared/bijux-checks/scripts/directory-tree-sha256.sh"
 )
 TEST_ROOT = (
     REPOSITORY_ROOT
@@ -65,19 +68,45 @@ class SharedStandardCapabilityTests(unittest.TestCase):
 
         for directory, expected_digest in entries.items():
             directory_path = REPOSITORY_ROOT / directory
-            file_hash_lines = []
-            for file_path in sorted(
-                path for path in directory_path.rglob("*") if path.is_file()
-            ):
-                relative_path = file_path.relative_to(directory_path).as_posix()
-                file_digest = hashlib.sha256(file_path.read_bytes()).hexdigest()
-                file_hash_lines.append(
-                    f"{file_digest}  ./{relative_path}\n"
-                )
-            actual_digest = hashlib.sha256(
-                "".join(file_hash_lines).encode()
-            ).hexdigest()
+            actual_digest = subprocess.run(
+                [str(DIGEST_PATH), str(directory_path)],
+                check=True,
+                text=True,
+                capture_output=True,
+            ).stdout.strip()
             self.assertEqual(actual_digest, expected_digest, directory)
+
+    def test_digest_ignores_runtime_cache_files(self) -> None:
+        source_tree = TEST_ROOT / "digest-source"
+        source_tree.mkdir()
+        (source_tree / "contract.txt").write_text(
+            "managed source\n",
+            encoding="utf-8",
+        )
+
+        expected_digest = subprocess.run(
+            [str(DIGEST_PATH), str(source_tree)],
+            check=True,
+            text=True,
+            capture_output=True,
+        ).stdout.strip()
+
+        python_cache = source_tree / "tooling/__pycache__"
+        python_cache.mkdir(parents=True)
+        (python_cache / "module.cpython-314.pyc").write_bytes(b"cache")
+        pytest_cache = source_tree / ".pytest_cache"
+        pytest_cache.mkdir()
+        (pytest_cache / "state").write_text("cache\n", encoding="utf-8")
+        (source_tree / ".DS_Store").write_bytes(b"metadata")
+
+        actual_digest = subprocess.run(
+            [str(DIGEST_PATH), str(source_tree)],
+            check=True,
+            text=True,
+            capture_output=True,
+        ).stdout.strip()
+
+        self.assertEqual(actual_digest, expected_digest)
 
     def test_rust_selection_includes_common_without_python_or_docs(self) -> None:
         result = self.resolve("--select", str(CONFIG_PATH), "rust")
