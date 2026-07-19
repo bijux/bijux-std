@@ -41,7 +41,12 @@ class RenderRepoConfigsTests(unittest.TestCase):
             for repository in manifest["repositories"]
         }
 
-        for repository_name in ("bijux-genomics", "bijux-gnss"):
+        for repository_name in (
+            "bijux-atlas",
+            "bijux-core",
+            "bijux-genomics",
+            "bijux-gnss",
+        ):
             wrapper = repositories[repository_name]["workflow_wrappers"]["ci"]
             self.assertEqual(wrapper["name"], "repo / ci")
             jobs = wrapper["jobs"]
