@@ -203,6 +203,10 @@ There are two distinct integrity layers:
 - [`.github/bijux-std-shared.sha256`](.github/bijux-std-shared.sha256) attests
   managed GitHub files in this repository.
 
+Consumer capability synchronization owns each consumer's scoped shared
+manifest. GitHub configuration synchronization must preserve that manifest so
+unselected language libraries do not become accidental requirements.
+
 Repository configuration is rendered from typed manifests, including
 [`.github/standards/repo-config.manifest.json`](.github/standards/repo-config.manifest.json)
 and
