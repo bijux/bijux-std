@@ -34,6 +34,27 @@ SPEC.loader.exec_module(MODULE)
 
 
 class RenderRepoConfigsTests(unittest.TestCase):
+    def test_python_ci_uses_current_setup_action_revisions(self) -> None:
+        manifest = json.loads(MANIFEST_PATH.read_text(encoding="utf-8"))
+        expected_revisions = {
+            "astral-sh/setup-uv": "11f9893b081a58869d3b5fccaea48c9e9e46f990",
+            "actions/setup-node": "820762786026740c76f36085b0efc47a31fe5020",
+            "actions/setup-java": "03ad4de0992f5dab5e18fcb136590ce7c4a0ac95",
+        }
+
+        for repository in manifest["repositories"]:
+            for wrapper in repository.get("workflow_wrappers", {}).values():
+                for job in wrapper.get("jobs", {}).values():
+                    for step in job.get("steps", []):
+                        action = step.get("uses", "")
+                        for name, revision in expected_revisions.items():
+                            if action.startswith(f"{name}@"):
+                                self.assertEqual(
+                                    action,
+                                    f"{name}@{revision}",
+                                    f"{repository['name']} uses a stale {name} revision",
+                                )
+
     def test_rust_repositories_expose_foundational_ci_gates(self) -> None:
         manifest = json.loads(MANIFEST_PATH.read_text(encoding="utf-8"))
         repositories = {
