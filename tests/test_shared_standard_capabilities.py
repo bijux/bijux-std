@@ -131,6 +131,24 @@ class SharedStandardCapabilityTests(unittest.TestCase):
         self.assertNotIn("make contract-tests", consumer_contract)
         self.assertIn("make contract-tests", canonical_contract)
 
+    def test_managed_workflow_checks_consumer_against_recorded_standard(
+        self,
+    ) -> None:
+        workflow = STANDARD_WORKFLOW_PATH.read_text(encoding="utf-8")
+
+        self.assertIn(
+            'tr -d \'[:space:]\' < .github/standards/bijux-std.sha',
+            workflow,
+        )
+        self.assertIn(
+            '[[ ! "${consumer_ref}" =~ ^[0-9a-f]{40}$ ]]',
+            workflow,
+        )
+        self.assertIn(
+            'BIJUX_STD_REF="${consumer_ref}" make bijux-std-checks',
+            workflow,
+        )
+
     def test_rust_selection_includes_common_without_python_or_docs(self) -> None:
         result = self.resolve("--select", str(CONFIG_PATH), "rust")
         self.assertEqual(result.returncode, 0, result.stderr)
