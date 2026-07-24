@@ -22,6 +22,18 @@ class ReleasePyPiWorkflowContractTests(unittest.TestCase):
             workflow,
         )
 
+    def test_release_pypi_workflow_uses_trusted_publish_for_maturin_by_default(self) -> None:
+        workflow = WORKFLOW_PATH.read_text(encoding="utf-8")
+
+        self.assertIn('publish_command="$(from_values "" "${BIJUX_PYPI_PUBLISH_COMMAND:-}" "${{ vars.BIJUX_PYPI_PUBLISH_COMMAND || \'\' }}" "")"', workflow)
+        self.assertIn("environment:\n      name: ${{ needs.resolve.outputs.environment_name }}", workflow)
+        self.assertIn("permissions:\n      contents: read\n      actions: read\n      id-token: write", workflow)
+        self.assertIn("Publish PyPI distributions with custom command", workflow)
+        self.assertIn("needs.resolve.outputs.publish_command == ''", workflow)
+        self.assertIn("uses: pypa/gh-action-pypi-publish@ba38be9e461d3875417946c167d0b5f3d385a247 # release/v1", workflow)
+        self.assertIn("packages-dir: artifacts/python/build", workflow)
+        self.assertNotIn('make publish-py PUBLISH_BUILD=0', workflow)
+
 
 if __name__ == "__main__":
     unittest.main()
