@@ -59,6 +59,17 @@ class SharedStandardCapabilityTests(unittest.TestCase):
         self.assertIn("shared/bijux-makes-rs", directories)
         self.assertEqual(len(directories), len(set(directories)))
 
+    def test_python_parity_roster_covers_all_python_products(self) -> None:
+        shared_make = (
+            REPOSITORY_ROOT / "shared/bijux-makes-py/bijux.mk"
+        ).read_text(encoding="utf-8")
+
+        self.assertIn(
+            "BIJUX_PY_REPOS ?= bijux-canon bijux-proteomics "
+            "bijux-pollenomics bijux-phylogenetics",
+            shared_make,
+        )
+
     def test_shared_manifest_matches_complete_directory_trees(self) -> None:
         manifest_path = REPOSITORY_ROOT / "shared/shared-dir-sha256.txt"
         entries = {}
