@@ -19,6 +19,12 @@ envelope. OpenAPI tooling uses one generic package identity and exact shared
 tool versions so its lockfile differences reflect dependency resolution rather
 than conflicting policy.
 
+`repository/badge_renderer.py` owns badge parsing, rendering, synchronization,
+and drift detection. Repository adapters identify their package-catalog table;
+the catalog owns repository identity, package paths, publication surfaces, and
+badge-family selection. Badge templates and rendered documentation remain
+product-owned.
+
 The shared Make environment routes Python bytecode, XDG caches, uv, pip, Tox,
 pytest, coverage, Hypothesis, Ruff, Mypy, builds, documentation, SBOMs, npm,
 and process scratch space beneath the same artifact tree. Package dispatch
