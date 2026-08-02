@@ -254,10 +254,14 @@ class SharedDocsHubTests(unittest.TestCase):
             "extra_css": baseline["extra_css"],
             "extra_javascript": baseline["extra_javascript"],
         }
-        root = {"plugins": baseline["required_plugins"], "nav": [{"Home": "index.md"}]}
+        root = {
+            "theme": {"custom_dir": "docs/overrides"},
+            "plugins": baseline["required_plugins"],
+            "nav": [{"Home": "index.md"}],
+        }
 
         validator.validate_mkdocs_baseline(
-            {**shared, **root},
+            validator.merge_mappings(shared, root),
             baseline,
             "effective",
         )
