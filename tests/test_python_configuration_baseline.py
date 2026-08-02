@@ -128,6 +128,21 @@ setenv =
 
         self.assertTrue(any("toxworkdir" in error for error in self.validate()))
 
+    def test_ignores_generated_project_manifests(self) -> None:
+        generated = self.fixture / "artifacts/generated"
+        generated.mkdir(parents=True)
+        generated.joinpath("pyproject.toml").write_text(
+            """\
+[project]
+name = "generated"
+version = "0.0.0"
+requires-python = ">=3.8"
+""",
+            encoding="utf-8",
+        )
+
+        self.assertEqual(self.validate(), [])
+
 
 if __name__ == "__main__":
     unittest.main()
