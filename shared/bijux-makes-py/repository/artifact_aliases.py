@@ -164,12 +164,21 @@ def _print_inspections(
         print("\t".join(fields))
 
 
-def _target_accepts_migration(target_path: Path) -> bool:
-    if not target_path.exists() and not target_path.is_symlink():
-        return True
+def _target_is_empty_directory(target_path: Path) -> bool:
     return target_path.is_dir() and not target_path.is_symlink() and not any(
         target_path.iterdir()
     )
+
+
+def _recovery_path(*, repo_root: Path, target_path: Path) -> Path:
+    artifact_root = repo_root / "artifacts"
+    try:
+        target_rel = target_path.relative_to(artifact_root)
+    except ValueError as exc:
+        raise RuntimeError(
+            f"canonical artifact destination is outside artifacts: {target_path}"
+        ) from exc
+    return artifact_root / "recovery" / "artifact-aliases" / target_rel
 
 
 def _migrate_legacy_directories(
@@ -196,24 +205,63 @@ def _migrate_legacy_directories(
         for inspection in inspections
         if inspection.state == "legacy-directory"
     ]
-    blocked_targets = [
-        inspection.binding.target_path.relative_to(repo_root)
+    occupied = [
+        inspection
         for inspection in legacy
-        if not _target_accepts_migration(inspection.binding.target_path)
+        if (
+            inspection.binding.target_path.exists()
+            or inspection.binding.target_path.is_symlink()
+        )
+        and not _target_is_empty_directory(inspection.binding.target_path)
     ]
-    if blocked_targets:
-        joined = ", ".join(str(path) for path in blocked_targets)
+    blocked_recovery_paths = [
+        _recovery_path(
+            repo_root=repo_root,
+            target_path=inspection.binding.target_path,
+        ).relative_to(repo_root)
+        for inspection in occupied
+        if _recovery_path(
+            repo_root=repo_root,
+            target_path=inspection.binding.target_path,
+        ).exists()
+        or _recovery_path(
+            repo_root=repo_root,
+            target_path=inspection.binding.target_path,
+        ).is_symlink()
+    ]
+    if blocked_recovery_paths:
+        joined = ", ".join(str(path) for path in blocked_recovery_paths)
         raise RuntimeError(
-            "canonical artifact destinations are not empty; no paths were moved: "
+            "artifact recovery destinations already exist; no paths were moved: "
             f"{joined}"
         )
 
     for inspection in legacy:
         binding = inspection.binding
         binding.target_path.parent.mkdir(parents=True, exist_ok=True)
-        if binding.target_path.is_dir():
+        recovery_path: Path | None = None
+        if _target_is_empty_directory(binding.target_path):
             binding.target_path.rmdir()
-        binding.alias_path.replace(binding.target_path)
+        elif binding.target_path.exists() or binding.target_path.is_symlink():
+            recovery_path = _recovery_path(
+                repo_root=repo_root,
+                target_path=binding.target_path,
+            )
+            recovery_path.parent.mkdir(parents=True, exist_ok=True)
+            preserved_size = _path_size(binding.target_path)
+            binding.target_path.replace(recovery_path)
+            print(
+                "preserved\t"
+                f"{binding.target_path.relative_to(repo_root)}\t"
+                f"recovery={recovery_path.relative_to(repo_root)}\t"
+                f"size={_human_size(preserved_size)}"
+            )
+        try:
+            binding.alias_path.replace(binding.target_path)
+        except OSError:
+            if recovery_path is not None:
+                recovery_path.replace(binding.target_path)
+            raise
         expected_target = _relative_target(
             link_path=binding.alias_path,
             target_path=binding.target_path,
@@ -222,6 +270,8 @@ def _migrate_legacy_directories(
             binding.alias_path.symlink_to(expected_target)
         except OSError:
             binding.target_path.replace(binding.alias_path)
+            if recovery_path is not None:
+                recovery_path.replace(binding.target_path)
             raise
         print(
             "migrated\t"

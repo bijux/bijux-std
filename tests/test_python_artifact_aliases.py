@@ -97,27 +97,47 @@ class PythonArtifactAliasTests(unittest.TestCase):
             "data\n",
         )
 
-    def test_migration_preflights_all_destinations_before_moving(self) -> None:
+    def test_migration_preserves_occupied_destination_for_recovery(self) -> None:
         repo_root = TEST_ROOT / "collision"
-        for alias_name in (".venv", ".tox"):
-            alias_path = repo_root / alias_name
-            alias_path.mkdir(parents=True)
-            (alias_path / "environment.txt").write_text(
-                f"{alias_name}\n",
-                encoding="utf-8",
-            )
+        alias_path = repo_root / ".tox"
+        alias_path.mkdir(parents=True)
+        (alias_path / "legacy.txt").write_text("legacy\n", encoding="utf-8")
         blocked_target = repo_root / "artifacts/root/tox"
         blocked_target.mkdir(parents=True)
         (blocked_target / "existing.txt").write_text("occupied\n", encoding="utf-8")
 
+        result = self.run_aliases(repo_root, "migrate", "--apply")
+
+        recovery_path = repo_root / "artifacts/recovery/artifact-aliases/root/tox"
+        self.assertIn("preserved\tartifacts/root/tox", result.stdout)
+        self.assertTrue(alias_path.is_symlink())
+        self.assertEqual(
+            (blocked_target / "legacy.txt").read_text(encoding="utf-8"),
+            "legacy\n",
+        )
+        self.assertEqual(
+            (recovery_path / "existing.txt").read_text(encoding="utf-8"),
+            "occupied\n",
+        )
+
+    def test_migration_preflights_recovery_collisions_before_moving(self) -> None:
+        repo_root = TEST_ROOT / "recovery-collision"
+        alias_path = repo_root / ".tox"
+        alias_path.mkdir(parents=True)
+        (alias_path / "legacy.txt").write_text("legacy\n", encoding="utf-8")
+        target_path = repo_root / "artifacts/root/tox"
+        target_path.mkdir(parents=True)
+        (target_path / "existing.txt").write_text("occupied\n", encoding="utf-8")
+        recovery_path = repo_root / "artifacts/recovery/artifact-aliases/root/tox"
+        recovery_path.mkdir(parents=True)
+
         result = self.run_aliases(repo_root, "migrate", "--apply", check=False)
 
         self.assertEqual(result.returncode, 2)
-        self.assertIn("no paths were moved", result.stderr)
-        for alias_name in (".venv", ".tox"):
-            alias_path = repo_root / alias_name
-            self.assertTrue(alias_path.is_dir())
-            self.assertFalse(alias_path.is_symlink())
+        self.assertIn("recovery destinations already exist", result.stderr)
+        self.assertTrue(alias_path.is_dir())
+        self.assertFalse(alias_path.is_symlink())
+        self.assertTrue(target_path.is_dir())
 
     def test_shared_make_contract_exposes_explicit_migration(self) -> None:
         root_make = (
