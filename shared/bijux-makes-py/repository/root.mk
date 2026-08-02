@@ -2,7 +2,8 @@
 
 .PHONY: \
 	help list list-all setup install lock lock-check lint quality security test docs docs-check docs-serve api build sbom clean all \
-	clean-root-artifacts root-check-env check-make-layout check-bijux-standard
+	clean-root-artifacts root-check-env check-make-layout check-bijux-standard \
+	artifact-aliases-inspect artifact-aliases-migrate
 
 ROOT_CHECK_VENV ?= $(ROOT_ARTIFACTS_DIR)/check-venv
 ROOT_CHECK_PYTHON ?= $(ROOT_CHECK_VENV)/bin/python
@@ -43,7 +44,14 @@ ROOT_FORBIDDEN_ARTIFACTS := $(filter-out \
 	$(ROOT_FORBIDDEN_ARTIFACTS))
 
 setup: ## Materialize repository and package artifact alias links
+	@mkdir -p "$(ROOT_PROCESS_DIR)"
 	@"$(PYTHON)" "$(ROOT_ARTIFACT_ALIAS_SCRIPT)" root --repo-root "$(CURDIR)" --packages-dir "$(ROOT_SETUP_PACKAGES_DIR)"
+
+artifact-aliases-inspect: ## Report legacy directories and governed artifact aliases
+	@"$(PYTHON)" "$(ROOT_ARTIFACT_ALIAS_SCRIPT)" inspect --repo-root "$(CURDIR)" --packages-dir "$(ROOT_SETUP_PACKAGES_DIR)"
+
+artifact-aliases-migrate: ## Move legacy directories under artifacts without deleting their contents
+	@"$(PYTHON)" "$(ROOT_ARTIFACT_ALIAS_SCRIPT)" migrate --apply --repo-root "$(CURDIR)" --packages-dir "$(ROOT_SETUP_PACKAGES_DIR)"
 
 $(ROOT_CHECK_STAMP): pyproject.toml uv.lock | setup
 	@mkdir -p "$(ROOT_ARTIFACTS_DIR)"
