@@ -234,6 +234,34 @@ class SharedDocsHubTests(unittest.TestCase):
         with self.assertRaisesRegex(RuntimeError, "navigation.tabs"):
             validator.validate_mkdocs_baseline(config, baseline, "shared")
 
+    def test_effective_configuration_can_own_plugins_in_root_config(self) -> None:
+        validator = load_validator()
+        baseline = json.loads(
+            (SHARED_DOCS / "config/mkdocs-baseline.json").read_text(encoding="utf-8")
+        )
+        theme = dict(baseline["theme"])
+        repository_icon = theme.pop("repository_icon")
+        required_features = theme.pop("required_features")
+        theme["icon"] = {"repo": repository_icon}
+        theme["features"] = required_features
+        shared = {
+            "strict": baseline["strict"],
+            "use_directory_urls": baseline["use_directory_urls"],
+            "dev_addr": baseline["dev_addr"],
+            "copyright": baseline["copyright"],
+            "theme": theme,
+            "markdown_extensions": baseline["required_markdown_extensions"],
+            "extra_css": baseline["extra_css"],
+            "extra_javascript": baseline["extra_javascript"],
+        }
+        root = {"plugins": baseline["required_plugins"], "nav": [{"Home": "index.md"}]}
+
+        validator.validate_mkdocs_baseline(
+            {**shared, **root},
+            baseline,
+            "effective",
+        )
+
 
 if __name__ == "__main__":
     unittest.main()
