@@ -5,6 +5,20 @@ Python repository automation keeps generated state beneath the repository
 `.benchmarks` are compatibility symlinks; their canonical destinations live
 under `artifacts/root/`. Package aliases point to `artifacts/<package>/`.
 
+## Configuration authority
+
+`config/python-baseline.toml` is the versioned semantic baseline for Python
+support, common development-tool compatibility envelopes, OpenAPI tooling, and
+Tox execution. Repositories retain their own reproducible Python and Node
+lockfiles and their product-specific Tox environments.
+
+`make check-python-baseline` validates repository-owned configuration against
+that baseline. A tool may use a narrower declared range or resolve to a
+different locked version, but it must remain inside the shared compatibility
+envelope. OpenAPI tooling uses one generic package identity and exact shared
+tool versions so its lockfile differences reflect dependency resolution rather
+than conflicting policy.
+
 The shared Make environment routes Python bytecode, XDG caches, uv, pip, Tox,
 pytest, coverage, Hypothesis, Ruff, Mypy, builds, documentation, SBOMs, npm,
 and process scratch space beneath the same artifact tree. Package dispatch

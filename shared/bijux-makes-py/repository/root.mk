@@ -3,7 +3,7 @@
 .PHONY: \
 	help list list-all setup install lock lock-check lint quality security test docs docs-check docs-serve api build sbom clean all \
 	clean-root-artifacts root-check-env check-make-layout check-bijux-standard \
-	artifact-aliases-inspect artifact-aliases-migrate
+	artifact-aliases-inspect artifact-aliases-migrate check-python-baseline
 
 ROOT_CHECK_VENV ?= $(ROOT_ARTIFACTS_DIR)/check-venv
 ROOT_CHECK_PYTHON ?= $(ROOT_CHECK_VENV)/bin/python
@@ -19,6 +19,7 @@ UV_SYNC ?= UV_PROJECT_ENVIRONMENT="$(ROOT_CHECK_VENV)" $(UV) sync --frozen --gro
 ROOT_DEV_PYTHONPATH ?=
 ROOT_CHECK_STAMP_SYNC_MESSAGE ?= @true
 ROOT_ARTIFACT_ALIAS_SCRIPT ?= $(ROOT_MAKEFILE_DIR)/bijux-py/repository/artifact_aliases.py
+ROOT_CONFIGURATION_BASELINE_SCRIPT ?= $(ROOT_MAKEFILE_DIR)/bijux-py/repository/configuration_baseline.py
 ROOT_SETUP_PACKAGES_DIR ?= $(CURDIR)/packages
 
 ifneq ($(strip $(ROOT_DEV_PYTHONPATH)),)
@@ -52,6 +53,9 @@ artifact-aliases-inspect: ## Report legacy directories and governed artifact ali
 
 artifact-aliases-migrate: ## Move legacy directories under artifacts without deleting their contents
 	@"$(PYTHON)" "$(ROOT_ARTIFACT_ALIAS_SCRIPT)" migrate --apply --repo-root "$(CURDIR)" --packages-dir "$(ROOT_SETUP_PACKAGES_DIR)"
+
+check-python-baseline: ## Validate Python, Tox, and OpenAPI configuration semantics
+	@"$(PYTHON)" "$(ROOT_CONFIGURATION_BASELINE_SCRIPT)" "$(CURDIR)"
 
 $(ROOT_CHECK_STAMP): pyproject.toml uv.lock | setup
 	@mkdir -p "$(ROOT_ARTIFACTS_DIR)"
