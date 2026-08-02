@@ -198,6 +198,17 @@ class PythonArtifactAliasTests(unittest.TestCase):
         self.assertIn("export TOX_WORK_DIR :=", root_env)
         self.assertIn("export COVERAGE_FILE :=", package_env)
 
+    def test_artifact_contract_documents_recoverable_migration(self) -> None:
+        contract = (
+            REPOSITORY_ROOT / "shared" / "bijux-makes-py" / "CONTRACT.md"
+        ).read_text(encoding="utf-8")
+
+        self.assertIn("`make artifact-aliases-inspect`", contract)
+        self.assertIn("`make artifact-aliases-migrate`", contract)
+        self.assertIn("inspection is read-only", contract.lower())
+        self.assertIn("artifacts/recovery/artifact-aliases/", contract)
+        self.assertIn("never\ndeletes or replaces a real", contract)
+
 
 if __name__ == "__main__":
     unittest.main()
