@@ -182,6 +182,58 @@ class SharedDocsHubTests(unittest.TestCase):
         with self.assertRaisesRegex(RuntimeError, "must exactly match"):
             validator.validate_shared_contract(config, CANONICAL_LINKS, "shared")
 
+    def test_validator_accepts_product_extensions_to_mkdocs_baseline(self) -> None:
+        validator = load_validator()
+        baseline = json.loads(
+            (SHARED_DOCS / "config/mkdocs-baseline.json").read_text(encoding="utf-8")
+        )
+        theme = dict(baseline["theme"])
+        repository_icon = theme.pop("repository_icon")
+        required_features = theme.pop("required_features")
+        theme["icon"] = {"repo": repository_icon}
+        theme["features"] = [*required_features, "product.feature"]
+        config = {
+            "strict": baseline["strict"],
+            "use_directory_urls": baseline["use_directory_urls"],
+            "dev_addr": baseline["dev_addr"],
+            "copyright": baseline["copyright"],
+            "theme": theme,
+            "plugins": [*baseline["required_plugins"], {"redirects": {}}],
+            "markdown_extensions": [
+                *baseline["required_markdown_extensions"],
+                "product.extension",
+            ],
+            "extra_css": [*baseline["extra_css"], "product.css"],
+            "extra_javascript": [*baseline["extra_javascript"], "product.js"],
+        }
+
+        validator.validate_mkdocs_baseline(config, baseline, "shared")
+
+    def test_validator_rejects_missing_common_mkdocs_feature(self) -> None:
+        validator = load_validator()
+        baseline = json.loads(
+            (SHARED_DOCS / "config/mkdocs-baseline.json").read_text(encoding="utf-8")
+        )
+        theme = dict(baseline["theme"])
+        repository_icon = theme.pop("repository_icon")
+        required_features = theme.pop("required_features")
+        theme["icon"] = {"repo": repository_icon}
+        theme["features"] = required_features[1:]
+        config = {
+            "strict": baseline["strict"],
+            "use_directory_urls": baseline["use_directory_urls"],
+            "dev_addr": baseline["dev_addr"],
+            "copyright": baseline["copyright"],
+            "theme": theme,
+            "plugins": baseline["required_plugins"],
+            "markdown_extensions": baseline["required_markdown_extensions"],
+            "extra_css": baseline["extra_css"],
+            "extra_javascript": baseline["extra_javascript"],
+        }
+
+        with self.assertRaisesRegex(RuntimeError, "navigation.tabs"):
+            validator.validate_mkdocs_baseline(config, baseline, "shared")
+
 
 if __name__ == "__main__":
     unittest.main()
