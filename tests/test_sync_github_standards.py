@@ -26,6 +26,14 @@ SPEC.loader.exec_module(MODULE)
 
 
 class SyncGithubStandardsTests(unittest.TestCase):
+    def test_observe_merge_reads_status_once(self) -> None:
+        payload = '{"number":7,"state":"OPEN","mergeStateStatus":"BLOCKED"}'
+        with mock.patch.object(MODULE, "run", return_value=payload) as run:
+            observed = MODULE.observe_merge(Path("/workspace"), 7)
+
+        self.assertEqual(observed["status"], "waiting_external")
+        run.assert_called_once()
+
     def test_capability_manifest_is_not_a_github_sync_mapping(self) -> None:
         self.assertNotIn(
             (
