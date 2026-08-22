@@ -34,6 +34,64 @@ SPEC.loader.exec_module(MODULE)
 
 
 class RenderRepoConfigsTests(unittest.TestCase):
+    def test_canon_ci_covers_supported_package_and_platform_matrix(self) -> None:
+        manifest = json.loads(MANIFEST_PATH.read_text(encoding="utf-8"))
+        repository = next(
+            repository
+            for repository in manifest["repositories"]
+            if repository["name"] == "bijux-canon"
+        )
+        verify_jobs = repository["workflow_wrappers"]["verify"]["jobs"]
+        package_matrix = verify_jobs["package"]["strategy"]["matrix"]["include"]
+
+        self.assertEqual(len(package_matrix), 6)
+        supported_python = verify_jobs["supported_python"]
+        self.assertEqual(
+            supported_python["strategy"]["matrix"]["python-version"],
+            ["3.11", "3.12", "3.13", "3.14"],
+        )
+        supported_python_command = next(
+            step["run"]
+            for step in supported_python["steps"]
+            if step.get("name")
+            == "Test every canonical and compatibility distribution"
+        )
+        self.assertIn('selected_python="$(command -v python)"', supported_python_command)
+        self.assertIn('make PYTHON="${selected_python}" test', supported_python_command)
+        for package in (
+            "compat-bijux-canon",
+            "compat-agentic-flows",
+            "compat-bijux-agent",
+            "compat-bijux-rag",
+            "compat-bijux-rar",
+            "compat-bijux-vex",
+        ):
+            self.assertIn(package, supported_python_command)
+        self.assertIn('PACKAGE="${package}" test', supported_python_command)
+
+        installed_family = verify_jobs["installed_family"]
+        self.assertEqual(
+            installed_family["strategy"]["matrix"],
+            {
+                "runner": ["ubuntu-latest", "macos-latest"],
+                "python-version": ["3.11", "3.12", "3.13", "3.14"],
+            },
+        )
+        installed_command = next(
+            step["run"]
+            for step in installed_family["steps"]
+            if step.get("name") == "Build and install the distribution family"
+        )
+        self.assertIn("uv build --all-packages --wheel", installed_command)
+        self.assertIn("= 13", installed_command)
+        self.assertIn("uv pip check", installed_command)
+        self.assertIn('"${venv_dir}/bin/bijux" --version', installed_command)
+
+        self.assertEqual(
+            verify_jobs["verification_ready"]["needs"],
+            ["repository", "package", "supported_python", "installed_family"],
+        )
+
     def test_python_ci_uses_current_setup_action_revisions(self) -> None:
         manifest = json.loads(MANIFEST_PATH.read_text(encoding="utf-8"))
         expected_revisions = {
