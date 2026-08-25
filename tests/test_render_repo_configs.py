@@ -34,6 +34,17 @@ SPEC.loader.exec_module(MODULE)
 
 
 class RenderRepoConfigsTests(unittest.TestCase):
+    def test_consumer_renderer_uses_synchronized_github_sources(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            repository_root = Path(temp_dir)
+            consumer_source = repository_root / ".bijux/shared/bijux-gh"
+            consumer_source.mkdir(parents=True)
+
+            self.assertEqual(
+                MODULE.shared_github_source_root(repository_root),
+                consumer_source,
+            )
+
     def test_canon_ci_covers_supported_package_and_platform_matrix(self) -> None:
         manifest = json.loads(MANIFEST_PATH.read_text(encoding="utf-8"))
         repository = next(
