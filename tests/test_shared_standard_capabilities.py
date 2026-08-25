@@ -85,6 +85,28 @@ class SharedStandardCapabilityTests(unittest.TestCase):
             self.assertIn(path, rendered_block)
             self.assertNotIn(path.removeprefix(".github/"), required_block)
 
+    def test_python_security_evidence_fails_closed_without_suppressions(self) -> None:
+        shared_root = REPOSITORY_ROOT / "shared/bijux-makes-py"
+        security_make = (shared_root / "ci/security.mk").read_text(encoding="utf-8")
+        sbom_make = (shared_root / "ci/sbom.mk").read_text(encoding="utf-8")
+        package_make = (shared_root / "package.mk").read_text(encoding="utf-8")
+
+        self.assertIn("SECURITY_IGNORE_IDS           ?=\n", security_make)
+        self.assertIn(
+            "BANDIT_FLAGS                  ?= --severity-level high "
+            "--confidence-level high",
+            security_make,
+        )
+        self.assertIn("Bandit is mandatory", security_make)
+        self.assertIn("Dependency vulnerability auditing is mandatory", security_make)
+        self.assertIn("SBOM_IGNORE_IDS          ?=\n", sbom_make)
+        self.assertIn("Ungoverned SBOM vulnerability suppressions", sbom_make)
+        self.assertNotIn("PYSEC-", security_make + sbom_make + package_make)
+        self.assertNotIn("CVE-", security_make + sbom_make + package_make)
+        for line in sbom_make.splitlines():
+            if "$(SBOM_PIP_AUDIT)" in line:
+                self.assertNotIn("|| true", line)
+
     def test_shared_manifest_matches_complete_directory_trees(self) -> None:
         manifest_path = REPOSITORY_ROOT / "shared/shared-dir-sha256.txt"
         entries = {}
