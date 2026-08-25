@@ -70,6 +70,21 @@ class SharedStandardCapabilityTests(unittest.TestCase):
             shared_make,
         )
 
+    def test_repository_specific_status_checks_are_rendered_outputs(self) -> None:
+        shared_make = (
+            REPOSITORY_ROOT / "shared/bijux-makes-py/bijux.mk"
+        ).read_text(encoding="utf-8")
+        rendered_block, required_block = shared_make.split(
+            "BIJUX_STANDARD_REQUIRED_FILES ?=", maxsplit=1
+        )
+
+        for path in (
+            ".github/required-status-checks.md",
+            ".github/rulesets/main-branch-protection.json",
+        ):
+            self.assertIn(path, rendered_block)
+            self.assertNotIn(path.removeprefix(".github/"), required_block)
+
     def test_shared_manifest_matches_complete_directory_trees(self) -> None:
         manifest_path = REPOSITORY_ROOT / "shared/shared-dir-sha256.txt"
         entries = {}
