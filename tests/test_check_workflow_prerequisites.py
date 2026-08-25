@@ -24,6 +24,36 @@ SPEC.loader.exec_module(MODULE)
 
 
 class CheckWorkflowPrerequisitesTests(unittest.TestCase):
+    def test_pending_prerequisite_returns_waiting_external_after_one_observation(self) -> None:
+        event = {
+            "pull_request": {"head": {"sha": "a" * 40}},
+        }
+        pending_run = {
+            "id": 60,
+            "name": "standards verification",
+            "path": ".github/workflows/bijux-std.yml",
+            "event": "pull_request",
+            "created_at": "2026-08-10T12:00:00Z",
+            "run_number": 20,
+            "status": "in_progress",
+            "conclusion": None,
+        }
+
+        with (
+            mock.patch.dict(
+                MODULE.os.environ,
+                {"GITHUB_EVENT_NAME": "pull_request"},
+                clear=True,
+            ),
+            mock.patch.object(MODULE, "_event_payload", return_value=event),
+            mock.patch.object(MODULE, "_list_workflow_runs", return_value=[pending_run]) as list_runs,
+            mock.patch.object(MODULE, "_run_has_materialized_jobs", return_value=True),
+        ):
+            with self.assertRaisesRegex(SystemExit, "75"):
+                MODULE.main()
+
+        list_runs.assert_called_once_with("a" * 40)
+
     def test_latest_run_ignores_wrong_event_and_zero_job_run(self) -> None:
         workflow = MODULE.RequiredWorkflow(
             ".github/workflows/bijux-std.yml",

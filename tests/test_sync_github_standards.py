@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import hashlib
 import importlib.util
 import os
 import sys
@@ -26,6 +27,14 @@ SPEC.loader.exec_module(MODULE)
 
 
 class SyncGithubStandardsTests(unittest.TestCase):
+    def test_observe_merge_reads_status_once(self) -> None:
+        payload = '{"number":7,"state":"OPEN","mergeStateStatus":"BLOCKED"}'
+        with mock.patch.object(MODULE, "run", return_value=payload) as run:
+            observed = MODULE.observe_merge(Path("/workspace"), 7)
+
+        self.assertEqual(observed["status"], "waiting_external")
+        run.assert_called_once()
+
     def test_capability_manifest_is_not_a_github_sync_mapping(self) -> None:
         self.assertNotIn(
             (
@@ -63,6 +72,27 @@ class SyncGithubStandardsTests(unittest.TestCase):
                     "BIJUX_REPOSITORY_PATH_BIJUX_GNSS",
                 ):
                     MODULE.resolve_repository_checkout("bijux-gnss")
+
+    def test_refresh_shared_checksums_binds_repository_rendered_files(self) -> None:
+        with tempfile.TemporaryDirectory() as checkout:
+            root = Path(checkout)
+            managed = root / ".github/required-status-checks.md"
+            managed.parent.mkdir(parents=True)
+            managed.write_text("repository-specific\n", encoding="utf-8")
+            checksum = root / ".github/bijux-std-shared.sha256"
+            checksum.write_text(
+                "0" * 64 + "  .github/required-status-checks.md\n",
+                encoding="utf-8",
+            )
+
+            MODULE.refresh_shared_checksums(root)
+
+            expected = hashlib.sha256(managed.read_bytes()).hexdigest()
+            self.assertEqual(
+                checksum.read_text(encoding="utf-8"),
+                f"{expected}  .github/required-status-checks.md\n",
+            )
+            MODULE.verify_shared_checksums(root)
 
 
 if __name__ == "__main__":
