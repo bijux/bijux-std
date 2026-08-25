@@ -107,6 +107,60 @@ class SharedStandardCapabilityTests(unittest.TestCase):
             if "$(SBOM_PIP_AUDIT)" in line:
                 self.assertNotIn("|| true", line)
 
+    def test_python_sibling_parity_is_scoped_to_the_accepted_standard(self) -> None:
+        shared_make = (
+            REPOSITORY_ROOT / "shared/bijux-makes-py/bijux.mk"
+        ).read_text(encoding="utf-8")
+
+        self.assertIn(
+            "BIJUX_PY_STD_PIN_REL ?= .github/standards/bijux-std.sha",
+            shared_make,
+        )
+        self.assertIn('cmp -s "$$current_pin_file" "$$other_pin_file"', shared_make)
+        self.assertIn("accepted standard pins differ", shared_make)
+        self.assertIn("match the local synchronized source", shared_make)
+
+        workspace = TEST_ROOT / "workspace"
+        for repository, pin, content in (
+            ("current", "a" * 40, "current\n"),
+            ("sibling", "b" * 40, "different\n"),
+        ):
+            root = workspace / repository
+            system_root = root / ".bijux/shared/bijux-makes-py"
+            local_root = root / "makes/bijux-py"
+            pin_path = root / ".github/standards/bijux-std.sha"
+            system_root.mkdir(parents=True)
+            local_root.mkdir(parents=True)
+            pin_path.parent.mkdir(parents=True)
+            (system_root / "contract.mk").write_text(content, encoding="utf-8")
+            local_content = "current\n" if repository == "current" else content
+            (local_root / "contract.mk").write_text(local_content, encoding="utf-8")
+            pin_path.write_text(f"{pin}\n", encoding="utf-8")
+
+        command = [
+            "make",
+            "-f",
+            str(REPOSITORY_ROOT / "shared/bijux-makes-py/bijux.mk"),
+            "check-bijux-standard",
+            f"PROJECT_DIR={workspace / 'current'}",
+            "PROJECT_SLUG=current",
+            f"BIJUX_PY_WORKSPACE_DIR={workspace}",
+            "BIJUX_PY_REPOS=current sibling",
+            "BIJUX_PY_SYSTEM_REL=.bijux/shared/bijux-makes-py",
+            "BIJUX_PY_REQUIRED_FILES=contract.mk",
+        ]
+        staggered = subprocess.run(command, check=False, text=True, capture_output=True)
+        self.assertEqual(staggered.returncode, 0, staggered.stdout + staggered.stderr)
+        self.assertIn("accepted standard pins differ", staggered.stdout)
+
+        sibling_pin = workspace / "sibling/.github/standards/bijux-std.sha"
+        sibling_pin.write_text(f"{'a' * 40}\n", encoding="utf-8")
+        same_standard = subprocess.run(
+            command, check=False, text=True, capture_output=True
+        )
+        self.assertNotEqual(same_standard.returncode, 0)
+        self.assertIn("Shared make drift", same_standard.stdout)
+
     def test_shared_manifest_matches_complete_directory_trees(self) -> None:
         manifest_path = REPOSITORY_ROOT / "shared/shared-dir-sha256.txt"
         entries = {}
