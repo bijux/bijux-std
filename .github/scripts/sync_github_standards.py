@@ -142,6 +142,29 @@ def verify_shared_checksums(repo_dir: Path) -> None:
         )
 
 
+def refresh_shared_checksums(repo_dir: Path) -> None:
+    """Rebind managed checksums after repository-specific rendering."""
+    checksum_file = repo_dir / ".github/bijux-std-shared.sha256"
+    if not checksum_file.exists():
+        raise FileNotFoundError(f"Missing checksum file: {checksum_file}")
+
+    refreshed: list[str] = []
+    for raw_line in checksum_file.read_text(encoding="utf-8").splitlines():
+        line = raw_line.strip()
+        if not line:
+            continue
+        parts = line.split(maxsplit=1)
+        if len(parts) != 2:
+            raise ValueError(f"Malformed checksum line: {raw_line}")
+        relative_path = parts[1]
+        path = repo_dir / relative_path
+        if not path.is_file():
+            raise FileNotFoundError(f"Missing managed file: {relative_path}")
+        digest = hashlib.sha256(path.read_bytes()).hexdigest()
+        refreshed.append(f"{digest}  {relative_path}")
+    checksum_file.write_text("\n".join(refreshed) + "\n", encoding="utf-8")
+
+
 def load_manifest() -> dict[str, Any]:
     return json.loads(MANIFEST_PATH.read_text(encoding="utf-8"))
 
@@ -322,6 +345,8 @@ def main() -> None:
 
     render_script = STD_REPO / ".github/scripts/render_repo_configs.py"
     subprocess.run(["python3", str(render_script), "--repo", "bijux-std"], check=True)
+    refresh_shared_checksums(STD_REPO)
+    verify_shared_checksums(STD_REPO)
 
     pr_records: list[tuple[str, int, str]] = []
     changed_repos: list[str] = []
@@ -330,6 +355,7 @@ def main() -> None:
         repo_dir = resolve_repository_checkout(repo)
         copy_shared_files(repo)
         subprocess.run(["python3", str(render_script), "--repo", repo], check=True)
+        refresh_shared_checksums(repo_dir)
 
         if args.advance_std_sha:
             write_std_pin(repo, std_sha)

@@ -83,7 +83,8 @@ class RenderRepoConfigsTests(unittest.TestCase):
             if step.get("name") == "Build and install the distribution family"
         )
         self.assertIn("uv build --all-packages --wheel", installed_command)
-        self.assertIn("= 13", installed_command)
+        self.assertIn("= 12", installed_command)
+        self.assertNotIn("bijux-canon-repository", installed_command)
         self.assertIn("uv pip check", installed_command)
         self.assertIn('"${venv_dir}/bin/bijux" --version', installed_command)
 
@@ -92,12 +93,61 @@ class RenderRepoConfigsTests(unittest.TestCase):
             ["repository", "package", "supported_python", "installed_family"],
         )
 
+    def test_canon_release_and_required_checks_cover_public_delivery(self) -> None:
+        manifest = json.loads(MANIFEST_PATH.read_text(encoding="utf-8"))
+        repository = next(
+            repository
+            for repository in manifest["repositories"]
+            if repository["name"] == "bijux-canon"
+        )
+        release_env = {
+            entry["key"]: entry["value"] for entry in repository["release_env"]
+        }
+        expected_public = {
+            "agentic-flows",
+            "bijux-agent",
+            "bijux-canon",
+            "bijux-canon-agent",
+            "bijux-canon-index",
+            "bijux-canon-ingest",
+            "bijux-canon-reason",
+            "bijux-canon-runtime",
+            "bijux-rag",
+            "bijux-rar",
+            "bijux-vex",
+        }
+        for key in (
+            "BIJUX_RELEASE_BUILD_MATRIX_JSON",
+            "BIJUX_PYPI_PACKAGE_MATRIX_JSON",
+            "BIJUX_GHCR_RELEASE_PACKAGE_MATRIX_JSON",
+        ):
+            self.assertEqual(
+                {entry["package_slug"] for entry in release_env[key]},
+                expected_public,
+            )
+
+        ruleset = json.loads(MODULE.render_required_status_ruleset(repository))
+        required_rule = next(
+            rule
+            for rule in ruleset["rules"]
+            if rule["type"] == "required_status_checks"
+        )
+        contexts = {
+            check["context"]
+            for check in required_rule["parameters"]["required_status_checks"]
+        }
+        self.assertIn("verification-ready", contexts)
+        reference = MODULE.render_required_status_reference(repository)
+        self.assertIn(
+            "`verification-ready` (from workflow `repo / verify`)", reference
+        )
+
     def test_python_ci_uses_current_setup_action_revisions(self) -> None:
         manifest = json.loads(MANIFEST_PATH.read_text(encoding="utf-8"))
         expected_revisions = {
             "actions/checkout": "3d3c42e5aac5ba805825da76410c181273ba90b1",
             "actions/setup-python": "5fda3b95a4ea91299a34e894583c3862153e4b97",
-            "astral-sh/setup-uv": "c771a70e6277c0a99b617c7a806ffedaca235ff9",
+            "astral-sh/setup-uv": "20cfd1bf945f4377ade1205e4dbc17946fc9a30d",
             "actions/setup-node": "820762786026740c76f36085b0efc47a31fe5020",
             "actions/setup-java": "03ad4de0992f5dab5e18fcb136590ce7c4a0ac95",
         }
@@ -161,7 +211,7 @@ class RenderRepoConfigsTests(unittest.TestCase):
 
         rust_toolchain_action = (
             "dtolnay/rust-toolchain@"
-            "e97e2d8cc328f1b50210efc529dca0028893a2d9"
+            "6c977a6ca4077a0ceb28ffbe03f59d46e9ac8772"
         )
         for job in wrapper["jobs"].values():
             for step in job.get("steps", []):
