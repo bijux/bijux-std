@@ -59,8 +59,8 @@ dev = ["ruff>=0.13,<1.0", "mypy>=1.18,<3.0", "pytest>=9,<10"]
                     "private": True,
                     "engines": {"node": ">=22.12.0"},
                     "devDependencies": {
-                        "@openapitools/openapi-generator-cli": "2.40.1",
-                        "@redocly/cli": "2.41.0",
+                        "@openapitools/openapi-generator-cli": "2.41.0",
+                        "@redocly/cli": "2.47.0",
                     },
                 }
             ),
