@@ -96,6 +96,7 @@ class RenderRepoConfigsTests(unittest.TestCase):
         self.assertIn("uv build --all-packages --wheel", installed_command)
         self.assertIn("= 13", installed_command)
         self.assertIn("bijux-canon-repository", installed_command)
+        self.assertNotIn("bijux_canon_repository", installed_command)
         self.assertIn("uv pip check", installed_command)
         self.assertIn('"${venv_dir}/bin/bijux" --version', installed_command)
 
