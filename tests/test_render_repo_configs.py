@@ -23,6 +23,12 @@ MANIFEST_PATH = (
     / "standards"
     / "repo-config.manifest.json"
 )
+AUTOMERGE_WORKFLOW_PATH = (
+    Path(__file__).resolve().parents[1]
+    / ".github"
+    / "workflows"
+    / "automerge-pr.yml"
+)
 SPEC = importlib.util.spec_from_file_location(
     "bijux_std_render_repo_configs",
     SCRIPT_PATH,
@@ -320,7 +326,7 @@ class RenderRepoConfigsTests(unittest.TestCase):
             "${{ (github.event_name != 'pull_request' || github.event.pull_request.user.login != 'dependabot[bot]') && (github.event_name == 'workflow_dispatch') }}",
         )
 
-    def test_ci_wrapper_stays_ungated(self) -> None:
+    def test_ci_wrapper_stays_unchanged(self) -> None:
         wrapper = {
             "jobs": {
                 "fast-tier": {
@@ -330,11 +336,11 @@ class RenderRepoConfigsTests(unittest.TestCase):
             }
         }
 
-        rendered = MODULE.inject_policy_gate("ci", copy.deepcopy(wrapper))
+        rendered = MODULE.normalize_workflow_wrapper("ci", copy.deepcopy(wrapper))
 
         self.assertEqual(rendered, wrapper)
 
-    def test_verify_wrapper_keeps_policy_gate_and_normalized_paths(self) -> None:
+    def test_verify_wrapper_runs_independently_with_normalized_paths(self) -> None:
         wrapper = {
             "on": {
                 "pull_request": {
@@ -349,14 +355,21 @@ class RenderRepoConfigsTests(unittest.TestCase):
             },
         }
 
-        rendered = MODULE.inject_policy_gate("verify", copy.deepcopy(wrapper))
+        rendered = MODULE.normalize_workflow_wrapper("verify", copy.deepcopy(wrapper))
 
-        self.assertIn("policy_gate", rendered["jobs"])
-        self.assertEqual(rendered["jobs"]["verify"]["needs"], "policy_gate")
+        self.assertNotIn("policy_gate", rendered["jobs"])
+        self.assertNotIn("needs", rendered["jobs"]["verify"])
         self.assertEqual(
             rendered["on"]["pull_request"]["paths"],
             [".bijux/**", ".github/**", "src/**"],
         )
+
+    def test_automerge_defers_to_required_checks_without_preflight_race(self) -> None:
+        workflow = AUTOMERGE_WORKFLOW_PATH.read_text(encoding="utf-8")
+
+        self.assertIn("  enable:\n", workflow)
+        self.assertNotIn("policy-gate", workflow)
+        self.assertNotIn("check_workflow_prerequisites.py", workflow)
 
 
 if __name__ == "__main__":
