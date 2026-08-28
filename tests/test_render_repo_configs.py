@@ -61,24 +61,40 @@ class RenderRepoConfigsTests(unittest.TestCase):
             supported_python["strategy"]["matrix"]["python-version"],
             ["3.11", "3.12", "3.13", "3.14"],
         )
-        supported_python_command = next(
-            step["run"]
-            for step in supported_python["steps"]
-            if step.get("name")
-            == "Test every canonical and compatibility distribution"
-        )
-        self.assertIn('selected_python="$(command -v python)"', supported_python_command)
-        self.assertIn('make PYTHON="${selected_python}" test', supported_python_command)
-        for package in (
+        expected_package_slugs = [
+            "bijux-canon-dev",
+            "bijux-canon-runtime",
+            "bijux-canon-agent",
+            "bijux-canon-ingest",
+            "bijux-canon-reason",
+            "bijux-canon-index",
             "compat-bijux-canon",
             "compat-agentic-flows",
             "compat-bijux-agent",
             "compat-bijux-rag",
             "compat-bijux-rar",
             "compat-bijux-vex",
-        ):
-            self.assertIn(package, supported_python_command)
-        self.assertIn('PACKAGE="${package}" test', supported_python_command)
+        ]
+        self.assertEqual(
+            supported_python["strategy"]["matrix"]["package_slug"],
+            expected_package_slugs,
+        )
+        self.assertEqual(supported_python["strategy"]["max-parallel"], 12)
+        supported_python_command = next(
+            step["run"]
+            for step in supported_python["steps"]
+            if step.get("name")
+            == "Test one supported package distribution"
+        )
+        self.assertIn('selected_python="$(command -v python)"', supported_python_command)
+        self.assertIn(
+            'PACKAGE="${{ matrix.package_slug }}" test', supported_python_command
+        )
+        self.assertNotIn("for package in", supported_python_command)
+        self.assertEqual(
+            supported_python["steps"][-1]["with"]["name"],
+            "${{ matrix.package_slug }}-test-py${{ matrix.python-version }}",
+        )
 
         installed_family = verify_jobs["installed_family"]
         self.assertEqual(
