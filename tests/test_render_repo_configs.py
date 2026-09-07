@@ -300,7 +300,7 @@ class RenderRepoConfigsTests(unittest.TestCase):
                 ):
                     MODULE.resolve_repository_checkout("bijux-gnss")
 
-    def test_ci_wrapper_skips_dependabot_pull_requests(self) -> None:
+    def test_expensive_wrappers_skip_dependabot_pull_requests(self) -> None:
         wrapper = {
             "jobs": {
                 "fast-tier": {
@@ -315,16 +315,36 @@ class RenderRepoConfigsTests(unittest.TestCase):
             }
         }
 
-        rendered = MODULE.inject_dependabot_pull_request_skip("ci", copy.deepcopy(wrapper))
+        for wrapper_name in ("ci", "verify"):
+            with self.subTest(wrapper_name=wrapper_name):
+                rendered = MODULE.inject_dependabot_pull_request_skip(
+                    wrapper_name, copy.deepcopy(wrapper)
+                )
 
-        self.assertEqual(
-            rendered["jobs"]["fast-tier"]["if"],
-            "${{ github.event_name != 'pull_request' || github.event.pull_request.user.login != 'dependabot[bot]' }}",
+                self.assertEqual(
+                    rendered["jobs"]["fast-tier"]["if"],
+                    "${{ github.event_name != 'pull_request' || github.event.pull_request.user.login != 'dependabot[bot]' }}",
+                )
+                self.assertEqual(
+                    rendered["jobs"]["slow-tier"]["if"],
+                    "${{ (github.event_name != 'pull_request' || github.event.pull_request.user.login != 'dependabot[bot]') && (github.event_name == 'workflow_dispatch') }}",
+                )
+
+    def test_governance_wrapper_keeps_dependabot_verification(self) -> None:
+        wrapper = {
+            "jobs": {
+                "policy": {
+                    "runs-on": "ubuntu-latest",
+                    "steps": [{"run": "make policy"}],
+                }
+            }
+        }
+
+        rendered = MODULE.inject_dependabot_pull_request_skip(
+            "github-policy", copy.deepcopy(wrapper)
         )
-        self.assertEqual(
-            rendered["jobs"]["slow-tier"]["if"],
-            "${{ (github.event_name != 'pull_request' || github.event.pull_request.user.login != 'dependabot[bot]') && (github.event_name == 'workflow_dispatch') }}",
-        )
+
+        self.assertEqual(rendered, wrapper)
 
     def test_ci_wrapper_stays_unchanged(self) -> None:
         wrapper = {
