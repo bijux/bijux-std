@@ -14,4 +14,4 @@ contract-unit-tests: ## Run bijux-std unit contracts
 		PYTHONPYCACHEPREFIX="$(abspath $(CONTRACT_PYCACHE_DIR))" \
 		python3 -m unittest discover -s tests -p 'test_*.py' -v
 
-contract-tests: shared-contracts contract-unit-tests ## Run complete bijux-std contracts
+contract-tests: shared-contracts contract-unit-tests docs-theme-tests ## Run complete bijux-std contracts

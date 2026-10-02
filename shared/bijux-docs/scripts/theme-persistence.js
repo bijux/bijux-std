@@ -155,7 +155,7 @@
     }
   }
 
-  function writeMaterialPalette(option) {
+  function writeMaterialPalette(option, index) {
     const color = optionSignature(option);
     if (!color.scheme) {
       color.scheme = "default";
@@ -168,7 +168,8 @@
     }
 
     if (typeof window.__md_set === "function") {
-      window.__md_set(MD_PALETTE_KEY, { color });
+      // Material restores its native palette by indexing the current option list.
+      window.__md_set(MD_PALETTE_KEY, { index, color });
     }
   }
 
@@ -198,7 +199,8 @@
   }
 
   function applyOption(themeKey, option, persistGlobal) {
-    if (!option) {
+    const index = paletteOptions().indexOf(option);
+    if (index < 0) {
       return false;
     }
 
@@ -206,7 +208,7 @@
 
     option.checked = true;
     applyThemeAttributes(option);
-    writeMaterialPalette(option);
+    writeMaterialPalette(option, index);
 
     if (persistGlobal) {
       persistThemeChoice(themeKey, option);
@@ -365,9 +367,11 @@
 
       if (savedChoice.signature) {
         const signedOption = findOptionBySignature(savedChoice.signature);
-        applyOption(themeKey, signedOption, false);
-        refreshThemeToggleButtons();
-        return;
+        if (signedOption) {
+          applyOption(themeKey, signedOption, false);
+          refreshThemeToggleButtons();
+          return;
+        }
       }
 
       if (savedChoice.mode) {
