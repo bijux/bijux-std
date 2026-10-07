@@ -5,6 +5,10 @@ This test workspace validates responsive UI/UX behavior for
 
 ## Coverage
 
+- dependency-free palette persistence contracts in `unit/theme-persistence.test.js`:
+  saved auto/light/dark modes, current option order, cross-tab fallback and
+  detached-option refusal, including Material's next-page palette selection
+
 - phone viewport behavior (`390px`)
 - normal/tablet behavior (`1024px`)
 - wide desktop behavior (`1920px`)
@@ -22,6 +26,10 @@ This test workspace validates responsive UI/UX behavior for
   - phone-first drawer behavior plus tablet/desktop regression guards
 
 ## Run
+
+Run the palette contracts with Node 18 or later through `make docs-theme-tests`.
+They also run in `make contract-tests`, including the standard verification
+workflow. These tests need no npm install or browser runtime.
 
 ```bash
 make ui-test-install

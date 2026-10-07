@@ -9,6 +9,11 @@ UI_TESTS_RUNTIME_PACKAGE_JSON ?= $(UI_TESTS_RUNTIME_DIR)/package.json
 UI_TESTS_RUNTIME_PACKAGE_LOCK ?= $(UI_TESTS_RUNTIME_DIR)/package-lock.json
 UI_TESTS_NODE_MODULES_LINK ?= $(UI_TESTS_DIR)/node_modules
 
+.PHONY: docs-theme-tests
+docs-theme-tests: ## Check shared palette persistence without browser dependencies
+	@command -v node >/dev/null 2>&1 || { echo "node 18 or later is required" >&2; exit 1; }
+	@node --test "$(UI_TESTS_DIR)/unit/theme-persistence.test.js"
+
 .PHONY: ui-test-prepare-runtime
 ui-test-prepare-runtime:
 	@mkdir -p "$(UI_TESTS_RUNTIME_DIR)" "$(UI_TESTS_NPM_CACHE_DIR)" "$(UI_TESTS_PLAYWRIGHT_BROWSERS_DIR)"
