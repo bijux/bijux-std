@@ -355,6 +355,7 @@ class SharedStandardCapabilityTests(unittest.TestCase):
                 "BIJUX_STD_CAPABILITIES": "rust",
                 "BIJUX_STD_CONFIG": str(CONFIG_PATH),
                 "BIJUX_STD_GIT_URL": str(standard_source),
+                "BIJUX_STD_ALLOW_LOCAL_SOURCE": "1",
                 "BIJUX_STD_REF": source_sha,
                 "BIJUX_STD_SELF_REPO_MODE": "off",
                 "TMPDIR": str(consumer / "artifacts/process"),
