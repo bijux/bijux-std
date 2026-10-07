@@ -54,7 +54,8 @@ class ExactSourceRefreshTests(unittest.TestCase):
 
     def managed_snapshot(self):
         return {p.relative_to(self.consumer).as_posix(): p.read_bytes()
-                for p in (self.consumer / '.bijux/shared').rglob('*') if p.is_file()}
+                for tree in (self.consumer / '.bijux/shared', self.consumer / 'shared')
+                for p in tree.rglob('*') if p.is_file()}
 
     def test_unavailable_exact_sha_fails_without_head_substitution_or_mutation(self):
         before = self.managed_snapshot()
@@ -127,6 +128,93 @@ class ExactSourceRefreshTests(unittest.TestCase):
         self.assertNotEqual(result.returncode, 0)
         self.assertEqual(self.managed_snapshot(), before)
         self.assertIn('preserve untracked', result.stderr)
+
+    def legacy_tree(self):
+        legacy = self.consumer / 'shared/bijux-makes'
+        legacy.mkdir(parents=True)
+        (legacy/'marker.txt').write_text('legacy bytes\n')
+        return legacy
+
+    def commit_all_managed(self):
+        self.git(self.consumer, 'config', 'user.email', 'bijux@example.invalid')
+        self.git(self.consumer, 'config', 'user.name', 'Bijux tests')
+        self.git(self.consumer, 'add', '.bijux', 'shared')
+        self.git(self.consumer, 'commit', '-qm', 'test(std): retain installed and legacy source')
+
+    def test_tracked_legacy_shared_edit_is_preserved_before_cleanup(self):
+        legacy = self.legacy_tree()
+        self.commit_all_managed()
+        (legacy/'marker.txt').write_text('legacy user work\n')
+        before = self.managed_snapshot()
+        result = self.refresh()
+        self.assertNotEqual(result.returncode, 0)
+        self.assertEqual(self.managed_snapshot(), before)
+        self.assertIn('preserve local managed changes', result.stderr)
+        self.assertIn('shared/bijux-makes', result.stderr)
+
+    def test_untracked_legacy_shared_input_is_preserved_before_cleanup(self):
+        legacy = self.legacy_tree()
+        self.commit_all_managed()
+        (legacy/'user.mk').write_text('untracked legacy user work\n')
+        before = self.managed_snapshot()
+        result = self.refresh()
+        self.assertNotEqual(result.returncode, 0)
+        self.assertEqual(self.managed_snapshot(), before)
+        self.assertIn('preserve untracked managed input', result.stderr)
+
+    def test_unavailable_exact_sha_preserves_installed_and_legacy_trees(self):
+        self.legacy_tree()
+        before = self.managed_snapshot()
+        result = self.refresh(BIJUX_STD_REF='f' * 40)
+        self.assertNotEqual(result.returncode, 0)
+        self.assertEqual(self.managed_snapshot(), before)
+        self.assertIn('no fallback', result.stderr)
+
+    def test_annotated_tag_resolves_to_commit_not_tag_object(self):
+        self.git(self.source, '-c', 'tag.gpgSign=false', 'tag', '-a', '-m', 'Published fixture source', 'v1.0.0')
+        result = self.refresh(BIJUX_STD_REF='refs/tags/v1.0.0')
+        self.assertEqual(result.returncode, 0, result.stderr)
+        receipt = json.loads((self.consumer/'artifacts/bijux-std/source-provenance.json').read_text())
+        self.assertEqual(receipt['resolved_sha'], self.sha)
+        self.assertEqual(receipt['requested_ref'], 'refs/tags/v1.0.0')
+
+    def test_ambiguous_branch_and_tag_cannot_choose_incidental_source(self):
+        self.git(self.source, 'branch', 'documentation')
+        self.git(self.source, 'tag', 'documentation')
+        before = self.managed_snapshot()
+        result = self.refresh(BIJUX_STD_REF='documentation')
+        self.assertNotEqual(result.returncode, 0)
+        self.assertEqual(self.managed_snapshot(), before)
+        self.assertIn('ambiguous', result.stderr)
+
+    def test_dry_run_reports_diff_pruned_and_legacy_trees_without_mutation(self):
+        self.legacy_tree()
+        docs = self.consumer/'.bijux/shared/bijux-docs'
+        docs.mkdir()
+        (docs/'marker.txt').write_text('previous docs capability\n')
+        before = self.managed_snapshot()
+        result = self.refresh(BIJUX_STD_UPDATE_DRY_RUN='1')
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(self.managed_snapshot(), before)
+        self.assertIn('-previous bytes', result.stdout)
+        self.assertIn('+accepted bytes', result.stdout)
+        self.assertIn('Remove unselected managed directory .bijux/shared/bijux-docs', result.stdout)
+        self.assertIn('Remove legacy managed directory shared/bijux-makes', result.stdout)
+
+    def test_recovery_snapshot_retains_pruned_capabilities_and_removed_legacy(self):
+        self.legacy_tree()
+        docs = self.consumer/'.bijux/shared/bijux-docs'
+        docs.mkdir()
+        (docs/'marker.txt').write_text('previous docs capability\n')
+        result = self.refresh()
+        self.assertEqual(result.returncode, 0, result.stderr)
+        receipt = json.loads((self.consumer/'artifacts/bijux-std/source-provenance.json').read_text())
+        recovery = Path(receipt['recovery_directory'])
+        self.assertFalse(docs.exists())
+        self.assertFalse((self.consumer/'shared/bijux-makes').exists())
+        self.assertEqual((recovery/'.bijux/shared/bijux-docs/marker.txt').read_text(),'previous docs capability\n')
+        self.assertEqual((recovery/'shared/bijux-makes/marker.txt').read_text(),'legacy bytes\n')
+        self.assertEqual((recovery/'shared-dir-sha256.txt').read_text(),'previous manifest\n')
 
     def test_source_guard_rejects_dirty_checkout_with_unchanged_head(self):
         checkout = self.base / 'fetched'

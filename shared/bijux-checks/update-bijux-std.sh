@@ -262,14 +262,21 @@ done
 
 BIJUX_STD_GIT_URL="${std_git_url}" bash "${script_dir}/scripts/verify-accepted-source.sh" "${tmp_dir}/bijux-std" "${fetched_sha}"
 
-# Reject tracked managed edits before any managed consumer path is replaced.
+# Both installed and legacy managed trees may contain user work.
+assert_managed_pristine() {
+  local managed_rel="$1"
+  if git -C "${repo_root}" rev-parse --verify HEAD >/dev/null 2>&1 && [[ -n "$(git -C "${repo_root}" ls-files --others --exclude-standard -- "${managed_rel}")" ]]; then
+    echo "ERROR: preserve untracked managed input before refresh: ${managed_rel}" >&2; exit 1
+  fi
+  if ! git -C "${repo_root}" diff --quiet -- "${managed_rel}" || ! git -C "${repo_root}" diff --cached --quiet -- "${managed_rel}"; then
+    echo "ERROR: preserve local managed changes before refresh: ${managed_rel}" >&2; exit 1
+  fi
+}
 while IFS= read -r remote_dir_rel; do
   local_dir_rel="$(resolve_local_rel "${remote_dir_rel}")"
-  if git -C "${repo_root}" rev-parse --verify HEAD >/dev/null 2>&1 && [[ -n "$(git -C "${repo_root}" ls-files --others --exclude-standard -- "${local_dir_rel}")" ]]; then
-    echo "ERROR: preserve untracked managed input before refresh: ${local_dir_rel}" >&2; exit 1
-  fi
-  if ! git -C "${repo_root}" diff --quiet -- "${local_dir_rel}" || ! git -C "${repo_root}" diff --cached --quiet -- "${local_dir_rel}"; then
-    echo "ERROR: preserve local managed changes before refresh: ${local_dir_rel}" >&2; exit 1
+  assert_managed_pristine "${local_dir_rel}"
+  if [[ "${local_dir_rel}" != "${remote_dir_rel}" ]]; then
+    assert_managed_pristine "${remote_dir_rel}"
   fi
 done <<<"${all_directories}"
 if ! git -C "${repo_root}" diff --quiet -- "${manifest_local_rel}" || ! git -C "${repo_root}" diff --cached --quiet -- "${manifest_local_rel}"; then
@@ -289,6 +296,15 @@ if [[ "${BIJUX_STD_UPDATE_DRY_RUN:-0}" == "1" ]]; then
       printf 'Add managed directory %s\n' "${local_dir_rel}"
     fi
   done
+  while IFS= read -r remote_dir_rel; do
+    local_dir_rel="$(resolve_local_rel "${remote_dir_rel}")"
+    if [[ -n "${BIJUX_STD_CAPABILITIES:-}" && "${in_bijux_std_repo}" == "0" ]] && ! grep -Fxq "${remote_dir_rel}" <<<"${selected_directories}" && [[ -d "${repo_root}/${local_dir_rel}" ]]; then
+      printf 'Remove unselected managed directory %s\n' "${local_dir_rel}"
+    fi
+    if [[ "${local_dir_rel}" != "${remote_dir_rel}" && -d "${repo_root}/${remote_dir_rel}" ]] && grep -Fxq "${remote_dir_rel}" <<<"${selected_directories}"; then
+      printf 'Remove legacy managed directory %s\n' "${remote_dir_rel}"
+    fi
+  done <<<"${all_directories}"
   echo "Verified standard refresh plan; managed consumer paths were not changed"
   exit 0
 fi
@@ -299,6 +315,10 @@ while IFS= read -r remote_dir_rel; do
   if [[ -d "${repo_root}/${local_dir_rel}" ]]; then
     mkdir -p "${recovery_dir}/$(dirname "${local_dir_rel}")"
     cp -R "${repo_root}/${local_dir_rel}" "${recovery_dir}/${local_dir_rel}"
+  fi
+  if [[ "${local_dir_rel}" != "${remote_dir_rel}" && -d "${repo_root}/${remote_dir_rel}" ]]; then
+    mkdir -p "${recovery_dir}/$(dirname "${remote_dir_rel}")"
+    cp -R "${repo_root}/${remote_dir_rel}" "${recovery_dir}/${remote_dir_rel}"
   fi
 done <<<"${all_directories}"
 python3 - "${bijux_std_artifact_root}/source-provenance.json" "${recovery_dir}" "${repo_root}/.github/standards/bijux-std.sha" <<'PY_RECOVERY'
