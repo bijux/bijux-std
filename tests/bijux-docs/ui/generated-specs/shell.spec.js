@@ -2,6 +2,7 @@ const fs = require("node:fs");
 const path = require("node:path");
 const registry = JSON.parse(fs.readFileSync(path.resolve(__dirname, "../../../../shared/bijux-docs/config/hub-links.json"), "utf8"));
 const { test, expect } = require("./helpers/document");
+const { tabTo } = require("./contrast-targets/measurement");
 const control = (page, kind) => page.locator(`[data-bijux-header-control='${kind}-toggle']`);
 const drawer = (page) => page.locator(".md-sidebar--primary");
 const exposedLinks = (page) => drawer(page).locator("a:visible");
@@ -187,6 +188,23 @@ test("deep documents have truthful current page state", async ({ page }) => {
     return rect.width > 0 && rect.height > 0 && new URL(link.href).pathname.replace(/\/+$/, "") !== location.pathname.replace(/\/+$/, "");
   }).map((link) => ({ name: link.textContent.trim(), href: link.href })));
   expect(incorrect).toEqual([]);
+  if (page.viewportSize().width >= 1220) {
+    await expect(drawer(page).locator("a[aria-current='page']")).toBeVisible();
+    const alternatives = page.locator("header .bijux-site-tabs a, header .bijux-detail-tabs a, header .bijux-course-tabs a, header .bijux-detail-select");
+    expect(await alternatives.evaluateAll(nodes => nodes.filter(node => node.getClientRects().length).length)).toBe(0);
+    expect(await alternatives.evaluateAll(nodes => nodes.every(node => {
+      node.focus();
+      return document.activeElement !== node;
+    }))).toBe(true);
+    const reading = drawer(page).locator("a").filter({ hasText: /^\s*Reading reference\s*$/ });
+    await tabTo(page, reading, test.info().project.use.browserName, 160);
+    await expect(reading).toBeFocused();
+    await page.keyboard.press("Enter");
+    await expect(page).toHaveURL(/\/bijux-core\/reading\/$/);
+    await page.goBack();
+    await expect(page).toHaveURL(/\/bijux-core\/platform\/details\/leaf\/$/);
+    await expect(drawer(page).locator("a[aria-current='page']")).toBeVisible();
+  }
 });
 test("resize and history preserve shell without uncaught errors", async ({ page }) => {
   const errors = [];
@@ -267,6 +285,26 @@ test("no-script generated document retains ordinary destination links", async ({
     expect(geometry.left).toBeGreaterThanOrEqual(-1);
     expect(geometry.right).toBeLessThanOrEqual(geometry.width + 1);
     expect(geometry.documentWidth).toBeLessThanOrEqual(geometry.width + 1);
+    for (const width of [768, 1440]) {
+      await page.setViewportSize({ width, height: 900 });
+      await page.goto(new URL("/", info.project.use.baseURL).href);
+      const localRows = page.locator("header .bijux-site-tabs, header .bijux-detail-tabs, header .bijux-course-tabs");
+      if (width === 768) {
+        const toggle = page.getByRole("checkbox", { name: "Navigation", exact: true });
+        expect(await localRows.evaluateAll(nodes => nodes.filter(node => node.getClientRects().length).length)).toBe(1);
+        await toggle.click();
+        expect(await localRows.evaluateAll(nodes => nodes.filter(node => node.getClientRects().length).length)).toBe(0);
+        await toggle.click();
+        expect(await localRows.evaluateAll(nodes => nodes.filter(node => node.getClientRects().length).length)).toBe(1);
+        await toggle.click();
+      }
+      await expect(drawer(page)).toBeVisible();
+      expect(await localRows.evaluateAll(nodes => nodes.filter(node => node.getClientRects().length).length)).toBe(0);
+      const reading = drawer(page).locator("a").filter({ hasText: /^\s*Reading reference\s*$/ });
+      await reading.click();
+      await expect(page).toHaveURL(/\/reading\/$/);
+      await expect(page.locator("h1")).toBeVisible();
+    }
   } finally {
     await context.close();
   }
