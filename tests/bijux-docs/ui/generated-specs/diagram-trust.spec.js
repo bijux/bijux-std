@@ -5,7 +5,7 @@ const figures = page => page.locator("main .bijux-diagram");
 const sources = page => figures(page).locator(".bijux-diagram-source code");
 function authored(name) {
   const markdown = fs.readFileSync(path.join(generated, "inputs/hub/docs", name + ".md"), "utf8");
-  return [...markdown.matchAll(/```mermaid\n([\s\S]*?)\n```/g)].map(match => match[1] + "\n");
+  return [...markdown.matchAll(/```mermaid\n([\s\S]*?)\n```/g)].map(match => match[1]);
 }
 async function rejected(figure) {
   await expect(figure.getByRole("status")).toContainText("preview unavailable");
@@ -26,11 +26,18 @@ async function admitted(figure, title) {
   })).toBe(true);
 }
 async function theme(page) {
+  const previousIds = await figures(page).locator(".bijux-diagram-preview > svg").evaluateAll(nodes => nodes.map(node => node.id));
   const previous = await page.locator("body").getAttribute("data-md-color-scheme");
   await page.getByRole("button", { name: /^Theme mode:/ }).click();
   if (await page.locator("body").getAttribute("data-md-color-scheme") === previous)
     await page.getByRole("button", { name: /^Theme mode:/ }).click();
   await expect(page.locator("body")).not.toHaveAttribute("data-md-color-scheme", previous);
+  for (let index = 0; index < previousIds.length; index++) {
+    await expect.poll(async () => {
+      const ids = await figures(page).locator(".bijux-diagram-preview > svg").evaluateAll(nodes => nodes.map(node => node.id));
+      return ids.length === previousIds.length && ids[index] !== previousIds[index];
+    }).toBe(true);
+  }
 }
 test.beforeEach(async ({ browser }, info) => {
   info.annotations.push({ type: "browser-version", description: browser.version() });

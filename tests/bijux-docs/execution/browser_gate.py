@@ -25,6 +25,11 @@ GROUPS = {
     'history': ('history',),
     'semantics': ('popup-relationships',),
     'search-scope': ('search-scope',),
+    'reader-accessibility': ('reader-accessibility',),
+    'diagram-trust': ('diagram-trust',),
+    'search-reflow-phone': ('search-reflow-phone',),
+    'search-reflow-tablet': ('search-reflow-tablet',),
+    'search-reflow-desktop': ('search-reflow-desktop',),
 }
 ENGINES = ('chromium', 'firefox', 'webkit')
 SUITES = tuple(suite for group in GROUPS.values() for suite in group)
