@@ -114,12 +114,27 @@ Footer profile links describe new-tab behavior before JavaScript runs.
 - Author descriptions and tooltips for all four profile links while preserving platform names, destinations and noopener.
 - Keep one runtime annotation and test ordinary script-enabled and no-script navigation, leaving the original document intact and isolating its opener.
 
+#### 2026-10-08T16:14:31Z — [#187](https://github.com/bijux/bijux-std/pull/187) — test\(docs\): qualify scientific diagram meaning and renderer isolation
+
+Maintained diagram fixtures verify scientific meaning and isolate renderer failures.
+
+- Check mathematical, nested and state labels with accessible descriptions in both themes and preserve exact authored source.
+- Reject structured configuration, nested resources and image shapes, and contain malformed or excessive diagrams so valid diagrams, Retry and navigation remain usable.
+
 #### 2026-10-08T15:22:01Z — [#186](https://github.com/bijux/bijux-std/pull/186) — fix\(docs\): preserve drawer traversal and reader focus on short screens
 
 Short-screen drawers keep hidden links out of Tab order and focused actions visible.
 
 - Exclude descendants of closed disclosures while preserving the first summary and expanded destinations, then scroll each focused action within its owning container.
 - Retain maintained landscape, RTL, modal-resize, new-page focus and fragment/history reader journeys as an independently required group.
+
+#### 2026-10-08T15:31:49Z — [#185](https://github.com/bijux/bijux-std/pull/185) — fix\(docs\): qualify public origins and publication command boundaries
+
+Public documentation commands validate origin and publication boundaries before mutation.
+
+- Build and check use the authored public origin, empty overrides preserve the MkDocs fallback, and local development serving remains explicit.
+- Validate renderer source/runtime command boundaries before bootstrap or public-output changes, with independent receipts for three actual command journeys.
+- Document public-site data flows; unsupported Linux producer profiles remain unapproved and reject before public artifact mutation.
 
 #### 2026-10-08T14:32:45Z — [#184](https://github.com/bijux/bijux-std/pull/184) — feat\(docs\): bind embedded readers to native search boundaries
 
@@ -171,6 +186,13 @@ Light-theme utility tabs and search recovery states retain readable color pairs.
 - Use qualified foreground/background combinations for inactive utilities and pending, unavailable and Retry search states.
 - Keep native search behavior and retain unresolved automated findings and manual qualification limits separately from measured color contrast.
 
+#### 2026-10-08T13:25:42Z — [#177](https://github.com/bijux/bijux-std/pull/177) — feat\(docs\): verify immutable publication resources and receipts
+
+The optional publication library verifies immutable resources and reconstruction receipts.
+
+- Separate route, redirect, passive-asset, CSP, native worker/index and bundle-receipt validation while binding source, configuration and renderer identity.
+- The library remains opt-in and does not approve a runtime or enable deployment; command-before-render guards are a separate delivery boundary.
+
 #### 2026-10-08T14:11:21Z — [#176](https://github.com/bijux/bijux-std/pull/176) — fix\(docs\): bind navigation dialogs and product search scope
 
 Navigation controls bind to their actual dialogs and expose product-local search scope.
@@ -178,6 +200,13 @@ Navigation controls bind to their actual dialogs and expose product-local search
 - Lease and restore authored popup identities, preserve accessible query names and identify the current product site in native search.
 - Wire native drawer opening and dismissal through its checkbox-owned surface while retaining keyboard and no-script fallback.
 - This grouped main change incorporates the search-scope work from PR \#179; the topic-only merge is recorded separately.
+
+#### 2026-10-08T12:25:06Z — [#175](https://github.com/bijux/bijux-std/pull/175) — feat\(docs\): bind renderer admission to owned runtime source
+
+Renderer admission requires reviewed physical source and explicit callback ownership.
+
+- Match installed files, executable caches, loaded modules, startup sources and registered callbacks to source-owned profiles.
+- Verification-only Darwin profiles do not grant publication permission; unsupported environments and unapproved Linux profiles remain closed.
 
 #### 2026-10-08T13:01:24Z — [#174](https://github.com/bijux/bijux-std/pull/174) — fix\(docs\): preserve authored external link intent
 
@@ -213,6 +242,13 @@ Renderer observations identify resolved startup sources and the active exception
 
 - Attribute loaded startup modules, selected symlink targets and actual interpreter callback origins.
 - Reads reject swapped or changing targets, nonregular inputs and oversized files; observation remains separate from publication permission.
+
+#### 2026-10-08T10:50:56Z — [#169](https://github.com/bijux/bijux-std/pull/169) — test\(docs\): close redirect renderer fixture dependencies
+
+The fixture lock includes the complete redirect plugin dependency chain.
+
+- Pin mkdocs-redirects 1.2.3 and properdocs 1.6.7 alongside the admitted MkDocs/Material renderer.
+- Installed-package ownership and payload checks cover Linux Python 3.12 and Darwin Python 3.14; the resulting 32-pin environment requires its own renderer observation.
 
 #### 2026-10-08T10:29:43Z — [#167](https://github.com/bijux/bijux-std/pull/167) — test\(docs\): record browser versions in contrast qualification
 
@@ -254,6 +290,13 @@ Navigation remains usable before, without or after failed shell enhancement.
 
 - Render a visible native checkbox label and complete in-flow tree until a successful owned mount activates the modal drawer.
 - Restore authored fallback after failed mounting and retain independent native Material header/search behavior.
+
+#### 2026-10-08T07:28:14Z — [#161](https://github.com/bijux/bijux-std/pull/161) — fix\(docs\): admit neutral and rust renderers before preparation
+
+Neutral and Rust documentation commands admit the renderer before preparation.
+
+- Use the configured Python launcher for admission and rendering, recheck after source hooks and reject unsupported profiles before cleanup.
+- Explicit native custom runners retain their flags without waiving managed project/configuration ownership.
 
 #### 2026-10-08T07:14:39Z — [#160](https://github.com/bijux/bijux-std/pull/160) — feat\(ci\): retain locked documentation renderer source fingerprints
 
@@ -303,6 +346,13 @@ Consumer configuration loads required shared assets without discarding authored 
 - Merge canonical CSS/script/plugin lists while preserving hooks, options and relative asset order; reject ambiguous plans before writing.
 - Offer read-only drift checks and retire only the exact obsolete eager Mermaid reference.
 
+#### 2026-10-08T02:39:13Z — [#153](https://github.com/bijux/bijux-std/pull/153) — fix\(docs\): render diagrams with one self-hosted lifecycle
+
+A single self-hosted renderer owns diagram lifecycle and recovery.
+
+- Load the reproducible Mermaid bundle lazily, serialize rendering and preserve authored source through theme and history changes.
+- Reject unsafe resource/configuration directives and stale completions while exposing readable source and keyboard Retry after preview failures.
+
 #### 2026-10-08T01:42:00Z — [#152](https://github.com/bijux/bijux-std/pull/152) — fix\(docs\): retain usable preferences when browser storage fails
 
 Theme and search controls remain usable when browser storage is denied.
@@ -323,6 +373,13 @@ Compact headers and drawers retain complete, reachable documentation navigation.
 
 - Replace the scoped sidebar with a native disclosure tree containing parent, deep-page and all nine ecosystem destinations.
 - Use named compact buttons, focus containment/restoration and user-intent preservation across delayed Material resets.
+
+#### 2026-10-07T23:45:58Z — [#149](https://github.com/bijux/bijux-std/pull/149) — build\(docs\): reproduce patched diagram dependencies and licenses
+
+Diagram dependencies can be reproduced from an exact licensed graph.
+
+- Lock Mermaid 11.17.2, DOMPurify 3.4.16 and KaTeX 0.18.2 with a deterministic bundler and input/output provenance.
+- Include third-party notices and select admitted Node24.21.0 for canonical reproduction; runtime replacement remains a separate change.
 
 #### 2026-10-07T23:16:15Z — [#147](https://github.com/bijux/bijux-std/pull/147) — fix\(std\): verify exact source before preserving managed refresh
 

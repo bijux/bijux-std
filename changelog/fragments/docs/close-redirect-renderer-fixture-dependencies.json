@@ -1,0 +1,15 @@
+{
+  "schema": 1,
+  "pr": 169,
+  "title": "test(docs): close redirect renderer fixture dependencies",
+  "type": "test",
+  "scope": "docs",
+  "summary": "The fixture lock includes the complete redirect plugin dependency chain.",
+  "details": [
+    "Pin mkdocs-redirects 1.2.3 and properdocs 1.6.7 alongside the admitted MkDocs/Material renderer.",
+    "Installed-package ownership and payload checks cover Linux Python 3.12 and Darwin Python 3.14; the resulting 32-pin environment requires its own renderer observation."
+  ],
+  "status": "merged",
+  "merged_at": "2026-10-08T10:50:56Z",
+  "breaking": false
+}

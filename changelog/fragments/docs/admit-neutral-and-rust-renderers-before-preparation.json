@@ -1,0 +1,15 @@
+{
+  "schema": 1,
+  "pr": 161,
+  "title": "fix(docs): admit neutral and rust renderers before preparation",
+  "type": "fix",
+  "scope": "docs",
+  "summary": "Neutral and Rust documentation commands admit the renderer before preparation.",
+  "details": [
+    "Use the configured Python launcher for admission and rendering, recheck after source hooks and reject unsupported profiles before cleanup.",
+    "Explicit native custom runners retain their flags without waiving managed project/configuration ownership."
+  ],
+  "status": "merged",
+  "merged_at": "2026-10-08T07:28:14Z",
+  "breaking": false
+}
