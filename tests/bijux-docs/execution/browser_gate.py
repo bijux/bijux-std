@@ -23,6 +23,7 @@ GROUPS = {
     'links': ('links',),
     'history': ('history',),
     'semantics': ('popup-relationships',),
+    'search-scope': ('search-scope',),
 }
 ENGINES = ('chromium', 'firefox', 'webkit')
 SUITES = tuple(suite for group in GROUPS.values() for suite in group)

@@ -180,3 +180,5 @@ complete aggregate as described in [shard reporting](reporting/README.md).
 Native history qualification retains exact Back/Forward and authored-fragment routes throughout passive restoration windows. It has its own bounded browser group in every engine. Automatic `navigation.tracking` is excluded from the default shell; an explicitly authored opt-in remains a consumer decision.
 
 Popup relationship qualification independently proves current owned header/dialog identities and restored authored ID/ARIA leases through12real cases. Its engine jobs are mandatory in the source-bound complete matrix.
+
+Every product search surface identifies its local site and describes index scope. The dedicated search-scope group qualifies nine actual consumer identities in three engines; ordinary native invoker assertions retain their exact site-aware name.
