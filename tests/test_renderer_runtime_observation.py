@@ -3,6 +3,8 @@
 import importlib.util
 from pathlib import Path
 import tempfile
+import types
+import sys
 import unittest
 from unittest.mock import patch
 
@@ -123,6 +125,87 @@ class RuntimeObservationTests(unittest.TestCase):
         self.assertEqual(len(result["links"]), 2)
         self.assertIn("link.py", {item["path"] for item in result["files"]})
         self.assertNotIn("missing.py", {item["path"] for item in result["files"]})
+
+    def test_external_stdlib_startup_target_is_observed_without_execution(self):
+        target = self.root / "external-startup.py"
+        target.write_text('raise RuntimeError("never run observed fixture")')
+        (self.stdlib / "sitecustomize.py").symlink_to(target)
+        result = self.snapshot()
+        record = next(item for item in result["startup_inputs"] if item["root"] == "stdlib")
+        self.assertEqual(record["resolved_target"], str(target))
+        self.assertEqual(record["sha256"], runtime.digest(target.read_bytes()))
+        self.assertFalse(result["admission_created"])
+        self.assertIn("customization_modules", result["startup_runtime"])
+
+    def test_loaded_external_startup_and_exception_callback_origins_are_retained(self):
+        target = self.root / "external-startup.py"
+        target.write_text("value=1")
+        module = types.ModuleType("sitecustomize")
+        module.__file__ = str(target)
+        def external_callback(kind, value, trace):
+            return None
+        with patch.dict(sys.modules, {"sitecustomize": module}), patch.object(sys, "excepthook", external_callback):
+            observed = self.snapshot()["startup_runtime"]
+        self.assertEqual(observed["customization_modules"][0]["origin"],
+                         {"root": "outside-observed-runtime", "path": str(target)})
+        self.assertFalse(observed["exception_hook_is_interpreter_default"])
+        self.assertEqual(observed["exception_hook"]["origin"]["root"], "outside-observed-runtime")
+
+    def test_changed_default_hook_pointer_is_not_reported_as_native_default(self):
+        callback=lambda *args:None
+        with patch.object(sys,"excepthook",callback), patch.object(sys,"__excepthook__",callback):
+            self.assertFalse(self.snapshot()["startup_runtime"]["exception_hook_is_interpreter_default"])
+
+    def test_external_target_content_change_changes_startup_identity(self):
+        target = self.root / "external-startup.py"
+        target.write_text("value=1")
+        (self.stdlib / "sitecustomize.py").symlink_to(target)
+        before = self.snapshot()["startup_inputs"]
+        target.write_text("value=2")
+        self.assertNotEqual(before, self.snapshot()["startup_inputs"])
+
+    def test_target_swap_during_open_is_rejected(self):
+        first = self.root / "first.py"
+        second = self.root / "second.py"
+        first.write_text("value=1")
+        second.write_text("value=2")
+        link = self.root / "selected.py"
+        link.symlink_to(first)
+        original = runtime.os.open
+        def changed(path, flags):
+            link.unlink()
+            link.symlink_to(second)
+            return original(path, flags)
+        with patch.object(runtime.os, "open", side_effect=changed):
+            with self.assertRaises(runtime.RuntimeObservationError):
+                runtime.file_record(link, "selected.py")
+
+    def test_target_change_after_open_is_rejected(self):
+        target = self.root / "external.py"
+        target.write_text("value=1")
+        original = runtime.os.open
+        def changed(path, flags):
+            descriptor = original(path, flags)
+            target.write_text("value=2")
+            return descriptor
+        with patch.object(runtime.os, "open", side_effect=changed):
+            with self.assertRaises(runtime.RuntimeObservationError):
+                runtime.file_record(target, "external.py")
+
+    def test_missing_nonregular_and_oversize_targets_are_rejected(self):
+        missing = self.root / "missing.py"
+        missing.symlink_to(self.root / "absent.py")
+        with self.assertRaises(runtime.RuntimeObservationError):
+            runtime.file_record(missing, "missing.py")
+        fifo = self.root / "fifo"
+        runtime.os.mkfifo(fifo)
+        with self.assertRaises(runtime.RuntimeObservationError):
+            runtime.file_record(fifo, "fifo")
+        large = self.root / "large.py"
+        large.write_text("value=1")
+        with patch.object(runtime, "MAXIMUM_FILE_BYTES", 2):
+            with self.assertRaises(runtime.RuntimeObservationError):
+                runtime.file_record(large, "large.py")
 
     def test_volatile_install_metadata_is_not_executable_source_identity(self):
         folder = self.installed / "owned.dist-info"

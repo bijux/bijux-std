@@ -5,9 +5,11 @@ from __future__ import annotations
 import hashlib
 import json
 import os
+import stat
 from pathlib import Path
 import sys
 import sysconfig
+import types
 
 MAXIMUM_FILES = 200000
 MAXIMUM_FILE_BYTES = 256 * 1024 * 1024
@@ -32,23 +34,42 @@ def canonical(value):
 
 
 def file_record(path: Path, relative: str):
-    require(path.is_file(), "Runtime observation requires a regular file: " + relative)
-    before = path.stat()
-    require(
-        before.st_size <= MAXIMUM_FILE_BYTES,
-        "Runtime file exceeds observation limit: " + relative,
-    )
-    value = hashlib.sha256()
-    with path.open("rb") as stream:
-        for chunk in iter(lambda: stream.read(1024 * 1024), b""):
-            value.update(chunk)
-    after = path.stat()
-    require(
-        (before.st_dev, before.st_ino, before.st_size, before.st_mtime_ns)
-        == (after.st_dev, after.st_ino, after.st_size, after.st_mtime_ns),
-        "Runtime input changed during observation: " + relative,
-    )
-    return {"path": relative, "bytes": before.st_size, "sha256": value.hexdigest()}
+    """Bind observed bytes to a stable regular target and its selected link."""
+    try:
+        selected = path.lstat()
+        target = path.resolve(strict=True)
+        before = target.stat()
+        require(stat.S_ISREG(before.st_mode),
+                "Runtime observation requires a regular target: " + relative)
+        require(before.st_size <= MAXIMUM_FILE_BYTES,
+                "Runtime file exceeds observation limit: " + relative)
+        value = hashlib.sha256()
+        descriptor = os.open(path, os.O_RDONLY | os.O_NONBLOCK)
+        with os.fdopen(descriptor, "rb") as stream:
+            opened = os.fstat(stream.fileno())
+            require(stat.S_ISREG(opened.st_mode) and
+                    (opened.st_dev, opened.st_ino) == (before.st_dev, before.st_ino),
+                    "Runtime target changed before observation: " + relative)
+            total = 0
+            for chunk in iter(lambda: stream.read(1024 * 1024), b""):
+                total += len(chunk)
+                require(total <= MAXIMUM_FILE_BYTES,
+                        "Runtime file exceeds observation limit: " + relative)
+                value.update(chunk)
+            completed = os.fstat(stream.fileno())
+        after = path.stat()
+        current = path.lstat()
+        identity = lambda item: (item.st_dev, item.st_ino, item.st_size, item.st_mtime_ns)
+        require(identity(before) == identity(opened) == identity(completed) == identity(after)
+                and identity(selected) == identity(current)
+                and path.resolve(strict=True) == target,
+                "Runtime input or selected target changed during observation: " + relative)
+        result = {"path": relative, "bytes": before.st_size, "sha256": value.hexdigest()}
+        if stat.S_ISLNK(selected.st_mode):
+            result["resolved_target"] = str(target)
+        return result
+    except (OSError, RuntimeError) as error:
+        raise RuntimeObservationError("Runtime target unavailable: " + relative) from error
 
 
 def inventory(root: Path, *, exclude_site_packages=False):
@@ -148,6 +169,9 @@ def snapshot(packages, *, roots=None, stdlib=None, executable=None):
                 startup.append({"root": label, **record})
     standard = inventory(stdlib, exclude_site_packages=True)
     standard["root"] = "stdlib"
+    for record in standard["files"]:
+        if record["path"] in ("sitecustomize.py", "usercustomize.py"):
+            startup.append({"root": "stdlib", **record})
     known = [
         (root, "site-packages:" + str(index)) for index, root in enumerate(roots)
     ] + [(stdlib, "stdlib")]
@@ -182,6 +206,19 @@ def snapshot(packages, *, roots=None, stdlib=None, executable=None):
         ),
         "import_paths": import_paths,
         "loaded_modules": loaded,
+        "startup_runtime": {
+            "customization_modules": [item for item in loaded if item["module"] in
+                                      {"sitecustomize", "usercustomize", "apport_python_hook"}],
+            "exception_hook_is_interpreter_default": (sys.excepthook is sys.__excepthook__
+                and type(sys.excepthook) is types.BuiltinFunctionType
+                and sys.excepthook.__self__ is sys and sys.excepthook.__name__ == "excepthook"),
+            "exception_hook": {
+                "module": getattr(sys.excepthook, "__module__", None),
+                "name": getattr(sys.excepthook, "__qualname__", None),
+                "origin": origin(sys.excepthook.__code__.co_filename)
+                          if hasattr(sys.excepthook, "__code__") else None,
+            },
+        },
         "limitations": [
             "Observation does not approve a renderer or certify startup behavior.",
             "Directory symlinks are retained as unresolved closure inputs, never silently admitted.",
