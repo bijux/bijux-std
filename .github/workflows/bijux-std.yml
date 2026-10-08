@@ -126,6 +126,8 @@ jobs:
         run: |
           set -euo pipefail
           git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          # Firefox requires the ephemeral container home to belong to its process user.
+          chown "$(id -u):$(id -g)" "$HOME"
           make UI_TESTS_PLAYWRIGHT_BROWSERS_DIR=/ms-playwright ui-test-navigation
 
       - name: Retain navigation qualification
