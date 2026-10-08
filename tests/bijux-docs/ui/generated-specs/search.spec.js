@@ -203,8 +203,17 @@ test("native desktop search restores visible inline input after Escape from a re
   await page.keyboard.press("Tab");
   await expect(query(page)).not.toBeFocused();
   await page.keyboard.press("/");
+  await expect(query(page)).not.toBeFocused();
+  await expect(page.locator("#__search")).not.toBeChecked();
+  await page.keyboard.press("Shift+Tab");
   await expect(query(page)).toBeFocused();
+  const beforeLiteral = await query(page).evaluate(node => ({ value: node.value, start: node.selectionStart, end: node.selectionEnd }));
+  await page.keyboard.press("/");
+  await expect(query(page)).toHaveValue(beforeLiteral.value.slice(0, beforeLiteral.start) + "/" + beforeLiteral.value.slice(beforeLiteral.end));
   await expect(page.locator("#__search")).toBeChecked();
+  await page.keyboard.press("ControlOrMeta+A");
+  await page.keyboard.type("resilient navigation");
+  await nativeAnswer(page);
   await page.keyboard.press("Escape");
   await expect(page.locator("#__search")).not.toBeChecked();
   await page.keyboard.press("ControlOrMeta+A");

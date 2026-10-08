@@ -214,3 +214,13 @@ The independent `accessibility-state` engine group is mandatory in the existing
 source/fixture/JUnit aggregate. It does not replace the reader, popup, contrast or
 native navigation groups. The gate and publication verifier retain their own
 required inventory; missing engine or case receipts cannot qualify a release.
+
+Global character-only `/`, `f` and `s` no longer activate search. The independent
+`search-shortcut-modality` engine group and `make ui-test-search-shortcut-modality`
+retain ordinary named-button Tab/Space invocation, literal editable typing,
+native query/result keys, modifiers, Escape and instant Back across owned and
+native headers. Its six cases per engine supplement the unchanged search and
+invoker inventories. Native browser character defaults are observed rather than
+replaced with scripted focus or state changes. Material runtime emission parses
+the entire final generated script before writing assets; malformed output cannot
+replace the previous valid bundle.

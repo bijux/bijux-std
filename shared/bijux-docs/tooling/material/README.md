@@ -1,5 +1,12 @@
 # Admitted Material search runtime
 
+Runtime emission requires the admitted Node.js 24.21.0 classic-script parser.
+The complete generated script is syntax checked after all owned transformations
+and before any output or provenance is written. Parsing does not execute the
+script or approve runtime behavior. Exact verification of already qualified
+shared output uses source-derived byte comparison and does not introduce a Node
+requirement into consumers' Python-only admission check.
+
 Material 9.7.7 subscribes to its search index from both worker setup and document
 highlighting. Its synchronous search-component catch does not handle asynchronous
 index errors. This boundary preserves the admitted native worker, ranking,
@@ -165,4 +172,10 @@ still apply to the final adopted source.
 The native header receives the same input/composition/reset bridge even when
 custom controls are absent. While recovery is visible, scoped Tab traversal
 reaches Cancel/Retry instead of triggering native search dismissal; healthy
-native search keeps its ordinary keyboard behavior.
+native search keeps its ordinary focused keyboard behavior. The exact admitted
+global character-only `/`, `f` and `s` subscription is removed by a unique
+source boundary; the owned header does not recreate those global actions.
+Characters remain literal text in a focused query or authored editable field.
+Named Search controls retain ordinary Tab/Space activation, and native query
+and result keyboard subscriptions, Escape and browser modifier defaults are
+unchanged. Missing or duplicate upstream shortcut boundaries fail before output.

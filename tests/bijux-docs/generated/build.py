@@ -19,6 +19,7 @@ import yaml
 
 from fixtures.diagram_trust import authored_sources as diagram_trust_authored_sources
 from fixtures.diagram_trust import pages as diagram_trust_pages
+from fixtures.search_modality import pages as search_modality_pages
 
 ROOT = Path(__file__).resolve().parents[3]
 ARTIFACTS = ROOT / "artifacts/bijux-docs"
@@ -165,6 +166,7 @@ flowchart LR
     table += "\n".join("| " + " | ".join(row) + " |" for row in READER_ROWS)
     write_page(docs, "reader-table.md", "Table boundary reference", "Each checkpoint keeps its original row, column and header relationships.\n\n## Checkpoint matrix\n\n" + table)
     nav.extend([{"Code boundary reference": "reader-code.md"}, {"Table boundary reference": "reader-table.md"}])
+    nav.extend(search_modality_pages(docs))
     return nav
 
 
