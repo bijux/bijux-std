@@ -1,3 +1,4 @@
+const { configureProjects, unsharded } = require("./reporting/projects");
 const path = require("path");
 const { defineConfig } = require("@playwright/test");
 const repoRoot = path.resolve(__dirname, "../..");
@@ -8,7 +9,7 @@ const profiles = {
   compact: { viewport: { width: 768, height: 900 } },
   desktop: { viewport: { width: 1440, height: 900 } },
 };
-module.exports = defineConfig({
+module.exports = configureProjects(defineConfig({
   testDir: path.join(__dirname, "ui/generated-specs"),
   testMatch: "**/shell.spec.js",
   outputDir: path.join(artifactRoot, "test-results"),
@@ -36,4 +37,4 @@ module.exports = defineConfig({
   projects: ["chromium", "firefox", "webkit"].flatMap((browserName) =>
     Object.entries(profiles).map(([profile, settings]) => ({ name: `${browserName}-${profile}`, metadata: { required_case_count: 16 }, use: { browserName, ...settings } }))
   ),
-});
+}));

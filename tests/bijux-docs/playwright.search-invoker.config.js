@@ -1,6 +1,7 @@
+const { configureProjects, unsharded } = require("./reporting/projects");
 const path = require("node:path");
 const { defineConfig } = require("@playwright/test");
-const inherited = require("./playwright.config");
+const inherited = unsharded(require("./playwright.config"));
 const artifactRoot = path.resolve(
   process.env.BIJUX_UI_ARTIFACT_ROOT ||
     path.join(
@@ -19,7 +20,7 @@ const projects = ["chromium", "firefox", "webkit"].map((browserName) => ({
   metadata: { required_case_count: 8 },
   use: { browserName },
 }));
-module.exports = defineConfig({
+module.exports = configureProjects(defineConfig({
   ...inherited,
   testMatch: "**/search-invoker.spec.js",
   projects,
@@ -57,4 +58,4 @@ module.exports = defineConfig({
       ];
     return entry;
   }),
-});
+}));

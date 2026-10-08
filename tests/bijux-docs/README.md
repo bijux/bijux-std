@@ -124,3 +124,24 @@ immutable fixture manifest lives under artifacts/bijux-docs/contrast-generated.
 This bounded gate does not certify all components, every consumer, axe findings,
 manual assistive testing or physical operating-system high contrast. WebKit
 forced-color emulation is qualified as source response only.
+
+## Parallel CI qualification
+
+`std / navigation fixtures` installs the admitted renderer, runs the isolated
+contracts, renders both fixture origins once and collects each complete suite
+inventory without launching a browser. Its compressed, digest-bound fixture
+archive belongs to the current workflow run and Git candidate.
+
+Twelve browser jobs divide navigation, search, reader and rendering journeys
+across Chromium, Firefox and WebKit. Each job downloads that archive and installs
+only the locked Node test runtime. It executes its explicitly assigned projects
+without rebuilding fixtures or repeating renderer tests. Each job has a
+three-minute limit; failed attempts retain their receipts and diagnostics.
+
+The required `std / navigation` check aggregates every assigned receipt. It
+rejects missing, duplicated, skipped, failed or retried cases, source/bundle
+changes, absent or inconsistent actual engine versions and mismatched JUnit
+case identities. Explicit shards cannot independently claim complete matrix
+qualification. Ordinary `--project` diagnosis still fails the complete gate
+when another required project is absent. Existing local Make targets remain
+available for complete or focused diagnosis.
