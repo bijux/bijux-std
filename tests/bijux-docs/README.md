@@ -179,6 +179,8 @@ complete aggregate as described in [shard reporting](reporting/README.md).
 
 Native history qualification retains exact Back/Forward and authored-fragment routes throughout passive restoration windows. It has its own bounded browser group in every engine. Automatic `navigation.tracking` is excluded from the default shell; an explicitly authored opt-in remains a consumer decision.
 
+Renderer command qualification owns a separate three-minute job. It executes exactly three source-bound Make journeys and retains before/after public bytes, per-case command output and installed lock identity. The final navigation aggregate independently rehashes every command receipt and requires its job success. Unsupported runtime profiles prove rejection before public mutation and keep positive qualification pending; they grant no publication approval.
+
 Native search reflow qualification observes opening and closing geometry across phone, tablet and desktop boundaries, including real JavaScript-disabled navigation. Each size group has an independent bounded job in every engine.
 
 Diagram rendering and contrast/target journeys run in separate engine jobs. Their independently assigned receipts are both mandatory in the final navigation aggregate. The three-minute budget includes cold browser-image setup, artifact transport and job finalization.

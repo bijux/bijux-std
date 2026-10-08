@@ -84,7 +84,7 @@ class FixtureTransferTests(unittest.TestCase):
             self.assertIn('"status": "failed"', (root / 'navigation-qualification.json').read_text())
 
     def test_failed_job_cannot_leave_passing_final_evidence(self) -> None:
-        for name in ('FIXTURE_RESULT', 'BROWSER_RESULT'):
+        for name in ('FIXTURE_RESULT', 'BROWSER_RESULT', 'COMMAND_RESULT'):
             with self.subTest(job=name), tempfile.TemporaryDirectory(dir=ROOT / 'artifacts') as directory:
                 root = Path(directory)
                 with patch.object(GATE, 'ARTIFACTS', root), patch.dict(GATE.os.environ, {name: 'failure'}), self.assertRaisesRegex(ValueError, 'required fixture/browser job'):
