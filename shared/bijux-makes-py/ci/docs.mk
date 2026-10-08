@@ -44,6 +44,13 @@ DOCS_BASE_CONFIG_FILE        ?= $(MKDOCS_CFG)
 DOCS_SHARED_CONFIG_FILE      ?=
 DOCS_RENDERED_DOCS_DIR       ?= $(PROJECT_DIR)/docs
 DOCS_CONFIG_CLI              ?=
+DOCS_MATERIAL_COMPILER       ?= $(PROJECT_DIR)/.bijux/shared/bijux-docs/tooling/material/build_runtime.py
+
+# The same interpreter that renders CSS/templates/worker must admit the owned runtime.
+define assert_docs_material_runtime
+	@test -f "$(DOCS_MATERIAL_COMPILER)" || { echo "ERROR: missing accepted Material runtime compiler: $(DOCS_MATERIAL_COMPILER)" >&2; exit 1; }
+	@PYTHONDONTWRITEBYTECODE=1 $(DOCS_ENV) $(1) "$(DOCS_PYTHON)" "$(DOCS_MATERIAL_COMPILER)" --check
+endef
 
 ifeq ($(shell uname -s),Darwin)
   DOCS_BREW_PREFIX   := $(shell command -v brew >/dev/null 2>&1 && brew --prefix)
@@ -67,6 +74,7 @@ include $(abspath $(dir $(lastword $(MAKEFILE_LIST))))/util.mk
 docs:
 	$(call run_make_targets,$(DOCS_BUILD_BOOTSTRAP_TARGETS),$(MAKE))
 	$(call run_make_targets,$(DOCS_BUILD_GUARD_TARGETS),$(MAKE))
+	$(call assert_docs_material_runtime,$(DOCS_BUILD_ENV))
 	$(call clean_paths,$(DOCS_BUILD_PRE_CLEAN_PATHS))
 	$(call run_make_targets,$(DOCS_BUILD_PREPARE_TARGETS),$(MAKE))
 	@echo "→ Building documentation"
@@ -100,6 +108,7 @@ docs-serve:
 
 docs-serve-run:
 	$(call run_make_targets,$(DOCS_SERVE_BOOTSTRAP_TARGETS),$(MAKE))
+	$(call assert_docs_material_runtime,$(DOCS_SERVE_ENV))
 	$(call clean_paths,$(DOCS_SERVE_PRE_CLEAN_PATHS))
 	$(call run_make_targets,$(DOCS_SERVE_PREPARE_TARGETS),$(MAKE))
 	@echo "→ Serving documentation on http://$(DOCS_DEV_ADDR)/"
@@ -112,6 +121,7 @@ docs-serve-run:
 
 docs-deploy:
 	$(call run_make_targets,$(DOCS_BUILD_BOOTSTRAP_TARGETS),$(MAKE))
+	$(call assert_docs_material_runtime,$(DOCS_BUILD_ENV))
 	$(call clean_paths,$(DOCS_BUILD_PRE_CLEAN_PATHS))
 	$(call run_make_targets,$(DOCS_BUILD_PREPARE_TARGETS),$(MAKE))
 	@echo "→ Deploying documentation"
@@ -122,6 +132,7 @@ docs-deploy:
 docs-check:
 	$(call run_make_targets,$(DOCS_CHECK_BOOTSTRAP_TARGETS),$(MAKE))
 	$(call run_make_targets,$(DOCS_CHECK_GUARD_TARGETS),$(MAKE))
+	$(call assert_docs_material_runtime,$(DOCS_CHECK_ENV))
 	$(call clean_paths,$(DOCS_CHECK_PRE_CLEAN_PATHS))
 	$(call run_make_targets,$(DOCS_CHECK_PREPARE_TARGETS),$(MAKE))
 	@echo "→ Checking documentation build integrity"

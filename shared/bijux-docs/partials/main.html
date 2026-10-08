@@ -1,0 +1,12 @@
+{# Native config/layout remain inherited; this reviewed block replaces only the admitted runtime. #}
+{% extends "base.html" %}
+{% block extrahead %}
+  {{ super() }}
+  {% include "partials/site-head.html" ignore missing %}
+{% endblock %}
+{% block scripts %}
+  <script src="{{ 'assets/javascripts/material-search.cbbd27023cd7c8b14f390052a578fea5da8b159620b2d1e724b5c0783f870cc0.js' | url }}"></script>
+  {% for script in config.extra_javascript %}
+    {{ script | script_tag }}
+  {% endfor %}
+{% endblock %}

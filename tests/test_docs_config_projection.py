@@ -205,11 +205,13 @@ class ConfigurationPreflightTests(unittest.TestCase):
         self.assertEqual(after, {name: (self.repo / name).read_bytes() for name in before})
 
     def test_feature_is_admitted_only_when_actual_baseline_requires_it(self):
+        policy = self.shared / 'config/mkdocs-baseline.json'
+        baseline = json.loads(policy.read_text())
+        baseline['extra_javascript'] = [value for value in baseline['extra_javascript'] if not value.endswith('/search-recovery.js')]
+        policy.write_text(json.dumps(baseline))
         self.assertEqual(self.run_sync().returncode, 0)
         path = self.repo / 'mkdocs.shared.yml'
         self.assertNotIn('search-recovery.js', path.read_text())
-        policy = self.shared / 'config/mkdocs-baseline.json'
-        baseline = json.loads(policy.read_text())
         index = baseline['extra_javascript'].index('assets/javascripts/shell/bootstrap.js')
         baseline['extra_javascript'].insert(index, 'assets/javascripts/shell/search-recovery.js')
         policy.write_text(json.dumps(baseline))
