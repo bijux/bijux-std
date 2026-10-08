@@ -1,0 +1,15 @@
+{
+  "schema": 1,
+  "pr": 160,
+  "title": "feat(ci): retain locked documentation renderer source fingerprints",
+  "type": "feat",
+  "scope": "ci",
+  "summary": "Documentation CI retains the locked renderer's physical installed-source inventory.",
+  "details": [
+    "Record package, native-wheel, Git, platform and Python identity and reject unsafe or changing inputs before writing artifact evidence.",
+    "Require committed clean source and double capture; fingerprints remain observation rather than runtime or publication admission."
+  ],
+  "status": "merged",
+  "merged_at": "2026-10-08T07:14:39Z",
+  "breaking": false
+}

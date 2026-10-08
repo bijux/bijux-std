@@ -1,0 +1,14 @@
+{
+  "schema": 1,
+  "pr": 138,
+  "title": "fix(python): fail closed and advance api tooling",
+  "type": "fix",
+  "scope": "python",
+  "summary": "Python build and recursive Make failures propagate immediately.",
+  "details": [
+    "Preserve the first failed nested command and advance the shared OpenAPI tooling to Generator CLI 2.41.0 and Redocly 2.47.0."
+  ],
+  "status": "merged",
+  "merged_at": "2026-08-28T12:46:50Z",
+  "breaking": false
+}
