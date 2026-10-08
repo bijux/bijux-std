@@ -4,6 +4,16 @@ This file records notable repository-level changes for `bijux-std`.
 
 ## Pull request history
 
+### Pending review
+
+#### [#209](https://github.com/bijux/bijux-std/pull/209) — docs(changelog): keep pull request history in one file
+
+Keep reviewed PR history directly in this file and remove fragment-based maintenance.
+
+- Purge the changelog directory, validators, fragment tests and Make rendering targets.
+- Remove the changelog CI gate and duplicate standards invocation; ask authors for a concise direct entry.
+- Retain all verified merged PR history and preceding-main-history notices without a separate history directory.
+
 ### Merged pull requests
 
 #### 2026-10-08T19:15:45Z — [#203](https://github.com/bijux/bijux-std/pull/203) — docs\(changelog\): record documentation shell history
