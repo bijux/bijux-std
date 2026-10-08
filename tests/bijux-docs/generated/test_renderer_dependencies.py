@@ -10,7 +10,7 @@ from packaging.markers import default_environment
 from packaging.requirements import Requirement
 from packaging.utils import canonicalize_name
 
-ROOT = Path(__file__).resolve().parents[1]
+ROOT = Path(__file__).resolve().parents[3]
 
 
 class RendererFixtureDependencyTests(unittest.TestCase):
