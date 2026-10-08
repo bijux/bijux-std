@@ -167,6 +167,13 @@ Records describe reviewed repository changes. Pending review is not a merged or 
 
 ### Pending review
 
+#### [#192](https://github.com/bijux/bijux-std/pull/192) — ci\(governance\): enforce exact pull request change records
+
+Check actual PR records and projection in CI and document the repository author workflow.
+
+- Add a bounded changelog job and invoke the same checker inside the existing mandatory standards gate, including standards-repository bot authors.
+- Carry author instructions through shared PR templates and expose Make targets without modifying release or deployment workflows.
+
 #### [#191](https://github.com/bijux/bijux-std/pull/191) — feat\(governance\): validate repository pull request change records
 
 Validate exact PR change records and generate a reproducible history without replacing existing release notes.

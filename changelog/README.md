@@ -86,9 +86,9 @@ its main delivery ownership honestly in the record.
 ## Projection and adoption
 
 `changelog/config.json` has exactly `schema: 1`, the actual `owner/repository`,
-and `mode`. `pr-history` projects the entire central `CHANGELOG.md`. The current standard
-repository uses `append` while historical entries receive separate review; the
-final foundation review switches it to `pr-history`. Historical imports
+and `mode`. `pr-history` projects the entire central `CHANGELOG.md`; `append` preserves
+existing notes outside its generated section. Repository-owned configuration
+selects the mode. Historical imports
 must come from reviewed source identities and API evidence, not inferred IDs or
 dates. `render --check` detects any drift. The default `render` writes a preview
 to `artifacts/changelog/CHANGELOG.md`; `--write` intentionally updates the governed
