@@ -6,14 +6,21 @@ This file records notable repository-level changes for `bijux-std`.
 
 ### Pending review
 
-#### [#214](https://github.com/bijux/bijux-std/pull/214) — fix(docs): preserve visible focus through navigation handoff
+#### [#220](https://github.com/bijux/bijux-std/pull/220) — fix(github): bind protected path policy to immutable pr source
+
+Keep policy checks bound to the reviewed PR event when main advances.
+
+- Compare validated full event base and head commits without shallow-fetching a mutable branch.
+- Reject incomplete identities and history while preserving earlier protected changes; regenerate the canonical managed runtime.
+
+### Merged pull requests
+
+#### 2026-10-08T23:19:00Z — [#214](https://github.com/bijux/bijux-std/pull/214) — fix(docs): preserve visible focus through navigation handoff
 
 Keep a usable Menu fallback when navigation is aborted and bring reopened drawer focus into view.
 
 - Give matching instant destinations heading focus while preserving fragments, downloads and other browsing contexts.
 - Revoke stale reading intent on explicit controls or disposal; verify aborted-request keyboard and search recovery.
-
-### Merged pull requests
 
 #### 2026-10-08T22:58:03Z — [#212](https://github.com/bijux/bijux-std/pull/212) — fix(docs): expose one site registry and isolate modal navigation
 
