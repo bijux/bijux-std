@@ -177,6 +177,13 @@ Observe declared static HTTP delivery with confined transport budgets and honest
 
 ### Merged pull requests
 
+#### 2026-10-08T17:41:36Z — [#193](https://github.com/bijux/bijux-std/pull/193) — test\(docs\): settle native drawer before pointer input
+
+Sample native pointer targets after finite drawer transitions and retain the open drawer through summary activation.
+
+- Reuse the existing passive ancestor-animation observer without forcing semantic state or cancelling animations.
+- Verify ordinary no-script drawer opening, summary activation and actual destination navigation in the maintained phone/tablet/desktop journeys.
+
 #### 2026-10-08T17:24:44Z — [#191](https://github.com/bijux/bijux-std/pull/191) — feat\(governance\): validate repository pull request change records
 
 Validate exact PR change records and generate a reproducible history without replacing existing release notes.
