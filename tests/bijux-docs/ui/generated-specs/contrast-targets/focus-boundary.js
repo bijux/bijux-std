@@ -61,8 +61,49 @@ async function tabTo(page, control, browserName) {
   throw new Error("Ordinary directional keyboard traversal did not reach the focus control");
 }
 
+async function settleGeometry(control, { now = () => Date.now(),
+  pause = milliseconds => new Promise(resolve => setTimeout(resolve, milliseconds)) } = {}) {
+  const started = now(), observations = [];
+  let previous = null, unchanged = 0;
+  for (let attempt = 0; attempt < 100; attempt++) {
+    const sample = await control.evaluate(node => {
+      const rectangle = element => {
+        const box = element.getBoundingClientRect();
+        return { x: box.x, y: box.y, width: box.width, height: box.height };
+      };
+      // Layout reads precede animation enumeration: opening styles can create a transition.
+      const target = rectangle(node), ancestors = [];
+      const elements = [node];
+      for (let parent = node.parentElement; parent; parent = parent.parentElement) {
+        const style = getComputedStyle(parent);
+        ancestors.push({ name: `${parent.tagName}.${parent.className}`, rectangle: rectangle(parent),
+          transform: style.transform, opacity: style.opacity,
+          clientLeft: parent.clientLeft, clientTop: parent.clientTop,
+          clientWidth: parent.clientWidth, clientHeight: parent.clientHeight });
+        elements.push(parent);
+      }
+      const animations = new Set(node.getAnimations({ subtree: true }));
+      for (const element of elements.slice(1)) {
+        for (const animation of element.getAnimations()) animations.add(animation);
+      }
+      const running = [...animations].filter(animation => animation.playState === "running" &&
+        Number.isFinite(animation.effect?.getComputedTiming().endTime)).length;
+      return { target, ancestors, running };
+    });
+    const signature = JSON.stringify({ target: sample.target, ancestors: sample.ancestors });
+    unchanged = sample.running === 0 && signature === previous ? unchanged + 1 : 0;
+    observations.push({ elapsedMs: now() - started, ...sample });
+    if (unchanged >= 2) return { elapsedMs: now() - started, observations };
+    previous = sample.running === 0 ? signature : null;
+    if (now() - started >= 2000) break;
+    await pause(20);
+  }
+  throw new Error(`Focused control geometry did not settle within two seconds: ${JSON.stringify(observations)}`);
+}
+
 async function observe(page, control) {
   await settle(control);
+  const settlement = await settleGeometry(control);
   const observed = await control.evaluate(node => {
     const rectangle = node.getBoundingClientRect(), style = getComputedStyle(node);
     const clips = [{ name: "viewport", x: true, y: true,
@@ -81,7 +122,7 @@ async function observe(page, control) {
       forcedActive: matchMedia("(forced-colors: active)").matches };
   });
   const boundary = geometry(observed.rectangle, observed.width, observed.offset, observed.clips);
-  if (!boundary.contained) return { ...observed, boundary, paint: null };
+  if (!boundary.contained) return { ...observed, settlement, boundary, paint: null };
   const screenshot = await page.screenshot({ scale: "css" });
   const samples = await page.evaluate(async ({ data, points }) => {
     const image = new Image(); image.src = `data:image/png;base64,${data}`; await image.decode();
@@ -92,7 +133,7 @@ async function observe(page, control) {
       return Array.from(context.getImageData(Math.floor(point.x), Math.floor(point.y), 1, 1).data);
     });
   }, { data: screenshot.toString("base64"), points: [...boundary.ring, ...boundary.adjacent] });
-  return { ...observed, boundary, paint: paint(samples),
+  return { ...observed, settlement, boundary, paint: paint(samples),
     method: "Ordinary keyboard focus; complete outline versus actual ancestor clips and unmodified adjacent screenshot paint" };
 }
-module.exports = { geometry, paint, tabTo, observe };
+module.exports = { geometry, paint, tabTo, settleGeometry, observe };

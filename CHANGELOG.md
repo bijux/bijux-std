@@ -12,8 +12,16 @@ Keep the visible focus ring inside disclosure scroll bounds and masthead reposit
 
 - Measure actual clipping and adjacent paint through ordinary keyboard focus and Auto theme transitions.
 - Retain every existing contrast case and detect the historical clipped-ring regression.
+- Admit focus geometry only after passive layout and finite-transition settlement; retain raw samples and strict clipping assertions.
 
 ### Merged pull requests
+
+#### 2026-10-08T23:19:00Z — [#214](https://github.com/bijux/bijux-std/pull/214) — fix(docs): preserve visible focus through navigation handoff
+
+Keep a usable Menu fallback when navigation is aborted and bring reopened drawer focus into view.
+
+- Give matching instant destinations heading focus while preserving fragments, downloads and other browsing contexts.
+- Revoke stale reading intent on explicit controls or disposal; verify aborted-request keyboard and search recovery.
 
 #### 2026-10-08T22:58:03Z — [#212](https://github.com/bijux/bijux-std/pull/212) — fix(docs): expose one site registry and isolate modal navigation
 
