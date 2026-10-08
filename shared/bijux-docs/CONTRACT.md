@@ -48,6 +48,23 @@ The registry array is the presentation order in the header and complete sidebar.
 Parent overview links are destinations; native `details`/`summary` controls only
 disclose descendants. Neither control substitutes for the other.
 
+## Reader history and optional scroll tracking
+
+The shared baseline preserves native authored fragment destinations and browser
+Back/Forward. It retains Material instant navigation, active table-of-contents
+indication and `toc.follow`. It does not enable `navigation.tracking` by default:
+that feature replaces the current URL fragment from scroll position and can
+restore a fragment after browser Back while the document is still settling.
+
+A product may explicitly add `navigation.tracking` to its authored feature list.
+The projector preserves authored feature additions; synchronization does not
+silently strip this opt-in. Such a product owns compatibility qualification for
+ordinary fragment Back/Forward, instant reader return, and URL stability during
+scroll restoration in every admitted browser. Automatic tracking must not be
+presented as qualified by the shared default history receipt. When reviewing an
+existing consumer override, distinguish an intentional opt-in from a feature
+copied from the previous standard before changing that authored list.
+
 ## Public observations and private integration
 
 | Surface | Contract | Ownership and lifetime |
