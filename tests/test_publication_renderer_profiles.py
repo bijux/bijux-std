@@ -47,6 +47,9 @@ class ProfileTests(unittest.TestCase):
             'recipe':'distro-apport-import-unavailable','purpose':'Reviewed distro import is absent; interpreter exception hook remains default.'}}
         module=types.ModuleType('sitecustomize');module.__file__=str(path)
         self.module_patch=patch.dict(sys.modules,{'sitecustomize':module});self.module_patch.start();self.addCleanup(self.module_patch.stop)
+        sys.modules.pop('apport_python_hook', None)
+        default_hook = patch.object(sys, 'excepthook', sys.__excepthook__)
+        default_hook.start(); self.addCleanup(default_hook.stop)
         self.write();return module
     def test_reviewed_external_distro_startup_retains_verification_scope(self):
         self.external();self.assertEqual(self.select()['usage'],'verification-only');self.rejected(True)
@@ -70,7 +73,8 @@ class ProfileTests(unittest.TestCase):
 
     def test_module_name_alone_cannot_open_an_external_publication_origin(self):
         module=types.ModuleType('sitecustomize');module.__file__=str(self.root.parent/'unowned/sitecustomize.py')
-        with patch.object(profiles.sys,'path',[str(self.root)]), patch.dict(profiles.sys.modules,{'sitecustomize':module},clear=True):
+        owned_sys=types.SimpleNamespace(**vars(sys));owned_sys.path=[str(self.root)];owned_sys.modules={'sitecustomize':module}
+        with patch.object(profiles,'sys',owned_sys):
             with self.assertRaisesRegex(profiles.ProfileError,'loaded module outside reviewed'):
                 REAL_ORIGINS(self.root,self.shared,publication=True)
 
