@@ -218,3 +218,8 @@ body[data-bijux-drawer-ready="true"] #__search:not(:checked) ~ header[data-bijux
   min-block-size: 24px;
   transform: none;
 }
+
+/* Search counts sit on Material's shaded metadata surface; muted text is too light there. */
+.md-search-result__meta {
+  color: var(--md-default-fg-color);
+}

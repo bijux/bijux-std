@@ -156,7 +156,10 @@ native control. Owned enhancement readiness is a private mount result, not
 Material's window-level JavaScript class. Failed or aborted enhancement must
 restore temporary state so the native authored fallback remains operable.
 Native search fields and result destinations retain Material semantics even
-when an owned recovery bridge is present.
+when an owned recovery bridge is present. Global character-only `/`, `f` and `s`
+search shortcuts are disabled in both headers. Readers open search through its
+named button or native inline field; focused query input, native Arrow/Enter
+result navigation, Escape restoration and browser modifier defaults remain available.
 
 Global profile/storage listeners bind once per window. Index and worker owners
 retain their bounded window transport; pagehide cancels owned work and bfcache
