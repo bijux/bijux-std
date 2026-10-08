@@ -1,0 +1,15 @@
+{
+  "schema": 1,
+  "pr": 151,
+  "title": "fix(docs): preserve authored extensions during standard projection",
+  "type": "fix",
+  "scope": "docs",
+  "summary": "Documentation projection preserves consumer-authored extensions and file ownership.",
+  "details": [
+    "Record generated ownership against accepted GitHub source and verify prior bytes before changing templates, assets or configuration.",
+    "Preserve clean authored overrides, ignored files, staged work and symlinks; retire only unchanged generated files and project nested content recursively."
+  ],
+  "status": "merged",
+  "merged_at": "2026-10-08T01:11:00Z",
+  "breaking": false
+}
