@@ -1,0 +1,15 @@
+{
+  "schema": 1,
+  "pr": 22,
+  "title": "refactor(workflows): remove reusable workflow entrypoints",
+  "type": "refactor",
+  "scope": "workflows",
+  "summary": "Managed CI wrappers carry their job definitions without reusable workflow entrypoints.",
+  "details": [
+    "Remove reusable IDs from inventories and allowlists and inline the selected Canon, Proteomics and Atlas CI jobs in generated wrappers.",
+    "Original GitHub merge ba1e2541d383876553af81eea52cd2f0258e979a is distinct from rewritten main-history delivery d674bdb649e3eb7a89c147ab5fcd1f9fd0d656d8; the merge date is the verified GitHub date."
+  ],
+  "status": "merged",
+  "merged_at": "2026-04-19T17:46:26Z",
+  "breaking": false
+}

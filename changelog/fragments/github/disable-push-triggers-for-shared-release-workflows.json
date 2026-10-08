@@ -1,0 +1,15 @@
+{
+  "schema": 1,
+  "pr": 25,
+  "title": "fix(github): disable push triggers for shared release workflows",
+  "type": "fix",
+  "scope": "github",
+  "summary": "Shared release workflows use explicit dispatch or reusable invocation.",
+  "details": [
+    "Remove automatic tag push triggers from GitHub, PyPI, GHCR and crates release templates.",
+    "Original GitHub merge 7768cbd38d5af2cad5e017e919fd5253c124bf13 is distinct from rewritten main-history delivery 3ab19d58941cbb38baa475209d68459dc6938d99; the merge date is the verified GitHub date."
+  ],
+  "status": "merged",
+  "merged_at": "2026-04-19T22:15:43Z",
+  "breaking": false
+}

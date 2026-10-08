@@ -1,0 +1,15 @@
+{
+  "schema": 1,
+  "pr": 96,
+  "title": "fix(github): normalize verify triggers and refresh checkout pins",
+  "type": "fix",
+  "scope": "github",
+  "summary": "Verify wrappers react to governed changes and use refreshed checkout pins.",
+  "details": [
+    "Normalize path filters, select checkout v7 and align the active repository policy workflow with shared source.",
+    "This merged correction supersedes the narrower PR #95 proposal."
+  ],
+  "status": "merged",
+  "merged_at": "2026-06-26T22:59:23Z",
+  "breaking": false
+}

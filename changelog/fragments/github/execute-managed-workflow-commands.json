@@ -1,0 +1,14 @@
+{
+  "schema": 1,
+  "pr": 93,
+  "title": "fix(github): execute managed workflow commands",
+  "type": "fix",
+  "scope": "github",
+  "summary": "Generated install, test, lint and repository-check commands actually execute.",
+  "details": [
+    "Correct malformed shell preambles and add a standards guard against invalid set -euo pipefail command rendering."
+  ],
+  "status": "merged",
+  "merged_at": "2026-05-13T21:12:41Z",
+  "breaking": false
+}

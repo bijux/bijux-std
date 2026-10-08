@@ -1,0 +1,14 @@
+{
+  "schema": 1,
+  "pr": 119,
+  "title": "fix(github): distinguish workflow and check names",
+  "type": "fix",
+  "scope": "github",
+  "summary": "Workflow display names and required-check identities are documented separately.",
+  "details": [
+    "Give repository policy and owner approval distinct durable names and regenerate their governed configurations."
+  ],
+  "status": "merged",
+  "merged_at": "2026-07-19T18:51:11Z",
+  "breaking": false
+}
