@@ -27,6 +27,33 @@ test("modal drawer contains every Tab stop and restores background on backdrop d
   await expect(page.locator("#__drawer")).not.toBeChecked();
   await expect(page.locator(".md-content")).toHaveJSProperty("inert", false);
   await expect(control(page)).toBeFocused();
+
+  // An actual aborted native request must leave a usable current document.
+  // This counterfactual is separate from the successful destination oracle.
+  const currentDocument = await page.evaluateHandle(() => document);
+  await open(page);
+  const destination = navigation(page).locator(".bijux-site-registry").getByRole("link", { name: "Bijux", exact: true });
+  await destination.evaluate(node => node.setAttribute("target", "_self"));
+  const href = await destination.evaluate(node => node.href);
+  await page.route(href, route => route.abort("aborted"));
+  const failed = page.waitForEvent("requestfailed", request => request.url() === href);
+  await destination.click({ noWaitAfter: true });
+  await failed;
+  expect(await page.evaluate(previous => previous === document, currentDocument)).toBe(true);
+  await expect(page.locator("#__drawer")).not.toBeChecked();
+  await expect(page.locator(".md-content")).toHaveJSProperty("inert", false);
+  await expect(control(page)).toBeFocused();
+  await page.keyboard.press("Space");
+  await expect(page.locator("#__drawer")).toBeChecked();
+  await page.keyboard.press("Escape");
+  await expect(control(page)).toBeFocused();
+  const search = page.locator("[data-bijux-header-control='search-toggle']");
+  await search.click();
+  await expect(page.locator("#__search")).toBeChecked();
+  await page.keyboard.press("Escape");
+  await expect(search).toBeFocused();
+  await page.unroute(href);
+  await currentDocument.dispose();
 });
 test("narrow masthead retains primary controls with enlarged text and prescribed spacing", async ({ page }) => {
   await page.setViewportSize({ width: 320, height: 700 });
