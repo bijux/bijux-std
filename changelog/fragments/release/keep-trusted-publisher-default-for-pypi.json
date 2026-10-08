@@ -1,0 +1,15 @@
+{
+  "schema": 1,
+  "pr": 12,
+  "title": "fix(release): keep trusted publisher default for PyPI",
+  "type": "fix",
+  "scope": "release",
+  "summary": "Trusted publishing is restored as the default PyPI authentication mode.",
+  "details": [
+    "Keep token bootstrap available only through an explicit matrix or environment override.",
+    "Original GitHub merge e2669297a3506f2468de49f2d04c52861d63f8f7 is distinct from rewritten main-history delivery 999472cfd2358bc403469cf86412bed94ee148d3; the merge date is the verified GitHub date."
+  ],
+  "status": "merged",
+  "merged_at": "2026-04-19T11:58:52Z",
+  "breaking": false
+}

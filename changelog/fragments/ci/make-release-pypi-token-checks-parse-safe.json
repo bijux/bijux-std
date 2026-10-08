@@ -1,0 +1,15 @@
+{
+  "schema": 1,
+  "pr": 31,
+  "title": "fix(ci): make release-pypi token checks parse-safe",
+  "type": "fix",
+  "scope": "ci",
+  "summary": "PyPI token-bootstrap conditions use a parse-safe environment value.",
+  "details": [
+    "Derive a Boolean from secret presence instead of referencing secrets directly in step if expressions.",
+    "Original GitHub merge 05c3de825d760403c8447b0d6b4fc34545d12cbf is distinct from rewritten main-history delivery be77a589bc7b7eb9679283e4496b427466392ba0; the merge date is the verified GitHub date."
+  ],
+  "status": "merged",
+  "merged_at": "2026-04-19T23:01:15Z",
+  "breaking": false
+}

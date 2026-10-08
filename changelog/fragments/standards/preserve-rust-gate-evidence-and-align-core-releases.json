@@ -1,0 +1,14 @@
+{
+  "schema": 1,
+  "pr": 112,
+  "title": "fix(standards): preserve Rust gate evidence and align core releases",
+  "type": "fix",
+  "scope": "standards",
+  "summary": "Pinned Rust gates preserve immutable sources and complete evidence.",
+  "details": [
+    "Keep inactive frozen inputs safe across repeated runs and align Core's release toolchain, binary families, crate order and allowlists."
+  ],
+  "status": "merged",
+  "merged_at": "2026-07-19T09:36:42Z",
+  "breaking": false
+}
