@@ -15,6 +15,7 @@ const query = (page) => page.locator("[data-md-component='search-query']");
 const opener = (page) =>
   page.locator("[data-bijux-header-control='search-toggle']");
 const toggle = (page) => page.locator("#__search");
+const siteSearchName = "Search bijux-core";
 const definitions = [
   { name: "owned phone", width: 320 },
   { name: "owned compact", width: 768 },
@@ -77,7 +78,7 @@ async function transit(page, definition, evidence) {
   if (!inline) {
     await expect(query(page)).toBeHidden();
     await expect(opener(page)).toHaveAccessibleName(
-      definition.native ? "Search" : "Open search",
+      definition.native ? siteSearchName : "Open search",
     );
   } else {
     await expect(query(page)).toBeVisible();
@@ -141,6 +142,11 @@ async function transit(page, definition, evidence) {
   if (!inline) await page.keyboard.press("Space");
   await expect(toggle(page)).toBeChecked();
   await expect(query(page)).toBeFocused();
+  await expect(query(page)).toHaveAccessibleName(siteSearchName);
+  evidence.queryName = {
+    expected: siteSearchName,
+    observed: await query(page).getAttribute("aria-label"),
+  };
   await page.keyboard.press("ControlOrMeta+A");
   await page.keyboard.insertText("resilient navigation");
   const answer = await nativeAnswer(page);

@@ -2,13 +2,14 @@
   "use strict";
   const shell = (window.bijuxShell = window.bijuxShell || {});
   if (shell.bootstrap) return;
+  const nativeDrawerLabels = new WeakMap();
   let lifetime;
   let closeDrawer;
   let readingIntent = false;
   const compact = window.matchMedia("(max-width: 76.2344em)");
 
   function upgradeControls() {
-    for (const label of document.querySelectorAll('label[data-bijux-control-target], label.md-header__button[for="__search"]')) {
+    for (const label of document.querySelectorAll('label[data-bijux-control-target], label.md-header__button[for="__search"], label.md-header__button[for="__drawer"]')) {
       const button = document.createElement("button");
       for (const attr of label.attributes) {
         if (!["role", "tabindex"].includes(attr.name)) button.setAttribute(attr.name, attr.value);
@@ -22,14 +23,100 @@
           button.setAttribute("aria-label", label.getAttribute("title") || document.querySelector(".md-search__input")?.getAttribute("aria-label") || "Search");
         }
       }
+      if (label.matches('.md-header__button[for="__drawer"]')) {
+        button.dataset.bijuxHeaderControl = "drawer-toggle";
+        button.dataset.bijuxControlTarget = "__drawer";
+        if (!button.hasAttribute("aria-label")) button.setAttribute("aria-label", label.getAttribute("title") || "Navigation");
+      }
+      if (button.dataset.bijuxControlTarget === "__drawer") nativeDrawerLabels.set(button, label);
       button.replaceChildren(...label.childNodes);
       label.replaceWith(button);
     }
   }
 
+  function bindPopupIdentity(surface, invoker, preferredId, signal) {
+    const remember = (node, names) => names.map(name => [name, node.getAttribute(name)]);
+    const surfaceAttributes = remember(surface, ["id", "role", "aria-modal", "aria-label"]);
+    const invokerAttributes = remember(invoker, ["aria-controls", "aria-haspopup", "aria-expanded"]);
+    const restore = (node, attributes) => {
+      for (const [name, value] of attributes) {
+        if (value === null) node.removeAttribute(name);
+        else node.setAttribute(name, value);
+      }
+    };
+    let id = surface.getAttribute("id");
+    if (id) {
+      const matches = [...document.querySelectorAll("[id]")].filter(node => node.getAttribute("id") === id);
+      if (/[\t\n\f\r ]/.test(id) || matches.length !== 1 || matches[0] !== surface) {
+        throw new Error("A popup surface requires a unique authored id without whitespace");
+      }
+    } else {
+      id = preferredId;
+      let suffix = 1;
+      while (document.getElementById(id)) id = `${preferredId}-${++suffix}`;
+      surface.setAttribute("id", id);
+    }
+    signal.addEventListener("abort", () => {
+      restore(surface, surfaceAttributes);
+      restore(invoker, invokerAttributes);
+    }, { once: true });
+    invoker.setAttribute("aria-controls", id);
+    invoker.setAttribute("aria-haspopup", "dialog");
+    return {
+      id,
+      label: surfaceAttributes.find(([name]) => name === "aria-label")[1],
+      // Closing restores authored semantics while keeping the bound identity.
+      restoreSurface: fallbackLabel => {
+        restore(surface, surfaceAttributes.filter(([name]) => name !== "id"));
+        // Native Material exposes its closed inline search as a dialog. Keep a
+        // bound fallback name without replacing an authored naming relation.
+        if (surface.getAttribute("role") === "dialog" &&
+            !surface.getAttribute("aria-label")?.trim() && !surface.getAttribute("aria-labelledby")?.trim()) {
+          surface.setAttribute("aria-label", fallbackLabel);
+        }
+      },
+    };
+  }
+
   function bindDrawer(signal) {
-    // Native Material headers retain their own drawer; this component requires shared ownership.
-    if (!document.querySelector("header[data-bijux-drawer-target]")) return false;
+    if (!document.querySelector("header[data-bijux-drawer-target]")) {
+      // Native Material retains its sidebar and backdrop; upgraded buttons own
+      // only activation of the existing checkbox and dismissal focus.
+      const toggle = document.getElementById("__drawer");
+      const opener = document.querySelector('button.md-header__button[data-bijux-control-target="__drawer"]');
+      if (!toggle) return false;
+      const expanded = opener?.getAttribute("aria-expanded");
+      const syncNativeState = () => opener?.setAttribute("aria-expanded", String(toggle.checked));
+      toggle.addEventListener("change", syncNativeState, { signal });
+      signal.addEventListener("abort", () => {
+        if (expanded == null) opener?.removeAttribute("aria-expanded");
+        else opener?.setAttribute("aria-expanded", expanded);
+      }, { once: true });
+      syncNativeState();
+      opener?.addEventListener("click", () => {
+        toggle.checked = !toggle.checked;
+        toggle.dispatchEvent(new Event("change", { bubbles: true }));
+      }, { signal });
+      const closers = [...document.querySelectorAll('button[data-bijux-control-target="__drawer"][data-bijux-control-close]')];
+      signal.addEventListener("abort", () => {
+        for (const control of [opener, ...closers]) {
+          const label = control && nativeDrawerLabels.get(control);
+          if (!label) continue;
+          label.replaceChildren(...control.childNodes);
+          control.replaceWith(label);
+          nativeDrawerLabels.delete(control);
+        }
+      }, { once: true });
+      for (const control of closers) {
+        control.addEventListener("click", () => {
+          const wasOpen = toggle.checked;
+          toggle.checked = false;
+          toggle.dispatchEvent(new Event("change", { bubbles: true }));
+          if (wasOpen && opener?.getClientRects().length && getComputedStyle(opener).visibility !== "hidden") opener.focus({ preventScroll: true });
+        }, { signal });
+      }
+      return false;
+    }
     const toggle = document.getElementById("__drawer");
     const sidebar = document.querySelector(".md-sidebar--primary");
     const navigation = document.getElementById("bijux-navigation");
@@ -38,20 +125,10 @@
     let open = false;
     let background = [];
     const initialSidebarInert = sidebar.inert;
-    const remember = (node, names) => names.map(name => [name, node.getAttribute(name)]);
-    const sidebarAttributes = remember(sidebar, ["role", "aria-modal", "aria-label"]);
-    const openerAttributes = remember(opener, ["aria-expanded", "aria-controls", "aria-haspopup"]);
-    const restore = (node, attributes) => {
-      for (const [name, value] of attributes) {
-        if (value === null) node.removeAttribute(name);
-        else node.setAttribute(name, value);
-      }
-    };
+    const popup = bindPopupIdentity(sidebar, opener, "bijux-navigation-dialog", signal);
     signal.addEventListener("abort", () => {
       restoreBackground();
       sidebar.inert = initialSidebarInert;
-      restore(sidebar, sidebarAttributes);
-      restore(opener, openerAttributes);
       delete document.body.dataset.bijuxDrawerOpen;
       delete document.body.dataset.bijuxDrawerReady;
     }, { once: true });
@@ -68,7 +145,7 @@
       const changed = next !== open;
       open = next;
       opener.setAttribute("aria-expanded", String(open));
-      opener.setAttribute("aria-controls", "bijux-navigation");
+      opener.setAttribute("aria-controls", popup.id);
       opener.setAttribute("aria-haspopup", "dialog");
       sidebar.inert = compact.matches && !open;
       document.body.dataset.bijuxDrawerOpen = String(open);
@@ -76,16 +153,14 @@
       if (open) {
         sidebar.setAttribute("role", "dialog");
         sidebar.setAttribute("aria-modal", "true");
-        sidebar.setAttribute("aria-label", "Site navigation");
+        sidebar.setAttribute("aria-label", popup.label || "Site navigation");
         for (const node of document.querySelectorAll(".md-content, .md-sidebar--secondary, .md-footer")) {
           background.push([node, node.inert]);
           node.inert = true;
         }
         if (changed) (focusable()[0] || navigation).focus({ preventScroll: true });
       } else {
-        sidebar.removeAttribute("role");
-        sidebar.removeAttribute("aria-modal");
-        sidebar.removeAttribute("aria-label");
+        popup.restoreSurface("Site navigation");
         if (restore && compact.matches) opener.focus({ preventScroll: true });
       }
     }
@@ -146,6 +221,8 @@
     if (!toggle || !control) return;
     const dialog = document.querySelector("[data-md-component='search']");
     const input = document.querySelector("[data-md-component='search-query']");
+    if (!dialog) throw new Error("Shared search initialization requires its controlled popup surface");
+    const popup = bindPopupIdentity(dialog, control, "bijux-search-dialog", signal);
     let closedInlineFocus = false;
     const visible = node => node && node.getClientRects().length && getComputedStyle(node).visibility !== "hidden";
     function returnFocus() {
@@ -185,9 +262,9 @@
       control.setAttribute("aria-expanded", String(open));
       control.setAttribute("aria-haspopup", "dialog");
       restoreBackground();
-      if (!dialog) return;
-      dialog.setAttribute("aria-label", "Search documentation");
       if (open) {
+        dialog.setAttribute("role", "dialog");
+        dialog.setAttribute("aria-label", popup.label || "Search documentation");
         dialog.setAttribute("aria-modal", "true");
         const nodes = new Set(document.querySelectorAll(".md-content, .md-sidebar, .md-footer"));
         for (let node = dialog; node.parentElement?.closest("header"); node = node.parentElement) {
@@ -195,7 +272,7 @@
         }
         for (const node of nodes) { background.push([node, node.inert]); node.inert = true; }
       } else {
-        dialog.removeAttribute("aria-modal");
+        popup.restoreSurface("Search documentation");
         if (wasOpen && !readingIntent) returnFocus();
       }
     }
