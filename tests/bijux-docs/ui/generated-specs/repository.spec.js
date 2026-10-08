@@ -35,13 +35,15 @@ test("default cold repository link and instant destinations preserve navigation 
   await expect(repository).toHaveAttribute("href", "https://github.com/bijux/bijux-core");
   await expect(repository).toHaveAccessibleName(/bijux\/bijux-core/);
   await page.context().route("https://github.com/bijux/bijux-core", route => route.fulfill({ contentType: "text/html", body: "<title>Repository destination fixture</title><h1>Bijux Core repository destination</h1>" }));
-  const [destination] = await Promise.all([page.waitForEvent("popup"), repository.click()]);
-  try {
-    await expect(destination).toHaveURL("https://github.com/bijux/bijux-core");
-    await expect(destination.locator("h1")).toHaveText("Bijux Core repository destination");
-  } finally {
-    await destination.close();
-  }
+  await expect(repository).not.toHaveAttribute("target");
+  await expect(repository).not.toHaveAttribute("download");
+  await repository.click();
+  await expect(page).toHaveURL("https://github.com/bijux/bijux-core");
+  await expect(page.locator("h1")).toHaveText("Bijux Core repository destination");
+  await page.goBack();
+  await expect(page).toHaveURL(/\/bijux-core\/platform\/start\/$/);
+  await expect(page.locator("h1")).toHaveText(/^Platform getting started(?:¶)?$/);
+  await noFacts(page, requests);
   expect(requests).toEqual([]);
 });
 
