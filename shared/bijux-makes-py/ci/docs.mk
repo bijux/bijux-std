@@ -13,7 +13,7 @@ DOCS_CHECK_CONFIG_FILE       ?= $(DOCS_EFFECTIVE_CONFIG)
 DOCS_SERVE_CONFIG_FILE       ?= $(DOCS_EFFECTIVE_CONFIG)
 DOCS_SHARED_ASSETS_DIR       ?= $(PROJECT_DIR)/docs/assets
 DOCS_DEV_ADDR                ?= 127.0.0.1:8001
-DOCS_SITE_URL                ?= http://127.0.0.1:8000/
+DOCS_SITE_URL                ?= $(SITE_URL)
 DOCS_BUILD_SITE_URL          ?= $(DOCS_SITE_URL)
 DOCS_CHECK_SITE_URL          ?= $(DOCS_SITE_URL)
 DOCS_SERVE_SITE_URL          ?= $(DOCS_SITE_URL)
@@ -78,9 +78,10 @@ endif
 
 include $(abspath $(dir $(lastword $(MAKEFILE_LIST))))/util.mk
 
-.PHONY: docs docs-serve docs-serve-run docs-deploy docs-check docs-clean docs-hygiene docs-prepare-source docs-assert-serve-port docs-render-serve-config
+.PHONY: docs docs-serve docs-serve-run docs-deploy docs-check docs-clean docs-hygiene docs-prepare-source docs-assert-serve-port docs-render-serve-config docs-assert-public-url
 
 docs:
+	@$(MAKE) docs-assert-public-url
 	$(call run_make_targets,$(DOCS_BUILD_BOOTSTRAP_TARGETS),$(MAKE))
 	$(call run_make_targets,$(DOCS_BUILD_GUARD_TARGETS),$(MAKE))
 	$(call assert_docs_source_authority)
@@ -137,6 +138,7 @@ docs-deploy:
 	@exit 1
 
 docs-check:
+	@$(MAKE) docs-assert-public-url
 	$(call run_make_targets,$(DOCS_CHECK_BOOTSTRAP_TARGETS),$(MAKE))
 	$(call run_make_targets,$(DOCS_CHECK_GUARD_TARGETS),$(MAKE))
 	$(call assert_docs_source_authority)
@@ -243,3 +245,9 @@ ifeq ($(strip $(DOCS_PUBLICATION_FRAMEWORK)),1)
     $(error BIJUX_DOCS_SHARED_DIR must identify the accepted shared documentation source for publication qualification)
   endif
 endif
+
+# An empty override leaves the canonical default with the authored MkDocs config.
+DOCS_PUBLIC_URL_VALIDATOR ?= $(firstword $(wildcard $(PROJECT_DIR)/.bijux/shared/bijux-docs/tooling/quality/validate_production_url.py $(PROJECT_DIR)/shared/bijux-docs/tooling/quality/validate_production_url.py))
+docs-assert-public-url:
+	@test -n "$(DOCS_PUBLIC_URL_VALIDATOR)" -a -f "$(DOCS_PUBLIC_URL_VALIDATOR)" || { echo "ERROR: canonical production URL validator is unavailable" >&2; exit 1; }
+	@PYTHONDONTWRITEBYTECODE=1 "$(DOCS_PYTHON)" "$(DOCS_PUBLIC_URL_VALIDATOR)" --allow-empty "$(DOCS_BUILD_SITE_URL)" "$(DOCS_CHECK_SITE_URL)"
