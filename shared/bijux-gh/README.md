@@ -242,3 +242,18 @@ The workflow validates and uploads the first detected directory containing
 3. `artifacts/site/bijux-masterclass`
 4. `artifacts/docs/site`
 5. `artifacts/root/docs/site`
+
+## Pull request history contract
+
+The canonical offline checker `.github/scripts/changelog.py` is distributed with
+the governance scripts. Its shared mirror is `scripts/changelog.py`. Standards
+synchronization installs the checker and templates, not consumer-authored history.
+A repository adopts with its own `changelog/config.json` and reviewed fragments.
+The `std / changelog` workflow validates every adopted PR, including bot changes,
+against its actual event identity and deterministic central projection. Consumers
+without a configuration report explicitly that PR-history qualification is not
+adopted. Package release configuration and version tags remain independent.
+
+The standard repository author contract and schema are documented in
+`changelog/README.md`; consumer adoption documents should describe their own
+repository identity, record ownership and retained package history.

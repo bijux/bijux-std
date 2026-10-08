@@ -13,6 +13,13 @@ Use a concise PR-led changelog with newest review identities first and preserve 
 - Replace the version-organized central changelog with the simple repository header and truthful pending/merged PR sections.
 - Keep all43previous material statements and verified source/tag distinctions in the foundation archive; historical PR imports and preceding main-history notices remain separately reviewed.
 
+#### [#192](https://github.com/bijux/bijux-std/pull/192) — ci\(governance\): enforce exact pull request change records
+
+Check actual PR records and projection in CI and document the repository author workflow.
+
+- Add a bounded changelog job and invoke the same checker inside the existing mandatory standards gate, including standards-repository bot authors.
+- Carry author instructions through shared PR templates and expose Make targets without modifying release or deployment workflows.
+
 ### Merged pull requests
 
 #### 2026-10-08T17:41:36Z — [#193](https://github.com/bijux/bijux-std/pull/193) — test\(docs\): settle native drawer before pointer input
