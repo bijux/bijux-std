@@ -3,6 +3,16 @@ const fs = require("node:fs");
 const path = require("node:path");
 const crypto = require("node:crypto");
 const outside = "https://outside.example";
+const footerNewTabLinks = [
+  { href: "https://github.com/bijux/", name: "GitHub", title: "GitHub" },
+  { href: "https://pypi.org/user/bijux/", name: "PyPI", title: "PyPI" },
+  { href: "https://crates.io/users/bijux", name: "Crates.io", title: "Crates.io" },
+  {
+    href: "https://github.com/bijux?tab=packages",
+    name: "GitHub Container Registry",
+    title: "GHCR",
+  },
+];
 test.beforeEach(async ({ page, browser, context }, info) => {
   info.annotations.push({
     type: "browser-version",
@@ -95,6 +105,18 @@ test("authored target, download, relation and description remain distinct", asyn
       .locator("#link-mail, #link-phone, #link-internal, #link-hash")
       .locator("[data-bijux-link-indication]"),
   ).toHaveCount(0);
+  for (const authored of footerNewTabLinks) {
+    const link = page.locator(".bijux-footer-strip__links").getByRole("link", {
+      name: authored.name,
+      exact: true,
+    });
+    await expect(link).toHaveAttribute("href", authored.href);
+    await expect(link).toHaveAttribute("target", "_blank");
+    await expect(link).toHaveAttribute("rel", "noopener");
+    await expect(link).toHaveAttribute("title", `${authored.title} (opens in new tab)`);
+    await expect(link).toHaveAccessibleDescription(/opens in new tab/i);
+    await expect(link.locator("[data-bijux-link-indication]")).toHaveCount(1);
+  }
 });
 
 test("ordinary external click stays in its window and Back returns to reading", async ({
@@ -363,8 +385,38 @@ test("no-script native same-window, fragment and download intent remains usable"
       path: file,
       contentType: "text/plain",
     });
-    // No-script new-tab warning/security admission is authored responsibility,
-    // not certified by this ordinary native fallback case.
+    // No-script warnings are authored by the shared footer, independently of
+    // the runtime's disposable warning annotation and external network state.
+    for (const authored of footerNewTabLinks) {
+      await context.route(authored.href, (route) =>
+        route.fulfill({
+          contentType: "text/html",
+          body: `<!doctype html><h1>Controlled ${authored.name} destination</h1>`,
+        }),
+      );
+      const link = page.locator(".bijux-footer-strip__links").getByRole("link", {
+        name: authored.name,
+        exact: true,
+      });
+      await expect(link).toHaveAttribute("href", authored.href);
+      await expect(link).toHaveAttribute("target", "_blank");
+      await expect(link).toHaveAttribute("rel", "noopener");
+      await expect(link).toHaveAttribute("title", `${authored.title} (opens in new tab)`);
+      await expect(link).toHaveAccessibleDescription("Opens in new tab");
+      await expect(link.locator("[data-bijux-link-indication]")).toHaveCount(0);
+      const popupJob = page.waitForEvent("popup");
+      await link.click();
+      const popup = await popupJob;
+      await expect(popup).toHaveURL(authored.href);
+      await expect(popup.getByRole("heading", {
+        name: `Controlled ${authored.name} destination`, exact: true,
+      })).toBeVisible();
+      expect(await popup.evaluate(() => window.opener === null)).toBe(true);
+      await expect(page).toHaveURL(url);
+      await popup.close();
+    }
+    await expect(page.locator('.bijux-footer-strip__links a[href^="mailto:"]'))
+      .toHaveAttribute("href", "mailto:bijan@bijux.io");
   } finally {
     await context.close();
   }
