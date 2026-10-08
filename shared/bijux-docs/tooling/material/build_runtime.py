@@ -44,6 +44,19 @@ def compile_runtime(templates: Path, installed_version: str) -> tuple[str, bytes
     worker_adapter = (OWNED / 'search-worker-adapter.js').read_bytes()
     # The original map describes upstream offsets. Never claim it maps modified bytes.
     modified = original.replace(needle, REPLACEMENT).replace(worker_needle, WORKER_REPLACEMENT)
+    renderer_needle = 'href:`${s}`,class:"md-search-result__link",tabIndex:-1'
+    renderer_replacement = 'href:`${s}`,target:__bijuxSearchCapabilityTarget(s),class:"md-search-result__link",tabIndex:-1'
+    opening = '"use strict";(()=>{'
+    if original.count(renderer_needle) != 1 or original.count(opening) != 1 or '__bijuxSearchCapabilityTarget' in original:
+        raise ValueError('Native search renderer boundary differs from admitted unique context')
+    resize_needle = 'new ResizeObserver(e=>e.forEach(t=>cn.next(t)))'
+    resize_replacement = '__bijuxElementResizeObserver(t=>cn.next(t))'
+    if original.count(resize_needle) != 1 or '__bijuxElementResizeObserver' in original:
+        raise ValueError('Native resize delivery differs from admitted unique context')
+    resize = (OWNED / 'element-resize-delivery.js').read_bytes()
+    modified = modified.replace(resize_needle, resize_replacement)
+    navigation = (OWNED / 'search-capability-boundary.js').read_bytes()
+    modified = modified.replace(renderer_needle, renderer_replacement).replace(opening, opening + navigation.decode() + resize.decode())
     modified, maps = re.subn(r'(?m)^//# sourceMappingURL=.*(?:\n|$)', '', modified)
     if maps != 1:
         raise ValueError('Expected exactly one upstream source-map annotation')
@@ -61,6 +74,12 @@ def compile_runtime(templates: Path, installed_version: str) -> tuple[str, bytes
         'upstream_worker': admitted['worker'], 'upstream_worker_sha256': admitted['worker_sha256'],
         'boundary': {'original': needle, 'replacement': REPLACEMENT, 'occurrences': 1},
         'worker_boundary': {'original': worker_needle, 'replacement': WORKER_REPLACEMENT, 'occurrences': 1},
+        'element_resize_owned_source': 'tooling/material/element-resize-delivery.js',
+        'element_resize_sha256': sha256(resize),
+        'element_resize_boundary': {'original': resize_needle, 'replacement': resize_replacement, 'occurrences': 1, 'helper_scope': 'admitted native IIFE; no global observer or error interception'},
+        'search_capability_owned_source': 'tooling/material/search-capability-boundary.js',
+        'search_capability_sha256': sha256(navigation),
+        'search_capability_renderer': {'original': renderer_needle, 'replacement': renderer_replacement, 'occurrences': 1, 'helper_scope': 'unique admitted native runtime IIFE'},
         'output_asset': asset, 'output_sha256': digest,
         'source_map': 'Upstream map applies only to unmodified upstream bundle; compatibility output has no map annotation.',
         'transport': 'Owned same-origin HTTP index XHR starts only on actual search focus/input/open or a native query/highlight deep link; direct cancel/retry, 45-second nonrenewable total deadline, 8-second no-progress stall bound, 80MiB browser-reported progress-byte limit, 40Mi UTF-16 response/source-character limit and 50,000-document candidate limit. Worker operation deadlines remain separately fixed at 8 seconds.',

@@ -12,6 +12,8 @@ import importlib.util
 import json
 from pathlib import Path
 import re
+import subprocess
+import sys
 from urllib.parse import urlsplit
 
 MATERIAL_VERSION = "9.7.7"
@@ -86,7 +88,19 @@ def policy_inputs(shared: Path, material_templates: Path) -> dict:
             "material_templates": records(material_templates, list((material_templates / "partials/javascripts").rglob("*.html")))}
 
 
-def qualify_html(html: str, allowed: set[str], normalized_base: str) -> tuple[str, list[str]]:
+def embedded_module():
+    name = "bijux_owned_embedded"
+    path = Path(__file__).with_name("embedded_reports")
+    spec = importlib.util.spec_from_file_location(name, path / "__init__.py", submodule_search_locations=[str(path)])
+    module = importlib.util.module_from_spec(spec)
+    sys.modules[name] = module
+    spec.loader.exec_module(module)
+    integration = importlib.import_module(name + ".integration")
+    return integration
+
+
+def qualify_html(html: str, allowed: set[str], normalized_base: str, capability: dict | None = None,
+                 *, owned_report: bool = False) -> tuple[str, list[str]]:
     parser = Scripts()
     parser.feed(html)
     if parser.existing:
@@ -113,6 +127,15 @@ def qualify_html(html: str, allowed: set[str], normalized_base: str) -> tuple[st
         "worker-src 'self' blob:", "img-src 'self' data: https://img.shields.io https://raw.githubusercontent.com",
         "media-src 'self'", "frame-src 'none'", "manifest-src 'self'",
     ])
+    if capability is not None:
+        directives = {part.split()[0]: part.split()[1:] for part in policy.split("; ")}
+        if owned_report:
+            directives.update({"base-uri": ["'none'"], "form-action": ["'none'"],
+                               "worker-src": capability["worker_sources"],
+                               "connect-src": capability["connect_sources"],
+                               "img-src": capability["image_sources"]})
+        directives["frame-src"] = capability["frame_uris"] or ["'none'"]
+        policy = "; ".join(name + " " + " ".join(values) for name, values in directives.items())
     charset = re.search(r'<meta\s+charset=["\']?utf-8["\']?\s*/?>', html, flags=re.IGNORECASE)
     if not charset or "<script" in html[:charset.end()].lower():
         raise PolicyError("UTF-8 charset must precede executable scripts")
@@ -120,11 +143,32 @@ def qualify_html(html: str, allowed: set[str], normalized_base: str) -> tuple[st
     return html[:charset.end()] + meta + html[charset.end():], sorted(hashes)
 
 
-def apply(site: Path, shared: Path, material_templates: Path, redirect_plan: dict | None = None) -> dict:
+def apply(site: Path, shared: Path, material_templates: Path, redirect_plan: dict | None = None,
+          embedded_plan: dict | None = None) -> dict:
     allowed, base = admitted_scripts(shared, material_templates)
+    static_inputs = policy_inputs(shared, material_templates)
+    processor_sha256 = hashlib.sha256(Path(__file__).read_bytes()).hexdigest()
     # Admit every page before writing any; a late rejection preserves all original bytes.
     writes = []
     redirects = {}
+    embedded = {}
+    navigation = {}
+    admission = None
+    initial_bundle = None
+    initial_embedded_inputs = None
+    if embedded_plan is not None:
+        admission = embedded_module()
+        try:
+            embedded_plan = admission.validate_plan(embedded_plan, site)
+        except ValueError as error:
+            raise PolicyError(str(error)) from error
+        initial_embedded_inputs = admission.inputs(embedded_plan)
+        navigation = {entry["path"]: entry for entry in embedded_plan["navigation"]}
+        initial_bundle = admission.bundle_identity(site)[1]
+        for record in embedded_plan["records"]:
+            if record["path"] in embedded:
+                raise PolicyError("Duplicate embedded capability route")
+            embedded[record["path"]] = record
     if redirect_plan is not None:
         if redirect_plan.get("schema") != 1 or redirect_plan.get("policy") != "exact-declared-redirects" or redirect_plan.get("applied"):
             raise PolicyError("A preflighted, unapplied declared redirect plan is required")
@@ -135,6 +179,8 @@ def apply(site: Path, shared: Path, material_templates: Path, redirect_plan: dic
             raise PolicyError("Redirect plan processor differs from canonical source")
         for record in redirect_plan["records"]:
             name = record["path"]
+            if name in embedded:
+                raise PolicyError("Redirect and embedded routes must have distinct owners")
             if name in redirects or not name.endswith(".html") or Path(name).is_absolute() or any(part in {".", ".."} for part in name.split("/")):
                 raise PolicyError("Redirect route is duplicate or outside the selected artifact")
             expected_script = normalizer.SCRIPT.format(target=json.dumps(record["target"], ensure_ascii=True))
@@ -145,6 +191,10 @@ def apply(site: Path, shared: Path, material_templates: Path, redirect_plan: dic
                 raise PolicyError("Redirect plan content differs from its admitted digests")
             redirects[name] = record
     observed_redirects = set()
+    observed_embedded = set()
+    publication_spec = importlib.util.spec_from_file_location("bijux_csp_html_boundary", Path(__file__).with_name("publication.py"))
+    boundary = importlib.util.module_from_spec(publication_spec)
+    publication_spec.loader.exec_module(boundary)
     for path in sorted(site.rglob("*.html")):
         if path.is_symlink():
             raise PolicyError("Symlink HTML is not admitted")
@@ -152,6 +202,7 @@ def apply(site: Path, shared: Path, material_templates: Path, redirect_plan: dic
         original = original_bytes.decode("utf-8")
         name = path.relative_to(site).as_posix()
         record = redirects.get(name)
+        owned = embedded.get(name)
         page_allowed = allowed
         if record:
             if hashlib.sha256(original_bytes).hexdigest() != record["input_sha256"]:
@@ -159,17 +210,44 @@ def apply(site: Path, shared: Path, material_templates: Path, redirect_plan: dic
             original = record["normalized_html"]
             page_allowed = allowed | {record["script"]}
             observed_redirects.add(name)
-        updated, hashes = qualify_html(original, page_allowed, base)
+        if owned:
+            if hashlib.sha256(original_bytes).hexdigest() != owned["input_sha256"]:
+                raise PolicyError("Embedded HTML changed after source preflight")
+            original = owned["normalized_html"]
+            if owned["kind"] == "owned-report":
+                page_allowed = set(owned["admitted_scripts"])
+            observed_embedded.add(name)
+        if name in navigation:
+            original = navigation[name]["normalized_html"]
+        inspected = boundary.DocumentPolicy(owned_report=bool(owned and owned["kind"] == "owned-report"),
+                                            owned_parent=bool(owned and owned["kind"] == "owned-parent-frame"))
+        inspected.feed(original)
+        if inspected.failures:
+            raise PolicyError("Public HTML boundary rejects: " + ", ".join(sorted(set(inspected.failures))))
+        updated, hashes = qualify_html(original, page_allowed, base,
+                                       owned["capability"] if owned else None,
+                                       owned_report=bool(owned and owned["kind"] == "owned-report"))
         writes.append((path, updated, hashes, original_bytes))
     if not writes:
         raise PolicyError("The selected artifact contains no HTML")
     if observed_redirects != set(redirects):
         raise PolicyError("Declared redirect is missing from the selected HTML artifact")
+    if observed_embedded != set(embedded):
+        raise PolicyError("Owned embedded route is missing from selected artifact")
     if any(path.read_bytes() != original for path, _, _, original in writes):
         raise PolicyError("Selected HTML changed during executable preflight")
+    if admission is not None:
+        if admission.bundle_identity(site)[1] != initial_bundle:
+            raise PolicyError("Public resources changed during complete executable preflight")
+        admission.validate_plan(embedded_plan, site)
+        if admission.inputs(embedded_plan) != initial_embedded_inputs:
+            raise PolicyError("Embedded processor/source/config inputs changed during preflight")
+    if policy_inputs(shared, material_templates) != static_inputs or hashlib.sha256(Path(__file__).read_bytes()).hexdigest() != processor_sha256:
+        raise PolicyError("Canonical/dependency executable policy inputs changed during preflight")
     for path, updated, _, _ in writes:
         path.write_text(updated)
     report = {"schema": 1, "material": MATERIAL_VERSION, "pages": len(writes),
+            "processor_sha256": processor_sha256, "policy_inputs": static_inputs,
             "policy": "early-meta-hashes", "script_hashes": sorted({h for _, _, hs, _ in writes for h in hs}),
             "limitations": ["Meta CSP cannot set frame-ancestors, HSTS or nosniff; hosting controls remain separate.",
                            "Inline styles remain required by admitted Material and diagram output; no unsafe-eval or inline handlers admitted."]}
@@ -177,6 +255,9 @@ def apply(site: Path, shared: Path, material_templates: Path, redirect_plan: dic
         report["redirects"] = {key: value for key, value in redirect_plan.items() if key not in {"records", "policy_inputs", "applied"}}
         report["redirects"]["applied"] = True
         report["redirects"]["records"] = [{key: value for key, value in record.items() if key not in {"normalized_html", "script"}} for record in redirect_plan["records"]]
+    if admission is not None:
+        report["embedded"] = admission.report(embedded_plan)
+        report["policy_inputs"]["embedded"] = initial_embedded_inputs
     return report
 
 
@@ -186,6 +267,8 @@ def main() -> int:
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--config", type=Path, default=Path("mkdocs.yml"))
     parser.add_argument("--site-url")
+    parser.add_argument("--embedded-owner", type=Path)
+    parser.add_argument("--build-identity", type=Path)
     args = parser.parse_args()
     root = Path.cwd().resolve()
     site, output = args.site_dir.resolve(), args.output.resolve()
@@ -212,9 +295,33 @@ def main() -> int:
         redirects = importlib.util.module_from_spec(redirect_spec)
         redirect_spec.loader.exec_module(redirects)
         redirect_plan = redirects.normalize_redirects(config, site, site_url, write=False)
-        report = apply(site, shared, templates, redirect_plan)
+        embedded_plan = None
+        if args.embedded_owner:
+            if args.build_identity is None:
+                raise PolicyError("An actual prepared builder receipt is required for embedded reports")
+            build = json.loads(args.build_identity.read_text())
+            if build.get("state") != "prepared" or build.get("scope") != "actual-mkdocs-renderer":
+                raise PolicyError("Embedded CLI requires actual prepared renderer evidence")
+            identity = publication.identity_module()
+            checkpoint = build.get("source_checkpoint")
+            if build.get("verification_only") is False:
+                identity.verify_source(root, checkpoint)
+                owner = args.embedded_owner.resolve()
+                if not owner.is_relative_to(root):
+                    raise PolicyError("Accepted embedded descriptor must belong to the selected source repository")
+                identity.git(root, "ls-files", "--error-unmatch", owner.relative_to(root).as_posix())
+                source_sha = checkpoint["repository_source"]["sha"]
+            else:
+                source_sha = identity.git(root, "rev-parse", "HEAD")
+            # Source authority is independent from mechanical plan validation.
+            # Keep the captured renderer/checkpoint unchanged; only the pure
+            # planner view is candidate-scoped, and publication verifies authority.
+            candidate_view = build | {"verification_only": True}
+            embedded_plan = embedded_module().plan_embedded_reports(root, site, args.embedded_owner, candidate_view, source_sha=source_sha)
+        report = apply(site, shared, templates, redirect_plan, embedded_plan)
+        inputs.update(report.get("policy_inputs", {}))
         inputs["redirects"] = redirect_plan["policy_inputs"]
-        if {key: value for key, value in inputs.items() if key != "redirects"} != policy_inputs(shared, templates):
+        if {key: value for key, value in inputs.items() if key not in {"redirects", "embedded"}} != policy_inputs(shared, templates):
             raise PolicyError("Policy inputs changed during artifact transformation")
         _, bundle_sha256 = publication.public_bundle_identity(site)
         report.update({"site_url": site_url, "site_dir": site.relative_to(root).as_posix(),
