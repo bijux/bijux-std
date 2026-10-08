@@ -119,6 +119,18 @@ ui-test-history: ui-test-prepare-runtime ui-test-fixtures ui-test-unit ## Qualif
 ui-test-publication-commands: ## Qualify the exact installed renderer command boundaries separately from browser fixtures
 	@PYTHONDONTWRITEBYTECODE=1 python3 "$(UI_TESTS_DIR)/execution/publication_gate.py" run --python "$(UI_TESTS_PYTHON_DIR)/bin/python" --output "$(BIJUX_DOCS_ARTIFACTS_DIR)/publication-commands"
 
+.PHONY: ui-test-search-reflow-phone
+ui-test-search-reflow-phone: ui-test-prepare-runtime ui-test-fixtures ui-test-unit ## Qualify search reflow phone through ordinary generated Material journeys
+	@NPM_CONFIG_CACHE="$(abspath $(UI_TESTS_NPM_CACHE_DIR))" PLAYWRIGHT_BROWSERS_PATH="$(abspath $(UI_TESTS_PLAYWRIGHT_BROWSERS_DIR))" BIJUX_UI_ARTIFACT_ROOT="$(abspath $(BIJUX_DOCS_ARTIFACTS_DIR))/search-reflow-phone-playwright" BIJUX_UI_FULL_GATE=1 npm --prefix "$(UI_TESTS_RUNTIME_DIR)" exec -- playwright test --config "$(UI_TESTS_DIR)/playwright.search-reflow-phone.config.js"
+
+.PHONY: ui-test-search-reflow-tablet
+ui-test-search-reflow-tablet: ui-test-prepare-runtime ui-test-fixtures ui-test-unit ## Qualify search reflow tablet through ordinary generated Material journeys
+	@NPM_CONFIG_CACHE="$(abspath $(UI_TESTS_NPM_CACHE_DIR))" PLAYWRIGHT_BROWSERS_PATH="$(abspath $(UI_TESTS_PLAYWRIGHT_BROWSERS_DIR))" BIJUX_UI_ARTIFACT_ROOT="$(abspath $(BIJUX_DOCS_ARTIFACTS_DIR))/search-reflow-tablet-playwright" BIJUX_UI_FULL_GATE=1 npm --prefix "$(UI_TESTS_RUNTIME_DIR)" exec -- playwright test --config "$(UI_TESTS_DIR)/playwright.search-reflow-tablet.config.js"
+
+.PHONY: ui-test-search-reflow-desktop
+ui-test-search-reflow-desktop: ui-test-prepare-runtime ui-test-fixtures ui-test-unit ## Qualify search reflow desktop through ordinary generated Material journeys
+	@NPM_CONFIG_CACHE="$(abspath $(UI_TESTS_NPM_CACHE_DIR))" PLAYWRIGHT_BROWSERS_PATH="$(abspath $(UI_TESTS_PLAYWRIGHT_BROWSERS_DIR))" BIJUX_UI_ARTIFACT_ROOT="$(abspath $(BIJUX_DOCS_ARTIFACTS_DIR))/search-reflow-desktop-playwright" BIJUX_UI_FULL_GATE=1 npm --prefix "$(UI_TESTS_RUNTIME_DIR)" exec -- playwright test --config "$(UI_TESTS_DIR)/playwright.search-reflow-desktop.config.js"
+
 .PHONY: ui-test-popup-relationships
 ui-test-popup-relationships: ui-test-prepare-runtime ui-test-fixtures ui-test-unit ## Qualify popup identity, dialog semantics and document disposal
 	@NPM_CONFIG_CACHE="$(abspath $(UI_TESTS_NPM_CACHE_DIR))" PLAYWRIGHT_BROWSERS_PATH="$(abspath $(UI_TESTS_PLAYWRIGHT_BROWSERS_DIR))" BIJUX_UI_ARTIFACT_ROOT="$(abspath $(BIJUX_DOCS_ARTIFACTS_DIR))/popup-relationships-playwright" BIJUX_UI_FULL_GATE=1 npm --prefix "$(UI_TESTS_RUNTIME_DIR)" exec -- playwright test --config "$(UI_TESTS_DIR)/playwright.popup-relationships.config.js"
@@ -126,3 +138,7 @@ ui-test-popup-relationships: ui-test-prepare-runtime ui-test-fixtures ui-test-un
 .PHONY: ui-test-search-scope
 ui-test-search-scope: ui-test-prepare-runtime ui-test-fixtures ui-test-unit ## Qualify site-local native search descriptions and reader journeys
 	@NPM_CONFIG_CACHE="$(abspath $(UI_TESTS_NPM_CACHE_DIR))" PLAYWRIGHT_BROWSERS_PATH="$(abspath $(UI_TESTS_PLAYWRIGHT_BROWSERS_DIR))" BIJUX_UI_ARTIFACT_ROOT="$(abspath $(BIJUX_DOCS_ARTIFACTS_DIR))/search-scope-playwright" BIJUX_UI_FULL_GATE=1 npm --prefix "$(UI_TESTS_RUNTIME_DIR)" exec -- playwright test --config "$(UI_TESTS_DIR)/playwright.search-scope.config.js"
+
+.PHONY: ui-test-reader-accessibility
+ui-test-reader-accessibility: ui-test-prepare-runtime ui-test-fixtures ui-test-unit ## Qualify keyboard drawer and reader focus journeys
+	@NPM_CONFIG_CACHE="$(abspath $(UI_TESTS_NPM_CACHE_DIR))" PLAYWRIGHT_BROWSERS_PATH="$(abspath $(UI_TESTS_PLAYWRIGHT_BROWSERS_DIR))" BIJUX_UI_ARTIFACT_ROOT="$(abspath $(BIJUX_DOCS_ARTIFACTS_DIR))/reader-accessibility-playwright" BIJUX_UI_FULL_GATE=1 npm --prefix "$(UI_TESTS_RUNTIME_DIR)" exec -- playwright test --config "$(UI_TESTS_DIR)/playwright.reader-accessibility.config.js"
