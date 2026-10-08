@@ -164,7 +164,7 @@
         sidebar.setAttribute("role", "dialog");
         sidebar.setAttribute("aria-modal", "true");
         sidebar.setAttribute("aria-label", popup.label || "Site navigation");
-        for (const node of document.querySelectorAll(".md-content, .md-sidebar--secondary, .md-footer")) {
+        for (const node of document.querySelectorAll(".md-content, .md-sidebar--secondary, .md-footer, .bijux-hub-strip, .bijux-site-tabs, .bijux-detail-tabs, .bijux-course-tabs")) {
           background.push([node, node.inert]);
           node.inert = true;
         }
