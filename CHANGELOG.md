@@ -6,6 +6,13 @@ This file records notable repository-level changes for `bijux-std`.
 
 ### Pending review
 
+#### [#216](https://github.com/bijux/bijux-std/pull/216) — fix(docs): expose one contextual navigation surface
+
+Keep the complete sidebar as the visible local navigation when duplicate contextual ribbons are unnecessary.
+
+- Preserve the closed compact header and native Material fallback; opening the native compact drawer exposes one local navigation surface.
+- Verify ordinary keyboard reading routes, Back and no-script navigation in the maintained browser matrix.
+
 #### [#212](https://github.com/bijux/bijux-std/pull/212) — fix(docs): expose one site registry and isolate modal navigation
 
 Use one owned desktop site registry and keep compact modal navigation isolated.
