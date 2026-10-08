@@ -94,3 +94,52 @@ jobs:
             artifacts/checks
             artifacts/bijux-checks
           if-no-files-found: error
+
+  navigation:
+    name: std / navigation
+    if: ${{ github.repository == 'bijux/bijux-std' && (github.event_name != 'pull_request' || github.event.pull_request.user.login != 'dependabot[bot]') }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    container:
+      # Playwright 1.58.2 Noble: matching browsers and system dependencies.
+      image: mcr.microsoft.com/playwright@sha256:6446946a1d9fd62d9ae501312a2d76a43ee688542b21622056a372959b65d63d
+      options: --ipc=host
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Prepare admitted Node runtime
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020
+        with:
+          node-version: '24.21.0'
+
+      - name: Prepare Python fixture renderer
+        shell: bash
+        run: |
+          set -euo pipefail
+          apt-get update
+          apt-get install --no-install-recommends -y make python3-venv
+          make ui-test-install ui-test-install-docs
+
+      - name: Qualify generated navigation
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          # Firefox requires the ephemeral container home to belong to its process user.
+          chown "$(id -u):$(id -g)" "$HOME"
+          make UI_TESTS_PLAYWRIGHT_BROWSERS_DIR=/ms-playwright ui-test-navigation
+
+      - name: Retain navigation qualification
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: docs-navigation-${{ github.sha }}
+          path: |
+            artifacts/bijux-docs/generated/manifest.json
+            artifacts/bijux-docs/generated/build-*.log
+            artifacts/bijux-docs/generated/site
+            artifacts/bijux-docs/playwright
+            artifacts/bijux-docs/drawer-playwright
+          if-no-files-found: warn
+          retention-days: 14
