@@ -66,7 +66,6 @@ BASE_FILE_MAPPINGS: list[tuple[str, str]] = [
     (".github/rulesets/main-branch-protection.json", ".github/rulesets/main-branch-protection.json"),
     (".github/scripts/build_repo_manifest.py", ".github/scripts/build_repo_manifest.py"),
     (".github/scripts/check_pinned_actions.py", ".github/scripts/check_pinned_actions.py"),
-    (".github/scripts/changelog.py", ".github/scripts/changelog.py"),
     (".github/scripts/check_protected_github_changes.py", ".github/scripts/check_protected_github_changes.py"),
     (".github/scripts/check_workflow_prerequisites.py", ".github/scripts/check_workflow_prerequisites.py"),
     (".github/scripts/render_repo_configs.py", ".github/scripts/render_repo_configs.py"),
