@@ -76,6 +76,7 @@ class SharedMakeCommonTests(unittest.TestCase):
             (
                 "BIJUX_MAKE_COMPONENTS := docs\n"
                 f"BIJUX_MAKES_SHARED_ROOT := {SHARED_ROOT}\n"
+                "DOCS_RENDERER_PROFILE := native\n"
                 "DOCS_RUN := ./mkdocs-fixture\n"
                 f"include {SHARED_ROOT}/bijux-makes/bijux.mk\n"
             ),
