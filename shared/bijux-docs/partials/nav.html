@@ -2,7 +2,7 @@
 {% set hub_links = bijux.hub_links if bijux and bijux.hub_links else [] %}
 {% set active_repository = bijux.repository if bijux and bijux.repository else "" %}
 {% import "partials/nav-item.html" as item with context %}
-<nav id="bijux-navigation" class="md-nav md-nav--primary bijux-nav bijux-nav--mobile" aria-label="{{ lang.t('nav') }}" data-md-level="0" data-bijux-nav-variant="complete">
+<nav id="bijux-navigation" class="md-nav md-nav--primary bijux-nav bijux-nav--mobile" aria-label="{{ config.site_name | e }} documentation navigation" data-md-level="0" data-bijux-nav-variant="complete">
   <div class="bijux-nav__title">
     <a href="{{ config.extra.homepage | d(nav.homepage.url, true) | url }}" class="md-nav__button md-logo" aria-label="{{ config.site_name }}" data-md-component="logo">
       {% include "partials/logo.html" %}
