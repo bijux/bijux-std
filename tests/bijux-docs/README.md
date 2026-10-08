@@ -156,4 +156,27 @@ and an explicit dynamic-extension fixture; and replay exact reviewed consumer
 source as the blanket-target counterfactual. Controlled outside replies prove
 browser semantics, not provider availability or production CSP.
 
+## Native reader history
+
+`playwright.history.config.js` declares 27 ordinary journeys: three cases in each
+Chromium, Firefox and WebKit phone, compact and desktop profile. They exercise
+authored fragment Back/Forward, direct product fragments, actual Next reader
+destinations and JavaScript-disabled links. Each restoration samples the exact
+URL for at least 1500ms without writing history, forcing input, finishing
+animations or changing scroll position. The interval exceeds the admitted
+Material scroll tracking debounce/delay and the observed hosted pointer
+settlement window. It verifies sampled stability, not every possible schedule.
+
+The shared default omits automatic `navigation.tracking` while retaining native
+anchors, instant navigation and `toc.follow`. An authored tracking opt-in has its
+own compatibility duty. The hosted historical WebKit failure remains evidence
+of a real fragment resurrection; passing default journeys do not claim that
+tracking opt-in was repaired or reproduce that Linux schedule on another host.
+
+Produce the canonical inventory with `reporting/inventory.js`, execute the full
+config or explicit assigned engine shards, and retain strict receipts and their
+complete aggregate as described in [shard reporting](reporting/README.md).
+
+Native history qualification retains exact Back/Forward and authored-fragment routes throughout passive restoration windows. It has its own bounded browser group in every engine. Automatic `navigation.tracking` is excluded from the default shell; an explicitly authored opt-in remains a consumer decision.
+
 Diagram rendering and contrast/target journeys run in separate engine jobs. Their independently assigned receipts are both mandatory in the final navigation aggregate. The three-minute budget includes cold browser-image setup, artifact transport and job finalization.

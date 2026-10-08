@@ -22,6 +22,7 @@ GROUPS = {
     'diagrams': ('diagrams',),
     'contrast': ('contrast',),
     'links': ('links',),
+    'history': ('history',),
 }
 ENGINES = ('chromium', 'firefox', 'webkit')
 SUITES = tuple(suite for group in GROUPS.values() for suite in group)
