@@ -151,6 +151,10 @@ class MaterialRuntimeTests(unittest.TestCase):
         self.assert_owned_context_rejected(
             '"use strict";(()=>{', '__bijuxSearchCapabilityTarget', 'Native search renderer boundary')
 
+    def test_native_resize_context_rejects_missing_duplicate_or_predeclared_owned_helper(self):
+        self.assert_owned_context_rejected(
+            'new ResizeObserver(e=>e.forEach(t=>cn.next(t)))',
+            '__bijuxElementResizeObserver', 'Native resize delivery')
 
     def test_altered_upstream_license_rejects_before_output(self):
         owned = self.root / 'owned'
