@@ -149,6 +149,7 @@ def config(baseline: dict, registry: list[dict], identity: str, docs: Path, site
         "site_name": "Bijux" if identity == "bijux" else identity,
         "site_url": base_url.rstrip("/") + route,
         "repo_url": "https://github.com/bijux/bijux.github.io" if identity == "bijux" else f"https://github.com/bijux/{identity}",
+        "repo_name": "bijux/bijux.github.io" if identity == "bijux" else f"bijux/{identity}",
         "docs_dir": str(docs), "site_dir": str(site), "strict": baseline["strict"],
         "exclude_docs": "/overrides/",
         "use_directory_urls": baseline["use_directory_urls"],
