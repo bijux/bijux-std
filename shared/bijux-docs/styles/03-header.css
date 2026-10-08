@@ -175,3 +175,9 @@ body[data-bijux-drawer-ready="true"] #__search:not(:checked) ~ header[data-bijux
 [data-md-color-scheme="slate"] .bijux-header-tools .bijux-theme-toggle:focus-visible {
   transform: none;
 }
+
+/* Search feedback belongs to the content surface rather than the white masthead. */
+.md-search__output .bijux-search-recovery {
+  background: var(--md-default-bg-color);
+  color: var(--md-default-fg-color);
+}
