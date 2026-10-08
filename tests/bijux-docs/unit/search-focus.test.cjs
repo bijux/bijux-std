@@ -5,7 +5,7 @@ const source = fs.readFileSync(process.env.BOOTSTRAP_SOURCE || proposed,'utf8');
 const begin = source.indexOf('  function bindSearch(signal) {');
 const fn = source.slice(begin, source.indexOf('  function runShellNavigationSync() {',begin));
 class Node extends EventTarget {
- constructor(tag='DIV'){super();this.tagName=tag;this.attributes=[];this.inert=false;this.children=[];this.parentElement=null;this.checked=false;this.hidden=false;this.attrs={};}
+ constructor(tag='DIV'){super();this.tagName=tag;this.attributes=[];this.inert=false;this.children=[];this.parentElement=null;this.checked=false;this.hidden=false;this.tabIndex=0;this.attrs={};}
  setAttribute(name,value){this.attrs[name]=value;}
  removeAttribute(name){delete this.attrs[name];}
  getClientRects(){return this.hidden?[]:[{}];}
@@ -13,12 +13,12 @@ class Node extends EventTarget {
  closest(selector){return selector==='a[href]'&&this.tagName==='A'?this:null;}
  click(){if(this.tagName==='INPUT'){const prior=this.checked;this.checked=!this.checked;const e=new Event('click',{cancelable:true});this.dispatchEvent(e);if(e.defaultPrevented)this.checked=prior;else this.dispatchEvent(new Event('change',{bubbles:true}));return e;}const e=new Event('click',{cancelable:true});this.dispatchEvent(e);return e;}
 }
-function fixture({inline=false}={}){
+function fixture({inline=false,modal=false}={}){
  const document=new EventTarget(),toggle=new Node('INPUT'),control=new Node('BUTTON'),query=new Node('INPUT'),dialog=new Node(),back=new Node('BUTTON'),background=new Node();
  query.focus=()=>{document.activeElement=query;query.dispatchEvent(new Event("focus"));};control.focus=()=>{document.activeElement=control;};back.focus=()=>{document.activeElement=back;};
  dialog.children=[query,back];dialog.querySelector=selector=>selector.includes('__search')?back:query;dialog.querySelectorAll=()=>[query,back];
  document.getElementById=()=>toggle;document.querySelector=selector=>selector.includes('search-toggle')?control:(selector.includes('search__input')||selector.includes('search-query'))?query:dialog;document.querySelectorAll=()=>[background];
- control.hidden=inline;
+ control.hidden=inline;query.hidden=modal;
  const lifetime=new AbortController();vm.runInNewContext('let closeDrawer; let readingIntent=false;'+fn+'bindSearch(signal);',{document,signal:lifetime.signal,Event,getComputedStyle:()=>({visibility:'visible'})});
  return{document,toggle,control,query,dialog,back,background,lifetime};
 }
@@ -40,3 +40,71 @@ test('ordinary blur ends closed inline focus ownership before later native open'
 test('disposed inline intent listeners cannot reopen or retain background inert state',()=>{const f=escapeInline(fixture({inline:true}));f.lifetime.abort();f.query.click();f.query.dispatchEvent(new Event('input'));assert.equal(f.toggle.checked,false);assert.equal(f.background.inert,false);});
 
 test('native focus after ordinary blur opens without relying on coalesced upstream focus observations',()=>{const f=escapeInline(fixture({inline:true}));f.query.dispatchEvent(new Event('blur'));f.query.focus();assert.equal(f.toggle.checked,true);assert.equal(f.document.activeElement,f.query);f.lifetime.abort();});
+
+function shortcut(f, modifiers = {}, target) {
+  const event = new Event("keydown", { cancelable: true });
+  for (const [name, value] of Object.entries({
+    key: "/",
+    ...modifiers,
+    ...(target ? { target } : {}),
+  }))
+    Object.defineProperty(event, name, { value });
+  f.document.dispatchEvent(event);
+  return event;
+}
+test("modal shortcut opens before focusing its hidden query", () => {
+  for (const key of ["/", "f", "s"]) {
+    const f = fixture({ modal: true });
+    const event = shortcut(f, { key });
+    assert.equal(event.defaultPrevented, true);
+    assert.equal(f.toggle.checked, true);
+    assert.equal(f.document.activeElement, f.query);
+    f.lifetime.abort();
+  }
+});
+test("modified modal shortcuts retain closed state and their native defaults", () => {
+  for (const modifier of ["ctrlKey", "metaKey", "altKey"]) {
+    const f = fixture({ modal: true });
+    assert.equal(shortcut(f, { [modifier]: true }).defaultPrevented, false);
+    assert.equal(f.toggle.checked, false);
+    f.lifetime.abort();
+  }
+});
+test("editable fields retain the literal slash without opening modal search", () => {
+  const f = fixture({ modal: true });
+  const editable = new Node("TEXTAREA");
+  editable.closest = () => editable;
+  assert.equal(shortcut(f, {}, editable).defaultPrevented, false);
+  assert.equal(f.toggle.checked, false);
+  f.lifetime.abort();
+});
+test("inline desktop shortcut remains owned by native Material", () => {
+  const f = fixture({ inline: true });
+  assert.equal(shortcut(f).defaultPrevented, false);
+  assert.equal(f.toggle.checked, false);
+  f.lifetime.abort();
+});
+test("disposed modal shortcut cannot establish open intent", () => {
+  const f = fixture({ modal: true });
+  f.lifetime.abort();
+  assert.equal(shortcut(f).defaultPrevented, false);
+  assert.equal(f.toggle.checked, false);
+});
+
+test("modal sequential traversal excludes authored negative tabindex buttons", () => {
+  const f = fixture();
+  const excluded = new Node("BUTTON");
+  excluded.tabIndex = -1;
+  excluded.focus = () => {
+    f.document.activeElement = excluded;
+  };
+  f.dialog.querySelectorAll = () => [f.query, f.back, excluded];
+  f.control.click();
+  f.document.activeElement = f.back;
+  const event = new Event("keydown", { cancelable: true });
+  Object.defineProperty(event, "key", { value: "Tab" });
+  f.document.dispatchEvent(event);
+  assert.equal(event.defaultPrevented, true);
+  assert.equal(f.document.activeElement, f.query);
+  f.lifetime.abort();
+});

@@ -212,10 +212,21 @@
       if (!event.isTrusted && ((open && !toggle.checked) || (closedInlineFocus && toggle.checked))) event.preventDefault();
     }, { capture: true, signal });
     document.addEventListener("keydown", event => {
-      if (!toggle.checked) return;
+      if (!toggle.checked) {
+        // Material's shortcut focuses its inline field. Modal-only headers must
+        // establish open intent before the hidden field can receive focus.
+        if (["/", "f", "s"].includes(event.key) && !event.ctrlKey && !event.metaKey && !event.altKey &&
+            !event.target?.isContentEditable && !event.target?.closest?.("input, textarea, select") &&
+            visible(control) && !visible(input)) {
+          event.preventDefault();
+          event.stopImmediatePropagation();
+          control.click();
+        }
+        return;
+      }
       if (event.key === "Tab" && dialog) {
         const nodes = [...dialog.querySelectorAll('input, button:not([disabled]), a[href], summary, [tabindex="0"]')]
-          .filter(node => node.getClientRects().length && getComputedStyle(node).visibility !== "hidden");
+          .filter(node => node.tabIndex >= 0 && node.getClientRects().length && getComputedStyle(node).visibility !== "hidden");
         if (!nodes.length) return;
         event.preventDefault();
         event.stopImmediatePropagation();

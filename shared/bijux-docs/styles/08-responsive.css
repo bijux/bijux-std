@@ -127,7 +127,6 @@
   .md-header__topic { position: static; }
   .bijux-header-tools { margin-inline-start: 0; }
   .bijux-header-tools .md-search__inner { width: 100%; }
-  #__search:not(:checked) ~ .md-header .md-search { display: none; }
   html { scroll-padding-top: 4rem; }
 }
 

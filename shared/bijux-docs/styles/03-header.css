@@ -52,6 +52,32 @@
   padding: 0;
 }
 
+/* An enhanced owned header has one modal Search invoker at every width.
+   Native Material headers retain their independently owned inline desktop field. */
+body[data-bijux-drawer-ready="true"] #__search:not(:checked) ~ header[data-bijux-drawer-target] .md-search {
+  display: none;
+}
+
+/* Match the admitted Material boundary between modal and inline search. */
+@media screen and (max-width: 59.984375em) {
+  #__search:not(:checked) ~ .md-header .md-search { display: none; }
+}
+
+/* The upgraded close button is an action only for an open search component.
+   Material's desktop icon is otherwise decorative and disables pointer events. */
+#__search:not(:checked) ~ .md-header button.md-search__icon[for="__search"] {
+  display: none;
+}
+#__search:checked ~ .md-header button.md-search__icon[for="__search"] {
+  pointer-events: auto;
+}
+#__search:checked ~ .md-header button.md-search__icon[for="__search"] svg:first-child {
+  display: none;
+}
+#__search:checked ~ .md-header button.md-search__icon[for="__search"] svg:last-child {
+  display: inline-block;
+}
+
 .bijux-header-tools .md-search__inner {
   width: clamp(8.75rem, 12vw, 10.75rem);
 }
