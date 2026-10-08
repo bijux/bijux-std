@@ -14,27 +14,17 @@ import xml.etree.ElementTree as ET
 ROOT = Path(__file__).resolve().parents[3]
 TESTS = ROOT / 'tests/bijux-docs'
 ARTIFACTS = ROOT / 'artifacts/bijux-docs'
-GROUPS = {
-    'navigation': ('navigation', 'drawer', 'preferences', 'repository'),
-    'search': ('search',),
-    'search-invoker': ('search-invoker',),
-    'reader': ('native-navigation', 'reader'),
-    'diagrams': ('diagrams',),
-    'contrast': ('contrast',),
-    'links': ('links',),
-    'history': ('history',),
-    'semantics': ('popup-relationships',),
-    'search-scope': ('search-scope',),
-    'reader-accessibility': ('reader-accessibility',),
-    'diagram-trust': ('diagram-trust',),
-    'accessibility-state': ('accessibility-state',),
-    'search-shortcut-modality': ('search-shortcut-modality',),
-    'search-reflow-phone': ('search-reflow-phone',),
-    'search-reflow-tablet': ('search-reflow-tablet',),
-    'search-reflow-desktop': ('search-reflow-desktop',),
-}
-ENGINES = ('chromium', 'firefox', 'webkit')
-SUITES = tuple(suite for group in GROUPS.values() for suite in group)
+PARTITIONS_PATH = TESTS / 'execution/browser_partitions.py'
+PARTITIONS_SPEC = importlib.util.spec_from_file_location('browser_partitions', PARTITIONS_PATH)
+PARTITIONS = importlib.util.module_from_spec(PARTITIONS_SPEC)
+PARTITIONS_SPEC.loader.exec_module(PARTITIONS)
+GROUPS, ENGINES, SUITES = PARTITIONS.GROUPS, PARTITIONS.ENGINES, PARTITIONS.SUITES
+
+
+def partition_plan() -> dict:
+    return PARTITIONS.plan({suite: json.loads((ARTIFACTS / 'inventories' / f'{suite}.json').read_text())
+                            for suite in SUITES})
+
 
 
 def write_json(path: Path, data: dict) -> None:
@@ -67,13 +57,14 @@ def fixture_transport():
 
 
 def prepare() -> None:
-    if 'BIJUX_UI_BROWSER_ENGINE' in os.environ or 'BIJUX_UI_PROJECTS' in os.environ:
+    if any(name in os.environ for name in ('BIJUX_UI_BROWSER_ENGINE', 'BIJUX_UI_PROJECTS', 'BIJUX_UI_PROFILE')):
         raise ValueError('Canonical inventory must not select projects')
     inventory = ARTIFACTS / 'inventories'
     for suite in SUITES:
         env = environment(suite, inventory / suite)
         config = TESTS / f'playwright.{suite}.config.js'
         subprocess.run(['node', str(TESTS / 'reporting/inventory.js'), '--config', str(config), '--output', str(inventory / f'{suite}.json')], cwd=ROOT, env=env, check=True)
+    partition_plan()
     archive = ARTIFACTS / 'browser-fixtures.tar.gz'
     receipt = fixture_transport().pack(ARTIFACTS, fixture_roots(), archive)
     print('Fixture transport: ' + json.dumps(receipt, sort_keys=True))
@@ -83,6 +74,7 @@ def prepare() -> None:
         'source_head': subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=ROOT, text=True).strip(),
         'workflow_run_id': os.environ.get('GITHUB_RUN_ID'),
         'workflow_attempt': os.environ.get('GITHUB_RUN_ATTEMPT'),
+        'partition_registry_sha256': hashlib.sha256(PARTITIONS.REGISTRY_PATH.read_bytes()).hexdigest(),
         'artifact_digests': {str(path.relative_to(ARTIFACTS)): hashlib.sha256(path.read_bytes()).hexdigest() for path in paths},
     })
 
@@ -93,6 +85,8 @@ def verify_producer_envelope() -> dict:
                 'workflow_run_id': os.environ.get('GITHUB_RUN_ID'), 'workflow_attempt': os.environ.get('GITHUB_RUN_ATTEMPT')}
     if any(receipt.get(key) != value for key, value in expected.items()):
         raise ValueError('Producer workflow/candidate identity mismatch')
+    if receipt.get('partition_registry_sha256') != hashlib.sha256(PARTITIONS.REGISTRY_PATH.read_bytes()).hexdigest():
+        raise ValueError('Producer browser partition registry mismatch')
     paths = ['browser-fixtures.tar.gz', 'renderer-source-observation.json'] + [f'inventories/{suite}.json' for suite in SUITES]
     if set(receipt.get('artifact_digests', {})) != set(paths):
         raise ValueError('Producer evidence inventory mismatch')
@@ -131,6 +125,11 @@ def install_browser_runtime() -> None:
 
 
 def run(group: str, engine: str) -> None:
+    if any(name in os.environ for name in ('BIJUX_UI_BROWSER_ENGINE', 'BIJUX_UI_PROJECTS', 'BIJUX_UI_PROFILE')):
+        raise ValueError('Browser execution selection must come from its assigned group/engine')
+    assignments = partition_plan()
+    if group not in GROUPS or engine not in ENGINES:
+        raise ValueError('Unknown assigned browser group or engine')
     verify_producer_envelope()
     unpack()
     install_browser_runtime()
@@ -139,7 +138,9 @@ def run(group: str, engine: str) -> None:
         output = ARTIFACTS / 'shards' / f'{group}-{engine}' / suite
         output.mkdir(parents=True, exist_ok=True)
         env = environment(suite, output)
-        env['BIJUX_UI_BROWSER_ENGINE'] = engine
+        env.update(PARTITIONS.selection(group, suite, engine))
+        if not assignments[(f'{group}-{engine}', suite)]:
+            raise ValueError('Browser partition must execute cases')
         result = subprocess.run([playwright(), 'test', '--config', str(TESTS / f'playwright.{suite}.config.js')], cwd=ROOT, env=env)
         if result.returncode:
             failed.append(suite)
@@ -164,11 +165,15 @@ def aggregate() -> None:
         if len(actual) != len(expected) or set(actual) != expected:
             raise ValueError('Missing, duplicate or unexpected browser shard receipt')
         producer = verify_producer_envelope()
+        assignments = partition_plan()
         evidence = []
+        partition_reports = []
         for path in reports:
             report = json.loads(path.read_text())
             report['junit']['path'] = str(path.parent / report['junit']['path'])
             evidence.append(report)
+            partition_reports.append((path.parent.parent.name, path.parent.name, report))
+        PARTITIONS.verify_reports(assignments, partition_reports)
         result = module.aggregate([json.loads(path.read_text()) for path in inventories], evidence)
         head = subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=ROOT, text=True).strip()
         files = subprocess.check_output(['git', 'ls-files', '-z'], cwd=ROOT).decode().split('\0')
@@ -181,6 +186,7 @@ def aggregate() -> None:
         commands_spec.loader.exec_module(commands)
         result['publication_commands'] = commands.verify(ARTIFACTS / 'publication-commands')
         result['producer_envelope'] = producer
+        result['browser_partitions'] = {f'{group}/{suite}': names for (group, suite), names in assignments.items()}
         result['inputs'] = [{'path': str(path.relative_to(ARTIFACTS)), 'sha256': hashlib.sha256(path.read_bytes()).hexdigest()} for path in inventories + reports]
     except (ValueError, KeyError, OSError, TypeError, ET.ParseError) as error:
         result = {'schema': 1, 'status': 'failed', 'error': str(error)}
