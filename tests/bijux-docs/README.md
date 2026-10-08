@@ -181,4 +181,6 @@ Native history qualification retains exact Back/Forward and authored-fragment ro
 
 Diagram rendering and contrast/target journeys run in separate engine jobs. Their independently assigned receipts are both mandatory in the final navigation aggregate. The three-minute budget includes cold browser-image setup, artifact transport and job finalization.
 
-Popup relationships, product-local search scope and native drawer dismissal are qualified together through ordinary generated Material journeys. Exact engine/case inventories remain required in separate bounded groups; no draft child can merge into its topic parent.
+Popup relationships, product-local search scope and native drawer dismissal are qualified together through ordinary generated Material journeys. Exact engine/case inventories remain required in separate bounded groups; grouped source remains qualified against main before acceptance.
+
+Immutable fixture transport stores each identical rendered payload once and reconstructs the exact manifest/site bytes without links. Diagnostic build logs remain intact; damaged, extra, missing and escaped payloads fail before admission. Native query and invoker journeys have separate bounded engine jobs, with both mandatory in the complete source-bound aggregate.
