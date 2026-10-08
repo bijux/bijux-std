@@ -6,14 +6,21 @@ This file records notable repository-level changes for `bijux-std`.
 
 ### Pending review
 
-#### [#212](https://github.com/bijux/bijux-std/pull/212) — fix(docs): expose one site registry and isolate modal navigation
+#### [#214](https://github.com/bijux/bijux-std/pull/214) — fix(docs): preserve visible focus through navigation handoff
+
+Keep a usable Menu fallback when navigation is aborted and bring reopened drawer focus into view.
+
+- Give matching instant destinations heading focus while preserving fragments, downloads and other browsing contexts.
+- Revoke stale reading intent on explicit controls or disposal; verify aborted-request keyboard and search recovery.
+
+### Merged pull requests
+
+#### 2026-10-08T22:58:03Z — [#212](https://github.com/bijux/bijux-std/pull/212) — fix(docs): expose one site registry and isolate modal navigation
 
 Use one owned desktop site registry and keep compact modal navigation isolated.
 
 - Preserve native Material navigation and restore header inert state on close, resize and disposal.
 - Test every nine-site and eleven-entry growth destination; bind retained-document focus checks to actual document identity.
-
-### Merged pull requests
 
 #### 2026-10-08T22:39:40Z — [#215](https://github.com/bijux/bijux-std/pull/215) — ci(docs): partition browser execution by viewport ownership
 
