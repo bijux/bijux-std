@@ -48,7 +48,7 @@ class NavigationProjectionTests(unittest.TestCase):
         for source in (shared / "styles").glob("*.css"):
             self.assertEqual(source.read_bytes(), (fixture / "docs/assets/styles" / source.name).read_bytes())
         for source in (shared / "scripts").glob("*.js"):
-            destination = {"nav-sync.js": "docs/assets/javascripts/navigation-sync.js", "mermaid-init.js": "docs/assets/javascripts/mermaid-init.js"}.get(source.name, "docs/assets/javascripts/shell/" + source.name)
+            destination = {"nav-sync.js": "docs/assets/javascripts/navigation-sync.js", "mermaid-init.js": "docs/assets/javascripts/mermaid-init.js", "external-links.js": "docs/assets/javascripts/external-links.js"}.get(source.name, "docs/assets/javascripts/shell/" + source.name)
             self.assertEqual(source.read_bytes(), (fixture / destination).read_bytes())
         self.assertEqual((shared / "assets/bijux_logo_hq.png").read_bytes(), (fixture / "docs/assets/bijux_logo_hq.png").read_bytes())
         self.assertEqual((shared / "assets/site-icons/favicon.ico").read_bytes(), (fixture / "docs/assets/site-icons/favicon.ico").read_bytes())

@@ -41,7 +41,7 @@ class DocsSourceProjectionTests(unittest.TestCase):
             path = self.shared / 'partials' / name
             path.parent.mkdir(parents=True, exist_ok=True)
             path.write_text('canonical ' + name)
-        for name in ('styles/extra.css','scripts/bootstrap.js','scripts/nav-sync.js','scripts/mermaid-init.js','assets/javascripts/vendor/mermaid-11.6.0.min.js'):
+        for name in ('styles/extra.css','scripts/bootstrap.js','scripts/nav-sync.js','scripts/mermaid-init.js','scripts/external-links.js','assets/javascripts/vendor/mermaid-11.6.0.min.js'):
             path = self.shared / name
             path.parent.mkdir(parents=True, exist_ok=True)
             path.write_text('canonical ' + name)

@@ -66,6 +66,24 @@ def content(docs: Path, scenario: str) -> list[dict]:
     if scenario == "empty":
         return [{"Home": "index.md"}]
     nav = [{"Home": "index.md"}]
+    write_page(docs, "links.md", "Authored link intent", '''<p><a id="link-ordinary" href="https://outside.example/ordinary" rel="external nofollow" referrerpolicy="no-referrer">Ordinary external reader</a></p>
+<p><a id="link-new-tab" href="https://outside.example/new-tab" target="_blank" rel="sponsored opener">Authored new tab</a></p>
+<p><a id="link-explicit-self" href="https://outside.example/self" target="_self">Authored same window</a></p>
+<p><a id="link-named" href="https://outside.example/named" target="research-window">Named research window</a></p>
+<p><a id="link-download" href="../reader-report.txt" download="authored-report.txt">Reader report</a></p>
+<p><a id="link-privacy" href="https://outside.example/privacy" target="_blank" rel="noreferrer nofollow" referrerpolicy="strict-origin">Private authored tab</a></p>
+<p><a id="link-described" href="https://outside.example/described" target="_blank" aria-label="Authored accessible name" aria-describedby="authored-link-description">Named resource</a><span id="authored-link-description">Authored resource context</span></p>
+<p><a id="link-internal" href="../platform/start/">Internal document</a></p>
+<p><a id="link-hash" href="#authored-heading">Local heading</a></p>
+<p><a id="link-mail" href="mailto:reader@example.invalid">Email reader</a></p>
+<p><a id="link-phone" href="tel:+441234567890">Call reader</a></p>
+
+## Authored heading
+
+Return through history without rewriting the native destination.
+''')
+    (docs / "reader-report.txt").write_text("Authored reader report bytes.\n")
+    nav.append({"Links": "links.md"})
     names = ["Platform", "Projects", "Handbook", "Knowledge", "Repository"]
     for label in names:
         section = label.lower()
@@ -210,14 +228,14 @@ def build(shared: Path, output: Path, base_url: str) -> None:
             # Exercise the installed Material header, not a fabricated control surrogate.
             (docs / "overrides/partials/header.html").unlink()
         shutil.copytree(shared / "styles", docs / "assets/styles", ignore=shutil.ignore_patterns("README.md"))
-        shutil.copytree(shared / "scripts", docs / "assets/javascripts/shell", ignore=shutil.ignore_patterns("README.md"))
+        shutil.copytree(shared / "scripts", docs / "assets/javascripts/shell", ignore=shutil.ignore_patterns("README.md", "external-links.js"))
         shutil.copy2(shared / "scripts/nav-sync.js", docs / "assets/javascripts/navigation-sync.js")
         shutil.copy2(shared / "scripts/mermaid-init.js", docs / "assets/javascripts/mermaid-init.js")
         (docs / "assets/javascripts/vendor").mkdir(parents=True, exist_ok=True)
         vendor_destination = docs / baseline.get("diagram", {}).get("vendor", "assets/javascripts/vendor/mermaid-11.6.0.min.js")
         if vendor_file.resolve() != vendor_destination.resolve():
             shutil.copy2(vendor_file, vendor_destination)
-        shutil.copy2(Path(__file__).parent / "external-links.js", docs / "assets/javascripts/external-links.js")
+        shutil.copy2(shared / "scripts/external-links.js", docs / "assets/javascripts/external-links.js")
         scenario_registry = registry
         if scenario == "long":
             scenario_registry = [{**entry, "label": entry["label"] + " scientific platform"} for entry in registry] + [{"key": "bijux-reference", "label": "Reference extension", "url": base_url + "/fixtures/empty/"}, {"key": "bijux-research", "label": "Research extension", "url": base_url + "/reading/"}]

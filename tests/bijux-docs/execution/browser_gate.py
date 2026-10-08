@@ -20,6 +20,8 @@ GROUPS = {
     'search': ('search', 'search-invoker'),
     'reader': ('native-navigation', 'reader'),
     'rendering': ('diagrams', 'contrast'),
+    'links': ('links',),
+    'history': ('history',),
     'search-reflow-phone': ('search-reflow-phone',),
     'search-reflow-tablet': ('search-reflow-tablet',),
     'search-reflow-desktop': ('search-reflow-desktop',),
