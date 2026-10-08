@@ -17,6 +17,8 @@ import material.extensions.emoji
 import pymdownx.superfences
 import yaml
 
+from fixtures.search_modality import pages as search_modality_pages
+
 ROOT = Path(__file__).resolve().parents[3]
 ARTIFACTS = ROOT / "artifacts/bijux-docs"
 MERMAID_SHA256 = "3a93016a73dc82ba890d919f9bbb176f3da9d98341650c0b517f2595cc68fef8"
@@ -161,6 +163,7 @@ flowchart LR
     table += "\n".join("| " + " | ".join(row) + " |" for row in READER_ROWS)
     write_page(docs, "reader-table.md", "Table boundary reference", "Each checkpoint keeps its original row, column and header relationships.\n\n## Checkpoint matrix\n\n" + table)
     nav.extend([{"Code boundary reference": "reader-code.md"}, {"Table boundary reference": "reader-table.md"}])
+    nav.extend(search_modality_pages(docs))
     return nav
 
 

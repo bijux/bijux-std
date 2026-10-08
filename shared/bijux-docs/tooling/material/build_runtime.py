@@ -8,11 +8,41 @@ import importlib.metadata
 import json
 from pathlib import Path
 import re
+import subprocess
 
 OWNED = Path(__file__).resolve().parent
 SHARED = OWNED.parents[1]
 REPLACEMENT = 'zi=document.forms.namedItem("search")?window.bijuxSearchIndex.observe(ks,Z):tt'
 WORKER_REPLACEMENT = 'function Ei(e,t){let r=window.bijuxSearchWorker.channel(e,T);'
+GLOBAL_CHARACTER_SHORTCUTS = ',r.pipe(g(({mode:c})=>c==="global")).subscribe(c=>{switch(c.type){case"f":case"s":case"/":i.focus(),i.select(),c.claim();break}});'
+
+
+def without_global_character_shortcuts(source: str) -> str:
+    """Retain focused native keyboard behavior without character-only global actions."""
+    if source.count(GLOBAL_CHARACTER_SHORTCUTS) != 1:
+        raise ValueError('Native character-only search shortcut boundary must occur exactly once')
+    return source.replace(GLOBAL_CHARACTER_SHORTCUTS, ';')
+
+
+NODE_PARSER_VERSION = 'v24.21.0'
+JAVASCRIPT_SYNTAX = ('const fs=require("node:fs"),vm=require("node:vm");'
+                     'try{new vm.Script(fs.readFileSync(0,"utf8"),{filename:"bijux-material-runtime.js"})}'
+                     'catch(error){console.error(error.name+": "+error.message);process.exitCode=1}')
+
+
+def validate_generated_javascript(source: bytes) -> None:
+    """Parse the complete emitted classic script before changing any owned output."""
+    try:
+        version = subprocess.run(['node', '--version'], capture_output=True, check=True, timeout=10)
+        if version.stdout.decode().strip() != NODE_PARSER_VERSION:
+            raise ValueError('Generated Material runtime requires the admitted Node.js ' + NODE_PARSER_VERSION + ' parser')
+        parsed = subprocess.run(['node', '-e', JAVASCRIPT_SYNTAX], input=source,
+                                capture_output=True, timeout=10)
+    except (OSError, subprocess.SubprocessError) as error:
+        raise ValueError('Generated Material runtime parser is unavailable; output was not changed') from error
+    if parsed.returncode:
+        raise ValueError('Generated Material runtime rejected by admitted JavaScript parser: '
+                         + parsed.stderr.decode(errors='replace').strip()[:1000])
 
 
 def sha256(data: bytes) -> str:
@@ -43,7 +73,7 @@ def compile_runtime(templates: Path, installed_version: str) -> tuple[str, bytes
     adapter = (OWNED / 'search-index-adapter.js').read_bytes()
     worker_adapter = (OWNED / 'search-worker-adapter.js').read_bytes()
     # The original map describes upstream offsets. Never claim it maps modified bytes.
-    modified = original.replace(needle, REPLACEMENT).replace(worker_needle, WORKER_REPLACEMENT)
+    modified = without_global_character_shortcuts(original).replace(needle, REPLACEMENT).replace(worker_needle, WORKER_REPLACEMENT)
     renderer_needle = 'href:`${s}`,class:"md-search-result__link",tabIndex:-1'
     renderer_replacement = 'href:`${s}`,target:__bijuxSearchCapabilityTarget(s),class:"md-search-result__link",tabIndex:-1'
     opening = '"use strict";(()=>{'
@@ -74,6 +104,7 @@ def compile_runtime(templates: Path, installed_version: str) -> tuple[str, bytes
         'upstream_worker': admitted['worker'], 'upstream_worker_sha256': admitted['worker_sha256'],
         'boundary': {'original': needle, 'replacement': REPLACEMENT, 'occurrences': 1},
         'worker_boundary': {'original': worker_needle, 'replacement': WORKER_REPLACEMENT, 'occurrences': 1},
+        'global_character_shortcuts': {'original': GLOBAL_CHARACTER_SHORTCUTS, 'replacement': ';', 'occurrences': 1, 'disabled_keys': ['/', 'f', 's'], 'retained': 'Focused native query/result keyboard subscriptions and browser modifier defaults.'},
         'element_resize_owned_source': 'tooling/material/element-resize-delivery.js',
         'element_resize_sha256': sha256(resize),
         'element_resize_boundary': {'original': resize_needle, 'replacement': resize_replacement, 'occurrences': 1, 'helper_scope': 'admitted native IIFE; no global observer or error interception'},
@@ -81,6 +112,7 @@ def compile_runtime(templates: Path, installed_version: str) -> tuple[str, bytes
         'search_capability_sha256': sha256(navigation),
         'search_capability_renderer': {'original': renderer_needle, 'replacement': renderer_replacement, 'occurrences': 1, 'helper_scope': 'unique admitted native runtime IIFE'},
         'output_asset': asset, 'output_sha256': digest,
+        'syntax_validation': {'parser': 'Node.js vm.Script', 'required_version': NODE_PARSER_VERSION, 'scope': 'Complete generated classic-script bytes after all transformations; syntax-only validation before emission.'},
         'source_map': 'Upstream map applies only to unmodified upstream bundle; compatibility output has no map annotation.',
         'transport': 'Owned same-origin HTTP index XHR starts only on actual search focus/input/open or a native query/highlight deep link; direct cancel/retry, 45-second nonrenewable total deadline, 8-second no-progress stall bound, 80MiB browser-reported progress-byte limit, 40Mi UTF-16 response/source-character limit and 50,000-document candidate limit. Worker operation deadlines remain separately fixed at 8 seconds.',
         'limits': ['Index-ready means fetched/admitted index, not worker-ready.', 'File-protocol search is outside admitted HTTP website qualification.', 'Largest actual consumer search corpus and CPU measurements remain required before scale claims.'],
@@ -102,6 +134,8 @@ def compile_runtime(templates: Path, installed_version: str) -> tuple[str, bytes
 
 def generate(shared: Path, templates: Path, installed_version: str, check: bool = False) -> dict:
     asset, runtime, provenance, template = compile_runtime(templates, installed_version)
+    if not check:
+        validate_generated_javascript(runtime)
     expected = {
         shared / asset: runtime,
         shared / 'tooling/material/runtime-provenance.json': (json.dumps(provenance, indent=2) + '\n').encode(),
