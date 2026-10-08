@@ -140,6 +140,13 @@ def merge_mappings(parent: dict, child: dict) -> dict:
 
 def validate_mkdocs_baseline(config: dict, baseline: dict, config_name: str) -> None:
     """Validate shared MkDocs semantics while allowing product-owned additions."""
+    required_exclusions = baseline.get('required_exclude_docs') or []
+    if required_exclusions:
+        exclusions = config.get('exclude_docs')
+        require(isinstance(exclusions, str), f'{config_name}: exclude_docs must preserve the implementation boundary')
+        rules = [line.strip() for line in exclusions.splitlines() if line.strip() and not line.lstrip().startswith('#')]
+        require(rules[-len(required_exclusions):] == required_exclusions,
+                f'{config_name}: exclude_docs must end with the canonical implementation exclusions')
     for key in ("strict", "use_directory_urls", "dev_addr", "copyright"):
         require(
             config.get(key) == baseline[key],
