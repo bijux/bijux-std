@@ -47,6 +47,9 @@ class FixtureArchiveTests(unittest.TestCase):
                     name: ARCHIVE.digest(data) for name, data in files.items()
                 },
             }
+            manifest["scenarios"] = [{"identity": "bijux", "route": "/", "kind": "hub",
+                "configuration": {"path": "inputs/hub/mkdocs.yml", "sha256": ARCHIVE.digest(b"site_name: Reader\n"), "bytes": len(b"site_name: Reader\n")}}]
+            manifest["configurations_sha256"] = ARCHIVE.configurations_digest(manifest["scenarios"])
             files = {"site/" + name: data for name, data in files.items()}
             files["manifest.json"] = json.dumps(manifest, indent=2).encode()
             for name, data in files.items():
@@ -114,6 +117,33 @@ class FixtureArchiveTests(unittest.TestCase):
         self.assertTrue(all(not path.is_symlink() for path in self.output.rglob("*")))
         native = [self.output / root / "site/assets/native.js" for root in self.roots]
         self.assertNotEqual(native[0].stat().st_ino, native[1].stat().st_ino)
+
+    def test_missing_configuration_metadata_rejects_pack_and_preserves_archive(self):
+        manifest = self.source / "generated/manifest.json"
+        original = self.archive.read_bytes()
+        value = json.loads(manifest.read_text())
+        value.pop("configurations_sha256")
+        manifest.write_text(json.dumps(value))
+        with self.assertRaisesRegex(ValueError, "configuration aggregate digest"):
+            ARCHIVE.pack(self.source, self.roots, self.archive)
+        self.assertEqual(self.archive.read_bytes(), original)
+
+    def test_changed_effective_digest_cannot_be_hidden_by_site_inventory(self):
+        manifest = self.source / "generated/manifest.json"
+        original = self.archive.read_bytes()
+        value = json.loads(manifest.read_text())
+        value["scenarios"][0]["configuration"]["sha256"] = "f" * 64
+        manifest.write_text(json.dumps(value))
+        with self.assertRaisesRegex(ValueError, "configuration aggregate differs"):
+            ARCHIVE.pack(self.source, self.roots, self.archive)
+        self.assertEqual(self.archive.read_bytes(), original)
+
+    def test_cold_reconstruction_retains_metadata_without_private_config_inputs(self):
+        self.unpack()
+        for root in self.roots:
+            retained = json.loads((self.output / root / "manifest.json").read_text())
+            self.assertEqual(ARCHIVE.validate_configurations(retained), retained["configurations_sha256"])
+            self.assertFalse((self.output / root / "inputs").exists())
 
     def test_transports_identical_content_once_and_is_deterministic(self):
         expected_objects = {

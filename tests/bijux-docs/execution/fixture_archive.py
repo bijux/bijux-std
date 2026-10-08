@@ -140,8 +140,54 @@ def site_files(directory: int, prefix: str = ""):
             yield relative, read_file(name, directory)
 
 
+def scenario_configurations(scenarios: list[dict]) -> dict[str, dict]:
+    require(isinstance(scenarios, list) and bool(scenarios), "Fixture scenario configurations are required")
+    require(len(scenarios) <= MAX_FILES, "Fixture scenario configuration limit exceeded")
+    records = {}
+    routes = set()
+    for scenario in scenarios:
+        require(isinstance(scenario, dict), "Invalid fixture scenario")
+        route = scenario.get("route")
+        require(isinstance(route, str) and route.startswith("/") and route.endswith("/"),
+                "Invalid fixture scenario route")
+        require(route not in routes, "Duplicate fixture scenario route")
+        routes.add(route)
+        if route != "/":
+            path_name(route.strip("/"))
+        label = "hub" if route == "/" else route.strip("/").replace("/", "-")
+        expected = "inputs/" + label + "/mkdocs.yml"
+        path_name(expected)
+        config = scenario.get("configuration")
+        require(isinstance(config, dict) and set(config) == {"path", "sha256", "bytes"},
+                "Fixture scenario configuration identity is required")
+        require(config["path"] == expected, "Fixture configuration path differs from scenario")
+        require(isinstance(config["sha256"], str) and SHA256.fullmatch(config["sha256"]),
+                "Invalid fixture configuration digest")
+        require(type(config["bytes"]) is int and 0 < config["bytes"] <= MAX_FILE_BYTES,
+                "Invalid fixture configuration byte count")
+        require(expected not in records, "Duplicate fixture configuration path")
+        records[expected] = {"bytes": config["bytes"], "sha256": config["sha256"]}
+    return records
+
+
+def configurations_digest(scenarios: list[dict]) -> str:
+    records = scenario_configurations(scenarios)
+    # Config paths are portable metadata; exact rendered YAML bytes stay producer-owned.
+    return digest(json.dumps(records, sort_keys=True, separators=(",", ":"), ensure_ascii=True).encode())
+
+
+def validate_configurations(manifest: dict) -> str:
+    expected = manifest.get("configurations_sha256")
+    require(isinstance(expected, str) and SHA256.fullmatch(expected),
+            "Fixture configuration aggregate digest is required")
+    actual = configurations_digest(manifest.get("scenarios"))
+    require(actual == expected, "Fixture configuration aggregate differs")
+    return actual
+
+
 def manifest_sites(data: bytes) -> dict[str, str]:
     manifest = decode_json(data)
+    validate_configurations(manifest)
     outputs = manifest.get("site_files")
     sources = manifest.get("source_files")
     require(
