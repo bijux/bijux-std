@@ -47,3 +47,20 @@ artifacts; JUnit paths must still resolve at aggregation time.
 
 Headless browser evidence does not replace physical mobile, actual zoom or human
 assistive review, and live URL inventories retain an unverified deployment claim.
+
+CI assigns slow navigation and search-scope suites by exact viewport profile.
+`BIJUX_UI_PROFILE=phone`, `compact`, or `desktop` requires an assigned
+`BIJUX_UI_BROWSER_ENGINE`; it cannot be combined with `BIJUX_UI_PROJECTS`.
+Engine-only selections for other suites and unselected full configs are unchanged.
+The declared assignments live in `execution/browser_partitions.json`.
+
+Navigation owns three profile jobs and a separate drawer/preferences/repository
+job. Search scope owns three profile jobs. The producer still collects each of
+the 21 canonical inventories once, preserving all 645 cases. Before execution,
+the runner proves each actual canonical project has exactly one job owner.
+Aggregation requires all 75 exact suite receipts from 66 engine jobs, verifies
+each receipt's declared engine/profile ownership, and then checks the complete
+case/JUnit/source/bundle contract. A passed profile receipt establishes only its
+assigned coverage. Missing, overlapping, moved or nonterminal receipts fail the
+required aggregate. The three-minute whole-job limit includes setup, transfer,
+browser work, report retention and cleanup; splitting does not raise that limit.
