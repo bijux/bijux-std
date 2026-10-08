@@ -6,6 +6,13 @@ This file records notable repository-level changes for `bijux-std`.
 
 ### Pending review
 
+#### [#211](https://github.com/bijux/bijux-std/pull/211) — test(docs): bind rendered fixtures to effective configuration bytes
+
+Bind each generated scenario and browser report to the exact effective MkDocs YAML.
+
+- Reject changed, missing or malformed configuration identity and stale success manifests.
+- Preserve private producer inputs while transporting digest-bound metadata and unchanged public files.
+
 #### [#194](https://github.com/bijux/bijux-std/pull/194) — feat(docs): observe static publication delivery safely
 
 Provide a bounded HTTP smoke check for deployed documentation and retain source-bound observations.
