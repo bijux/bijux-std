@@ -132,7 +132,17 @@
       delete document.body.dataset.bijuxDrawerOpen;
       delete document.body.dataset.bijuxDrawerReady;
     }, { once: true });
-    const visible = node => node.getClientRects().length && getComputedStyle(node).visibility !== "hidden";
+    const visible = node => {
+      if (!node.getClientRects().length || getComputedStyle(node).visibility === "hidden") return false;
+      // Closed details can retain descendant rectangles while refusing focus.
+      // Only their first summary subtree participates in native traversal.
+      for (let parent = node.parentElement; parent && parent !== navigation; parent = parent.parentElement) {
+        if (parent.tagName !== "DETAILS" || parent.open) continue;
+        const summary = [...parent.children].find(child => child.tagName === "SUMMARY");
+        if (!summary?.contains(node)) return false;
+      }
+      return true;
+    };
     const focusable = () => [...navigation.querySelectorAll('a[href], button:not([disabled]), summary, [tabindex="0"]')].filter(visible);
 
     function restoreBackground() {
@@ -200,6 +210,9 @@
         const index = nodes.indexOf(document.activeElement);
         const next = index < 0 ? (event.shiftKey ? nodes.length - 1 : 0) : (index + (event.shiftKey ? -1 : 1) + nodes.length) % nodes.length;
         nodes[next].focus();
+        // Browser focus scrolling can accept a partially clipped target.
+        // Keep the complete action visible inside its owning drawer scroller.
+        nodes[next].scrollIntoView({ block: "nearest", inline: "nearest" });
       }
     }, { signal });
     document.addEventListener("focusin", event => {
