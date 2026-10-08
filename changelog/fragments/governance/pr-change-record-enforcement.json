@@ -1,0 +1,15 @@
+{
+  "schema": 1,
+  "pr": 192,
+  "title": "ci(governance): enforce exact pull request change records",
+  "type": "ci",
+  "scope": "governance",
+  "summary": "Check actual PR records and projection in CI and document the repository author workflow.",
+  "details": [
+    "Add a bounded changelog job and invoke the same checker inside the existing mandatory standards gate, including standards-repository bot authors.",
+    "Carry author instructions through shared PR templates and expose Make targets without modifying release or deployment workflows."
+  ],
+  "status": "pending",
+  "merged_at": null,
+  "breaking": false
+}

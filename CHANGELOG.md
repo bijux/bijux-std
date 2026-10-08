@@ -167,14 +167,21 @@ Records describe reviewed repository changes. Pending review is not a merged or 
 
 ### Pending review
 
-#### [#193](https://github.com/bijux/bijux-std/pull/193) — test\(docs\): settle native drawer before pointer input
+#### [#192](https://github.com/bijux/bijux-std/pull/192) — ci\(governance\): enforce exact pull request change records
+
+Check actual PR records and projection in CI and document the repository author workflow.
+
+- Add a bounded changelog job and invoke the same checker inside the existing mandatory standards gate, including standards-repository bot authors.
+- Carry author instructions through shared PR templates and expose Make targets without modifying release or deployment workflows.
+
+### Merged pull requests
+
+#### 2026-10-08T17:41:36Z — [#193](https://github.com/bijux/bijux-std/pull/193) — test\(docs\): settle native drawer before pointer input
 
 Sample native pointer targets after finite drawer transitions and retain the open drawer through summary activation.
 
 - Reuse the existing passive ancestor-animation observer without forcing semantic state or cancelling animations.
 - Verify ordinary no-script drawer opening, summary activation and actual destination navigation in the maintained phone/tablet/desktop journeys.
-
-### Merged pull requests
 
 #### 2026-10-08T17:24:44Z — [#191](https://github.com/bijux/bijux-std/pull/191) — feat\(governance\): validate repository pull request change records
 
