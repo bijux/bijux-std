@@ -6,6 +6,13 @@ This file records notable repository-level changes for `bijux-std`.
 
 ### Pending review
 
+#### [#207](https://github.com/bijux/bijux-std/pull/207) — docs\(changelog\): record workflow definitions history
+
+Record 21 reviewed historical PRs concerning workflow definition.
+
+- workflow source/trigger authority, reusable entrypoints, wrapper retirement and executable shell structure.
+- Preserve original reviewed titles, verified merge dates and source-history distinctions while retaining all prior PR records.
+
 #### [#206](https://github.com/bijux/bijux-std/pull/206) — docs\(changelog\): record branch governance history
 
 Record 15 reviewed historical PRs concerning branch governance.
