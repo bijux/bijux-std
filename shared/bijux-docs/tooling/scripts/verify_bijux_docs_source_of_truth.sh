@@ -17,6 +17,7 @@ shared_root="${repo_root}/${shared_prefix}/bijux-docs"
 source "${shared_root}/tooling/scripts/docs_source_authority.sh"
 verify_docs_authority "${repo_root}" "${shared_root}"
 python3 "${shared_root}/tooling/scripts/project_bijux_docs.py" "${repo_root}" "${shared_root}" --check
+python3 "${shared_root}/tooling/scripts/sync_mkdocs_hub.py" "${repo_root}" "${shared_root}" --check
 
 if [[ -d "${repo_root}/overrides" ]]; then
   echo "ERROR: root overrides/ must not exist; use ${shared_prefix}/bijux-docs as docs source of truth" >&2

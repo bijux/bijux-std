@@ -10,6 +10,9 @@ import yaml
 from pathlib import Path
 import sys
 
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+from configuration.ordered_assets import validate_effective_assets
+
 DIAGRAM_POLICY = json.loads((Path(__file__).resolve().parents[2] / "config/mkdocs-baseline.json").read_text())["diagram"]
 MERMAID_VENDOR = DIAGRAM_POLICY["vendor"]
 MERMAID_SCRIPTS = ("assets/javascripts/mermaid-init.js",)
@@ -196,13 +199,7 @@ def validate_mkdocs_baseline(config: dict, baseline: dict, config_name: str) -> 
             f"{config_name}: markdown_extensions must include {extension}",
         )
 
-    for key in ("extra_css", "extra_javascript"):
-        configured = config.get(key) or []
-        for required_path in baseline[key]:
-            require(
-                required_path in configured,
-                f"{config_name}: {key} must include {required_path}",
-            )
+    validate_effective_assets(config, baseline, config_name)
 
 
 def validate_root_contract(config: dict, config_name: str) -> None:

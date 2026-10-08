@@ -1,0 +1,55 @@
+# Required configuration lists
+
+`ordered_assets.py` owns the narrow projection of common CSS, scripts, and
+plugin names from `config/mkdocs-baseline.json`. Product navigation, metadata,
+hooks, extension options, plugin options, and custom assets remain authored.
+The updater's verified source and pristine-destination checks still apply.
+
+## Execution and cascade order
+
+Required entries occur once in baseline order. Missing entries are inserted
+before the next existing required peer, or directly after the preceding peer.
+When no required peer exists, the common entries precede authored additions.
+This provides the normal shared-CSS-before-author-CSS cascade. Existing authored
+entries retain their bytes and relative order; the tool never sorts them.
+
+Conflicting required order or attribute-bearing required script mappings need
+an explicit reviewed migration. The tool does not silently strip `async`,
+`defer`, `type`, or other authored script attributes. Authored module scripts
+and plugin options retain their original representations.
+
+## Supported configuration boundary
+
+Both `mkdocs.shared.yml` and `mkdocs.yml` are planned before either is written.
+The root must inherit `mkdocs.shared.yml`. Shared required lists are materialized;
+root lists are merged only when an explicit overriding list exists. An absent
+root list continues to inherit the shared list.
+
+The admitted representation is an ordinary YAML block sequence, including
+indentless sequences, quoted strings, and block mappings. A script mapping
+starts with `path`; a plugin mapping starts with its name. An empty `[]` is
+accepted. Scalar, nonempty flow, alias, tagged list, duplicate, top-level merge,
+and explicit-key representations fail with a path and review instruction.
+These forms are not rewritten speculatively. Tags nested inside preserved
+author plugin settings, including `!ENV`, remain byte-for-byte unchanged.
+
+Only exact paths in `retired_extra_javascript` are removed from the script
+list. This does not claim physical ownership of a historical asset or delete
+its file. A different vendor version is never matched by a wildcard retirement.
+New required scripts appear only when the actual accepted baseline requires
+them; the projection does not acquire undeclared optional features.
+
+## Validation
+
+`sync_mkdocs_hub.py REPOSITORY SHARED_ROOT --check` is read-only and rejects
+configuration drift. Source-of-truth verification invokes this check after
+the existing source authority and generated-file checks. Effective asset
+validation requires each owned asset once, in order, and rejects retired paths.
+Existing effective plugin and Markdown extension checks remain in place.
+
+The implementation uses Python's standard library. The normal contract test
+discovery includes `tests/test_docs_config_projection.py`; no extra YAML package
+is required for synchronization. MkDocs remains the authority for actual
+configuration resolution and final builds. Native worker/result journeys and
+full artifact validation are required for each applicable adopted consumer;
+source-list projection alone does not prove delivery or browser behavior.

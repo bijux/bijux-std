@@ -78,13 +78,20 @@ class DocsSourceProjectionTests(unittest.TestCase):
     def prepare_sync(self):
         scripts = ROOT/'shared/bijux-docs/tooling/scripts'
         shutil.copytree(scripts, self.shared/'tooling/scripts', dirs_exist_ok=True)
+        shutil.copytree(ROOT/'shared/bijux-docs/tooling/configuration', self.shared/'tooling/configuration', dirs_exist_ok=True)
+        baseline_path = self.shared/'config/mkdocs-baseline.json'
+        baseline = json.loads(baseline_path.read_text())
+        canonical = json.loads((ROOT/'shared/bijux-docs/config/mkdocs-baseline.json').read_text())
+        for field in ('extra_css', 'extra_javascript', 'required_plugins', 'retired_extra_javascript'):
+            baseline[field] = canonical[field]
+        baseline_path.write_text(json.dumps(baseline))
         if SCRIPTS != scripts:
             shutil.copytree(SCRIPTS, self.shared/'tooling/scripts', dirs_exist_ok=True)
         (self.shared/'config/hub-links.json').write_text(json.dumps([
             dict(key='fixture',label='Fixture',url='https://bijux.io/')]))
         config = 'extra:\n  bijux:\n    repository: fixture\n'
-        for name in ('mkdocs.yml','mkdocs.shared.yml'):
-            (self.repo/name).write_text(config)
+        (self.repo/'mkdocs.shared.yml').write_text(config)
+        (self.repo/'mkdocs.yml').write_text('INHERIT: mkdocs.shared.yml\n' + config)
         self.commit()
 
     def run_sync(self, **environment):
