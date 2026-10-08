@@ -52,9 +52,25 @@
   body:has(> header[data-bijux-drawer-target] .bijux-hub-strip:not([hidden]))
     .md-sidebar--primary .bijux-site-registry { display: none; }
 
+  /* The complete sidebar tree owns local document context at desktop widths.
+     Preserve contextual ribbons when the complete owned tree is unavailable. */
+  body:has(.md-sidebar--primary [data-bijux-nav-variant="complete"])
+    > header[data-bijux-drawer-target] :is(.bijux-site-tabs, .bijux-detail-tabs, .bijux-course-tabs) {
+    display: none !important;
+  }
+
   .md-header__title { display: none; }
   .md-header__button[data-bijux-header-control="drawer-toggle"],
   .bijux-drawer-close { display: none; }
+}
+
+/* Native checkbox navigation becomes the sole local presentation while open.
+   Closed compact headers and native Material headers retain their own controls. */
+@media screen and (min-width: 48em) and (max-width: 76.2344em) {
+  body:has(#__drawer:checked):has(.md-sidebar--primary [data-bijux-nav-variant="complete"])
+    > header[data-bijux-drawer-target] :is(.bijux-site-tabs, .bijux-detail-tabs, .bijux-course-tabs) {
+    display: none !important;
+  }
 }
 
 @media screen and (min-width: 90em) {
