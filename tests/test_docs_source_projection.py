@@ -82,7 +82,7 @@ class DocsSourceProjectionTests(unittest.TestCase):
         baseline_path = self.shared/'config/mkdocs-baseline.json'
         baseline = json.loads(baseline_path.read_text())
         canonical = json.loads((ROOT/'shared/bijux-docs/config/mkdocs-baseline.json').read_text())
-        for field in ('extra_css', 'extra_javascript', 'required_plugins', 'retired_extra_javascript'):
+        for field in ('extra_css', 'extra_javascript', 'required_plugins', 'retired_extra_javascript', 'theme', 'retired_theme_logos'):
             baseline[field] = canonical[field]
         baseline_path.write_text(json.dumps(baseline))
         if SCRIPTS != scripts:

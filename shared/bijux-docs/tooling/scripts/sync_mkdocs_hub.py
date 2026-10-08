@@ -10,6 +10,7 @@ import sys
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from configuration.ordered_assets import project_required_lists
+from configuration.branding import project_theme_logo
 
 
 def load_hub_links(shared_root: Path) -> list[dict[str, str]]:
@@ -237,7 +238,8 @@ def plan_configs(repo_root: Path, shared_root: Path) -> dict[Path, tuple[str, st
         with path.open(encoding="utf-8", newline="") as stream:
             original = stream.read()
         shared = name == "mkdocs.shared.yml"
-        updated = project_required_lists(original, baseline, path, shared=shared)
+        updated = project_theme_logo(original, baseline, path)
+        updated = project_required_lists(updated, baseline, path, shared=shared)
         updated = shared_hub_content(updated, path, links) if shared else root_hub_content(updated, path)
         updated = diagram_content(updated)
         updated = implementation_exclusions(updated, required, path)

@@ -53,3 +53,17 @@ is required for synchronization. MkDocs remains the authority for actual
 configuration resolution and final builds. Native worker/result journeys and
 full artifact validation are required for each applicable adopted consumer;
 source-list projection alone does not prove delivery or browser behavior.
+
+## Shared branding references
+
+`branding.py` migrates only literal `theme.logo` references named exactly in
+`retired_theme_logos` to the baseline's current logo. It preserves scalar quote
+style, comments, line endings, authored custom logos, icon settings, and other
+theme options. Missing theme/logo fields remain absent and continue inheriting.
+Dynamic custom logo values remain authored. Duplicate relevant keys, merge
+keys, and ambiguous theme representations require review before any writes.
+
+Retirement changes the configuration reference only. The historical HQ PNG
+remains a physical compatibility asset; the compact common PNG is supplied by
+the separately governed shared asset projection. Supported root configuration
+identity and inherited publication exclusion rules remain unchanged.

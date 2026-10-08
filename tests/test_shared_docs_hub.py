@@ -213,22 +213,30 @@ class SharedDocsHubTests(unittest.TestCase):
         self.assertNotIn("vendor/mermaid-11.6.0.min.js", content)
         self.assertIn("fence_code_format", content)
 
-    def test_diagram_migration_preserves_logo_and_unrelated_configuration(self) -> None:
+    def test_configuration_projection_keeps_diagram_and_branding_ownership_separate(self) -> None:
         fixture = self.fixture()
         config = fixture / "mkdocs.shared.yml"
         authored = '\ntheme:\n  logo: assets/bijux_logo_hq.png\nplugins:\n  - search\n  - authored-plugin\n'
-        config.write_text(config.read_text().replace("class: bijux-diagram", "class: mermaid") + authored)
+        before = config.read_text().replace("class: bijux-diagram", "class: mermaid") + authored
+        config.write_text(before)
+        spec = importlib.util.spec_from_file_location("bijux_configuration_projection", SYNC_SCRIPT)
+        sync = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(sync)
+        self.assertIn(authored, sync.diagram_content(before))
+        root = fixture / "mkdocs.yml"
+        custom = '\ntheme:\n  logo: assets/product-wordmark.svg # authored\n'
+        root.write_text(root.read_text() + custom)
         result = self.run_sync(fixture)
         self.assertEqual(result.returncode, 0, result.stderr)
         after = config.read_text()
-        expected = authored.replace("  - search\n", "  - search\n  - autorefs\n")
+        expected = authored.replace("  - search\n", "  - search\n  - autorefs\n").replace("assets/bijux_logo_hq.png", "assets/bijux_logo.png")
         self.assertIn(expected, after)
+        self.assertIn(custom, root.read_text())
         self.assertIn("class: bijux-diagram", after)
         self.assertIn("fence_code_format", after)
-        self.assertIn("logo: assets/bijux_logo_hq.png", after)
-        self.assertNotIn("logo: assets/bijux_logo.png", after)
         baseline = json.loads((SHARED_DOCS / "config/mkdocs-baseline.json").read_text())
-        self.assertEqual(baseline["theme"]["logo"], "assets/bijux_logo_hq.png")
+        self.assertEqual(baseline["theme"]["logo"], "assets/bijux_logo.png")
+        self.assertEqual(baseline["retired_theme_logos"], ["assets/bijux_logo_hq.png"])
         self.assertFalse(any("search-recovery" in value for value in baseline["extra_javascript"]))
 
     def test_validator_rejects_second_material_owned_mermaid_fence(self) -> None:
