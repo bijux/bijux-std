@@ -6,6 +6,13 @@ This file records notable repository-level changes for `bijux-std`.
 
 ### Pending review
 
+#### [#200](https://github.com/bijux/bijux-std/pull/200) — docs\(changelog\): record dependency revisions history
+
+Record 16 reviewed historical PRs concerning dependency revisions.
+
+- immutable action runtime pins and the declared GNSS toolchain revision.
+- Preserve original reviewed titles, verified merge dates and source-history distinctions while retaining all prior PR records.
+
 #### [#199](https://github.com/bijux/bijux-std/pull/199) — docs\(changelog\): record Python verification history
 
 Record 12 reviewed historical PRs concerning python verification.
