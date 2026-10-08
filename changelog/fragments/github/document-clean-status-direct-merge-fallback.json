@@ -1,0 +1,15 @@
+{
+  "schema": 1,
+  "pr": 10,
+  "title": "docs(github): document clean-status direct merge fallback",
+  "type": "docs",
+  "scope": "github",
+  "summary": "Auto-merge guidance records the historical clean-status direct merge fallback.",
+  "details": [
+    "Describe the then-current workflow_run and fallback behavior; later trust-policy changes are recorded in their own PR entries.",
+    "Original GitHub merge b09ae203a52fef4e75d01c9301598ce38bc7d298 is distinct from rewritten main-history delivery fa5862ff95b5432579916011c01d2e3b873a7f28; the merge date is the verified GitHub date."
+  ],
+  "status": "merged",
+  "merged_at": "2026-04-18T23:26:21Z",
+  "breaking": false
+}
