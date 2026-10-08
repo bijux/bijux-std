@@ -17,6 +17,7 @@ import material.extensions.emoji
 import pymdownx.superfences
 import yaml
 
+from fixtures.diagram_trust import authored_sources as diagram_trust_authored_sources
 from fixtures.diagram_trust import pages as diagram_trust_pages
 
 ROOT = Path(__file__).resolve().parents[3]
@@ -202,6 +203,7 @@ def config(baseline: dict, registry: list[dict], identity: str, docs: Path, site
 
 
 def build(shared: Path, output: Path, base_url: str) -> None:
+    diagram_sources = diagram_trust_authored_sources()
     original = digest_tree(shared)
     compiler = shared / "tooling/material/build_runtime.py"
     subprocess.run([sys.executable, "-B", str(compiler), "--shared-root", str(shared), "--check"], check=True, stdout=subprocess.DEVNULL)
@@ -268,6 +270,7 @@ def build(shared: Path, output: Path, base_url: str) -> None:
         "vendor": {"url": None if baseline.get("diagram") else MERMAID_URL, "sha256": baseline.get("diagram", {}).get("sha256", MERMAID_SHA256), "source": str(vendor_file)},
         "base_url": base_url, "scenarios": [{"identity": identity, "route": route, "kind": scenario} for identity, route, scenario in scenarios],
         "registry_adaptation": "Canonical keys/order; URLs point to generated local consumers. Long-registry scenario expands labels and adds two entries.",
+        "diagram_fixture": {"authored_sources": diagram_sources},
         "reader_fixture": {"code": READER_CODE, "code_sha256": hashlib.sha256(READER_CODE.encode()).hexdigest(), "table_headers": READER_HEADERS, "table_rows": READER_ROWS},
         "site_files": digest_tree(site_root),
     }

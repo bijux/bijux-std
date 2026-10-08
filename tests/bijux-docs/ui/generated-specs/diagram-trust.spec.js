@@ -4,8 +4,12 @@ const generated = process.env.BIJUX_GENERATED_ROOT || path.resolve(__dirname, ".
 const figures = page => page.locator("main .bijux-diagram");
 const sources = page => figures(page).locator(".bijux-diagram-source code");
 function authored(name) {
-  const markdown = fs.readFileSync(path.join(generated, "inputs/hub/docs", name + ".md"), "utf8");
-  return [...markdown.matchAll(/```mermaid\n([\s\S]*?)\n```/g)].map(match => match[1]);
+  const manifest = JSON.parse(fs.readFileSync(path.join(generated, "manifest.json"), "utf8"));
+  const expected = manifest.diagram_fixture?.authored_sources?.[name];
+  if (!Array.isArray(expected) || !expected.length || expected.some(source => typeof source !== "string" || !source)) {
+    throw new Error(`Generated fixture lacks authored diagram source oracle: ${name}`);
+  }
+  return expected;
 }
 async function rejected(figure) {
   await expect(figure.getByRole("status")).toContainText("preview unavailable");
