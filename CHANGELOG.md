@@ -6,14 +6,21 @@ This file records notable repository-level changes for `bijux-std`.
 
 ### Pending review
 
-#### [#214](https://github.com/bijux/bijux-std/pull/214) — fix(docs): preserve visible focus through navigation handoff
+#### [#216](https://github.com/bijux/bijux-std/pull/216) — fix(docs): expose one contextual navigation surface
+
+Keep the complete sidebar as the visible local navigation when duplicate contextual ribbons are unnecessary.
+
+- Preserve the closed compact header and native Material fallback; opening the native compact drawer exposes one local navigation surface.
+- Verify ordinary keyboard reading routes, Back and no-script navigation in the maintained browser matrix.
+
+### Merged pull requests
+
+#### 2026-10-08T23:19:00Z — [#214](https://github.com/bijux/bijux-std/pull/214) — fix(docs): preserve visible focus through navigation handoff
 
 Keep a usable Menu fallback when navigation is aborted and bring reopened drawer focus into view.
 
 - Give matching instant destinations heading focus while preserving fragments, downloads and other browsing contexts.
 - Revoke stale reading intent on explicit controls or disposal; verify aborted-request keyboard and search recovery.
-
-### Merged pull requests
 
 #### 2026-10-08T22:58:03Z — [#212](https://github.com/bijux/bijux-std/pull/212) — fix(docs): expose one site registry and isolate modal navigation
 
