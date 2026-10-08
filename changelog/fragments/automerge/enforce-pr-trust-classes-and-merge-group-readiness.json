@@ -1,0 +1,16 @@
+{
+  "schema": 1,
+  "pr": 39,
+  "title": "fix(automerge): enforce PR trust classes and merge-group readiness",
+  "type": "fix",
+  "scope": "automerge",
+  "summary": "Auto-merge eligibility is limited to trusted bot changes on allowed paths.",
+  "details": [
+    "Classify protected governance, safe bot and product changes, reject branches behind their base and use squash for the then-current auto-merge mode.",
+    "Add merge_group handling so required standards checks work with merge queues.",
+    "Original GitHub merge ddcfaea4e5a15ec5905e3d82eb3e804472b9725c is distinct from rewritten main-history delivery 5fa39fc8eb0856a3c0a95617b13165f643564bb7; the merge date is the verified GitHub date."
+  ],
+  "status": "merged",
+  "merged_at": "2026-04-21T09:43:10Z",
+  "breaking": false
+}

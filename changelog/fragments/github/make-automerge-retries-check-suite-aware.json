@@ -1,0 +1,15 @@
+{
+  "schema": 1,
+  "pr": 34,
+  "title": "fix(github): make automerge retries check-suite aware",
+  "type": "fix",
+  "scope": "github",
+  "summary": "Auto-merge enablement retries when a check suite completes.",
+  "details": [
+    "Resolve the PR from check_suite pull requests so automation can act after required checks become successful.",
+    "Original GitHub merge d35733591734dd43bc8e5286d87f3a3b48c8d472 is distinct from rewritten main-history delivery 6c84f61f9a5a915c429439c657852fd4fd2a74a4; the merge date is the verified GitHub date."
+  ],
+  "status": "merged",
+  "merged_at": "2026-04-20T01:34:05Z",
+  "breaking": false
+}
