@@ -26,6 +26,7 @@ GROUPS = {
     'semantics': ('popup-relationships',),
     'search-scope': ('search-scope',),
     'reader-accessibility': ('reader-accessibility',),
+    'accessibility-state': ('accessibility-state',),
     'search-reflow-phone': ('search-reflow-phone',),
     'search-reflow-tablet': ('search-reflow-tablet',),
     'search-reflow-desktop': ('search-reflow-desktop',),

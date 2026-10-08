@@ -132,8 +132,8 @@ contracts, renders both fixture origins once and collects each complete suite
 inventory without launching a browser. Its compressed, digest-bound fixture
 archive belongs to the current workflow run and Git candidate.
 
-Fifteen browser jobs divide navigation, search, reader, rendering and link journeys
-across Chromium, Firefox and WebKit. Each job downloads that archive and installs
+Each registered journey group has a separate job in Chromium, Firefox and
+WebKit. Each job downloads that archive and installs
 only the locked Node test runtime. It executes its explicitly assigned projects
 without rebuilding fixtures or repeating renderer tests. Each job has a
 three-minute limit; failed attempts retain their receipts and diagnostics.
@@ -188,3 +188,25 @@ Popup relationships, product-local search scope and native drawer dismissal are 
 Immutable fixture transport stores each identical rendered payload once and reconstructs the exact manifest/site bytes without links. Diagnostic build logs remain intact; damaged, extra, missing and escaped payloads fail before admission. Native query and invoker journeys have separate bounded engine jobs, with both mandatory in the complete source-bound aggregate.
 
 `make ui-test-reader-accessibility` exercises short-screen drawer traversal, RTL destinations, reader focus and fragment history. The required browser gate assigns its five cases independently to each engine.
+
+## Automated accessibility states
+
+`make ui-test-accessibility-state` runs three cases in each engine, with nine
+actual scan states per engine: root/deep documents, modal phone drawers and
+empty/known-answer search. Ordinary pointer, keyboard and theme requests qualify
+the inspected state. An Auto theme request uses an explicitly simulated dark
+system preference; it is not physical operating-system qualification.
+
+The development dependency `@axe-core/playwright` is pinned to 4.13.0 with its
+locked axe-core bytes. Every scan runs the full default rule set with resource
+preloading disabled, no excluded targets and no explicit disabled rules. Raw
+violations, incomplete findings, computed metadata foreground/background chains
+and trusted-input observations are attached to each case. Confirmed violations
+fail the gate; incomplete findings remain reviewer-owned limitations and do not
+become passes. A zero-violation scan does not certify full WCAG conformance,
+assistive reading, physical devices, actual zoom or deployed consumers.
+
+The independent `accessibility-state` engine group is mandatory in the existing
+source/fixture/JUnit aggregate. It does not replace the reader, popup, contrast or
+native navigation groups. The gate and publication verifier retain their own
+required inventory; missing engine or case receipts cannot qualify a release.
