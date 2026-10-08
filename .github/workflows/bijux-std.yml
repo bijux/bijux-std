@@ -20,7 +20,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        check: [standard, contracts, report]
+        check: [standard, contracts]
     steps:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -67,28 +67,54 @@ jobs:
                 exit 1
               fi
               ;;
-            report)
-              if [[ -x ".bijux/shared/bijux-checks/scripts/run-bijux-check-suite.sh" ]]; then
-                bash .bijux/shared/bijux-checks/scripts/run-bijux-check-suite.sh \
-                  --consumer .bijux/checks.consumer.json \
-                  --artifacts-dir artifacts/checks
-              elif [[ -x "shared/bijux-checks/scripts/run-bijux-check-suite.sh" ]]; then
-                bash shared/bijux-checks/scripts/run-bijux-check-suite.sh \
-                  --consumer .bijux/checks.consumer.json \
-                  --artifacts-dir artifacts/bijux-checks
-              else
-                echo "ERROR: unable to locate bijux checks runner script" >&2
-                exit 1
-              fi
-              ;;
             *)
               echo "ERROR: unknown matrix check '${{ matrix.check }}'" >&2
               exit 2
               ;;
           esac
 
+  report:
+    name: std / report
+    if: ${{ always() && (github.repository == 'bijux/bijux-std' || github.event_name != 'pull_request' || github.event.pull_request.user.login != 'dependabot[bot]') }}
+    needs: [checks, navigation]
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+      - name: Require applicable source and rendered checks
+        shell: bash
+        env:
+          CHECK_RESULT: ${{ needs.checks.result }}
+          NAVIGATION_RESULT: ${{ needs.navigation.result }}
+        run: |
+          set -euo pipefail
+          test "$CHECK_RESULT" = success
+          if [[ "$GITHUB_REPOSITORY" == "bijux/bijux-std" ]]; then
+            test "$NAVIGATION_RESULT" = success
+          else
+            test "$NAVIGATION_RESULT" = skipped
+          fi
+      - name: Run standards report
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ -x ".bijux/shared/bijux-checks/scripts/run-bijux-check-suite.sh" ]]; then
+            bash .bijux/shared/bijux-checks/scripts/run-bijux-check-suite.sh \
+              --consumer .bijux/checks.consumer.json \
+              --artifacts-dir artifacts/checks
+          elif [[ -x "shared/bijux-checks/scripts/run-bijux-check-suite.sh" ]]; then
+            bash shared/bijux-checks/scripts/run-bijux-check-suite.sh \
+              --consumer .bijux/checks.consumer.json \
+              --artifacts-dir artifacts/bijux-checks
+          else
+            echo "ERROR: unable to locate bijux checks runner script" >&2
+            exit 1
+          fi
       - name: Upload bijux checks report artifact
-        if: always() && matrix.check == 'report'
+        if: always()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: bijux-checks-report
@@ -99,7 +125,7 @@ jobs:
 
   publication-commands:
     name: std / publication commands
-    if: ${{ github.repository == 'bijux/bijux-std' && (github.event_name != 'pull_request' || github.event.pull_request.user.login != 'dependabot[bot]') }}
+    if: ${{ github.repository == 'bijux/bijux-std' }}
     runs-on: ubuntu-latest
     timeout-minutes: 3
     steps:
@@ -127,7 +153,7 @@ jobs:
 
   navigation-fixtures:
     name: std / navigation fixtures
-    if: ${{ github.repository == 'bijux/bijux-std' && (github.event_name != 'pull_request' || github.event.pull_request.user.login != 'dependabot[bot]') }}
+    if: ${{ github.repository == 'bijux/bijux-std' }}
     runs-on: ubuntu-latest
     timeout-minutes: 3
     steps:
@@ -215,7 +241,7 @@ jobs:
 
   navigation:
     name: std / navigation
-    if: ${{ always() && github.repository == 'bijux/bijux-std' && (github.event_name != 'pull_request' || github.event.pull_request.user.login != 'dependabot[bot]') }}
+    if: ${{ always() && github.repository == 'bijux/bijux-std' }}
     needs: [navigation-fixtures, navigation-browsers, publication-commands]
     runs-on: ubuntu-latest
     timeout-minutes: 3
