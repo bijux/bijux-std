@@ -5,6 +5,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import importlib.metadata
+import importlib.util
 import json
 import os
 from pathlib import Path, PurePosixPath
@@ -19,6 +20,7 @@ SOURCE_PATHS = (
     "tests/bijux-docs/generated/build.py",
     "makes/bijux-docs.mk",
     ".github/workflows/bijux-std.yml",
+    "shared/bijux-docs/tooling/security/runtime_fingerprints.py",
 )
 VOLATILE_METADATA = {"RECORD", "INSTALLER", "direct_url.json", "REQUESTED"}
 PIN = re.compile(r"([A-Za-z0-9][A-Za-z0-9_.-]*)==([A-Za-z0-9][A-Za-z0-9_.+!-]*)")
@@ -150,21 +152,33 @@ def output_path(root: Path, value: str) -> Path:
     return output
 
 
+def runtime_snapshot(packages):
+    path = Path(__file__).with_name("runtime_fingerprints.py")
+    captured = regular(path)
+    spec = importlib.util.spec_from_file_location("bijux_runtime_observation", path)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    require(captured == regular(path), "Runtime observer source changed during load")
+    return module.snapshot(packages)
+
+
 def observe(root: Path) -> dict:
     before = source_snapshot(root)
     require(Path(__file__).absolute() == root / SOURCE_PATHS[0],
             "Invoke the committed repository observer")
     lock = regular(root / SOURCE_PATHS[1])
     packages = observe_packages(lock)
+    runtime = runtime_snapshot(packages)
     # A second capture detects source, installed code, inventory and version races.
     require(packages == observe_packages(lock), "Installed renderer changed during observation")
+    require(runtime == runtime_snapshot(packages), "Physical renderer runtime changed during observation")
     require(before == source_snapshot(root), "Source changed during renderer observation")
     return {"schema": 1, "scope": "observed-locked-renderer-source", "verification_only": True,
             "admission_created": False, "source": before, "lock_sha256": sha(lock),
             "platform": {"system": platform.system(), "machine": platform.machine(),
                          "python": platform.python_version(), "implementation": sys.implementation.name,
                          "cache_tag": sys.implementation.cache_tag},
-            "packages": packages,
+            "packages": packages, "runtime": runtime,
             "hosted_context": {key: os.environ.get(key) for key in (
                 "GITHUB_REPOSITORY", "GITHUB_SHA", "GITHUB_RUN_ID", "GITHUB_RUN_ATTEMPT",
                 "RUNNER_OS", "ImageOS")},
@@ -189,7 +203,7 @@ def main() -> int:
         print(json.dumps({"scope": report["scope"], "admission_created": False,
                           "packages": len(report["packages"])}))
         return 0
-    except (ObservationError, OSError, subprocess.CalledProcessError) as error:
+    except (ValueError, OSError, subprocess.CalledProcessError) as error:
         print(str(error), file=sys.stderr)
         return 1
 
