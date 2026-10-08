@@ -77,6 +77,11 @@
       }
     }
     retry.addEventListener("click", () => {
+      // Disabling the focused Retry button must preserve the reader's editing intent.
+      if (document.activeElement === retry && document.getElementById("__search")?.checked &&
+          query.getClientRects().length && getComputedStyle(query).visibility !== "hidden") {
+        query.focus();
+      }
       if (window.bijuxSearchIndex?.state.stage === "index-unavailable") {
         window.dispatchEvent(new Event("bijux:search-index-retry"));
       }

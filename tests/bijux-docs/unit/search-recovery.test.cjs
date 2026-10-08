@@ -14,3 +14,35 @@ function tab(f,shiftKey=false){const event=new Event('keydown',{cancelable:true}
 test('native-header failed search exposes keyboard Retry without native Tab dismissal',()=>{const f=fixture();f.set({stage:'index-unavailable',attempt:1,reason:'network'});f.query.focus();assert.equal(tab(f).defaultPrevented,true);assert.equal(f.document.activeElement,f.retry);assert.equal(tab(f,true).defaultPrevented,true);assert.equal(f.document.activeElement,f.query);f.controller.abort()});
 test('native-header busy search reaches Cancel and does not focus disabled Retry',()=>{const f=fixture();f.set({stage:'index-loading',attempt:1});f.query.focus();tab(f);assert.equal(f.document.activeElement,f.cancel);tab(f);assert.equal(f.document.activeElement,f.query);f.controller.abort()});
 test('healthy, closed and disposed native search retain native keyboard behavior',()=>{const f=fixture();f.set({stage:'index-ready',attempt:1},{stage:'worker-ready',attempt:1});f.query.focus();assert.equal(tab(f).defaultPrevented,false);f.set({stage:'index-loading',attempt:2});f.toggle.checked=false;assert.equal(tab(f).defaultPrevented,false);f.toggle.checked=true;f.controller.abort();assert.equal(tab(f).defaultPrevented,false)});
+
+// Model the browser's immediate blur when synchronous retry disables its control.
+test('keyboard Retry keeps editing focus before the transport disables its button',()=>{
+ const f=fixture();f.set({stage:'index-unavailable',attempt:1,reason:'cancelled'});f.retry.focus();
+ let focusedAtDispatch;f.window.addEventListener('bijux:search-index-retry',()=>{
+  focusedAtDispatch=f.document.activeElement;f.set({stage:'index-loading',attempt:2});
+  if(f.document.activeElement===f.retry)f.document.activeElement=f.outside;
+ });
+ f.retry.dispatchEvent(new Event('click'));assert.equal(focusedAtDispatch,f.query);
+ assert.equal(f.retry.disabled,true);assert.equal(f.document.activeElement,f.query);
+ f.set({stage:'index-ready',attempt:2},{stage:'worker-ready',attempt:1});
+ assert.equal(f.document.activeElement,f.query);f.controller.abort();
+});
+test('keyboard worker Retry preserves focus before synchronous worker loading',()=>{
+ const f=fixture();f.set({stage:'index-ready',attempt:1},{stage:'worker-unavailable',attempt:1});
+ f.retry.focus();let focusedAtDispatch;f.window.addEventListener('bijux:search-worker-retry',()=>{
+  focusedAtDispatch=f.document.activeElement;f.set({stage:'index-ready',attempt:1},{stage:'worker-loading',attempt:2});
+ });f.retry.dispatchEvent(new Event('click'));assert.equal(focusedAtDispatch,f.query);
+ assert.equal(f.document.activeElement,f.query);f.controller.abort();
+});
+for(const mode of ['outside-focus','closed-search','hidden-query']){
+ test(`Retry does not steal focus from ${mode}`,()=>{
+  const f=fixture();f.set({stage:'index-unavailable',attempt:1,reason:'stalled'});
+  if(mode!=='outside-focus')f.retry.focus();
+  if(mode==='closed-search')f.toggle.checked=false;
+  if(mode==='hidden-query')f.query.hidden=true;
+  const before=f.document.activeElement;let focusedAtDispatch;
+  f.window.addEventListener('bijux:search-index-retry',()=>focusedAtDispatch=f.document.activeElement);
+  f.retry.dispatchEvent(new Event('click'));assert.equal(focusedAtDispatch,before);
+  assert.equal(f.document.activeElement,before);f.controller.abort();
+ });
+}

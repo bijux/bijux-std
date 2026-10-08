@@ -44,4 +44,9 @@ test("keyboard Cancel preserves the query and keyboard Retry returns the native 
   await page.keyboard.press("Enter");
   await nativeAnswer(page);
   await expect(query(page)).toHaveValue("resilient navigation");
+  await expect(query(page)).toBeFocused();
+  await page.keyboard.press("ControlOrMeta+A");
+  await page.keyboard.insertText("resilient");
+  await expect(query(page)).toHaveValue("resilient");
+  await nativeAnswer(page, "resilient");
 });
