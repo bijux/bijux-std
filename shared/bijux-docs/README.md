@@ -57,3 +57,25 @@ Material continues to own palette radio changes and the native search worker.
 Global theme records are bounded to 2,048 characters; scoped Material records to
 16,384 characters and 32 retained keys. Memory does not persist across reloads.
 Run `make ui-test-preferences` for the three-engine storage and reload journeys.
+
+## Optional repository facts
+
+The shared repository partial preserves the repository link, name and icon.
+Its accessible label includes the repository identity when compact header CSS
+hides the visible name.
+Automatic provider statistics are disabled by default: native Material does not
+mount its source-facts component without the owned activation marker. This
+prevents the optional GitHub API request rather than suppressing its errors.
+
+A consumer can explicitly enable the native component with Boolean
+`extra.bijux.repository_facts: true`. Strings and numeric values do not enable
+it. Activation requires a reviewed provider purpose, compatible CSP policy and
+consumer privacy/disclosure decision; no global network allowance follows from
+this flag. Other authored embeds and resources require their own inventories.
+The existing projector owns the new partial only after exact accepted-source
+refresh; an authored destination conflict requires explicit review.
+
+This partial derives from Material9.7.7. Its upstream MIT notice is retained in
+[tooling/material/UPSTREAM-LICENSE.txt](tooling/material/UPSTREAM-LICENSE.txt).
+Run the generated renderer contract tests and the applicable native browser
+journeys before claiming that an adopted consumer makes no facts requests.

@@ -53,7 +53,7 @@ ui-test-fixtures: ## Render the full canonical shared shell through real MkDocs/
 .PHONY: ui-test-unit
 ui-test-unit: ## Check meaningful isolated runtime invariants
 	@node --test "$(UI_TESTS_DIR)"/unit/*.test.js "$(UI_TESTS_DIR)/unit/mermaid-init.test.cjs"
-	@PYTHONDONTWRITEBYTECODE=1 "$(UI_TESTS_PYTHON_DIR)/bin/python" -m unittest discover -s "$(UI_TESTS_DIR)/generated" -p test_navigation_projection.py
+	@PYTHONDONTWRITEBYTECODE=1 "$(UI_TESTS_PYTHON_DIR)/bin/python" -m unittest discover -s "$(UI_TESTS_DIR)/generated" -p "test_*.py"
 
 .PHONY: ui-test
 ui-test: ui-test-prepare-runtime ui-test-fixtures ui-test-unit ## Qualify generated shell in all nine engine/profile projects
@@ -78,3 +78,7 @@ ui-test-preferences: ui-test-prepare-runtime ui-test-fixtures ui-test-unit ## Qu
 .PHONY: ui-test-diagrams
 ui-test-diagrams: ui-test-prepare-runtime ui-test-fixtures ui-test-unit ## Qualify single-owner self-hosted diagrams across three engines
 	@NPM_CONFIG_CACHE="$(abspath $(UI_TESTS_NPM_CACHE_DIR))" PLAYWRIGHT_BROWSERS_PATH="$(abspath $(UI_TESTS_PLAYWRIGHT_BROWSERS_DIR))" BIJUX_UI_ARTIFACT_ROOT="$(abspath $(BIJUX_DOCS_ARTIFACTS_DIR))/diagram-playwright" BIJUX_UI_FULL_GATE=1 npm --prefix "$(UI_TESTS_RUNTIME_DIR)" exec -- playwright test --config "$(UI_TESTS_DIR)/playwright.diagrams.config.js"
+
+.PHONY: ui-test-repository
+ui-test-repository: ui-test-prepare-runtime ui-test-fixtures ui-test-unit ## Qualify optional repository facts and ordinary native navigation
+	@NPM_CONFIG_CACHE="$(abspath $(UI_TESTS_NPM_CACHE_DIR))" PLAYWRIGHT_BROWSERS_PATH="$(abspath $(UI_TESTS_PLAYWRIGHT_BROWSERS_DIR))" BIJUX_UI_ARTIFACT_ROOT="$(abspath $(BIJUX_DOCS_ARTIFACTS_DIR))/repository-playwright" BIJUX_UI_FULL_GATE=1 npm --prefix "$(UI_TESTS_RUNTIME_DIR)" exec -- playwright test --config "$(UI_TESTS_DIR)/playwright.repository.config.js"
