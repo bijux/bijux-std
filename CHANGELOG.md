@@ -161,4 +161,26 @@ release notes from consuming repositories.
 
 <!-- bijux:pr-history:start -->
 
+## Pull request history
+
+Records describe reviewed repository changes. Pending review is not a merged or published release.
+
+### Pending review
+
+#### [#191](https://github.com/bijux/bijux-std/pull/191) — feat\(governance\): validate repository pull request change records
+
+Validate exact PR change records and generate a reproducible history without replacing existing release notes.
+
+- Add the offline standard-library validator and shared mirror with managed ownership and meaningful negative controls.
+- Keep existing historical notes intact outside the generated section; workflow enforcement and the full historical import remain separate reviews.
+
+### Merged pull requests
+
+#### 2026-10-08T16:47:44Z — [#189](https://github.com/bijux/bijux-std/pull/189) — fix\(docs\): preserve accessible reader controls and literal input
+
+Keep search metadata readable, distinguish navigation landmarks, and preserve ordinary character input outside focused search.
+
+- Use the scheme-aware foreground on search metadata and an escaped site-specific primary navigation label.
+- Remove global character-only search activation while retaining named Search controls, editable typing, native result keys, modifiers, Escape and Back.
+- Parse the full generated runtime before emission and require source-bound accessibility and shortcut browser groups.
 <!-- bijux:pr-history:end -->
