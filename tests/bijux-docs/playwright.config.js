@@ -15,7 +15,8 @@ module.exports = defineConfig({
   timeout: 30_000,
   expect: { timeout: 5_000 },
   fullyParallel: true,
-  workers: 3,
+  workers: process.env.CI ? 1 : 3,
+  globalTimeout: process.env.CI ? 10 * 60_000 : 0,
   retries: 0,
   reporter: [
     ["list"],
