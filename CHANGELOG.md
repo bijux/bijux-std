@@ -6,6 +6,13 @@ This file records notable repository-level changes for `bijux-std`.
 
 ### Pending review
 
+#### [#199](https://github.com/bijux/bijux-std/pull/199) — docs\(changelog\): record Python verification history
+
+Record 12 reviewed historical PRs concerning python verification.
+
+- Python delivery gates, installed distribution families, security/SBOM evidence and renderer observation.
+- Preserve original reviewed titles, verified merge dates and source-history distinctions while retaining all prior PR records.
+
 #### [#198](https://github.com/bijux/bijux-std/pull/198) — docs\(changelog\): record CI execution history
 
 Record 16 reviewed historical PRs concerning ci execution.
