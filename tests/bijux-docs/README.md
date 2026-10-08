@@ -178,3 +178,5 @@ config or explicit assigned engine shards, and retain strict receipts and their
 complete aggregate as described in [shard reporting](reporting/README.md).
 
 Native history qualification retains exact Back/Forward and authored-fragment routes throughout passive restoration windows. It has its own bounded browser group in every engine. Automatic `navigation.tracking` is excluded from the default shell; an explicitly authored opt-in remains a consumer decision.
+
+Diagram rendering and contrast/target journeys run in separate engine jobs. Their independently assigned receipts are both mandatory in the final navigation aggregate. The three-minute budget includes cold browser-image setup, artifact transport and job finalization.
