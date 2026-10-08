@@ -3,9 +3,11 @@ const assert = require('node:assert/strict'), test = require('node:test');
 const proposed = path.resolve(__dirname, '../../../shared/bijux-docs/scripts/bootstrap.js');
 const source = fs.readFileSync(process.env.BOOTSTRAP_SOURCE || proposed,'utf8');
 const begin = source.indexOf('  function bindSearch(signal) {');
+const helper = source.slice(source.indexOf('  function bindPopupIdentity('), source.indexOf('  function bindDrawer(signal) {'));
 const fn = source.slice(begin, source.indexOf('  function runShellNavigationSync() {',begin));
 class Node extends EventTarget {
  constructor(tag='DIV'){super();this.tagName=tag;this.attributes=[];this.inert=false;this.children=[];this.parentElement=null;this.checked=false;this.hidden=false;this.tabIndex=0;this.attrs={};}
+ getAttribute(name){return this.attrs[name]??null;}
  setAttribute(name,value){this.attrs[name]=value;}
  removeAttribute(name){delete this.attrs[name];}
  getClientRects(){return this.hidden?[]:[{}];}
@@ -17,9 +19,9 @@ function fixture({inline=false,modal=false}={}){
  const document=new EventTarget(),toggle=new Node('INPUT'),control=new Node('BUTTON'),query=new Node('INPUT'),dialog=new Node(),back=new Node('BUTTON'),background=new Node();
  query.focus=()=>{document.activeElement=query;query.dispatchEvent(new Event("focus"));};control.focus=()=>{document.activeElement=control;};back.focus=()=>{document.activeElement=back;};
  dialog.children=[query,back];dialog.querySelector=selector=>selector.includes('__search')?back:query;dialog.querySelectorAll=()=>[query,back];
- document.getElementById=()=>toggle;document.querySelector=selector=>selector.includes('search-toggle')?control:(selector.includes('search__input')||selector.includes('search-query'))?query:dialog;document.querySelectorAll=()=>[background];
+ document.getElementById=id=>id==='__search'?toggle:dialog.getAttribute('id')===id?dialog:null;document.querySelector=selector=>selector.includes('search-toggle')?control:(selector.includes('search__input')||selector.includes('search-query'))?query:dialog;document.querySelectorAll=selector=>selector==='[id]'?[dialog].filter(node=>node.getAttribute('id')):[background];
  control.hidden=inline;query.hidden=modal;
- const lifetime=new AbortController();vm.runInNewContext('let closeDrawer; let readingIntent=false;'+fn+'bindSearch(signal);',{document,signal:lifetime.signal,Event,getComputedStyle:()=>({visibility:'visible'})});
+ const lifetime=new AbortController();vm.runInNewContext('let closeDrawer; let readingIntent=false;'+helper+fn+'bindSearch(signal);',{document,signal:lifetime.signal,Event,getComputedStyle:()=>({visibility:'visible'})});
  return{document,toggle,control,query,dialog,back,background,lifetime};
 }
 test('a newer explicit open survives the old native setToggle synthetic click default action',()=>{const f=fixture();f.control.click();assert.equal(f.toggle.checked,true);assert.equal(f.document.activeElement,f.query);const close=f.toggle.click();assert.equal(close.defaultPrevented,true);assert.equal(f.toggle.checked,true);f.lifetime.abort();});
