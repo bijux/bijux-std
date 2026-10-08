@@ -108,3 +108,31 @@ licenses and review the generated projection. Update provenance only from an act
 qualified rebuild; replacing an expected digest with arbitrary current bytes is not
 verification. A dependency update invalidates affected diagram/runtime/consumer receipts.
 Never hand-edit bundled sanitizer code or jump to a major version solely for prestige.
+
+## Website renderer ownership
+
+Mermaid source fences keep the authored language name `mermaid` and emit the
+`bijux-diagram` class. Material must never own those nodes: its `mermaid` class
+activates an independent remote renderer. The shared initializer owns discovery,
+serialized render requests, palette changes, stale document completions and retry.
+
+The baseline pins Mermaid 11.17.2 by SHA-256. Its owned vendor bundle and license
+files project through the existing canonical asset projector. The initializer
+loads that asset only when a diagram exists, uses SRI and strict security, and
+retains the exact source in a disclosure for success and failure. Source directives
+cannot change renderer security or import network resources. Source/edge admission
+limits are 50,000 characters and 500 edges; these are declared limits, not evidence
+of arbitrary corpus scalability. Failed or timed-out loading exposes source and
+an ordinary Retry diagram button.
+
+`sync_mkdocs_hub.py` migrates block-form Mermaid fences and removes eager versioned
+vendor entries while preserving other MkDocs configuration, including the logo.
+Effective root/shared configuration and the projected bundle digest are validated
+before publication. Unsupported configuration shapes fail contract verification;
+they must be reviewed rather than silently rewritten.
+
+Run the asynchronous lifecycle contracts with `python3 -m unittest discover -s
+tests -p test_shared_mermaid_lifecycle.py`, and the real MkDocs/Material browser
+gate with `make ui-test-diagrams`. The browser gate covers no-diagram lazy loading,
+actual light/dark SVG rendering, ordinary instant navigation, missing-bundle
+fallback, keyboard retry and absence of remote renderer imports.

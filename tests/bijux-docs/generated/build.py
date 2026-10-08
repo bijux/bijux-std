@@ -34,13 +34,15 @@ def vendor(shared: Path, baseline: dict) -> Path:
     contract = baseline.get("diagram", {})
     expected = contract.get("sha256", MERMAID_SHA256)
     canonical = shared / "assets" / contract.get("vendor", "assets/javascripts/vendor/mermaid-11.6.0.min.js").removeprefix("assets/")
+    if contract and not canonical.is_file():
+        raise ValueError("Missing baseline-owned Mermaid asset; legacy CDN fallback is not admitted")
     target = canonical if canonical.exists() else ARTIFACTS / "cache/mermaid-11.6.0.min.js"
     target.parent.mkdir(parents=True, exist_ok=True)
     if not target.exists():
         with urllib.request.urlopen(MERMAID_URL, timeout=60) as response:
             target.write_bytes(response.read())
     if hashlib.sha256(target.read_bytes()).hexdigest() != expected:
-        raise ValueError("Mermaid asset differs from the admitted 11.6.0 bundle")
+        raise ValueError("Mermaid asset differs from the admitted baseline digest")
     return target
 
 
@@ -99,6 +101,32 @@ flowchart LR
 ## Long content
 
 AnIdentifierThatIsIntentionallyLongToExerciseReadableScientificContentAcrossSmallScreensAndEnlargedTextWithoutLosingTheMeaningfulEnding.
+''')
+    write_page(docs, "diagram-safety.md", "Diagram trust boundaries", r'''These inputs preserve their authored source when the renderer cannot admit them.
+
+```mermaid
+flowchart LR
+  A["<img src='https://diagram-resource.invalid/pixel' />"] --> B
+```
+
+```mermaid
+flowchart LR
+  A --> B
+  style A fill:\75rl(https://diagram-resource.invalid/style)
+```
+
+```mermaid
+%%{init: {"securityLevel": "loose", "themeCSS": "@import url(https://diagram-resource.invalid/theme)"}}%%
+flowchart LR
+  A --> B
+```
+
+```mermaid
+flowchart LR
+  A["Local<br/>label"] --> B["Reader"]
+  classDef emphasis fill:#ffffff,stroke:#123456,stroke-width:2px
+  class A emphasis
+```
 ''')
     nav.append({"Reading reference": "reading.md"})
     return nav
@@ -182,12 +210,18 @@ def build(shared: Path, output: Path, base_url: str) -> None:
         shutil.copytree(work / "site", destination, dirs_exist_ok=True)
     if original != digest_tree(shared):
         raise RuntimeError("Canonical source changed while fixture rendering; rebuild a coherent candidate")
+    git_root = Path(subprocess.check_output(["git", "rev-parse", "--show-toplevel"], cwd=ROOT, text=True).strip())
+    owns_source = git_root == ROOT and shared.is_relative_to(ROOT)
+    if owns_source:
+        source_path = str(shared.relative_to(ROOT))
+        owns_source = bool(subprocess.check_output(["git", "ls-files", "--", source_path], cwd=ROOT, text=True).strip())
     manifest = {
         "schema": 1, "source_root": str(shared), "source_files": original,
-        "source_sha": subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=ROOT, text=True).strip(),
-        "source_tree_dirty": bool(subprocess.check_output(["git", "status", "--porcelain", "--", "shared/bijux-docs"], cwd=ROOT, text=True).strip()),
+        "source_sha": subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=ROOT, text=True).strip() if owns_source else None,
+        "source_tree_dirty": bool(subprocess.check_output(["git", "status", "--porcelain", "--", source_path], cwd=ROOT, text=True).strip()) if owns_source else None,
+        "source_identity": "tracked repository source" if owns_source else "untracked artifact source; file digests are authoritative",
         "toolchain": {name: importlib.metadata.version(name) for name in ["mkdocs", "mkdocs-material", "mkdocs-autorefs", "pymdown-extensions"]},
-        "vendor": {"url": MERMAID_URL, "sha256": baseline.get("diagram", {}).get("sha256", MERMAID_SHA256), "source": str(vendor_file)},
+        "vendor": {"url": None if baseline.get("diagram") else MERMAID_URL, "sha256": baseline.get("diagram", {}).get("sha256", MERMAID_SHA256), "source": str(vendor_file)},
         "base_url": base_url, "scenarios": [{"identity": identity, "route": route, "kind": scenario} for identity, route, scenario in scenarios],
         "registry_adaptation": "Canonical keys/order; URLs point to generated local consumers. Long-registry scenario expands labels and adds two entries.",
         "site_files": digest_tree(site_root),
