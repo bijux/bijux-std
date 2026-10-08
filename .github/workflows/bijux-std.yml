@@ -12,24 +12,6 @@ permissions:
   contents: read
 
 jobs:
-  changelog:
-    name: std / changelog
-    runs-on: ubuntu-latest
-    timeout-minutes: 3
-    steps:
-      - name: Checkout complete review history
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          fetch-depth: 0
-      - name: Validate exact PR records and projection
-        shell: bash
-        run: |
-          set -euo pipefail
-          python3 -B .github/scripts/changelog.py check-event \
-            --event-file "$GITHUB_EVENT_PATH" \
-            --event-name "$GITHUB_EVENT_NAME" \
-            --repository "$GITHUB_REPOSITORY"
-
   checks:
     name: std / ${{ matrix.check }}
     if: ${{ github.repository == 'bijux/bijux-std' || github.event_name != 'pull_request' || github.event.pull_request.user.login != 'dependabot[bot]' }}
@@ -62,10 +44,6 @@ jobs:
               python3 .github/scripts/check_pinned_actions.py \
                 --manifest-managed .github/standards/repo-config.manifest.json \
                 .github/workflows
-              python3 -B .github/scripts/changelog.py check-event \
-                --event-file "$GITHUB_EVENT_PATH" \
-                --event-name "$GITHUB_EVENT_NAME" \
-                --repository "$GITHUB_REPOSITORY"
               if [[ "${GITHUB_REPOSITORY}" == "bijux/bijux-std" ]]; then
                 make bijux-std-checks
               else

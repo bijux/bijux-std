@@ -6,120 +6,86 @@ This file records notable repository-level changes for `bijux-std`.
 
 ### Pending review
 
-#### [#208](https://github.com/bijux/bijux-std/pull/208) — docs\(changelog\): record release contracts history
+#### [#194](https://github.com/bijux/bijux-std/pull/194) — feat(docs): observe static publication delivery safely
 
-Record 15 reviewed historical PRs concerning release contracts.
+Provide a bounded HTTP smoke check for deployed documentation and retain source-bound observations.
 
-- release channel orchestration, publication authentication, command quoting and candidate evidence.
-- Preserve original reviewed titles, verified merge dates and source-history distinctions while retaining all prior PR records.
+- Check the configured root and deep reader routes, search metadata, published assets and missing-route behavior.
+- Bound response bytes, redirect scope and request deadlines; avoid ambient proxy configuration and reject output paths outside artifacts.
+- Document the distinction between delivery observations, browser qualification and operational availability.
 
-#### [#207](https://github.com/bijux/bijux-std/pull/207) — docs\(changelog\): record workflow definitions history
+### Merged pull requests
 
-Record 21 reviewed historical PRs concerning workflow definition.
+#### 2026-10-08T19:36:02Z — [#209](https://github.com/bijux/bijux-std/pull/209) — docs(changelog): keep pull request history in one file
 
-- workflow source/trigger authority, reusable entrypoints, wrapper retirement and executable shell structure.
-- Preserve original reviewed titles, verified merge dates and source-history distinctions while retaining all prior PR records.
+Keep reviewed PR history directly in this file and remove fragment-based maintenance.
 
-#### [#206](https://github.com/bijux/bijux-std/pull/206) — docs\(changelog\): record branch governance history
+- Purge the changelog directory, validators, fragment tests and Make rendering targets.
+- Remove the changelog CI gate and duplicate standards invocation; ask authors for a concise direct entry.
+- Retain all verified merged PR history and preceding-main-history notices without a separate history directory.
 
-Record 15 reviewed historical PRs concerning branch governance.
-
-- branch protection authority, import identity, bypass/review behavior, merge method and required check names.
-- Preserve original reviewed titles, verified merge dates and source-history distinctions while retaining all prior PR records.
-
-#### [#205](https://github.com/bijux/bijux-std/pull/205) — docs\(changelog\): record documentation renderer boundaries history
-
-Record 8 reviewed historical PRs concerning docs renderer.
-
-- licensed self-hosted diagrams, fixture admission, owned runtime source and immutable publication commands.
-- Preserve original reviewed titles, verified merge dates and source-history distinctions while retaining all prior PR records.
-
-#### [#204](https://github.com/bijux/bijux-std/pull/204) — docs\(changelog\): record documentation reader behavior history
-
-Record 6 reviewed historical PRs concerning docs reader.
-
-- native search recovery, wide-content keyboard scrolling, authored links, recovery contrast and document boundaries.
-- Preserve original reviewed titles, verified merge dates and source-history distinctions while retaining all prior PR records.
-
-#### [#203](https://github.com/bijux/bijux-std/pull/203) — docs\(changelog\): record documentation shell history
+#### 2026-10-08T19:15:45Z — [#203](https://github.com/bijux/bijux-std/pull/203) — docs\(changelog\): record documentation shell history
 
 Record 16 reviewed historical PRs concerning docs shell.
 
 - responsive navigation, storage/privacy choices, configuration, search traversal and native history.
 - Preserve original reviewed titles, verified merge dates and source-history distinctions while retaining all prior PR records.
 
-#### [#202](https://github.com/bijux/bijux-std/pull/202) — docs\(changelog\): record consumer standards history
+#### 2026-10-08T19:10:10Z — [#202](https://github.com/bijux/bijux-std/pull/202) — docs\(changelog\): record consumer standards history
 
 Record 14 reviewed historical PRs concerning consumer standards.
 
 - managed consumer capabilities, selected standard pins and authored configuration projection.
 - Preserve original reviewed titles, verified merge dates and source-history distinctions while retaining all prior PR records.
 
-#### [#201](https://github.com/bijux/bijux-std/pull/201) — docs\(changelog\): record standards tooling history
+#### 2026-10-08T19:07:13Z — [#201](https://github.com/bijux/bijux-std/pull/201) — docs\(changelog\): record standards tooling history
 
 Record 13 reviewed historical PRs concerning standards tooling.
 
 - repository automation, aliases, environment readiness, contract validation and exact source integrity.
 - Preserve original reviewed titles, verified merge dates and source-history distinctions while retaining all prior PR records.
 
-#### [#200](https://github.com/bijux/bijux-std/pull/200) — docs\(changelog\): record dependency revisions history
+#### 2026-10-08T19:05:18Z — [#200](https://github.com/bijux/bijux-std/pull/200) — docs\(changelog\): record dependency revisions history
 
 Record 16 reviewed historical PRs concerning dependency revisions.
 
 - immutable action runtime pins and the declared GNSS toolchain revision.
 - Preserve original reviewed titles, verified merge dates and source-history distinctions while retaining all prior PR records.
 
-#### [#199](https://github.com/bijux/bijux-std/pull/199) — docs\(changelog\): record Python verification history
+#### 2026-10-08T19:02:54Z — [#199](https://github.com/bijux/bijux-std/pull/199) — docs\(changelog\): record Python verification history
 
 Record 12 reviewed historical PRs concerning python verification.
 
 - Python delivery gates, installed distribution families, security/SBOM evidence and renderer observation.
 - Preserve original reviewed titles, verified merge dates and source-history distinctions while retaining all prior PR records.
 
-#### [#198](https://github.com/bijux/bijux-std/pull/198) — docs\(changelog\): record CI execution history
+#### 2026-10-08T19:01:02Z — [#198](https://github.com/bijux/bijux-std/pull/198) — docs\(changelog\): record CI execution history
 
 Record 16 reviewed historical PRs concerning ci execution.
 
 - prerequisite scheduling, bounded worktrees, foundational Rust checks and source-bound browser jobs.
 - Preserve original reviewed titles, verified merge dates and source-history distinctions while retaining all prior PR records.
 
-#### [#197](https://github.com/bijux/bijux-std/pull/197) — docs\(changelog\): record managed configuration history
+#### 2026-10-08T18:54:53Z — [#197](https://github.com/bijux/bijux-std/pull/197) — docs\(changelog\): record managed configuration history
 
 Record 16 reviewed historical PRs concerning managed configuration.
 
 - generated manifests, labeler/Dependabot schemas, control digests and renderer parity.
 - Preserve original reviewed titles, verified merge dates and source-history distinctions while retaining all prior PR records.
 
-#### [#196](https://github.com/bijux/bijux-std/pull/196) — docs\(changelog\): record maintainer trust history
+#### 2026-10-08T18:52:28Z — [#196](https://github.com/bijux/bijux-std/pull/196) — docs\(changelog\): record maintainer trust history
 
 Record 12 reviewed historical PRs concerning maintainer trust.
 
 - CODEOWNERS, trusted auto-merge author classes, eligibility retries and owner-controlled approval.
 - Preserve original reviewed titles, verified merge dates and source-history distinctions while retaining all prior PR records.
 
-#### [#195](https://github.com/bijux/bijux-std/pull/195) — docs\(changelog\): present concise pull request history
+#### 2026-10-08T18:47:29Z — [#195](https://github.com/bijux/bijux-std/pull/195) — docs\(changelog\): present concise pull request history
 
 Use a concise PR-led changelog with newest review identities first and preserve historical source notes separately.
 
 - Replace the version-organized central changelog with the simple repository header and truthful pending/merged PR sections.
-- Keep all43previous material statements and verified source/tag distinctions in the foundation archive; historical PR imports and preceding main-history notices remain separately reviewed.
-
-#### [#194](https://github.com/bijux/bijux-std/pull/194) — feat\(docs\): observe bounded static delivery contracts
-
-Observe declared static HTTP delivery with confined transport budgets and honest sampled source attribution.
-
-- Check canonical documents, a typed search corpus and real known destination/anchor, nonempty critical assets and truthful missing routes.
-- Bound redirect-chain payloads and transport phases, avoid ambient proxies, and retain source digests plus optional sampled manifest comparisons.
-- Keep rendered navigation, browser search, scheduling, uptime and accepted live deployment qualification separate from HTTP smoke.
-
-#### [#192](https://github.com/bijux/bijux-std/pull/192) — ci\(governance\): enforce exact pull request change records
-
-Check actual PR records and projection in CI and document the repository author workflow.
-
-- Add a bounded changelog job and invoke the same checker inside the existing mandatory standards gate, including standards-repository bot authors.
-- Carry author instructions through shared PR templates and expose Make targets without modifying release or deployment workflows.
-
-### Merged pull requests
+- Keep all 43 previous material statements and verified source/tag distinctions in the foundation archive; historical PR imports and preceding main-history notices remain separately reviewed.
 
 #### 2026-10-08T17:41:36Z — [#193](https://github.com/bijux/bijux-std/pull/193) — test\(docs\): settle native drawer before pointer input
 
@@ -127,6 +93,13 @@ Sample native pointer targets after finite drawer transitions and retain the ope
 
 - Reuse the existing passive ancestor-animation observer without forcing semantic state or cancelling animations.
 - Verify ordinary no-script drawer opening, summary activation and actual destination navigation in the maintained phone/tablet/desktop journeys.
+
+#### 2026-10-08T18:05:54Z — [#192](https://github.com/bijux/bijux-std/pull/192) — ci\(governance\): enforce exact pull request change records
+
+Check actual PR records and projection in CI and document the repository author workflow.
+
+- Add a bounded changelog job and invoke the same checker inside the existing mandatory standards gate, including standards-repository bot authors.
+- Carry author instructions through shared PR templates and expose Make targets without modifying release or deployment workflows.
 
 #### 2026-10-08T17:24:44Z — [#191](https://github.com/bijux/bijux-std/pull/191) — feat\(governance\): validate repository pull request change records
 
@@ -817,9 +790,9 @@ The managed main-branch ruleset no longer includes a bypass actor.
 
 - State that normal main changes merge through pull requests and keep required-check guidance aligned with that policy.
 - Original GitHub merge 9ca9ec98985e03b805e9f9bca91bbc55af424d90 is distinct from rewritten main-history delivery 2ddfe4ee843832440b6b68b131469369bfa036f8; the merge date is the verified GitHub date.
-- Notice: 1 preceding main-history commits occur before this PR in the current first-parent graph. Rewritten history does not establish direct pushes or that this PR first published them.
+- Notice: 1 preceding main-history commit occur before this PR in the current first-parent graph. Rewritten history does not establish direct pushes or that this PR first published them.
 - The preceding main-history change exported ARTIFACTS\_DIR for post-test validation and refreshed the matching managed manifest.
-- Full commit subjects, source changes and Git date distinctions: https://github.com/bijux/bijux-std/blob/main/changelog/history/governance-adoption.md
+- Preceding source commit: https://github.com/bijux/bijux-std/commit/917dbcda23aad48a84d8c639daed247144400e28
 
 #### 2026-04-29T09:06:13Z — [#79](https://github.com/bijux/bijux-std/pull/79) — docs\(license\): align root licensing with mit metadata
 
@@ -978,8 +951,8 @@ Terraform manages main-branch protection for the standards and hub repositories.
 - Original GitHub merge c4a84947d436c8f810f5dca3b71eb475fcea6f9d is distinct from rewritten main-history delivery 705137f9b1e092109e8f758e9bcde2238f1119cc; the merge date is the verified GitHub date.
 - Notice: 6 preceding main-history commits occur before this PR in the current first-parent graph. Rewritten history does not establish direct pushes or that this PR first published them.
 - Preceding main-history changes recorded an Apache-2.0/NOTICE state, documented the Rust deny baseline and deviations, applied/reverted/reapplied generated governance, and refreshed its checksum. Later licensing and standards records remain authoritative.
-- Historical PR54 has no distinct rewritten first-parent delivery anchor; its separately recorded API merge and32-file historical equivalence do not establish direct-push publication.
-- Full commit subjects, source changes and Git date distinctions: https://github.com/bijux/bijux-std/blob/main/changelog/history/governance-adoption.md
+- Historical PR \#54 has no distinct rewritten first-parent delivery anchor; its separately recorded API merge and 32-file historical equivalence do not establish direct-push publication.
+- Preceding main-history endpoints: https://github.com/bijux/bijux-std/commit/8e27a497092343a6f5d0d42563cdb1166a094b5e through https://github.com/bijux/bijux-std/commit/143a5ba41d69e432cb30e64894f9e5a01246f927
 
 #### 2026-04-23T17:29:01Z — [#54](https://github.com/bijux/bijux-std/pull/54) — chore\(github\): sync shared standards and checksum metadata
 
@@ -1296,7 +1269,7 @@ Artifact publication and generated workflow event keys remain executable.
 - Original GitHub merge 0956c7085623b82195ef908997595898a41a7ce0 is distinct from rewritten main-history delivery d2e2ee174289917df3ce796c90c9c7e67db59a92; the merge date is the verified GitHub date.
 - Notice: 13 preceding main-history commits occur before this PR in the current first-parent graph. Rewritten history does not establish direct pushes or that this PR first published them.
 - Preceding main-history changes honored configured release triggers, preserved Canon release/environment contracts, corrected reusable caller permissions and checkout order, retained matrix JSON and Boolean input semantics, and refreshed artifact pins/checksums.
-- Full commit subjects, source changes and Git date distinctions: https://github.com/bijux/bijux-std/blob/main/changelog/history/release-automation.md
+- Preceding main-history endpoints: https://github.com/bijux/bijux-std/commit/9e6898c8e9b6a603f6b34466d29d691525fce5e2 through https://github.com/bijux/bijux-std/commit/78c980d4245d3f9c45456cdb5cfde74090405183
 
 #### 2026-04-18T23:26:21Z — [#10](https://github.com/bijux/bijux-std/pull/10) — docs\(github\): document clean-status direct merge fallback
 
@@ -1374,4 +1347,4 @@ Shared workflow sources are separated from active repository workflows.
 - Preceding main-history changes established shared manifests and source/consumer checks, safer repository automation and artifact-owned UI test execution.
 - They developed viewport/drawer navigation, site switching, native controls and local/live regression harnesses, and introduced diagram initialization and site branding. These are historical introductions, not current qualification receipts.
 - They introduced managed governance and release templates, typed repository configuration, action-pin checks and repository documentation/licensing foundations.
-- Full commit subjects, source changes and Git date distinctions: https://github.com/bijux/bijux-std/blob/main/changelog/history/repository-foundations.md
+- Preceding main-history endpoints: https://github.com/bijux/bijux-std/commit/c2c5df7df73aeb76340893a609cef7c2d90e8070 through https://github.com/bijux/bijux-std/commit/5f1aeaa7a65160838a582bf4838dcb2b206b71d7
