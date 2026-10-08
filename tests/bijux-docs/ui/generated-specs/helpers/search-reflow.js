@@ -61,6 +61,9 @@ async function clickVisiblePoint(page, target) {
   await expect(target).toBeVisible();
   // Native input remains available when script-disabled animation callbacks do
   // not provide Playwright's stability oracle. Require the real pointer target.
+  // A hittable point can still move with the native drawer transition.
+  // Observe finite ancestor animations before sampling ordinary pointer input.
+  await settle(target);
   let point;
   await expect.poll(async () => target.evaluate(node => {
     const box = node.getBoundingClientRect();
@@ -233,19 +236,29 @@ for (const width of widths) {
             await expect(query(noJSPage)).toBeHidden();
             const checkbox = noJSPage.locator("#__drawer");
             const nativeLabel = noJSPage.locator("header label.md-header__button[for='__drawer']:visible").first();
-            if (await checkbox.isVisible()) await clickVisiblePoint(noJSPage, checkbox);
-            else if (await nativeLabel.count()) await clickVisiblePoint(noJSPage, nativeLabel);
+            let drawerInvoked = false;
+            if (await checkbox.isVisible()) {
+              await clickVisiblePoint(noJSPage, checkbox);
+              drawerInvoked = true;
+            } else if (await nativeLabel.count()) {
+              await clickVisiblePoint(noJSPage, nativeLabel);
+              drawerInvoked = true;
+            }
+            if (drawerInvoked) await expect(checkbox).toBeChecked();
             const summary = noJSPage.locator(".md-sidebar--primary summary:visible").first();
             if (await summary.count() && !await summary.evaluate(node => node.parentElement.open)) {
               await clickVisiblePoint(noJSPage, summary);
               await expect.poll(() => summary.evaluate(node => node.parentElement.open)).toBe(true);
             }
+            const groupOpen = await summary.count() ? await summary.evaluate(node => node.parentElement.open) : null;
+            if (drawerInvoked) await expect(checkbox).toBeChecked();
+            const drawerCheckedBeforeRoute = await checkbox.isChecked();
             const link = noJSPage.locator(".md-sidebar--primary .md-nav__link:visible").filter({ hasText: /^\s*Getting started\s*$/ }).first();
             const destination = await link.evaluate(node => node.href);
             await clickVisiblePoint(noJSPage, link);
             await expect(noJSPage).toHaveURL(destination);
             await expect(noJSPage.locator(".md-content h1")).toContainText("getting started");
-            record.noJS = { searchHidden: true, destination, nativeRouteActivated: true, geometry: await geometry(noJSPage) };
+            record.noJS = { searchHidden: true, drawerInvoked, groupOpen, drawerCheckedBeforeRoute, destination, nativeRouteActivated: true, geometry: await geometry(noJSPage) };
           } finally { await noJS.close(); }
           expect(record.errors).toEqual([]);
           record.status = "passed";

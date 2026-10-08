@@ -167,14 +167,21 @@ Records describe reviewed repository changes. Pending review is not a merged or 
 
 ### Pending review
 
-#### [#191](https://github.com/bijux/bijux-std/pull/191) — feat\(governance\): validate repository pull request change records
+#### [#193](https://github.com/bijux/bijux-std/pull/193) — test\(docs\): settle native drawer before pointer input
+
+Sample native pointer targets after finite drawer transitions and retain the open drawer through summary activation.
+
+- Reuse the existing passive ancestor-animation observer without forcing semantic state or cancelling animations.
+- Verify ordinary no-script drawer opening, summary activation and actual destination navigation in the maintained phone/tablet/desktop journeys.
+
+### Merged pull requests
+
+#### 2026-10-08T17:24:44Z — [#191](https://github.com/bijux/bijux-std/pull/191) — feat\(governance\): validate repository pull request change records
 
 Validate exact PR change records and generate a reproducible history without replacing existing release notes.
 
 - Add the offline standard-library validator and shared mirror with managed ownership and meaningful negative controls.
 - Keep existing historical notes intact outside the generated section; workflow enforcement and the full historical import remain separate reviews.
-
-### Merged pull requests
 
 #### 2026-10-08T16:47:44Z — [#189](https://github.com/bijux/bijux-std/pull/189) — fix\(docs\): preserve accessible reader controls and literal input
 
