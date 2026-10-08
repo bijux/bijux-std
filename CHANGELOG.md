@@ -148,6 +148,20 @@ Package SBOM audits bind to candidate source rather than stale environment input
 - Bind selected package/version and project/lock/Make/helper inputs, export frozen offline closures and promote output only after audit and source rechecks.
 - Retain failed output for diagnosis; declared-input provenance does not authenticate an upstream repository or claim a real vulnerability-service scan.
 
+#### 2026-10-08T03:08:10Z — [#154](https://github.com/bijux/bijux-std/pull/154) — feat\(docs\): preserve authored configuration when projecting required assets
+
+Consumer configuration loads required shared assets without discarding authored settings.
+
+- Merge canonical CSS/script/plugin lists while preserving hooks, options and relative asset order; reject ambiguous plans before writing.
+- Offer read-only drift checks and retire only the exact obsolete eager Mermaid reference.
+
+#### 2026-10-08T01:11:00Z — [#151](https://github.com/bijux/bijux-std/pull/151) — fix\(docs\): preserve authored extensions during standard projection
+
+Documentation projection preserves consumer-authored extensions and file ownership.
+
+- Record generated ownership against accepted GitHub source and verify prior bytes before changing templates, assets or configuration.
+- Preserve clean authored overrides, ignored files, staged work and symlinks; retire only unchanged generated files and project nested content recursively.
+
 #### 2026-10-07T23:16:15Z — [#147](https://github.com/bijux/bijux-std/pull/147) — fix\(std\): verify exact source before preserving managed refresh
 
 Managed refresh verifies the exact requested source before changing consumer files.
@@ -234,6 +248,13 @@ Python delivery contracts make repository configuration and artifact ownership e
 
 - Centralize documentation and badge semantics and give Canon supported-Python and installed-family CI.
 - Declare the then-current 12-distribution installed and 11-distribution publication families and the verification-ready product gate.
+
+#### 2026-07-24T02:20:24Z — [#131](https://github.com/bijux/bijux-std/pull/131) — fix\(github\): honor consumer standards pins in CI
+
+Consumer CI checks the repository's selected standard commit.
+
+- Reject malformed pins before fetching and compare synchronized content against the checked-in SHA rather than an incidental standard revision.
+- Advance generated Python workflows to setup-uv 9.0.0.
 
 #### 2026-07-24T00:09:33Z — [#129](https://github.com/bijux/bijux-std/pull/129) — chore\(github\): refresh PyPI publisher runtime pin
 
@@ -327,6 +348,12 @@ Common and Rust Make libraries provide capability-selected repository automation
 - Add governed environment, guards, entrypoints, pinned gates and Cargo format/lint/test/security/coverage/docs surfaces.
 - Synchronize only selected language capabilities and preserve existing Python behavior and consumer Make graphs.
 
+#### 2026-07-18T19:54:07Z — [#110](https://github.com/bijux/bijux-std/pull/110) — fix\(standards\): register bijux-gnss and enable publication
+
+GNSS uses its canonical managed identity and declared publication channels.
+
+- Resolve nonstandard checkout locations explicitly and configure GitHub, crates.io and GHCR delivery for its six crates while keeping PyPI disabled.
+
 #### 2026-07-08T23:47:09Z — [#109](https://github.com/bijux/bijux-std/pull/109) — fix\(github\): repair managed labels and shared workflow pins
 
 Managed dependency labels and setup-uv pins follow shared policy.
@@ -405,6 +432,12 @@ PR approval is explicitly controlled by the repository owner.
 
 - Require owner-self-signoff for bijux-authored PRs and an approving bijux review for other authors through a managed approval workflow.
 
+#### 2026-05-01T21:15:46Z — [#83](https://github.com/bijux/bijux-std/pull/83) — feat\(standards\): add bijux-phylogenetics repo manifest support
+
+Phylogenetics joins the managed repository catalog.
+
+- Generate its release, dependency-update and workflow-wrapper configuration through the standard build and synchronization paths.
+
 #### 2026-04-29T09:06:13Z — [#79](https://github.com/bijux/bijux-std/pull/79) — docs\(license\): align root licensing with mit metadata
 
 Root licensing files match the repository's MIT declaration.
@@ -425,6 +458,27 @@ The root README explains repository operations in direct language.
 
 - Retain the operational content while simplifying the repository narrative and top-level description.
 - Original GitHub merge b94662abad6607d25bae01f3ed9a7f2f1fffb383 is distinct from rewritten main-history delivery 6e1eb14b23d2aa938d3de1eb78579cf81d3fe6fd; the merge date is the verified GitHub date.
+
+#### 2026-04-28T10:16:13Z — [#75](https://github.com/bijux/bijux-std/pull/75) — fix\(github\): place telecom ci linux deps in compile jobs
+
+Telecom build dependencies are installed only in jobs that compile.
+
+- Keep formatting and security lanes free of unnecessary Linux package setup while preserving compile prerequisites.
+- Original GitHub merge 44a77e32edc759e92b95feb63b2988ff90f0ca59 is distinct from rewritten main-history delivery a5bec69c280d9f0ed80a82ee404c39db9797b6fe; the merge date is the verified GitHub date.
+
+#### 2026-04-28T10:12:10Z — [#74](https://github.com/bijux/bijux-std/pull/74) — fix\(github\): install telecom ci linux build deps
+
+Telecom CI installs the Linux headers needed by compile jobs.
+
+- Provide pkg-config, fontconfig and freetype dependencies through its managed workflow instead of consumer-specific patches.
+- Original GitHub merge e7ca7bc1cd60471d01b60cf0a79a7c8cf7cf1c15 is distinct from rewritten main-history delivery ae04582964e695194bcfe341fe0b3f640d769d8b; the merge date is the verified GitHub date.
+
+#### 2026-04-28T10:05:59Z — [#73](https://github.com/bijux/bijux-std/pull/73) — fix\(github\): restore telecom pr ci wrapper
+
+Telecom regains a governed PR CI wrapper for its native Rust lane.
+
+- Run the repository's ci-pr target on pull requests and main pushes using the shared standards definition.
+- Original GitHub merge 7468e2271e7bd211b0b1b7d98482c29cd4e939a8 is distinct from rewritten main-history delivery c5f7b4a3a8100450524f01168bd9d8ec5d95feee; the merge date is the verified GitHub date.
 
 #### 2026-04-28T09:20:47Z — [#72](https://github.com/bijux/bijux-std/pull/72) — fix\(docs\): normalize local shared manifest lookups
 
@@ -490,6 +544,20 @@ A local standards delivery queue is incorporated through the PR workflow.
 - The audited original API merge and historical rewritten ancestor have 32 matching changed-file postimages; that comparison does not identify the current main tip.
 - Original GitHub merge 53d969f919a09c4212702eb15f5ca8873ee04267 is not the rewritten historical ancestor 143a5ba41d69e432cb30e64894f9e5a01246f927 or the audited main tip.
 
+#### 2026-04-21T17:19:37Z — [#50](https://github.com/bijux/bijux-std/pull/50) — fix\(standards\): disable generated ci wrapper for telecom
+
+Telecom keeps policy workflows without an undefined generated CI wrapper.
+
+- Stop generating the CI wrapper until the repository exposes the required Make CI entrypoints.
+- Original GitHub merge 9208eca7639e3768cfa18ab3ac14a7ab994cd233 is distinct from rewritten main-history delivery fd895ee11fc55c36e99df8641e34c02241732095; the merge date is the verified GitHub date.
+
+#### 2026-04-21T17:16:37Z — [#49](https://github.com/bijux/bijux-std/pull/49) — fix\(standards\): remove telecom python-cache assumptions
+
+Telecom's generated CI and dependency policies omit nonexistent Python paths.
+
+- Remove pip cache assumptions and pip Dependabot directories that are absent from the Rust repository.
+- Original GitHub merge 01d55270518d321e15686dc676a3ca07842b7350 is distinct from rewritten main-history delivery ae3ba0fb9016fda4f5ed32cd6f2d903e6863e311; the merge date is the verified GitHub date.
+
 #### 2026-04-21T17:09:07Z — [#48](https://github.com/bijux/bijux-std/pull/48) — fix\(github\): restore shared checksum manifest format
 
 The governance checksum manifest has valid, verifiable entries.
@@ -497,12 +565,33 @@ The governance checksum manifest has valid, verifiable entries.
 - Restore the canonical managed file digests in sha256sum-compatible format.
 - Original GitHub merge 95842490b6a5d0e5d993e6f08b0e84987b76d0f4 is distinct from rewritten main-history delivery 7bc4d440e5dfb02f6ce5dbc6af0867095ca8c8f7; the merge date is the verified GitHub date.
 
+#### 2026-04-21T14:23:08Z — [#46](https://github.com/bijux/bijux-std/pull/46) — fix\(standards\): disable deploy-docs wrapper for bijux-genomics
+
+Genomics no longer receives an incompatible documentation deployment wrapper.
+
+- Remove deploy-docs from its allowlist while preserving the managed GitHub policy workflow.
+- Original GitHub merge 0a4b2d886dd646495b3805c19a2597d3b78d42d3 is distinct from rewritten main-history delivery b4cef70646de36b53fe2cdefd870f158923fbebb; the merge date is the verified GitHub date.
+
 #### 2026-04-21T14:03:27Z — [#45](https://github.com/bijux/bijux-std/pull/45) — chore\(github\): recognize bot author aliases in automerge
 
 Auto-merge recognizes the managed bot author aliases.
 
 - Treat the @dependabot\[bot\] and @github-actions\[bot\] forms consistently with the existing trusted-bot set.
 - Original GitHub merge caacc0fa75d845cbbfdd27ee47ec9c5007b23f10 is distinct from rewritten main-history delivery 7f7ec7da5d1e6b1b1466dcfaadc6ca8dcc97ec11; the merge date is the verified GitHub date.
+
+#### 2026-04-21T14:01:57Z — [#44](https://github.com/bijux/bijux-std/pull/44) — feat\(standards\): register bijux-genomics as managed consumer
+
+Genomics becomes a managed standards consumer.
+
+- Add its workflow allowlist, dependency-update policy and default synchronization target to the repository catalog.
+- Original GitHub merge 5b94a984fd7a481eeca95f8627cdd2adc3cabcb9 is distinct from rewritten main-history delivery 538de90a37e3e35e25bc1c887c20584f0ad89798; the merge date is the verified GitHub date.
+
+#### 2026-04-21T12:54:11Z — [#43](https://github.com/bijux/bijux-std/pull/43) — chore\(standards\): include bijux-telecom in manifest and sync targets
+
+Telecom is included in the managed repository and default synchronization catalogs.
+
+- Generate its standards metadata through the same manifest and synchronization tooling as existing consumers.
+- Original GitHub merge d59319f9fe61125505ed91b393b18f90eb00cfdd is distinct from rewritten main-history delivery af98f2182ab0bfd3ded3ba6b447cc21599ac7b92; the merge date is the verified GitHub date.
 
 #### 2026-04-21T10:10:45Z — [#41](https://github.com/bijux/bijux-std/pull/41) — fix\(github\): normalize dependabot schedule time format
 
@@ -639,6 +728,14 @@ Standards synchronization and auto-merge checks handle changing repository state
 - Match approvals to the current head and live PR state while handling stale workflow directories safely.
 - The original title has no scope; the fragment scope identifies editorial ownership without changing that historical title.
 - Original GitHub merge d66f87e3319765adb2de66e9102c3fdeee201aa1 is distinct from rewritten main-history delivery f4050194f723ed021cf7a25b632db3b31acd729f; the merge date is the verified GitHub date.
+
+#### 2026-04-18T22:52:52Z — [#3](https://github.com/bijux/bijux-std/pull/3) — fix: support .bijux-only consumer layout
+
+Consumers use the managed .bijux/shared layout consistently.
+
+- Prefer consumer shared paths, remove root-governance hash coupling and reject obsolete root shared directories during compliance checks.
+- The original title has no scope; the fragment scope identifies editorial ownership without changing that historical title.
+- Original GitHub merge 22c0efda72b7a2515b4775294aaad1096d9b0c2f is distinct from rewritten main-history delivery 2b60ba816693b39dc122a597bbf3f7a22d83dcb4; the merge date is the verified GitHub date.
 
 #### 2026-04-18T21:51:27Z — [#2](https://github.com/bijux/bijux-std/pull/2) — feat\(github\): add CODEOWNERS and align main PR gate for auto-merge
 

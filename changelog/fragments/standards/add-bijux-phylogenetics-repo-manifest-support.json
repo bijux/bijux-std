@@ -1,0 +1,14 @@
+{
+  "schema": 1,
+  "pr": 83,
+  "title": "feat(standards): add bijux-phylogenetics repo manifest support",
+  "type": "feat",
+  "scope": "standards",
+  "summary": "Phylogenetics joins the managed repository catalog.",
+  "details": [
+    "Generate its release, dependency-update and workflow-wrapper configuration through the standard build and synchronization paths."
+  ],
+  "status": "merged",
+  "merged_at": "2026-05-01T21:15:46Z",
+  "breaking": false
+}

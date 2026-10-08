@@ -1,0 +1,15 @@
+{
+  "schema": 1,
+  "pr": 50,
+  "title": "fix(standards): disable generated ci wrapper for telecom",
+  "type": "fix",
+  "scope": "standards",
+  "summary": "Telecom keeps policy workflows without an undefined generated CI wrapper.",
+  "details": [
+    "Stop generating the CI wrapper until the repository exposes the required Make CI entrypoints.",
+    "Original GitHub merge 9208eca7639e3768cfa18ab3ac14a7ab994cd233 is distinct from rewritten main-history delivery fd895ee11fc55c36e99df8641e34c02241732095; the merge date is the verified GitHub date."
+  ],
+  "status": "merged",
+  "merged_at": "2026-04-21T17:19:37Z",
+  "breaking": false
+}
