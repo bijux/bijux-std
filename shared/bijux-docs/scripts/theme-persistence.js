@@ -11,7 +11,8 @@
 
   function safeGetGlobalTheme(themeKey) {
     try {
-      return localStorage.getItem(themeKey);
+      const raw = localStorage.getItem(themeKey);
+      return raw && raw.length <= 2048 ? raw : null;
     } catch (error) {
       return null;
     }
@@ -169,7 +170,7 @@
 
     if (typeof window.__md_set === "function") {
       // Material restores its native palette by indexing the current option list.
-      window.__md_set(MD_PALETTE_KEY, { index, color });
+      try { window.__md_set(MD_PALETTE_KEY, { index, color }); } catch (_) {}
     }
   }
 
@@ -207,7 +208,8 @@
     const scrollBeforeThemeChange = captureScrollPosition();
 
     option.checked = true;
-    applyThemeAttributes(option);
+    const effective = modeFromOption(option) === "auto" ? optionByMode(window.matchMedia?.("(prefers-color-scheme: dark)").matches ? "dark" : "light") || option : option;
+    applyThemeAttributes(effective);
     writeMaterialPalette(option, index);
 
     if (persistGlobal) {
@@ -224,8 +226,7 @@
       })
     );
 
-    // Keep the user anchored to the same viewport position while the page
-    // restyles and any theme listeners (for example Mermaid) rerender.
+    // Keep the reader anchored while the palette and theme subscribers restyle.
     restoreScrollPosition(scrollBeforeThemeChange);
     requestAnimationFrame(() => restoreScrollPosition(scrollBeforeThemeChange));
     setTimeout(() => restoreScrollPosition(scrollBeforeThemeChange), 80);
@@ -253,18 +254,18 @@
   }
 
   function parseStoredChoice(rawValue) {
-    if (!rawValue) {
+    if (!rawValue || rawValue.length > 2048) {
       return null;
     }
 
     try {
       const parsed = JSON.parse(rawValue);
-      if (!parsed || typeof parsed !== "object") {
+      if (!parsed || typeof parsed !== "object" || parsed.version !== 2 || !["auto", "light", "dark"].includes(parsed.mode)) {
         return null;
       }
       return parsed;
     } catch (error) {
-      return { version: 1, scheme: rawValue };
+      return ["slate", "default"].includes(rawValue) ? { version: 1, scheme: rawValue } : null;
     }
   }
 
@@ -344,8 +345,8 @@
         if (!targetOption) {
           return;
         }
-        applyOption(themeKey, targetOption, true);
-        refreshThemeToggleButtons();
+        targetOption.checked = true;
+        targetOption.dispatchEvent(new Event("change", { bubbles: true }));
       });
     }
   }
@@ -391,5 +392,7 @@
     refreshThemeToggleButtons();
   }
 
-  document$.subscribe(init);
+  if (window.document$ && typeof window.document$.subscribe === "function") window.document$.subscribe(init);
+  else if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", init, { once: true });
+  else init();
 })();

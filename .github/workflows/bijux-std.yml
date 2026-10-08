@@ -128,7 +128,7 @@ jobs:
           git config --global --add safe.directory "$GITHUB_WORKSPACE"
           # Firefox requires the ephemeral container home to belong to its process user.
           chown "$(id -u):$(id -g)" "$HOME"
-          make UI_TESTS_PLAYWRIGHT_BROWSERS_DIR=/ms-playwright ui-test-navigation
+          make UI_TESTS_PLAYWRIGHT_BROWSERS_DIR=/ms-playwright ui-test-navigation ui-test-preferences
 
       - name: Retain navigation qualification
         if: always()
@@ -141,5 +141,6 @@ jobs:
             artifacts/bijux-docs/generated/site
             artifacts/bijux-docs/playwright
             artifacts/bijux-docs/drawer-playwright
+            artifacts/bijux-docs/preferences-playwright
           if-no-files-found: warn
           retention-days: 14

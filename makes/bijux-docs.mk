@@ -70,3 +70,7 @@ ui-test-release-gate: ui-test ## Required generated browser, responsive and runt
 .PHONY: ui-test-live-navigation
 ui-test-live-navigation: ui-test-prepare-runtime ## Run ordinary read-only published journeys with BIJUX_LIVE_E2E=1
 	@BIJUX_LIVE_E2E="$${BIJUX_LIVE_E2E:-0}" NPM_CONFIG_CACHE="$(abspath $(UI_TESTS_NPM_CACHE_DIR))" PLAYWRIGHT_BROWSERS_PATH="$(abspath $(UI_TESTS_PLAYWRIGHT_BROWSERS_DIR))" BIJUX_UI_FULL_GATE=1 npm --prefix "$(UI_TESTS_RUNTIME_DIR)" exec -- playwright test --config "$(UI_TESTS_DIR)/playwright.live.config.js"
+
+.PHONY: ui-test-preferences
+ui-test-preferences: ui-test-prepare-runtime ui-test-fixtures ui-test-unit ## Qualify storage failure and palette recovery in three phone engines
+	@NPM_CONFIG_CACHE="$(abspath $(UI_TESTS_NPM_CACHE_DIR))" PLAYWRIGHT_BROWSERS_PATH="$(abspath $(UI_TESTS_PLAYWRIGHT_BROWSERS_DIR))" BIJUX_UI_ARTIFACT_ROOT="$(abspath $(BIJUX_DOCS_ARTIFACTS_DIR))/preferences-playwright" BIJUX_UI_FULL_GATE=1 npm --prefix "$(UI_TESTS_RUNTIME_DIR)" exec -- playwright test --config "$(UI_TESTS_DIR)/playwright.preferences.config.js"
