@@ -52,6 +52,35 @@
   padding: 0;
 }
 
+/* A search backdrop covers the viewport without enlarging document geometry.
+   Material's scaled mobile circle and double-height desktop plane otherwise
+   escape the viewport before its asynchronous scroll lock takes effect. */
+[data-md-toggle="search"] ~ .md-header .md-search__overlay {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100vh;
+  height: 100dvh;
+  border-radius: 0;
+  transform: none;
+  visibility: hidden;
+  transition: opacity 0.2s;
+}
+
+[data-md-toggle="search"]:checked ~ .md-header .md-search__overlay {
+  width: 100%;
+  height: 100vh;
+  height: 100dvh;
+  transform: none;
+  visibility: visible;
+  transition: opacity 0.2s;
+}
+
+/* Full-width mobile results fade in without sliding outside their viewport. */
+@media screen and (max-width: 59.984375em) {
+  .md-header .md-search__inner { transform: none; }
+}
+
 /* An enhanced owned header has one modal Search invoker at every width.
    Native Material headers retain their independently owned inline desktop field. */
 body[data-bijux-drawer-ready="true"] #__search:not(:checked) ~ header[data-bijux-drawer-target] .md-search {

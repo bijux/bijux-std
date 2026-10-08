@@ -145,3 +145,5 @@ case identities. Explicit shards cannot independently claim complete matrix
 qualification. Ordinary `--project` diagnosis still fails the complete gate
 when another required project is absent. Existing local Make targets remain
 available for complete or focused diagnosis.
+
+Native search reflow qualification observes opening and closing geometry across phone, tablet and desktop boundaries, including real JavaScript-disabled navigation. Each size group has an independent bounded job in every engine.

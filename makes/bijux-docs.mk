@@ -103,3 +103,15 @@ ui-test-contrast: ui-test-prepare-runtime ## Qualify shared text, focus and hit 
 .PHONY: ui-test-search-invoker
 ui-test-search-invoker: ui-test-prepare-runtime ui-test-fixtures ui-test-unit ## Qualify modal and native inline search invocation, keyboard defaults and header reachability
 	@NPM_CONFIG_CACHE="$(abspath $(UI_TESTS_NPM_CACHE_DIR))" PLAYWRIGHT_BROWSERS_PATH="$(abspath $(UI_TESTS_PLAYWRIGHT_BROWSERS_DIR))" BIJUX_UI_ARTIFACT_ROOT="$(abspath $(BIJUX_DOCS_ARTIFACTS_DIR))/search-invoker-playwright" BIJUX_UI_FULL_GATE=1 npm --prefix "$(UI_TESTS_RUNTIME_DIR)" exec -- playwright test --config "$(UI_TESTS_DIR)/playwright.search-invoker.config.js"
+
+.PHONY: ui-test-search-reflow-phone
+ui-test-search-reflow-phone: ui-test-prepare-runtime ui-test-fixtures ui-test-unit ## Qualify search reflow phone through ordinary generated Material journeys
+	@NPM_CONFIG_CACHE="$(abspath $(UI_TESTS_NPM_CACHE_DIR))" PLAYWRIGHT_BROWSERS_PATH="$(abspath $(UI_TESTS_PLAYWRIGHT_BROWSERS_DIR))" BIJUX_UI_ARTIFACT_ROOT="$(abspath $(BIJUX_DOCS_ARTIFACTS_DIR))/search-reflow-phone-playwright" BIJUX_UI_FULL_GATE=1 npm --prefix "$(UI_TESTS_RUNTIME_DIR)" exec -- playwright test --config "$(UI_TESTS_DIR)/playwright.search-reflow-phone.config.js"
+
+.PHONY: ui-test-search-reflow-tablet
+ui-test-search-reflow-tablet: ui-test-prepare-runtime ui-test-fixtures ui-test-unit ## Qualify search reflow tablet through ordinary generated Material journeys
+	@NPM_CONFIG_CACHE="$(abspath $(UI_TESTS_NPM_CACHE_DIR))" PLAYWRIGHT_BROWSERS_PATH="$(abspath $(UI_TESTS_PLAYWRIGHT_BROWSERS_DIR))" BIJUX_UI_ARTIFACT_ROOT="$(abspath $(BIJUX_DOCS_ARTIFACTS_DIR))/search-reflow-tablet-playwright" BIJUX_UI_FULL_GATE=1 npm --prefix "$(UI_TESTS_RUNTIME_DIR)" exec -- playwright test --config "$(UI_TESTS_DIR)/playwright.search-reflow-tablet.config.js"
+
+.PHONY: ui-test-search-reflow-desktop
+ui-test-search-reflow-desktop: ui-test-prepare-runtime ui-test-fixtures ui-test-unit ## Qualify search reflow desktop through ordinary generated Material journeys
+	@NPM_CONFIG_CACHE="$(abspath $(UI_TESTS_NPM_CACHE_DIR))" PLAYWRIGHT_BROWSERS_PATH="$(abspath $(UI_TESTS_PLAYWRIGHT_BROWSERS_DIR))" BIJUX_UI_ARTIFACT_ROOT="$(abspath $(BIJUX_DOCS_ARTIFACTS_DIR))/search-reflow-desktop-playwright" BIJUX_UI_FULL_GATE=1 npm --prefix "$(UI_TESTS_RUNTIME_DIR)" exec -- playwright test --config "$(UI_TESTS_DIR)/playwright.search-reflow-desktop.config.js"
