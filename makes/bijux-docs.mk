@@ -122,3 +122,7 @@ ui-test-popup-relationships: ui-test-prepare-runtime ui-test-fixtures ui-test-un
 .PHONY: ui-test-search-scope
 ui-test-search-scope: ui-test-prepare-runtime ui-test-fixtures ui-test-unit ## Qualify site-local native search descriptions and reader journeys
 	@NPM_CONFIG_CACHE="$(abspath $(UI_TESTS_NPM_CACHE_DIR))" PLAYWRIGHT_BROWSERS_PATH="$(abspath $(UI_TESTS_PLAYWRIGHT_BROWSERS_DIR))" BIJUX_UI_ARTIFACT_ROOT="$(abspath $(BIJUX_DOCS_ARTIFACTS_DIR))/search-scope-playwright" BIJUX_UI_FULL_GATE=1 npm --prefix "$(UI_TESTS_RUNTIME_DIR)" exec -- playwright test --config "$(UI_TESTS_DIR)/playwright.search-scope.config.js"
+
+.PHONY: ui-test-reader-accessibility
+ui-test-reader-accessibility: ui-test-prepare-runtime ui-test-fixtures ui-test-unit ## Qualify keyboard drawer and reader focus journeys
+	@NPM_CONFIG_CACHE="$(abspath $(UI_TESTS_NPM_CACHE_DIR))" PLAYWRIGHT_BROWSERS_PATH="$(abspath $(UI_TESTS_PLAYWRIGHT_BROWSERS_DIR))" BIJUX_UI_ARTIFACT_ROOT="$(abspath $(BIJUX_DOCS_ARTIFACTS_DIR))/reader-accessibility-playwright" BIJUX_UI_FULL_GATE=1 npm --prefix "$(UI_TESTS_RUNTIME_DIR)" exec -- playwright test --config "$(UI_TESTS_DIR)/playwright.reader-accessibility.config.js"

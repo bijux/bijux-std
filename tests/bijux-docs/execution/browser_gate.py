@@ -25,6 +25,7 @@ GROUPS = {
     'history': ('history',),
     'semantics': ('popup-relationships',),
     'search-scope': ('search-scope',),
+    'reader-accessibility': ('reader-accessibility',),
 }
 ENGINES = ('chromium', 'firefox', 'webkit')
 SUITES = tuple(suite for group in GROUPS.values() for suite in group)
