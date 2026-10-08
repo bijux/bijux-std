@@ -13,14 +13,14 @@ Keep the complete sidebar as the visible local navigation when duplicate context
 - Preserve the closed compact header and native Material fallback; opening the native compact drawer exposes one local navigation surface.
 - Verify ordinary keyboard reading routes, Back and no-script navigation in the maintained browser matrix.
 
-#### [#212](https://github.com/bijux/bijux-std/pull/212) — fix(docs): expose one site registry and isolate modal navigation
+### Merged pull requests
+
+#### 2026-10-08T22:58:03Z — [#212](https://github.com/bijux/bijux-std/pull/212) — fix(docs): expose one site registry and isolate modal navigation
 
 Use one owned desktop site registry and keep compact modal navigation isolated.
 
 - Preserve native Material navigation and restore header inert state on close, resize and disposal.
 - Test every nine-site and eleven-entry growth destination; bind retained-document focus checks to actual document identity.
-
-### Merged pull requests
 
 #### 2026-10-08T22:39:40Z — [#215](https://github.com/bijux/bijux-std/pull/215) — ci(docs): partition browser execution by viewport ownership
 
