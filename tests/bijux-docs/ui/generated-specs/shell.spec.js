@@ -1,3 +1,6 @@
+const fs = require("node:fs");
+const path = require("node:path");
+const registry = JSON.parse(fs.readFileSync(path.resolve(__dirname, "../../../../shared/bijux-docs/config/hub-links.json"), "utf8"));
 const { test, expect } = require("@playwright/test");
 test.beforeEach(async ({ browser }, testInfo) => {
   testInfo.annotations.push({ type: "browser-version", description: browser.version() });
@@ -19,6 +22,67 @@ async function openDrawer(page) {
   await expect(page.locator("#__drawer")).toBeChecked();
   await expect(exposedLinks(page).first()).toBeInViewport();
 }
+async function registryDestination(page, link, expected) {
+  await expect(link).toHaveCount(1);
+  await expect(link).toHaveAccessibleName(expected.label);
+  expect(await link.evaluate(node => node.href)).toBe(expected.url);
+  await link.hover();
+  const target = await link.evaluate(node => {
+    const rect = node.getBoundingClientRect();
+    const hit = document.elementFromPoint(rect.x + rect.width / 2, rect.y + rect.height / 2);
+    return { width: rect.width, height: rect.height, owned: hit === node || node.contains(hit),
+      fit: rect.left >= 0 && rect.right <= innerWidth + 1 && rect.top >= 0 && rect.bottom <= innerHeight + 1,
+      labelFit: node.scrollWidth <= node.clientWidth && node.scrollHeight <= node.clientHeight };
+  });
+  expect(target.height).toBeGreaterThanOrEqual(44);
+  expect(target.width).toBeGreaterThanOrEqual(44);
+  expect(target.owned).toBe(true);
+  expect(target.fit).toBe(true);
+  expect(target.labelFit).toBe(true);
+  expect(await page.evaluate(() => document.documentElement.scrollWidth - innerWidth)).toBeLessThanOrEqual(1);
+  const previousDocument = await page.evaluateHandle(() => document);
+  const documentRequests = [];
+  let retainedDocument;
+  const observeDocument = request => {
+    if (request.isNavigationRequest() && request.frame() === page.mainFrame()) documentRequests.push(request.url());
+  };
+  page.on("request", observeDocument);
+  try {
+    await link.click();
+    await expect(page).toHaveURL(expected.url);
+    await expect(page.locator("main h1")).toHaveText(expected.heading);
+    try {
+      retainedDocument = await previousDocument.evaluate(original => original === document);
+    } catch (error) {
+      // Only a destroyed former context and a genuine completed document load
+      // establish native navigation; an attempted or aborted request does not.
+      if (!documentRequests.length || !/Execution context was destroyed|JSHandles can be evaluated only in the context|Execution context is not available|Cannot find context/.test(error.message)) throw error;
+      await page.waitForLoadState("domcontentloaded");
+      retainedDocument = false;
+    }
+  } finally {
+    page.off("request", observeDocument);
+    await previousDocument.dispose();
+  }
+  await expect(page.locator("main h1")).toHaveText(expected.heading);
+  // Cross-site registry links may use a native document navigation. Retained
+  // document reading journeys own H1 focus; native navigation owns page context.
+  if (retainedDocument) await expect(page.locator("main h1")).toBeFocused();
+  await expect(page).toHaveTitle(expected.title);
+  expect(await page.evaluate(() => document.activeElement.isConnected)).toBe(true);
+  await expect(page.locator("#__drawer")).not.toBeChecked();
+  await expect(page.locator(".md-content")).toHaveJSProperty("inert", false);
+  await openDrawer(page);
+  const current = drawer(page).locator(".bijux-mobile-hub__link[aria-current='location']");
+  await expect(current).toHaveCount(1);
+  expect(await current.evaluate(node => node.href)).toBe(expected.currentURL || expected.url);
+  const incorrect = await drawer(page).locator("a[aria-current='page']").evaluateAll(nodes =>
+    nodes.filter(node => node.getClientRects().length && new URL(node.href).pathname !== location.pathname)
+      .map(node => ({ name: node.textContent.trim(), href: node.href })));
+  expect(incorrect).toEqual([]);
+  await page.keyboard.press("Escape");
+  await expect(control(page, "drawer")).toBeFocused();
+}
 test("inactive navigation strips remain absent at every responsive boundary", async ({ page }) => {
   for (const width of [320, 767, 768, 820, 1024, 1219, 1220, 1440]) {
     await page.setViewportSize({ width, height: 900 });
@@ -29,6 +93,17 @@ test("inactive navigation strips remain absent at every responsive boundary", as
     expect(painted, `Hidden navigation painted at ${width}px`).toBe(0);
     const height = await page.locator("header").first().evaluate((node) => node.getBoundingClientRect().height);
     expect(height, `Masthead height at ${width}px`).toBeLessThanOrEqual(width < 768 ? 72 : width < 1220 ? 112 : 160);
+    if (width >= 1220) {
+      await expect(page.locator("header .bijux-hub-strip")).toBeVisible();
+      await expect(page.locator(".md-sidebar--primary .bijux-site-registry")).toBeHidden();
+    } else {
+      await openDrawer(page);
+      const tabs = page.locator("header .bijux-site-tabs");
+      await expect(tabs).toHaveJSProperty("inert", true);
+      await page.keyboard.press("Escape");
+      await expect(tabs).toHaveJSProperty("inert", false);
+      await expect(control(page, "drawer")).toBeFocused();
+    }
   }
 });
 test("phone brand and visually hidden helper text preserve useful space", async ({ page }) => {
@@ -93,14 +168,20 @@ test("parent overview remains a real navigation destination", async ({ page }) =
   await expect(page).toHaveURL(/\/platform\/$/);
   await expect(page.locator("h1")).toHaveText(/^Platform overview(?:¶)?$/);
 });
-test("all nine shared site destinations are reachable from phone drawer", async ({ page }) => {
-  await phone(page);
-  await openDrawer(page);
-  const sites = drawer(page).locator(".bijux-mobile-hub__link:visible");
-  await expect(sites).toHaveCount(9);
-  await sites.filter({ hasText: /^Core$/ }).click();
-  await expect(page).toHaveURL(/\/bijux-core\/$/);
-  await expect(page.locator("h1")).toHaveText(/^Product overview(?:¶)?$/);
+test("all nine shared site destinations are reachable from phone drawer", async ({ page }, info) => {
+  expect(registry).toHaveLength(9);
+  for (const destination of registry) {
+    await phone(page);
+    await openDrawer(page);
+    await expect(drawer(page).locator(".bijux-mobile-hub__link:visible")).toHaveCount(9);
+    const route = destination.key === "bijux" ? "/" : `/${destination.key}/`;
+    await registryDestination(page, drawer(page).locator(".bijux-site-registry").getByRole("link", { name: destination.label, exact: true }), {
+      label: destination.label,
+      url: new URL(route, info.project.use.baseURL).href,
+      heading: destination.key === "bijux" ? /^Bijux reference(?:¶)?$/ : /^Product overview(?:¶)?$/,
+      title: destination.key === "bijux" ? "Bijux" : destination.key,
+    });
+  }
 });
 test("deep documents have truthful current page state", async ({ page }) => {
   await ready(page, "/bijux-core/platform/details/leaf/");
@@ -143,12 +224,30 @@ test("rich content renders actual Material enhancements", async ({ page }) => {
   await expect(page.locator("table")).toContainText("Measurement");
   expect(errors).toEqual([]);
 });
-test("empty and expanded-registry fixtures retain useful navigation", async ({ page }) => {
+test("empty and expanded-registry fixtures retain useful navigation", async ({ page }, info) => {
   for (const route of ["/fixtures/empty/", "/fixtures/long-registry/"]) {
     await phone(page, route);
     await openDrawer(page);
     expect(await exposedLinks(page).count()).toBeGreaterThan(1);
     expect(await page.evaluate(() => document.documentElement.scrollWidth - innerWidth)).toBeLessThanOrEqual(1);
+  }
+  const expected = registry.map(entry => {
+    const route = entry.key === "bijux" ? "/" : `/${entry.key}/`;
+    const label = entry.label + " scientific platform";
+    expect(label.length).toBeGreaterThanOrEqual(entry.label.length * 1.5);
+    return { label, url: new URL(route, info.project.use.baseURL).href, title: entry.key === "bijux" ? "Bijux" : entry.key,
+      heading: entry.key === "bijux" ? /^Bijux reference(?:¶)?$/ : /^Product overview(?:¶)?$/ };
+  }).concat([
+    { label: "Reference extension", url: new URL("/fixtures/empty/", info.project.use.baseURL).href,
+      currentURL: new URL("/bijux-core/", info.project.use.baseURL).href, title: "bijux-core", heading: /^Product overview(?:¶)?$/ },
+    { label: "Research extension", url: new URL("/reading/", info.project.use.baseURL).href,
+      currentURL: new URL("/", info.project.use.baseURL).href, title: "Reading reference - Bijux", heading: /^Rich reading reference(?:¶)?$/ },
+  ]);
+  for (const entry of expected) {
+    await phone(page, "/fixtures/long-registry/");
+    await openDrawer(page);
+    await expect(drawer(page).locator(".bijux-mobile-hub__link:visible")).toHaveCount(11);
+    await registryDestination(page, drawer(page).locator(".bijux-site-registry").getByRole("link", { name: entry.label, exact: true }), entry);
   }
 });
 test("no-script generated document retains ordinary destination links", async ({ browser }, info) => {

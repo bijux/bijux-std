@@ -6,6 +6,13 @@ This file records notable repository-level changes for `bijux-std`.
 
 ### Pending review
 
+#### [#219](https://github.com/bijux/bijux-std/pull/219) — fix(docs): restore fragments without redundant native navigation
+
+Keep browser Back from resurrecting the fragment a reader just left.
+
+- Restore only the current history entry through the uniquely admitted Material helper, preserving native target reveal and sequential focus.
+- Bind the readable helper, generated runtime and exact boundary in source-derived provenance; retain race failures and native-semantics comparisons.
+
 #### [#213](https://github.com/bijux/bijux-std/pull/213) — fix(docs): adopt exact source-bound legacy script defaults
 
 Refresh the complete previous canonical script list from its committed accepted standard source.
@@ -14,6 +21,13 @@ Refresh the complete previous canonical script list from its committed accepted 
 - Resolve prior ownership from the exact official GitHub authority only when an order conflict needs it.
 
 ### Merged pull requests
+
+#### 2026-10-08T22:58:03Z — [#212](https://github.com/bijux/bijux-std/pull/212) — fix(docs): expose one site registry and isolate modal navigation
+
+Use one owned desktop site registry and keep compact modal navigation isolated.
+
+- Preserve native Material navigation and restore header inert state on close, resize and disposal.
+- Test every nine-site and eleven-entry growth destination; bind retained-document focus checks to actual document identity.
 
 #### 2026-10-08T22:39:40Z — [#215](https://github.com/bijux/bijux-std/pull/215) — ci(docs): partition browser execution by viewport ownership
 

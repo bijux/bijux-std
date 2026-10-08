@@ -47,6 +47,11 @@
   .md-grid {
     max-width: min(calc(100vw - 3rem), var(--bijux-shell-width));
   }
+  /* An owned visible desktop registry is the sole global-site presentation.
+     Native Material headers retain the complete sidebar registry. */
+  body:has(> header[data-bijux-drawer-target] .bijux-hub-strip:not([hidden]))
+    .md-sidebar--primary .bijux-site-registry { display: none; }
+
   .md-header__title { display: none; }
   .md-header__button[data-bijux-header-control="drawer-toggle"],
   .bijux-drawer-close { display: none; }
