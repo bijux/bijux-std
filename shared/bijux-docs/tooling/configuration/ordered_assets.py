@@ -7,6 +7,7 @@ allowed to change execution order or attribute ownership.
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from dataclasses import dataclass
 import json
 from pathlib import Path
@@ -104,7 +105,7 @@ def entries(lines: list[str], start: int, end: int, source: Path, field: str) ->
     return prefix, result, indent
 
 
-def ordered_list(content: str, field: str, required: list[str], source: Path, *, create: bool, retired: tuple[str, ...] = ()) -> str:
+def ordered_list(content: str, field: str, required: list[str], source: Path, *, create: bool, retired: tuple[str, ...] = (), prior_javascript: Callable[[], tuple[str, ...] | None] | None = None) -> str:
     """Insert missing owned entries; retain every authored item and relative order.
 
     A missing entry is inserted immediately before its next present owned peer,
@@ -130,6 +131,19 @@ def ordered_list(content: str, field: str, required: list[str], source: Path, *,
     if len(set(owned)) != len(owned):
         raise RuntimeError(f'{source}: {field}: duplicate canonical entry')
     if owned != [name for name in required if name in owned]:
+        if field == 'extra_javascript' and prior_javascript is not None:
+            previous = prior_javascript()
+            if previous is not None:
+                plain = ''.join('  - ' + name + '\n' for name in previous)
+                body = ''.join(lines[start + 1:end])
+                trailing = body[len(plain):] if body.startswith(plain) else None
+                # Only the complete literal prior default is managed adoption.
+                # Comments, custom entries and attribute-bearing scripts retain author ownership.
+                if (lines[start] == 'extra_javascript:\n' and names == list(previous)
+                        and trailing is not None and not trailing.strip('\n')
+                        and not any(entry.mapping for entry in values)):
+                    replacement = lines[start] + ''.join('  - ' + name + '\n' for name in required) + trailing
+                    return ''.join(lines[:start]) + replacement + ''.join(lines[end:])
         raise RuntimeError(f'{source}: {field}: canonical order conflicts with existing entries; review authored execution order')
     for entry in values:
         if entry.name in (*required, *retired) and field == 'extra_javascript' and entry.mapping:
@@ -156,7 +170,7 @@ def ordered_list(content: str, field: str, required: list[str], source: Path, *,
     return ''.join(lines[:start]) + replacement + ''.join(lines[end:])
 
 
-def project_required_lists(content: str, baseline: dict, source: Path, *, shared: bool) -> str:
+def project_required_lists(content: str, baseline: dict, source: Path, *, shared: bool, prior_javascript: Callable[[], tuple[str, ...] | None] | None = None) -> str:
     if not shared:
         lines = content.splitlines(keepends=True)
         bounds = field_bounds(lines, 'INHERIT', source)
@@ -167,7 +181,7 @@ def project_required_lists(content: str, baseline: dict, source: Path, *, shared
         raise RuntimeError('Canonical retired_extra_javascript policy must contain unique exact paths')
     for field in ('extra_css', 'extra_javascript', 'plugins'):
         required = baseline['required_plugins'] if field == 'plugins' else baseline[field]
-        content = ordered_list(content, field, required, source, create=shared, retired=tuple(policy) if field == 'extra_javascript' else ())
+        content = ordered_list(content, field, required, source, create=shared, retired=tuple(policy) if field == 'extra_javascript' else (), prior_javascript=prior_javascript if shared else None)
     return content
 
 

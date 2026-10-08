@@ -11,6 +11,7 @@ import sys
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from configuration.ordered_assets import project_required_lists
 from configuration.branding import project_theme_logo
+from configuration.prior_assets import prior_javascript
 
 
 def load_hub_links(shared_root: Path) -> list[dict[str, str]]:
@@ -239,7 +240,8 @@ def plan_configs(repo_root: Path, shared_root: Path) -> dict[Path, tuple[str, st
             original = stream.read()
         shared = name == "mkdocs.shared.yml"
         updated = project_theme_logo(original, baseline, path)
-        updated = project_required_lists(updated, baseline, path, shared=shared)
+        updated = project_required_lists(updated, baseline, path, shared=shared,
+                                         prior_javascript=lambda: prior_javascript(repo_root, shared_root))
         updated = shared_hub_content(updated, path, links) if shared else root_hub_content(updated, path)
         updated = diagram_content(updated)
         updated = implementation_exclusions(updated, required, path)
