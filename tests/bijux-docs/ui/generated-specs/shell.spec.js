@@ -151,15 +151,29 @@ test("empty and expanded-registry fixtures retain useful navigation", async ({ p
     expect(await page.evaluate(() => document.documentElement.scrollWidth - innerWidth)).toBeLessThanOrEqual(1);
   }
 });
-test("no-script generated document retains ordinary destination links", async ({ browser }) => {
+test("no-script generated document retains ordinary destination links", async ({ browser }, info) => {
   const context = await browser.newContext({ javaScriptEnabled: false, viewport: { width: 390, height: 844 } });
-  const page = await context.newPage();
-  await page.goto("http://127.0.0.1:4173/");
-  await control(page, "drawer").click();
-  await expect(page.locator("#__drawer")).toBeChecked();
-  await expect(exposedLinks(page).first()).toBeInViewport();
-  expect(await exposedLinks(page).count()).toBeGreaterThan(1);
-  await context.close();
+  try {
+    const page = await context.newPage();
+    await page.goto(new URL("/", info.project.use.baseURL).href);
+    const toggle = page.getByRole("checkbox", { name: "Navigation", exact: true });
+    await expect(toggle).toBeVisible();
+    await toggle.click();
+    await expect(toggle).toBeChecked();
+    await expect(exposedLinks(page).first()).toBeInViewport();
+    expect(await exposedLinks(page).count()).toBeGreaterThan(1);
+    const geometry = await drawer(page).evaluate(node => {
+      const bounds = node.getBoundingClientRect();
+      return { position: getComputedStyle(node).position, left: bounds.left, right: bounds.right,
+        width: innerWidth, documentWidth: document.documentElement.scrollWidth };
+    });
+    expect(geometry.position).toBe("static");
+    expect(geometry.left).toBeGreaterThanOrEqual(-1);
+    expect(geometry.right).toBeLessThanOrEqual(geometry.width + 1);
+    expect(geometry.documentWidth).toBeLessThanOrEqual(geometry.width + 1);
+  } finally {
+    await context.close();
+  }
 });
 
 test("disclosure keyboard changes expansion without swallowing overview navigation", async ({ page }) => {

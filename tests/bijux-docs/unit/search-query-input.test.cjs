@@ -13,6 +13,7 @@ function nativeHeader() {
   input.form = form;
   input.addEventListener('keyup', event => values.push({value: input.value, key: event.key}));
   // The source-default header deliberately has no Bijux custom control selectors.
+  document.body = {dataset: {}};
   document.getElementById = () => null;
   document.querySelectorAll = () => [];
   document.querySelector = selector => selector === "[data-md-component='search-query']" ? input : null;
@@ -28,7 +29,7 @@ function nativeHeader() {
 }
 
 test('native header paste/input reaches the unchanged Material keyup observer without custom chrome', () => {
-  const f = nativeHeader(); f.bind(); f.input.value = 'resilient navigation'; f.input.dispatchEvent(new Event('input'));
+  const f = nativeHeader(); f.bind(); assert.equal(f.document.body.dataset.bijuxDrawerReady, undefined); f.input.value = 'resilient navigation'; f.input.dispatchEvent(new Event('input'));
   assert.deepEqual(f.values, [{value: 'resilient navigation', key: 'Unidentified'}]);
 });
 

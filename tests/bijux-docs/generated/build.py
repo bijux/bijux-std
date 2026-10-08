@@ -54,7 +54,7 @@ def write_page(docs: Path, relative: str, title: str, body: str = "") -> None:
 
 
 def content(docs: Path, scenario: str) -> list[dict]:
-    write_page(docs, "index.md", "Bijux reference" if scenario == "hub" else "Product overview")
+    write_page(docs, "index.md", "Bijux reference" if scenario in {"hub", "rtl"} else "Product overview")
     if scenario == "empty":
         return [{"Home": "index.md"}]
     nav = [{"Home": "index.md"}]
@@ -176,7 +176,7 @@ def build(shared: Path, output: Path, base_url: str) -> None:
     entries = raw_registry if isinstance(raw_registry, list) else raw_registry["hub_links"]
     registry = [{**entry, "url": base_url.rstrip("/") + ("/" if entry["key"] == "bijux" else f"/{entry['key']}/")} for entry in entries]
     scenarios = [(entry["key"], "/" if entry["key"] == "bijux" else f"/{entry['key']}/", "hub" if entry["key"] == "bijux" else "project") for entry in entries]
-    scenarios += [("bijux-core", "/fixtures/empty/", "empty"), ("bijux-core", "/fixtures/long-registry/", "long"), ("bijux-core", "/fixtures/native-header/", "native-header")]
+    scenarios += [("bijux-core", "/fixtures/empty/", "empty"), ("bijux-core", "/fixtures/long-registry/", "long"), ("bijux-core", "/fixtures/native-header/", "native-header"), ("bijux", "/fixtures/rtl/", "rtl")]
     output.mkdir(parents=True, exist_ok=True)
     site_root = output / "site"
     if site_root.exists():
@@ -209,6 +209,8 @@ def build(shared: Path, output: Path, base_url: str) -> None:
         if scenario == "long":
             scenario_registry = [{**entry, "label": entry["label"] + " scientific platform"} for entry in registry] + [{"key": "bijux-reference", "label": "Reference extension", "url": base_url + "/fixtures/empty/"}, {"key": "bijux-research", "label": "Research extension", "url": base_url + "/reading/"}]
         cfg = config(baseline, scenario_registry, identity, docs, work / "site", base_url, route, scenario)
+        if scenario == "rtl":
+            cfg["theme"]["direction"] = "rtl"
         cfg_path = work / "mkdocs.yml"
         cfg_path.write_text(yaml.dump(cfg, sort_keys=False))
         log_path = output / f"build-{label}.log"
