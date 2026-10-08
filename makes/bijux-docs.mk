@@ -114,3 +114,11 @@ ui-test-link-policy: ui-test-prepare-runtime ## Qualify authored link intent, na
 .PHONY: ui-test-history
 ui-test-history: ui-test-prepare-runtime ui-test-fixtures ui-test-unit ## Qualify history through ordinary generated Material journeys
 	@NPM_CONFIG_CACHE="$(abspath $(UI_TESTS_NPM_CACHE_DIR))" PLAYWRIGHT_BROWSERS_PATH="$(abspath $(UI_TESTS_PLAYWRIGHT_BROWSERS_DIR))" BIJUX_UI_ARTIFACT_ROOT="$(abspath $(BIJUX_DOCS_ARTIFACTS_DIR))/history-playwright" BIJUX_UI_FULL_GATE=1 npm --prefix "$(UI_TESTS_RUNTIME_DIR)" exec -- playwright test --config "$(UI_TESTS_DIR)/playwright.history.config.js"
+
+.PHONY: ui-test-popup-relationships
+ui-test-popup-relationships: ui-test-prepare-runtime ui-test-fixtures ui-test-unit ## Qualify popup identity, dialog semantics and document disposal
+	@NPM_CONFIG_CACHE="$(abspath $(UI_TESTS_NPM_CACHE_DIR))" PLAYWRIGHT_BROWSERS_PATH="$(abspath $(UI_TESTS_PLAYWRIGHT_BROWSERS_DIR))" BIJUX_UI_ARTIFACT_ROOT="$(abspath $(BIJUX_DOCS_ARTIFACTS_DIR))/popup-relationships-playwright" BIJUX_UI_FULL_GATE=1 npm --prefix "$(UI_TESTS_RUNTIME_DIR)" exec -- playwright test --config "$(UI_TESTS_DIR)/playwright.popup-relationships.config.js"
+
+.PHONY: ui-test-search-scope
+ui-test-search-scope: ui-test-prepare-runtime ui-test-fixtures ui-test-unit ## Qualify site-local native search descriptions and reader journeys
+	@NPM_CONFIG_CACHE="$(abspath $(UI_TESTS_NPM_CACHE_DIR))" PLAYWRIGHT_BROWSERS_PATH="$(abspath $(UI_TESTS_PLAYWRIGHT_BROWSERS_DIR))" BIJUX_UI_ARTIFACT_ROOT="$(abspath $(BIJUX_DOCS_ARTIFACTS_DIR))/search-scope-playwright" BIJUX_UI_FULL_GATE=1 npm --prefix "$(UI_TESTS_RUNTIME_DIR)" exec -- playwright test --config "$(UI_TESTS_DIR)/playwright.search-scope.config.js"
