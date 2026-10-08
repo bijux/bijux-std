@@ -163,6 +163,9 @@ if [[ "${manifest_entry_count}" -eq 0 ]]; then
 fi
 
 if [[ "${BIJUX_STD_LOCAL_VERIFY:-0}" == "1" ]]; then
+  if [[ -n "${DOCS_SITE_DIR:-}" ]]; then
+    bash "${shared_root}/tooling/scripts/verify_bijux_docs_site.sh"
+  fi
   echo "Bijux docs local candidate source-of-truth checks passed; accepted rollout was not verified"
   exit 0
 fi
@@ -200,4 +203,7 @@ else
 fi
 
 verify_docs_authority "${repo_root}" "${shared_root}"
+if [[ -n "${DOCS_SITE_DIR:-}" ]]; then
+  bash "${shared_root}/tooling/scripts/verify_bijux_docs_site.sh"
+fi
 echo "Bijux docs source-of-truth checks passed against exact accepted source"
