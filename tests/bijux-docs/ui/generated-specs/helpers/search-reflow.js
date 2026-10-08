@@ -1,6 +1,7 @@
 const fs = require("node:fs"), path = require("node:path");
 const { test, expect } = require("@playwright/test");
 const { nativeAnswer } = require("./search");
+const { settle } = require("../contrast-targets/measurement");
 const generated = path.resolve(process.env.BIJUX_GENERATED_ROOT || path.join(__dirname, "../../../../../artifacts/bijux-docs/generated"));
 const manifest = JSON.parse(fs.readFileSync(path.join(generated, "manifest.json")));
 const variants = { owned: "/bijux-core/", native: "/fixtures/native-header/", rtl: "/fixtures/rtl/" };
@@ -48,6 +49,7 @@ async function geometry(page, frames = 1) {
 async function hitTarget(target) {
   await expect(target).toBeVisible();
   await target.scrollIntoViewIfNeeded();
+  await settle(target);
   expect(await target.evaluate(node => {
     const box = node.getBoundingClientRect();
     const hit = document.elementFromPoint((box.left + box.right) / 2, (box.top + box.bottom) / 2);
@@ -114,6 +116,18 @@ async function drawerPath(page) {
     standaloneNativeCloseControlQualified: owned ? null : false };
 }
 
+async function wheelReader(page) {
+  // Pointer preparation can settle Material's sidebar sizing. Measure the
+  // document at the input point, rather than retaining its earlier overflow.
+  await page.locator(".md-content h1").hover();
+  const before = await page.evaluate(() => ({ position: scrollY, maximum: document.scrollingElement.scrollHeight - document.scrollingElement.clientHeight }));
+  if (before.maximum > before.position) {
+    await page.mouse.wheel(0, 600);
+    await expect.poll(() => page.evaluate(() => scrollY)).toBeGreaterThan(before.position);
+  }
+  return { before, after: await page.evaluate(() => scrollY) };
+}
+
 async function readerPath(page, baseURL, route) {
   await page.goto(new URL(`${route}reader-code/`, baseURL).href);
   await expect(page.locator("article .highlight td.code pre > code")).toHaveText(manifest.reader_fixture.code, { useInnerText: false });
@@ -126,15 +140,18 @@ async function readerPath(page, baseURL, route) {
     await expect.poll(() => target.evaluate(node => Math.abs(node.scrollLeft) >= node.scrollWidth - node.clientWidth - 1)).toBe(true);
     result.scroll = await target.evaluate(node => ({ left: node.scrollLeft, maximum: node.scrollWidth - node.clientWidth }));
   }
-  const before = await page.evaluate(() => ({ position: scrollY, maximum: document.documentElement.scrollHeight - innerHeight }));
-  if (before.maximum > before.position) {
-    await page.locator(".md-content h1").hover();
-    await page.mouse.wheel(0, 600);
-    await expect.poll(() => page.evaluate(() => scrollY)).toBeGreaterThan(before.position);
-  }
-  result.pageScrollAvailable = before.maximum;
-  result.pageScroll = await page.evaluate(() => scrollY);
+  const codeScroll = await wheelReader(page);
+  result.pageScrollAvailable = codeScroll.before.maximum;
+  result.pageScroll = codeScroll.after;
   result.geometry = await geometry(page);
+  // A short code page may fit entirely after layout settles. The authored long
+  // reading page must still prove ordinary vertical scrolling independently.
+  await page.goto(new URL(`${route}reading/`, baseURL).href);
+  await expect(page.locator(".md-content h1")).toContainText("Rich reading reference");
+  const longReader = await wheelReader(page);
+  expect(longReader.before.maximum, "The long reading fixture must provide real document scrolling").toBeGreaterThan(longReader.before.position);
+  expect(longReader.after, "Ordinary wheel input must scroll the long reading document").toBeGreaterThan(longReader.before.position);
+  result.longReader = { ...longReader, url: page.url(), geometry: await geometry(page) };
   return result;
 }
 

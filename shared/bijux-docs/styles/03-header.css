@@ -210,3 +210,11 @@ body[data-bijux-drawer-ready="true"] #__search:not(:checked) ~ header[data-bijux
   background: var(--md-default-bg-color);
   color: var(--md-default-fg-color);
 }
+
+/* Clear becomes clickable as the query changes; its hit area must not shrink
+   during Material's icon reveal transition. */
+.md-search__options > button.md-search__icon[type="reset"] {
+  min-inline-size: 24px;
+  min-block-size: 24px;
+  transform: none;
+}
