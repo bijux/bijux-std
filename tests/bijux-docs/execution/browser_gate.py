@@ -21,6 +21,7 @@ GROUPS = {
     'reader': ('native-navigation', 'reader'),
     'rendering': ('diagrams', 'contrast'),
     'links': ('links',),
+    'history': ('history',),
     'semantics': ('popup-relationships',),
 }
 ENGINES = ('chromium', 'firefox', 'webkit')
