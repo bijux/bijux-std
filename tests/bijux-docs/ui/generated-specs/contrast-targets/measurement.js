@@ -11,6 +11,7 @@ async function tabTo(page, locator, browserName, maximum = 80) {
 }
 
 async function state(locator, icon = false) {
+  await settle(locator);
   return locator.evaluate((node, isIcon) => {
     const style = getComputedStyle(node);
     const rectangle = node.getBoundingClientRect();
@@ -76,10 +77,15 @@ async function screenshotPixels(page, points) {
 async function settle(locator) {
   // Synchronous browser observations also work in Firefox's no-script contexts.
   for (let attempt = 0; attempt < 100; attempt++) {
-    const running = await locator.evaluate(node => node.getAnimations({ subtree: true })
-      .filter(animation => animation.playState === "running" &&
-        Number.isFinite(animation.effect?.getComputedTiming().endTime) &&
-        animation.effect.getComputedTiming().endTime <= 1000).length);
+    const running = await locator.evaluate(node => {
+      // Ancestor transforms and opacity affect the glyph's sampled paint coordinates.
+      const animations = new Set(node.getAnimations({ subtree: true }));
+      for (let ancestor = node.parentElement; ancestor; ancestor = ancestor.parentElement) {
+        for (const animation of ancestor.getAnimations()) animations.add(animation);
+      }
+      return [...animations].filter(animation => animation.playState === "running" &&
+        Number.isFinite(animation.effect?.getComputedTiming().endTime)).length;
+    });
     if (!running) return;
     await new Promise(resolve => setTimeout(resolve, 20));
   }
