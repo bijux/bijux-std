@@ -1,0 +1,15 @@
+{
+  "schema": 1,
+  "pr": 67,
+  "title": "fix(github): update managed ci node toolchain pin",
+  "type": "fix",
+  "scope": "github",
+  "summary": "Generated CI wrappers select the managed setup-node 6.4.0 pin.",
+  "details": [
+    "Bring manifest-derived wrappers into alignment with the shared action revision rather than leaving downstream dependency drift.",
+    "Original GitHub merge e97902f821e8170177c374bfe9e7704c1545f142 is distinct from rewritten main-history delivery a534639834184aafca47abdf95525944725f4e1c; the merge date is the verified GitHub date."
+  ],
+  "status": "merged",
+  "merged_at": "2026-04-27T18:42:26Z",
+  "breaking": false
+}

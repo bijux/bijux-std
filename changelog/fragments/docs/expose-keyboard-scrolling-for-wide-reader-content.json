@@ -1,0 +1,15 @@
+{
+  "schema": 1,
+  "pr": 164,
+  "title": "feat(docs): expose keyboard scrolling for wide reader content",
+  "type": "feat",
+  "scope": "docs",
+  "summary": "Wide reader content has a named keyboard-accessible scroll owner.",
+  "details": [
+    "Find the actual overflowing code/table surface, including inner numbered-code overflow, and expose ordinary Arrow/Home/End scrolling without adding stops to fitting content.",
+    "Preserve source, line anchors, cells, selections and descendant controls; dispose annotations/observers with the document and exclude decorative permalink text from contextual labels."
+  ],
+  "status": "merged",
+  "merged_at": "2026-10-08T08:47:53Z",
+  "breaking": false
+}

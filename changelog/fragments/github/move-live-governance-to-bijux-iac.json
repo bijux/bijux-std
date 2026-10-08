@@ -1,0 +1,15 @@
+{
+  "schema": 1,
+  "pr": 76,
+  "title": "feat(github): move live governance to bijux-iac",
+  "type": "feat",
+  "scope": "github",
+  "summary": "Live GitHub governance moves to the dedicated bijux-iac authority.",
+  "details": [
+    "Remove the embedded Terraform control plane, register the infrastructure repository and direct governance documentation to its ownership boundary.",
+    "Original GitHub merge 1324a0915511fc60fa4b8c30f998e0e6274b11b1 is distinct from rewritten main-history delivery df9015910f452218d2f563c1b1cf3d1ef8b370af; the merge date is the verified GitHub date."
+  ],
+  "status": "merged",
+  "merged_at": "2026-04-28T11:09:11Z",
+  "breaking": false
+}

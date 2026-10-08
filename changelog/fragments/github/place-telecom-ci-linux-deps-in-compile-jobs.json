@@ -1,0 +1,15 @@
+{
+  "schema": 1,
+  "pr": 75,
+  "title": "fix(github): place telecom ci linux deps in compile jobs",
+  "type": "fix",
+  "scope": "github",
+  "summary": "Telecom build dependencies are installed only in jobs that compile.",
+  "details": [
+    "Keep formatting and security lanes free of unnecessary Linux package setup while preserving compile prerequisites.",
+    "Original GitHub merge 44a77e32edc759e92b95feb63b2988ff90f0ca59 is distinct from rewritten main-history delivery a5bec69c280d9f0ed80a82ee404c39db9797b6fe; the merge date is the verified GitHub date."
+  ],
+  "status": "merged",
+  "merged_at": "2026-04-28T10:16:13Z",
+  "breaking": false
+}

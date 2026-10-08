@@ -1,0 +1,15 @@
+{
+  "schema": 1,
+  "pr": 180,
+  "title": "ci(docs): separate diagram and contrast browser budgets",
+  "type": "ci",
+  "scope": "docs",
+  "summary": "Diagram and contrast browser suites have separate execution budgets.",
+  "details": [
+    "Keep both rendering suites required while giving each engine/suite its own bounded job, including report finalization.",
+    "Preserve existing case identities and complete aggregation rather than treating a successful partial job as matrix completion."
+  ],
+  "status": "merged",
+  "merged_at": "2026-10-08T13:35:06Z",
+  "breaking": false
+}

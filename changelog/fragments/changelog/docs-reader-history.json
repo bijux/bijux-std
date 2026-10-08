@@ -1,0 +1,15 @@
+{
+  "schema": 1,
+  "pr": 204,
+  "title": "docs(changelog): record documentation reader behavior history",
+  "type": "docs",
+  "scope": "changelog",
+  "summary": "Record 6 reviewed historical PRs concerning docs reader.",
+  "details": [
+    "native search recovery, wide-content keyboard scrolling, authored links, recovery contrast and document boundaries.",
+    "Preserve original reviewed titles, verified merge dates and source-history distinctions while retaining all prior PR records."
+  ],
+  "status": "pending",
+  "merged_at": null,
+  "breaking": false
+}

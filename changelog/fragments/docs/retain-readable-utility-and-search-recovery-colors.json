@@ -1,0 +1,15 @@
+{
+  "schema": 1,
+  "pr": 178,
+  "title": "fix(docs): retain readable utility and search recovery colors",
+  "type": "fix",
+  "scope": "docs",
+  "summary": "Light-theme utility tabs and search recovery states retain readable color pairs.",
+  "details": [
+    "Use qualified foreground/background combinations for inactive utilities and pending, unavailable and Retry search states.",
+    "Keep native search behavior and retain unresolved automated findings and manual qualification limits separately from measured color contrast."
+  ],
+  "status": "merged",
+  "merged_at": "2026-10-08T12:43:44Z",
+  "breaking": false
+}

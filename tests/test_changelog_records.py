@@ -59,6 +59,12 @@ class ChangeRecordTests(unittest.TestCase):
         self.assertEqual(MODULE.project(self.root), MODULE.project(self.root))
         self.assertIn("https://github.com/bijux/example/pull/12", MODULE.project(self.root))
 
+    def test_history_header_leads_directly_to_pr_sections(self):
+        text = MODULE.project(self.root)
+        self.assertTrue(text.startswith("# Changelog\n\nThis file records notable repository-level changes for `example`.\n\n## Pull request history\n\n### Pending review\n\n"))
+        self.assertNotIn("projected from", text)
+        self.assertNotIn("Records describe", text)
+
     def test_draft_identity_is_explicit_and_cannot_project(self):
         self.write(record(None))
         self.assertEqual(self.cli("validate"), 1)
@@ -107,13 +113,25 @@ class ChangeRecordTests(unittest.TestCase):
         self.write(item); text = MODULE.project(self.root)
         self.assertIn(item["title"], text)
         self.assertIn("unverified dates", text)
-        self.assertIn("no verified merge chronology", text)
+        self.assertNotIn("None", text)
 
-    def test_verified_merge_chronology_wins_over_pr_identity(self):
+    def test_newest_pr_identity_leads_without_rewriting_actual_merge_dates(self):
         old = record(99); old.update(status="merged", merged_at="2026-01-01T12:00:00Z"); self.write(old)
         recent = record(1); recent.update(status="merged", merged_at="2026-02-01T12:00:00Z"); self.write(recent, self.path.with_name("drawer-focus.json"))
         text = MODULE.project(self.root)
-        self.assertLess(text.index("[#1]"), text.index("[#99]"))
+        self.assertLess(text.index("[#99]"), text.index("[#1]"))
+        self.assertIn("2026-01-01T12:00:00Z — [#99]", text)
+        self.assertIn("2026-02-01T12:00:00Z — [#1]", text)
+
+    def test_each_review_status_section_orders_newest_pr_first(self):
+        self.path.unlink()
+        for status, stamp, numbers in (("pending", None, [12, 9]), ("merged", "2026-01-01T12:00:00Z", [8, 10]), ("merged", None, [4, 6])):
+            for number in numbers:
+                item = record(number); item.update(status=status, merged_at=stamp)
+                self.write(item, self.path.with_name(f"search-count-{number}.json"))
+        text = MODULE.project(self.root)
+        positions = [text.index(f"[#{number}]") for number in [12, 9, 10, 8, 6, 4]]
+        self.assertEqual(positions, sorted(positions))
 
     def test_pending_dates_and_malformed_historical_dates_fail(self):
         for status, stamp in [("pending", "2026-01-01T12:00:00Z"), ("merged", "2026-02-30T12:00:00Z"), ("merged", "2026-01-01T12:00:00+00:00"), ("merged", "2999-01-01T12:00:00Z")]:
@@ -137,11 +155,11 @@ class ChangeRecordTests(unittest.TestCase):
             (self.root / "CHANGELOG.md").write_text(text)
             self.assertEqual(self.cli("render"), 1)
 
-    def test_foundation_notes_are_linked_without_becoming_fake_prs(self):
+    def test_foundation_archive_remains_separate_from_pr_projection(self):
         foundation = self.root / "changelog/FOUNDATION.md"
         foundation.write_text("# Audited source material\n\nA fact without an independently verified PR.\n")
         text = MODULE.project(self.root)
-        self.assertIn("[foundation notes](changelog/FOUNDATION.md)", text)
+        self.assertNotIn("foundation", text.lower())
         self.assertNotIn("A fact without", text)
         foundation.unlink(); foundation.symlink_to(self.path)
         self.assertEqual(self.cli("render"), 1)

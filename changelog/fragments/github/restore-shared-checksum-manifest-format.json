@@ -1,0 +1,15 @@
+{
+  "schema": 1,
+  "pr": 48,
+  "title": "fix(github): restore shared checksum manifest format",
+  "type": "fix",
+  "scope": "github",
+  "summary": "The governance checksum manifest has valid, verifiable entries.",
+  "details": [
+    "Restore the canonical managed file digests in sha256sum-compatible format.",
+    "Original GitHub merge 95842490b6a5d0e5d993e6f08b0e84987b76d0f4 is distinct from rewritten main-history delivery 7bc4d440e5dfb02f6ce5dbc6af0867095ca8c8f7; the merge date is the verified GitHub date."
+  ],
+  "status": "merged",
+  "merged_at": "2026-04-21T17:09:07Z",
+  "breaking": false
+}

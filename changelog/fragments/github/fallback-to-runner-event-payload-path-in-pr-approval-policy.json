@@ -1,0 +1,14 @@
+{
+  "schema": 1,
+  "pr": 86,
+  "title": "fix(github): fallback to runner event payload path in pr approval policy",
+  "type": "fix",
+  "scope": "github",
+  "summary": "PR approval reads the actual GitHub runner event payload.",
+  "details": [
+    "Use GH_EVENT_PATH with GITHUB_EVENT_PATH fallback and fail clearly if neither exists."
+  ],
+  "status": "merged",
+  "merged_at": "2026-05-01T23:11:37Z",
+  "breaking": false
+}

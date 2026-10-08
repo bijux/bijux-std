@@ -1,0 +1,15 @@
+{
+  "schema": 1,
+  "pr": 66,
+  "title": "fix(github): allow std pin as workflow sync control",
+  "type": "fix",
+  "scope": "github",
+  "summary": "The exact standard pin is an approved control path for workflow synchronization.",
+  "details": [
+    "Allow protected managed workflow changes accompanied by .github/standards/bijux-std.sha while retaining rejection when no approved control file changes.",
+    "Original GitHub merge ca42c91bced2f226cd16d1c6159775d7dffad225 is distinct from rewritten main-history delivery 0cc2bf56b2c83967a081b7037c25ba70db3dd211; the merge date is the verified GitHub date."
+  ],
+  "status": "merged",
+  "merged_at": "2026-04-27T17:53:26Z",
+  "breaking": false
+}

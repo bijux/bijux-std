@@ -1,0 +1,15 @@
+{
+  "schema": 1,
+  "pr": 200,
+  "title": "docs(changelog): record dependency revisions history",
+  "type": "docs",
+  "scope": "changelog",
+  "summary": "Record 16 reviewed historical PRs concerning dependency revisions.",
+  "details": [
+    "immutable action runtime pins and the declared GNSS toolchain revision.",
+    "Preserve original reviewed titles, verified merge dates and source-history distinctions while retaining all prior PR records."
+  ],
+  "status": "pending",
+  "merged_at": null,
+  "breaking": false
+}

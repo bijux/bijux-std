@@ -1,0 +1,14 @@
+{
+  "schema": 1,
+  "pr": 129,
+  "title": "chore(github): refresh PyPI publisher runtime pin",
+  "type": "chore",
+  "scope": "github",
+  "summary": "Both trusted and explicit bootstrap PyPI publishing use the 1.14.1 action revision.",
+  "details": [
+    "Keep the shared publisher runtime pin consistent without triggering a release."
+  ],
+  "status": "merged",
+  "merged_at": "2026-07-24T00:09:33Z",
+  "breaking": false
+}

@@ -1,0 +1,14 @@
+{
+  "schema": 1,
+  "pr": 124,
+  "title": "fix(github): preserve configured release command quoting",
+  "type": "fix",
+  "scope": "github",
+  "summary": "Configured release commands retain package-list and shell quoting.",
+  "details": [
+    "Pass command strings through step environments before evaluation across crates, GitHub and PyPI publication paths."
+  ],
+  "status": "merged",
+  "merged_at": "2026-07-19T21:09:09Z",
+  "breaking": false
+}

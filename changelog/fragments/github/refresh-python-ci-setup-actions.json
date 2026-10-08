@@ -1,0 +1,14 @@
+{
+  "schema": 1,
+  "pr": 126,
+  "title": "chore(github): refresh python ci setup actions",
+  "type": "chore",
+  "scope": "github",
+  "summary": "Managed Python and API jobs use refreshed setup action revisions.",
+  "details": [
+    "Select setup-uv 8.3.2, setup-node 7.0.0 and setup-java 5.6.0 with contracts that reject stale generated revisions."
+  ],
+  "status": "merged",
+  "merged_at": "2026-07-23T21:50:59Z",
+  "breaking": false
+}

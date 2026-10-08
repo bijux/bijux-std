@@ -1,0 +1,15 @@
+{
+  "schema": 1,
+  "pr": 52,
+  "title": "fix(standards): prune stale generated wrapper files",
+  "type": "fix",
+  "scope": "standards",
+  "summary": "Stale workflow cleanup respects generated-file ownership.",
+  "details": [
+    "Remove wrappers with standard provenance only, preserving authored workflow files when definitions are absent.",
+    "Original GitHub merge ec396e27ab0d964a39cce0e0d4553242ac9d08a2 is distinct from rewritten main-history delivery 444557b8e8fc53d374f0ffa993ac5365705ecb0a; the merge date is the verified GitHub date."
+  ],
+  "status": "merged",
+  "merged_at": "2026-04-21T17:24:29Z",
+  "breaking": false
+}

@@ -1,0 +1,15 @@
+{
+  "schema": 1,
+  "pr": 47,
+  "title": "chore(standards): align rust release registry channels",
+  "type": "chore",
+  "scope": "standards",
+  "summary": "Rust publication registry channels are aligned in shared configuration.",
+  "details": [
+    "Keep downstream release metadata consistent with the selected Rust registry channels during standards refresh.",
+    "Original GitHub merge 2da425054a4da3cf8fe792e5ba8b2ca53e31e9e7 is distinct from rewritten main-history delivery 0777827bf3fb59eae77cae18b12b3469ceef02a6; the merge date is the verified GitHub date."
+  ],
+  "status": "merged",
+  "merged_at": "2026-04-21T17:04:05Z",
+  "breaking": false
+}

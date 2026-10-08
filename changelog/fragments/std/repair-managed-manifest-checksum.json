@@ -1,0 +1,15 @@
+{
+  "schema": 1,
+  "pr": 68,
+  "title": "fix(std): repair managed manifest checksum",
+  "type": "fix",
+  "scope": "std",
+  "summary": "The standards checksum includes the already-merged CI toolchain metadata.",
+  "details": [
+    "Update the managed manifest digest to match the repository configuration delivered by PR #67.",
+    "Original GitHub merge 9612247bcc489065ded6fa9ff6fb7b870ae12185 is distinct from rewritten main-history delivery 93bd94411ddc9e13df6075341921a7ea37218c39; the merge date is the verified GitHub date."
+  ],
+  "status": "merged",
+  "merged_at": "2026-04-27T18:46:10Z",
+  "breaking": false
+}

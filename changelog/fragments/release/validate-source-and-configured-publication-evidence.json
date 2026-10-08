@@ -1,0 +1,15 @@
+{
+  "schema": 1,
+  "pr": 148,
+  "title": "fix(release): validate source and configured publication evidence",
+  "type": "fix",
+  "scope": "release",
+  "summary": "Package publication requires matching source and configured prepublication evidence.",
+  "details": [
+    "Bind release tags, workflow revisions and staged distribution bytes, run caller-configured verification first and propagate its failure.",
+    "Pass the selected tag through artifact construction without activating consumer publication in this standards change."
+  ],
+  "status": "merged",
+  "merged_at": "2026-10-07T23:32:41Z",
+  "breaking": false
+}

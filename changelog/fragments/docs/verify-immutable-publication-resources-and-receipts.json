@@ -1,0 +1,15 @@
+{
+  "schema": 1,
+  "pr": 177,
+  "title": "feat(docs): verify immutable publication resources and receipts",
+  "type": "feat",
+  "scope": "docs",
+  "summary": "The optional publication library verifies immutable resources and reconstruction receipts.",
+  "details": [
+    "Separate route, redirect, passive-asset, CSP, native worker/index and bundle-receipt validation while binding source, configuration and renderer identity.",
+    "The library remains opt-in and does not approve a runtime or enable deployment; command-before-render guards are a separate delivery boundary."
+  ],
+  "status": "merged",
+  "merged_at": "2026-10-08T13:25:42Z",
+  "breaking": false
+}

@@ -1,0 +1,15 @@
+{
+  "schema": 1,
+  "pr": 163,
+  "title": "feat(docs): validate shell configuration and document consumer extensions",
+  "type": "feat",
+  "scope": "docs",
+  "summary": "Shell configuration rejects ambiguous or incorrectly typed owned fields before rendering.",
+  "details": [
+    "Validate namespaces, Boolean flags, YAML shadowing and ordered registry records with field-specific diagnostics.",
+    "Preserve product fields, plugins, tags and legitimate merges and document extension, token, observation and lifecycle ownership."
+  ],
+  "status": "merged",
+  "merged_at": "2026-10-08T08:21:45Z",
+  "breaking": false
+}

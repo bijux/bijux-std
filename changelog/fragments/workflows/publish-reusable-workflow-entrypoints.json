@@ -1,0 +1,15 @@
+{
+  "schema": 1,
+  "pr": 17,
+  "title": "fix(workflows): publish reusable workflow entrypoints",
+  "type": "fix",
+  "scope": "workflows",
+  "summary": "Consumer workflow_call references resolve published reusable entrypoints.",
+  "details": [
+    "Expose runtime copies under .github/workflows while retaining canonical workflow source ownership under shared/bijux-gh/workflows.",
+    "Original GitHub merge 008ff6bf6ee3f22bd0f0884c5b323830a9a12f46 is distinct from rewritten main-history delivery 05b01d55bb2fe7743aef173c163284538666a9c7; the merge date is the verified GitHub date."
+  ],
+  "status": "merged",
+  "merged_at": "2026-04-19T13:55:01Z",
+  "breaking": false
+}

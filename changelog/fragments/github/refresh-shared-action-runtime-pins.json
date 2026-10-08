@@ -1,0 +1,14 @@
+{
+  "schema": 1,
+  "pr": 127,
+  "title": "chore(github): refresh shared action runtime pins",
+  "type": "chore",
+  "scope": "github",
+  "summary": "Shared and generated workflows select checkout 7.0.1 and setup-python 7.0.0.",
+  "details": [
+    "Keep immutable action revisions consistent across source workflows, consumer manifests and managed checksums."
+  ],
+  "status": "merged",
+  "merged_at": "2026-07-23T23:44:55Z",
+  "breaking": false
+}

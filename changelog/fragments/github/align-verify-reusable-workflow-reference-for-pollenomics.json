@@ -1,0 +1,15 @@
+{
+  "schema": 1,
+  "pr": 29,
+  "title": "fix(github): align verify reusable workflow reference for pollenomics",
+  "type": "fix",
+  "scope": "github",
+  "summary": "The Pollenomics verify wrapper refers to its generated reusable workflow path.",
+  "details": [
+    "Correct the source mapping that previously named a nonexistent workflow entrypoint.",
+    "Original GitHub merge c5e8eeee3e981a1e917361c4557a30b5d242311d is distinct from rewritten main-history delivery 698ddb3e344cec430a7c975111b4c4c255865d94; the merge date is the verified GitHub date."
+  ],
+  "status": "merged",
+  "merged_at": "2026-04-19T22:39:00Z",
+  "breaking": false
+}
