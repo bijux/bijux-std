@@ -168,10 +168,11 @@
           background.push([node, node.inert]);
           node.inert = true;
         }
-        if (changed) (focusable()[0] || navigation).focus({ preventScroll: true });
+        if (changed) (focusable()[0] || navigation).focus({ preventScroll: false });
       } else {
         popup.restoreSurface("Site navigation");
-        if (restore && compact.matches) opener.focus({ preventScroll: true });
+        if (restore && compact.matches && opener.isConnected && !opener.disabled &&
+            visible(opener) && !opener.closest("[inert]")) opener.focus({ preventScroll: true });
       }
     }
 
@@ -190,6 +191,7 @@
     compact.addEventListener("change", () => close(false), { signal });
     for (const control of document.querySelectorAll('[data-bijux-control-target="__drawer"]')) {
       control.addEventListener("click", () => {
+        readingIntent = false;
         if (control.hasAttribute("data-bijux-control-close")) close();
         else {
           toggle.checked = !toggle.checked;
@@ -221,8 +223,18 @@
     navigation.addEventListener("click", event => {
       const link = event.target.closest("a[href]");
       if (!link || event.ctrlKey || event.metaKey || event.shiftKey || event.altKey || event.button !== 0) return;
-      readingIntent = true;
-      close(false);
+      // New browsing contexts and downloads do not hand this document to a reader.
+      const target = link.getAttribute("target");
+      if (link.hasAttribute("download") || (target && target.toLowerCase() !== "_self")) return;
+      const destination = new URL(link.href, window.location.href);
+      if (!["http:", "https:"].includes(destination.protocol)) return;
+      const current = new URL(window.location.href);
+      const fragment = destination.origin === current.origin && destination.pathname === current.pathname &&
+        destination.search === current.search && destination.hash;
+      readingIntent = target || fragment ? false : { href: destination.href };
+      // Keep a usable fallback before a native request can fail. A successful
+      // instant document emission subsequently owns destination heading focus.
+      close();
     }, { signal });
     sync();
     return true;
@@ -290,6 +302,7 @@
       }
     }
     control.addEventListener("click", () => {
+      readingIntent = false;
       closedInlineFocus = false;
       closeDrawer?.(false);
       toggle.checked = !toggle.checked;
@@ -387,8 +400,10 @@
       window.dispatchEvent(new Event("bijux:search-location"));
       shell.detailTabs?.runDetailTabsSync?.();
       shell.navReveal?.runDesktopNavigationSync?.();
-      if (readingIntent) {
-        readingIntent = false;
+      const focusReading = readingIntent === true ||
+        (readingIntent && readingIntent.href === window.location.href);
+      readingIntent = false;
+      if (focusReading) {
         const heading = document.querySelector(".md-content h1");
         if (heading) {
           heading.setAttribute("tabindex", "-1");
@@ -412,7 +427,10 @@
     } else if (document.readyState === "loading") {
       document.addEventListener("DOMContentLoaded", runShellNavigationSync, { once: true });
     } else runShellNavigationSync();
-    window.addEventListener("pagehide", () => lifetime?.abort());
+    window.addEventListener("pagehide", () => {
+      readingIntent = false;
+      lifetime?.abort();
+    });
     window.addEventListener("pageshow", event => { if (event.persisted) runShellNavigationSync(); });
   }
 
