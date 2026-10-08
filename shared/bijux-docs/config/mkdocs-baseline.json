@@ -22,7 +22,6 @@
       "navigation.sections",
       "navigation.indexes",
       "navigation.path",
-      "navigation.tracking",
       "navigation.instant",
       "navigation.top",
       "navigation.footer",
@@ -70,11 +69,11 @@
     "assets/javascripts/shell/nav-reveal.js",
     "assets/javascripts/shell/search-recovery.js",
     "assets/javascripts/shell/content-reflow.js",
+    "assets/javascripts/external-links.js",
     "assets/javascripts/shell/bootstrap.js",
-    "assets/javascripts/navigation-sync.js",
-    "assets/javascripts/external-links.js"
+    "assets/javascripts/navigation-sync.js"
   ],
-  "copyright": "© 2026 Bijan Mousavi <bijan@bijux.io>",
+  "copyright": "\u00a9 2026 Bijan Mousavi <bijan@bijux.io>",
   "diagram": {
     "fence_class": "bijux-diagram",
     "vendor": "assets/javascripts/vendor/mermaid-11.17.2.min.js",
