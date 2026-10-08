@@ -48,7 +48,7 @@
     max-width: min(calc(100vw - 3rem), var(--bijux-shell-width));
   }
   .md-header__title { display: none; }
-  [data-bijux-header-control="drawer-toggle"],
+  .md-header__button[data-bijux-header-control="drawer-toggle"],
   .bijux-drawer-close { display: none; }
 }
 

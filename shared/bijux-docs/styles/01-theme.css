@@ -48,7 +48,7 @@
   --bijux-ribbon-fade: rgba(9, 21, 36, 0);
   --bijux-nav-indicator: linear-gradient(90deg, rgba(251, 191, 36, 0.92), rgba(103, 232, 249, 0.92));
   --bijux-nav-active-shadow: 0 18px 34px rgba(2, 6, 23, 0.48);
-  --bijux-focus-ring: rgba(103, 232, 249, 0.24);
+  --bijux-focus-ring: #67e8f9;
 }
 
 [data-md-color-scheme="slate"] .bijux-hero {

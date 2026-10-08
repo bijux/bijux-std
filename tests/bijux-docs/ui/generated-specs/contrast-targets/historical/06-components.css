@@ -263,12 +263,6 @@
   background: transparent;
 }
 
-/* Footer destinations remain above the sticky sidebar's transparent hit surface. */
-.md-footer {
-  position: relative;
-  z-index: 1;
-}
-
 .md-footer__inner.bijux-footer-nav {
   align-items: center;
   background: transparent !important;
@@ -332,7 +326,6 @@
 }
 
 .md-footer__inner.bijux-footer-nav .md-footer__direction {
-  opacity: 1;
   color: var(--bijux-muted);
   font-size: 0.78rem;
   letter-spacing: 0.01em;
@@ -437,16 +430,6 @@
   .bijux-footer-center,
   .bijux-footer-nav-spacer {
     justify-self: stretch;
-  }
-
-  /* Stacked reader destinations retain their direction and full available width. */
-  .md-footer__inner.bijux-footer-nav .md-footer__link {
-    max-width: 100%;
-  }
-
-  .md-footer__inner.bijux-footer-nav .md-footer__title {
-    display: block;
-    overflow-wrap: anywhere;
   }
 
   .bijux-footer-nav-spacer {

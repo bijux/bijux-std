@@ -17,13 +17,25 @@
   border: 0;
 }
 
+/* Focus on saturated shell surfaces needs a light adjacent indicator. */
+.md-header__inner,
+.bijux-hub-strip,
+.bijux-site-tabs {
+  --bijux-focus-ring: #fff;
+}
+
+.md-header__button:focus-visible,
 :focus-visible {
   outline: 2px solid var(--bijux-focus-ring);
   outline-offset: 3px;
 }
 
+/* Keep the entire ring inside the four-pixel phone masthead gutter. */
+.md-header__button:focus-visible { outline-offset: 2px; }
+
 @media (forced-colors: active) {
-  :focus-visible { outline-color: Highlight; }
+  .md-header__button:focus-visible,
+  :focus-visible { outline-color: CanvasText; }
   [aria-current], details[open] > summary { border: 1px solid CanvasText; }
 }
 

@@ -102,3 +102,25 @@ Live checks are ordinary read-only published journeys. They require explicit
 enablement, and `BIJUX_LIVE_HUB_URL` can select another deployment. Their receipt
 cannot certify candidate-to-publication equivalence without independently
 verified publication identity. No check publishes the website.
+
+## Rendered contrast and primary targets
+
+`make ui-test-contrast` builds the actual thirteen Material fixtures at the same
+origin as its browser server, then requires all 39 cases in nine engine/profile
+projects. The cases measure visible text against rendered backgrounds, meaningful
+icons, opaque focus rings, primary 44px hit areas, light/dark and forced-color
+responses, and actual Previous reader navigation with browser Back. The three
+phone projects additionally exercise native Navigation with JavaScript disabled.
+Desktop cases require the compact drawer control to be hidden.
+
+The negative fixture replaces only 06-components.css with its exact authored
+preimage from 56730b993878c0f6d0ba3f4ed1ff9d60c6bb1d92, whose digest is checked
+by the measurement unit test. It must detect hidden phone reader directions or
+insufficient visible direction contrast. Diagnostic glyph-paint removal is used
+only to sample backgrounds; behavior always uses ordinary input.
+
+Receipts and traces live under artifacts/bijux-docs/contrast-playwright; the
+immutable fixture manifest lives under artifacts/bijux-docs/contrast-generated.
+This bounded gate does not certify all components, every consumer, axe findings,
+manual assistive testing or physical operating-system high contrast. WebKit
+forced-color emulation is qualified as source response only.
