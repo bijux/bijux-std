@@ -1,0 +1,14 @@
+{
+  "schema": 1,
+  "pr": 101,
+  "title": "fix(github): render release env commands safely",
+  "type": "fix",
+  "scope": "github",
+  "summary": "Generated release environments preserve executable command quoting.",
+  "details": [
+    "Quote string commands for shell sourcing and parse them back into manifests without retaining wrapper quotes."
+  ],
+  "status": "merged",
+  "merged_at": "2026-06-28T20:16:22Z",
+  "breaking": false
+}

@@ -1,0 +1,15 @@
+{
+  "schema": 1,
+  "pr": 78,
+  "title": "fix(github): align managed workflow action pins",
+  "type": "fix",
+  "scope": "github",
+  "summary": "Managed Codecov, Labeler and Pages action revisions remain aligned.",
+  "details": [
+    "Refresh shared sources and generated copies, and remove stale active copies that belong to shared governance ownership.",
+    "Original GitHub merge 8259f570a298527385d786a74b23294d0a6465a2 is distinct from rewritten main-history delivery 04ae756ab3f1cf0539609d03102e028a7cc80544; the merge date is the verified GitHub date."
+  ],
+  "status": "merged",
+  "merged_at": "2026-04-28T11:51:50Z",
+  "breaking": false
+}

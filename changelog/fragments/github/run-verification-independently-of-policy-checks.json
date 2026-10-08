@@ -1,0 +1,14 @@
+{
+  "schema": 1,
+  "pr": 143,
+  "title": "fix(github): run verification independently of policy checks",
+  "type": "fix",
+  "scope": "github",
+  "summary": "Verification jobs can start independently of policy prerequisite timing.",
+  "details": [
+    "Remove the one-shot preflight from generated verify and auto-merge enablement while retaining separate required standards, policy and approval merge checks."
+  ],
+  "status": "merged",
+  "merged_at": "2026-08-28T14:09:39Z",
+  "breaking": false
+}

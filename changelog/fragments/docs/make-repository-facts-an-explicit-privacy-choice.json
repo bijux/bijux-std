@@ -1,0 +1,15 @@
+{
+  "schema": 1,
+  "pr": 157,
+  "title": "fix(docs): make repository facts an explicit privacy choice",
+  "type": "fix",
+  "scope": "docs",
+  "summary": "Repository statistics become an explicit authored privacy choice.",
+  "details": [
+    "Require Boolean extra.bijux.repository_facts opt-in before mounting Material's repository facts requests.",
+    "Keep repository navigation and meaningful compact accessible names independent of optional provider metadata."
+  ],
+  "status": "merged",
+  "merged_at": "2026-10-08T04:36:06Z",
+  "breaking": false
+}

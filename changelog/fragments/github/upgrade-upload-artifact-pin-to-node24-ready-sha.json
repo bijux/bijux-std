@@ -1,0 +1,15 @@
+{
+  "schema": 1,
+  "pr": 20,
+  "title": "fix(github): upgrade upload-artifact pin to node24-ready sha",
+  "type": "fix",
+  "scope": "github",
+  "summary": "The standards verification workflow uses the Node24-ready artifact upload pin.",
+  "details": [
+    "Keep the managed checksum aligned with the action revision inherited by downstream standards copies.",
+    "Original GitHub merge c3360be49ad83cfa2f2aa4ea3b789dbe94f756a4 is distinct from rewritten main-history delivery 0a40bc070a478747d07215255c0e9a9504ea2c84; the merge date is the verified GitHub date."
+  ],
+  "status": "merged",
+  "merged_at": "2026-04-19T16:18:19Z",
+  "breaking": false
+}

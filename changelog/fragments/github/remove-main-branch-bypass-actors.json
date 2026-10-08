@@ -1,0 +1,15 @@
+{
+  "schema": 1,
+  "pr": 80,
+  "title": "fix(github): remove main branch bypass actors",
+  "type": "fix",
+  "scope": "github",
+  "summary": "The managed main-branch ruleset no longer includes a bypass actor.",
+  "details": [
+    "State that normal main changes merge through pull requests and keep required-check guidance aligned with that policy.",
+    "Original GitHub merge 9ca9ec98985e03b805e9f9bca91bbc55af424d90 is distinct from rewritten main-history delivery 2ddfe4ee843832440b6b68b131469369bfa036f8; the merge date is the verified GitHub date."
+  ],
+  "status": "merged",
+  "merged_at": "2026-04-29T11:53:14Z",
+  "breaking": false
+}

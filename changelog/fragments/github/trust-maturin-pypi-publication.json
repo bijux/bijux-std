@@ -1,0 +1,14 @@
+{
+  "schema": 1,
+  "pr": 132,
+  "title": "fix(github): trust maturin pypi publication",
+  "type": "fix",
+  "scope": "github",
+  "summary": "Maturin-built distributions use trusted PyPI publishing by default.",
+  "details": [
+    "Preserve an explicit custom publish-command override for repositories that intentionally replace the managed publisher."
+  ],
+  "status": "merged",
+  "merged_at": "2026-07-24T12:25:29Z",
+  "breaking": false
+}

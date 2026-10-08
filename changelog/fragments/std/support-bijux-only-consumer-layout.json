@@ -1,0 +1,16 @@
+{
+  "schema": 1,
+  "pr": 3,
+  "title": "fix: support .bijux-only consumer layout",
+  "type": "fix",
+  "scope": "std",
+  "summary": "Consumers use the managed .bijux/shared layout consistently.",
+  "details": [
+    "Prefer consumer shared paths, remove root-governance hash coupling and reject obsolete root shared directories during compliance checks.",
+    "The original title has no scope; the fragment scope identifies editorial ownership without changing that historical title.",
+    "Original GitHub merge 22c0efda72b7a2515b4775294aaad1096d9b0c2f is distinct from rewritten main-history delivery 2b60ba816693b39dc122a597bbf3f7a22d83dcb4; the merge date is the verified GitHub date."
+  ],
+  "status": "merged",
+  "merged_at": "2026-04-18T22:52:52Z",
+  "breaking": false
+}

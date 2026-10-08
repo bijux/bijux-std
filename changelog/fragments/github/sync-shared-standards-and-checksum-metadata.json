@@ -1,0 +1,16 @@
+{
+  "schema": 1,
+  "pr": 54,
+  "title": "chore(github): sync shared standards and checksum metadata",
+  "type": "chore",
+  "scope": "github",
+  "summary": "A local standards delivery queue is incorporated through the PR workflow.",
+  "details": [
+    "Align shared governance and generated configuration changes with their directory and managed-file digests.",
+    "The audited original API merge and historical rewritten ancestor have 32 matching changed-file postimages; that comparison does not identify the current main tip.",
+    "Original GitHub merge 53d969f919a09c4212702eb15f5ca8873ee04267 is not the rewritten historical ancestor 143a5ba41d69e432cb30e64894f9e5a01246f927 or the audited main tip."
+  ],
+  "status": "merged",
+  "merged_at": "2026-04-23T17:29:01Z",
+  "breaking": false
+}

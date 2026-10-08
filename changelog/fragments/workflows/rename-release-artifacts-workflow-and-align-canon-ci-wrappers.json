@@ -1,0 +1,16 @@
+{
+  "schema": 1,
+  "pr": 15,
+  "title": "refactor(workflows): rename release artifacts workflow and align canon CI wrappers",
+  "type": "refactor",
+  "scope": "workflows",
+  "summary": "Release artifact workflow names and Canon wrappers share one canonical contract.",
+  "details": [
+    "Use release-artifacts.yml at call sites and retire its historical build-release-artifacts path during managed synchronization.",
+    "Canon's CI and verify wrappers consume the shared definitions selected by the manifest.",
+    "Original GitHub merge ae8762de0a883f6882f5ff206e5dc6573ebb3026 is distinct from rewritten main-history delivery 699751ac281dab468c7e515bb1a1f1b84a788f5a; the merge date is the verified GitHub date."
+  ],
+  "status": "merged",
+  "merged_at": "2026-04-19T13:23:44Z",
+  "breaking": false
+}

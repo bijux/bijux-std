@@ -1,0 +1,14 @@
+{
+  "schema": 1,
+  "pr": 103,
+  "title": "fix(governance): refresh shared docs manifest",
+  "type": "fix",
+  "scope": "governance",
+  "summary": "Shared tests preserve consumer full-suite overrides.",
+  "details": [
+    "Align canonical hub-strip and Mermaid checks with shared documentation ownership and refresh the matching source digest."
+  ],
+  "status": "merged",
+  "merged_at": "2026-07-04T15:30:23Z",
+  "breaking": false
+}

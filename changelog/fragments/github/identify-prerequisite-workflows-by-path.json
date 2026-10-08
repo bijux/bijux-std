@@ -1,0 +1,14 @@
+{
+  "schema": 1,
+  "pr": 121,
+  "title": "fix(github): identify prerequisite workflows by path",
+  "type": "fix",
+  "scope": "github",
+  "summary": "Prerequisite workflow matching survives display-name changes.",
+  "details": [
+    "Identify runs by stable workflow path, retain name compatibility and use the approval path for auto-merge gating."
+  ],
+  "status": "merged",
+  "merged_at": "2026-07-19T19:50:31Z",
+  "breaking": false
+}

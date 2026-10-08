@@ -1,0 +1,15 @@
+{
+  "schema": 1,
+  "pr": 81,
+  "title": "fix(github): render multiline workflow commands safely",
+  "type": "fix",
+  "scope": "github",
+  "summary": "Generated multiline workflow commands retain their shell structure.",
+  "details": [
+    "Emit YAML block scalars so manifest-driven commands do not fold into corrupted shell programs.",
+    "Original GitHub merge d5283516774e6a2a9abddfd89ee38c3d4c82a68a is distinct from rewritten main-history delivery ce7cd4d4af4430686bfd7735f681262afa4860cc; the merge date is the verified GitHub date."
+  ],
+  "status": "merged",
+  "merged_at": "2026-04-29T13:46:30Z",
+  "breaking": false
+}

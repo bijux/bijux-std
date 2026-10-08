@@ -1,0 +1,16 @@
+{
+  "schema": 1,
+  "pr": 11,
+  "title": "fix(release): align artifact publishing and wrapper manifest generation",
+  "type": "fix",
+  "scope": "release",
+  "summary": "Artifact publication and generated workflow event keys remain executable.",
+  "details": [
+    "Use token authentication for the then-current artifact PyPI mode and retain trusted publishing for the other mode.",
+    "Preserve YAML on keys in generated wrappers and advance the shared artifact-download action pin.",
+    "Original GitHub merge 0956c7085623b82195ef908997595898a41a7ce0 is distinct from rewritten main-history delivery d2e2ee174289917df3ce796c90c9c7e67db59a92; the merge date is the verified GitHub date."
+  ],
+  "status": "merged",
+  "merged_at": "2026-04-19T11:57:34Z",
+  "breaking": false
+}

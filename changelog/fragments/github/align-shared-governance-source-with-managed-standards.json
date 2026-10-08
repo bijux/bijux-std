@@ -1,0 +1,15 @@
+{
+  "schema": 1,
+  "pr": 64,
+  "title": "fix(github): align shared governance source with managed standards",
+  "type": "fix",
+  "scope": "github",
+  "summary": "Shared governance source matches the managed repository baseline.",
+  "details": [
+    "Align automation identity, required-check names and main-branch rules with their top-level rendered copies.",
+    "Original GitHub merge 82c887c4d3d4bb548b1f2741fee0af9a184aa5e2 is distinct from rewritten main-history delivery d3cabb3fb8120bc052e16d22cf23eccf9b5e7b83; the merge date is the verified GitHub date."
+  ],
+  "status": "merged",
+  "merged_at": "2026-04-27T17:10:02Z",
+  "breaking": false
+}

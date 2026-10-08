@@ -1,0 +1,15 @@
+{
+  "schema": 1,
+  "pr": 1,
+  "title": "refactor(github): move shared workflow templates out of active workflows",
+  "type": "refactor",
+  "scope": "github",
+  "summary": "Shared workflow sources are separated from active repository workflows.",
+  "details": [
+    "Keep canonical consumer templates under the shared governance tree while limiting the standards repository's activated workflow surface.",
+    "Original GitHub merge 78caf80e1f9377c2140d91d6fd506a350faeee90 is distinct from rewritten main-history delivery a453971c39bb596326cd0b68c38622c265180ab3; the merge date is the verified GitHub date."
+  ],
+  "status": "merged",
+  "merged_at": "2026-04-18T21:45:42Z",
+  "breaking": false
+}

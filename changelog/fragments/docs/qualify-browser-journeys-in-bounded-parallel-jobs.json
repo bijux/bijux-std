@@ -1,0 +1,15 @@
+{
+  "schema": 1,
+  "pr": 172,
+  "title": "ci(docs): qualify browser journeys in bounded parallel jobs",
+  "type": "ci",
+  "scope": "docs",
+  "summary": "The required browser matrix runs in bounded parallel jobs with complete source-bound aggregation.",
+  "details": [
+    "Render admitted fixtures once and distribute immutable bundles across twelve engine/journey jobs while retaining all 363 cases.",
+    "Reject missing, duplicate, failed, skipped or retried coverage and mismatched source, bundle, browser-version or JUnit evidence; instant navigation uses actual Document identity."
+  ],
+  "status": "merged",
+  "merged_at": "2026-10-08T11:33:09Z",
+  "breaking": false
+}

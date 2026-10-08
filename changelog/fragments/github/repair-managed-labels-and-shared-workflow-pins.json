@@ -1,0 +1,14 @@
+{
+  "schema": 1,
+  "pr": 109,
+  "title": "fix(github): repair managed labels and shared workflow pins",
+  "type": "fix",
+  "scope": "github",
+  "summary": "Managed dependency labels and setup-uv pins follow shared policy.",
+  "details": [
+    "Align Dependabot labels with the governance taxonomy and refresh setup revisions in documentation and release workflows."
+  ],
+  "status": "merged",
+  "merged_at": "2026-07-08T23:47:09Z",
+  "breaking": false
+}

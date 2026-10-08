@@ -1,0 +1,16 @@
+{
+  "schema": 1,
+  "pr": 55,
+  "title": "feat(governance): manage main branch protection from bijux-std",
+  "type": "feat",
+  "scope": "governance",
+  "summary": "Terraform manages main-branch protection for the standards and hub repositories.",
+  "details": [
+    "Declare the PR-only review, conversation-resolution and force-push/deletion restrictions for both repositories.",
+    "Plan/apply workflows import existing protection before operating without a persistent Terraform backend.",
+    "Original GitHub merge c4a84947d436c8f810f5dca3b71eb475fcea6f9d is distinct from rewritten main-history delivery 705137f9b1e092109e8f758e9bcde2238f1119cc; the merge date is the verified GitHub date."
+  ],
+  "status": "merged",
+  "merged_at": "2026-04-23T18:29:44Z",
+  "breaking": false
+}

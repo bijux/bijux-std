@@ -1,0 +1,15 @@
+{
+  "schema": 1,
+  "pr": 131,
+  "title": "fix(github): honor consumer standards pins in CI",
+  "type": "fix",
+  "scope": "github",
+  "summary": "Consumer CI checks the repository's selected standard commit.",
+  "details": [
+    "Reject malformed pins before fetching and compare synchronized content against the checked-in SHA rather than an incidental standard revision.",
+    "Advance generated Python workflows to setup-uv 9.0.0."
+  ],
+  "status": "merged",
+  "merged_at": "2026-07-24T02:20:24Z",
+  "breaking": false
+}

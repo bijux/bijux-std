@@ -1,0 +1,15 @@
+{
+  "schema": 1,
+  "pr": 19,
+  "title": "fix(release): avoid artifact workflow cancellation across channels",
+  "type": "fix",
+  "scope": "release",
+  "summary": "Independent release channels no longer cancel each other's artifact orchestration.",
+  "details": [
+    "Include caller workflow and ref in the concurrency key so identical package slugs can publish through separate channels safely.",
+    "Original GitHub merge c240e0629f69cabe675d4bb43f75e8a072e69cec is distinct from rewritten main-history delivery 3f1a796de5c1d2226b37bc5a058f9a06be374739; the merge date is the verified GitHub date."
+  ],
+  "status": "merged",
+  "merged_at": "2026-04-19T14:10:38Z",
+  "breaking": false
+}

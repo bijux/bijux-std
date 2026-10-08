@@ -1,0 +1,15 @@
+{
+  "schema": 1,
+  "pr": 73,
+  "title": "fix(github): restore telecom pr ci wrapper",
+  "type": "fix",
+  "scope": "github",
+  "summary": "Telecom regains a governed PR CI wrapper for its native Rust lane.",
+  "details": [
+    "Run the repository's ci-pr target on pull requests and main pushes using the shared standards definition.",
+    "Original GitHub merge 7468e2271e7bd211b0b1b7d98482c29cd4e939a8 is distinct from rewritten main-history delivery c5f7b4a3a8100450524f01168bd9d8ec5d95feee; the merge date is the verified GitHub date."
+  ],
+  "status": "merged",
+  "merged_at": "2026-04-28T10:05:59Z",
+  "breaking": false
+}

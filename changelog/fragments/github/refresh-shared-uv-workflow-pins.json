@@ -1,0 +1,14 @@
+{
+  "schema": 1,
+  "pr": 98,
+  "title": "fix(github): refresh shared uv workflow pins",
+  "type": "fix",
+  "scope": "github",
+  "summary": "Shared CI setup uses the setup-uv 8.2.0 revision.",
+  "details": [
+    "Advance canonical workflow references and their governance directory digest together."
+  ],
+  "status": "merged",
+  "merged_at": "2026-06-26T23:32:59Z",
+  "breaking": false
+}

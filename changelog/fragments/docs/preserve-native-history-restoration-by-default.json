@@ -1,0 +1,15 @@
+{
+  "schema": 1,
+  "pr": 181,
+  "title": "fix(docs): preserve native history restoration by default",
+  "type": "fix",
+  "scope": "docs",
+  "summary": "Shared defaults preserve native Back URL restoration.",
+  "details": [
+    "Exclude optional navigation.tracking from the default while retaining instant navigation, authored anchors, TOC following and consumer-authored opt-ins.",
+    "Maintain separate history journeys for direct routes, Back/Forward and document continuity."
+  ],
+  "status": "merged",
+  "merged_at": "2026-10-08T13:14:33Z",
+  "breaking": false
+}

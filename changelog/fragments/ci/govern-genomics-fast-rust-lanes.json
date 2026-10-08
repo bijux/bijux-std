@@ -1,0 +1,14 @@
+{
+  "schema": 1,
+  "pr": 118,
+  "title": "fix(ci): govern Genomics fast Rust lanes",
+  "type": "fix",
+  "scope": "ci",
+  "summary": "Genomics fast CI uses its governed Rust 1.95 toolchain and cache setup.",
+  "details": [
+    "Remove the slow-tier workflow and dispatch input and initialize sccache in the foundational jobs."
+  ],
+  "status": "merged",
+  "merged_at": "2026-07-19T16:24:26Z",
+  "breaking": false
+}

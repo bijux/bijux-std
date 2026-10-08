@@ -1,0 +1,14 @@
+{
+  "schema": 1,
+  "pr": 155,
+  "title": "perf(docs): trim repeated whitespace from complete navigation",
+  "type": "perf",
+  "scope": "docs",
+  "summary": "Complete navigation emits less repeated indentation without changing destinations.",
+  "details": [
+    "Trim template block-edge whitespace while preserving labels, escaping, disclosure hierarchy and active-state attributes; the tree stays native and static."
+  ],
+  "status": "merged",
+  "merged_at": "2026-10-08T03:32:14Z",
+  "breaking": false
+}

@@ -1,0 +1,16 @@
+{
+  "schema": 1,
+  "pr": 185,
+  "title": "fix(docs): qualify public origins and publication command boundaries",
+  "type": "fix",
+  "scope": "docs",
+  "summary": "Public documentation commands validate origin and publication boundaries before mutation.",
+  "details": [
+    "Build and check use the authored public origin, empty overrides preserve the MkDocs fallback, and local development serving remains explicit.",
+    "Validate renderer source/runtime command boundaries before bootstrap or public-output changes, with independent receipts for three actual command journeys.",
+    "Document public-site data flows; unsupported Linux producer profiles remain unapproved and reject before public artifact mutation."
+  ],
+  "status": "merged",
+  "merged_at": "2026-10-08T15:31:49Z",
+  "breaking": false
+}
