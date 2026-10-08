@@ -48,23 +48,6 @@ The registry array is the presentation order in the header and complete sidebar.
 Parent overview links are destinations; native `details`/`summary` controls only
 disclose descendants. Neither control substitutes for the other.
 
-## Reader history and optional scroll tracking
-
-The shared baseline preserves native authored fragment destinations and browser
-Back/Forward. It retains Material instant navigation, active table-of-contents
-indication and `toc.follow`. It does not enable `navigation.tracking` by default:
-that feature replaces the current URL fragment from scroll position and can
-restore a fragment after browser Back while the document is still settling.
-
-A product may explicitly add `navigation.tracking` to its authored feature list.
-The projector preserves authored feature additions; synchronization does not
-silently strip this opt-in. Such a product owns compatibility qualification for
-ordinary fragment Back/Forward, instant reader return, and URL stability during
-scroll restoration in every admitted browser. Automatic tracking must not be
-presented as qualified by the shared default history receipt. When reviewing an
-existing consumer override, distinguish an intentional opt-in from a feature
-copied from the previous standard before changing that authored list.
-
 ## Public observations and private integration
 
 | Surface | Contract | Ownership and lifetime |
@@ -118,6 +101,7 @@ base templates are inputs to that producer, not competing controllers.
 | `nav-state.js`, `detail-tabs.js` | Shared active-path and header-detail state consumes server-rendered destinations. | Navigation projection and deep-page/history journeys |
 | `nav-reveal.js` | Shared container scroll reveal consumes the active navigation state. | Generated resize/navigation journeys; compatibility aliases retained |
 | `content-reflow.js` | Shared progressive annotation of measured code/table overflow; authored source, line anchors, cells, labels and controls remain owned by their authors. | `unit/content-reflow.test.cjs`; `ui/generated-specs/reader-reflow.spec.js` via `ui-test-reader` |
+| `external-links.js` | Shared progressive warnings and explicit `_blank` opener isolation; products own href, target, download and referrer intent. The coordinator owns mount/disposal. | `ui/generated-specs/external-links.spec.js` via `ui-test-link-policy`; `tests/test_docs_external_link_projection.py` |
 | `bootstrap.js` | Shared document-lifetime coordinator owns control upgrade, compact drawer/search interaction, binding and disposal. | Search focus/input units; generated shell/drawer/search journeys |
 | `search-recovery.js`, `tooling/material/search-*-adapter.js` | Shared failure UI and admitted index/worker transport; Material worker retains tokenization, ranking, options, and result protocol. | Index/worker/recovery units; search outage/retry/latest-query browser gate |
 | `mermaid-init.js` | Shared sole renderer; lazy admitted vendor renders strictly from preserved authored source. Material must not intercept source fences. | Renderer/dependency units and diagrams browser gate |
@@ -134,12 +118,29 @@ Test paths in this table are relative to `tests/bijux-docs/` unless prefixed by
 source and executable test references for public behavior and boundary guards.
 It records applicability, not a universal pass or full accessibility claim.
 
-The baseline currently references `assets/javascripts/external-links.js`, which
-is not produced by the shared source tree. Some consumers author that file; the
-generated test harness has its own fixture. Those facts are an unresolved
-producer boundary, not evidence of an upstream external-link policy. Do not
-overwrite an authored file, synthesize an alias, or remove required behavior to
-hide a missing producer. Consumer asset checks must retain the actual failure.
+The shared external-link producer supplies the required
+`assets/javascripts/external-links.js` asset. It is projected at that exact path
+and executes before the coordinator. Native `href`, `target`, `download`,
+`referrerpolicy` and relationship intent remain authored inputs; offsite origin
+alone does not select a new window. Explicit `_blank` adds `noopener`, retaining
+other relationship/privacy tokens and removing contradictory `opener`.
+
+The projector does not claim existing authored external-link files as legacy
+managed content. Each consumer must review its current file and authored link
+intent, then explicitly migrate that authored boundary in the same coherent
+candidate that adopts the generated producer. There is no force-adoption alias
+or silent ownership rewrite. Authored target/content decisions are separate
+from generated synchronization where separable. An existing consumer's blanket
+new-tab script must not execute alongside this producer.
+
+Native anchors keep modified clicks, browser menus and Back/Forward. The shared
+script has no click listener, window-opening call, router or history owner. Its
+private document annotations and observer are disposed by the existing signal.
+Plain actions have warning text; icon actions have visible/accessible indication.
+Consumers retain authored source warnings/security for no-script use, and review
+named-window/opener integrations rather than imposing `_blank` on them.
+Cross-origin download delivery remains dependent on browser/server policy;
+authored filename preservation is not proof of that external capability.
 
 ## Lifetimes and compatibility
 
@@ -214,3 +215,21 @@ Projection provenance, protected destinations, exact-source verification, and
 implementation exclusions are specified in [consumer projection](README.md).
 The shared asset inventory and versions are authoritative in the baseline and
 compiler provenance, rather than repeated vendor URLs in this document.
+
+
+## Reader history and optional scroll tracking
+
+The shared baseline preserves native authored fragment destinations and browser
+Back/Forward. It retains Material instant navigation, active table-of-contents
+indication and `toc.follow`. It does not enable `navigation.tracking` by default:
+that feature replaces the current URL fragment from scroll position and can
+restore a fragment after browser Back while the document is still settling.
+
+A product may explicitly add `navigation.tracking` to its authored feature list.
+The projector preserves authored feature additions; synchronization does not
+silently strip this opt-in. Such a product owns compatibility qualification for
+ordinary fragment Back/Forward, instant reader return, and URL stability during
+scroll restoration in every admitted browser. Automatic tracking must not be
+presented as qualified by the shared default history receipt. When reviewing an
+existing consumer override, distinguish an intentional opt-in from a feature
+copied from the previous standard before changing that authored list.

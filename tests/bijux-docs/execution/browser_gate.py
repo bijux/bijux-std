@@ -20,6 +20,7 @@ GROUPS = {
     'search': ('search', 'search-invoker'),
     'reader': ('native-navigation', 'reader'),
     'rendering': ('diagrams', 'contrast'),
+    'links': ('links',),
     'history': ('history',),
 }
 ENGINES = ('chromium', 'firefox', 'webkit')
