@@ -402,6 +402,11 @@ class QualifiedPublicationTests(unittest.TestCase):
                                               self.policy, self.paths["source"], self.paths["build"],
                                               self.paths["verification"], self.paths["csp"])
 
+    def test_local_embedded_candidate_receipt_cannot_bypass_independent_producer(self):
+        self.records["csp"]["embedded"] = {"verification_only": True, "applied": True}
+        with self.assertRaisesRegex(publication.AdmissionError, "independently reconstructed producer capability admission"):
+            self.qualified()
+
     def test_scoped_receipts_bind_real_clean_source_and_exact_standard(self):
         manifest = self.qualified()
         self.assertEqual(manifest["schema"], 2)

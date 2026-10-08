@@ -100,7 +100,7 @@ def validate_config(*, repository: str, event: str, ref: str, default_branch: st
 class DocumentPolicy(HTMLParser):
     """Inspect executable/URL attributes without treating code text as HTML."""
 
-    def __init__(self) -> None:
+    def __init__(self, *, owned_report: bool = False, owned_parent: bool = False) -> None:
         super().__init__(convert_charrefs=True)
         self.failures: list[str] = []
         self.canonicals: list[str] = []
@@ -108,6 +108,8 @@ class DocumentPolicy(HTMLParser):
         self.head_open = False
         self.active_seen = False
         self.csp_early = False
+        self.owned_report = owned_report
+        self.owned_parent = owned_parent
 
     def handle_starttag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
         values = dict(attrs)
@@ -115,6 +117,8 @@ class DocumentPolicy(HTMLParser):
             self.failures.append("duplicate HTML attributes")
         if tag == "head":
             self.head_open = True
+        if tag == "iframe" and not self.owned_parent:
+            self.failures.append("iframe requires an exact source-owned parent capability")
         if tag in {"script", "style", "img", "iframe", "object", "embed", "source", "video", "audio"} or (
                 tag == "link" and set((values.get("rel") or "").split()) & {
                     "stylesheet", "preload", "modulepreload", "prefetch", "preconnect", "dns-prefetch", "icon"}) or (
@@ -130,7 +134,8 @@ class DocumentPolicy(HTMLParser):
                 scheme = urlsplit(normalized).scheme
                 if scheme in {"javascript", "vbscript"}:
                     self.failures.append("executable URL scheme")
-                if scheme == "data" and tag not in {"img", "source"}:
+                empty_owned_icon = self.owned_report and tag == "link" and values.get("rel") == "icon" and value == "data:,"
+                if scheme == "data" and tag not in {"img", "source"} and not empty_owned_icon:
                     self.failures.append("unadmitted data URL")
                 if normalized.startswith("http://") and tag in {"script", "img", "iframe", "link", "source", "video", "audio"}:
                     self.failures.append("insecure active resource")
@@ -253,7 +258,8 @@ def static_svg(content: bytes, maximum_bytes: int) -> None:
 
 
 def bundle_manifest(repo_root: Path, site_dir: str, site_url: str, source_sha: str,
-                    policy: dict, standard_sha: str | None = None) -> dict:
+                    policy: dict, standard_sha: str | None = None, *, embedded_report_routes: set[str] | None = None,
+                    embedded_parent_routes: set[str] | None = None) -> dict:
     validate_url(site_url)
     require(bool(SHA.fullmatch(source_sha)), "source identity: full lowercase commit SHA required")
     if standard_sha is not None:
@@ -284,7 +290,7 @@ def bundle_manifest(repo_root: Path, site_dir: str, site_url: str, source_sha: s
             failures.append({"path": relative, "code": "private-material"})
         if path.suffix.lower() == ".html":
             try:
-                parser = DocumentPolicy()
+                parser = DocumentPolicy(owned_report=relative in (embedded_report_routes or set()), owned_parent=relative in (embedded_parent_routes or set()))
                 parser.feed(content.decode("utf-8"))
                 for failure in sorted(set(parser.failures)):
                     failures.append({"path": relative, "code": failure})
@@ -323,13 +329,20 @@ def identity_module():
     return module
 
 
-def applied_csp(policy: str, admitted_hashes: set[str]) -> set[str]:
+def applied_csp(policy: str, admitted_hashes: set[str], capability: dict | None = None) -> set[str]:
     expected = {"default-src": ["'self'"], "base-uri": ["'self'"], "object-src": ["'none'"],
                 "form-action": ["'self'"], "script-src-attr": ["'none'"],
                 "style-src": ["'self'", "'unsafe-inline'"], "font-src": ["'self'"],
                 "connect-src": ["'self'"], "worker-src": ["'self'", "blob:"],
                 "img-src": ["'self'", "data:", "https://img.shields.io", "https://raw.githubusercontent.com"],
                 "media-src": ["'self'"], "frame-src": ["'none'"], "manifest-src": ["'self'"]}
+    if capability is not None:
+        expected["frame-src"] = capability["frame_uris"] or ["'none'"]
+        if "script_hashes" in capability:
+            expected.update({"base-uri": ["'none'"], "form-action": ["'none'"],
+                             "worker-src": capability["worker_sources"],
+                             "connect-src": capability["connect_sources"],
+                             "img-src": capability["image_sources"]})
     directives = {}
     for section in policy.split(";"):
         tokens = section.strip().split()
@@ -344,6 +357,92 @@ def applied_csp(policy: str, admitted_hashes: set[str]) -> set[str]:
     require(all(re.fullmatch(r"'sha256-[A-Za-z0-9+/]{43}='", value) and value in admitted_hashes for value in hashes),
             "CSP receipt: unadmitted executable hash or source")
     return hashes
+
+
+def embedded_module():
+    import sys
+    name = "bijux_publication_embedded"
+    path = Path(__file__).with_name("embedded_reports")
+    spec = importlib.util.spec_from_file_location(name, path / "__init__.py", submodule_search_locations=[str(path)])
+    module = importlib.util.module_from_spec(spec)
+    sys.modules[name] = module
+    spec.loader.exec_module(module)
+    return importlib.import_module(name + ".integration")
+
+
+def verify_embedded_candidate(repo_root: Path, site_dir: str, site_url: str, source_sha: str,
+                              policy: dict, csp: dict, completed_build: dict, *, canonical_root: Path | None = None) -> dict:
+    """Exercise source-owned local composition without claiming accepted publication."""
+    site = site_directory(repo_root, site_dir, exists=True)
+    admitted = embedded_module().verify_composition(site, csp, completed_build)
+    result = bundle_manifest(repo_root, site_dir, site_url, source_sha, policy,
+                             embedded_report_routes=admitted["report_routes"],
+                             embedded_parent_routes=set(admitted["capabilities"]) - admitted["report_routes"])
+    require(csp.get("pages") == sum(e["path"].endswith(".html") for e in result["files"]),
+            "Candidate CSP: incomplete HTML coverage")
+    owned_hashes = {"'" + h + "'" for cap in admitted["capabilities"].values() for h in cap.get("script_hashes", [])}
+    used = set()
+    executable = executable_admission(canonical_root or Path(__file__).resolve().parents[1], csp)
+    for item in result["files"]:
+        if not item["path"].endswith(".html"):
+            continue
+        parsed = DocumentPolicy(owned_report=item["path"] in admitted["report_routes"], owned_parent=item["path"] in admitted["capabilities"] and item["path"] not in admitted["report_routes"])
+        parsed.feed((site / item["path"]).read_text())
+        require(len(parsed.csp) == 1 and parsed.csp_early, "Candidate CSP: missing or late policy")
+        capability = admitted["capabilities"].get(item["path"])
+        executable((site / item["path"]).read_text(), item["path"], capability, csp)
+        hashes = applied_csp(parsed.csp[0], set(csp.get("script_hashes", [])), capability)
+        require(hashes.intersection(owned_hashes) == ({"'" + h + "'" for h in capability.get("script_hashes", [])} if capability else set()),
+                "Candidate CSP: report script hash is admitted on another route")
+        used.update(hashes)
+    require(used == set(csp.get("script_hashes", [])), "Candidate CSP: script coverage differs")
+    return result | {"verification_only": True, "scope": "source-owned local embedded composition; no publication acceptance", "embedded": admitted["receipt"]}
+
+
+def executable_admission(canonical: Path, csp: dict):
+    """Recompute exact source-derived executable admission, independent of receipt hashes."""
+    import importlib.metadata
+    import material
+    spec = importlib.util.spec_from_file_location("bijux_publication_exact_csp", Path(__file__).with_name("csp.py"))
+    processor = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(processor)
+    require(importlib.metadata.version("mkdocs-material") == processor.MATERIAL_VERSION,
+            "CSP receipt: actual admitted dependency version differs")
+    templates = Path(material.__file__).parent / "templates"
+    observed = processor.policy_inputs(canonical, templates)
+    require(all(csp["policy_inputs"].get(key) == value for key, value in observed.items()),
+            "CSP receipt: actual source/dependency executable inputs differ")
+    require(csp.get("processor_sha256") == hashlib.sha256(Path(processor.__file__).read_bytes()).hexdigest(),
+            "CSP receipt: executable processor differs")
+    allowed, base = processor.admitted_scripts(canonical, templates)
+    def validate(html, path, capability, report):
+        parsed = DocumentPolicy(owned_report=bool(capability and "script_hashes" in capability),
+                                owned_parent=bool(capability and "script_hashes" not in capability))
+        parsed.feed(html)
+        require(len(parsed.csp) == 1 and not parsed.failures, "CSP receipt: unsafe or missing effective HTML policy")
+        injected = '\n<meta http-equiv="Content-Security-Policy" content="' + parsed.csp[0] + '">'
+        require(html.count(injected) == 1, "CSP receipt: exact early insertion is required")
+        original = html.replace(injected, "", 1)
+        page_allowed = allowed
+        if capability and "script_hashes" in capability:
+            # The embedded source verifier already proved these exact bodies;
+            # reparse only this declared source-owned route, never ordinary HTML.
+            page_parser = processor.Scripts()
+            page_parser.feed(original)
+            page_allowed = set(page_parser.inline)
+            require({processor.hash_source(body) for body in page_allowed} == {"'" + h + "'" for h in capability["script_hashes"]},
+                    "CSP receipt: source-owned report bodies differ")
+        for record in report.get("redirects", {}).get("records", []):
+            if record["path"] == path:
+                redirect = importlib.util.spec_from_file_location("bijux_publication_exact_redirect", Path(__file__).with_name("redirects.py"))
+                normalizer = importlib.util.module_from_spec(redirect)
+                redirect.loader.exec_module(normalizer)
+                script = normalizer.SCRIPT.format(target=json.dumps(record["target"], ensure_ascii=True))
+                page_allowed = page_allowed | {script}
+        updated, _ = processor.qualify_html(original, page_allowed, base, capability,
+                                          owned_report=bool(capability and "script_hashes" in capability))
+        require(updated == html, "CSP receipt: final policy differs from independently admitted executable source")
+    return validate
 
 
 def qualified_redirects(canonical: Path, build: dict, csp: dict, site: Path, site_url: str) -> dict:
@@ -464,6 +563,8 @@ def qualified_manifest(repo_root: Path, site_dir: str, site_url: str, source_sha
     require(source["repository_source"]["sha"] == source_sha, "source identity: receipt differs from selected source")
     require(source["site_url"] == site_url and source["site_dir"] == site_dir,
             "source identity: receipt selects another public artifact")
+    require(records["csp"]["receipt"].get("embedded") is None,
+            "Embedded publication: independently reconstructed producer capability admission is required; local candidate verification cannot grant publication")
     result = bundle_manifest(root, site_dir, site_url, source_sha, policy, source["standard"]["sha"])
     for name in ("build", "verification", "csp"):
         receipt = records[name]["receipt"]
