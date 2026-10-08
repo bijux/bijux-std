@@ -16,7 +16,8 @@ TESTS = ROOT / 'tests/bijux-docs'
 ARTIFACTS = ROOT / 'artifacts/bijux-docs'
 GROUPS = {
     'navigation': ('navigation', 'drawer', 'preferences', 'repository'),
-    'search': ('search', 'search-invoker'),
+    'search': ('search',),
+    'search-invoker': ('search-invoker',),
     'reader': ('native-navigation', 'reader'),
     'diagrams': ('diagrams',),
     'contrast': ('contrast',),
