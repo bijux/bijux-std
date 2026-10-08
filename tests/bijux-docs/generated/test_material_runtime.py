@@ -125,6 +125,33 @@ class MaterialRuntimeTests(unittest.TestCase):
                     runtime.generate(self.root / 'shared', templates, self.version)
             self.assertFalse((self.root / 'shared').exists())
 
+    def assert_owned_context_rejected(self, needle, declaration, message):
+        templates = self.copied_templates()
+        owned = self.root / 'owned-context'
+        shutil.copytree(OWNED, owned)
+        admitted = json.loads((owned / 'admission.json').read_text())
+        bundle = templates / admitted['bundle']
+        original = bundle.read_text()
+        self.assertEqual(original.count(needle), 1)
+        for changed in (original.replace(needle, ''), original + needle, original + declaration):
+            with self.subTest(owned_context=needle, declaration=declaration):
+                bundle.write_text(changed)
+                current = dict(admitted, bundle_sha256=hashlib.sha256(bundle.read_bytes()).hexdigest())
+                (owned / 'admission.json').write_text(json.dumps(current))
+                with mock.patch.object(runtime, 'OWNED', owned), self.assertRaisesRegex(ValueError, message):
+                    runtime.generate(self.root / 'shared', templates, self.version)
+                self.assertFalse((self.root / 'shared').exists())
+
+    def test_search_result_context_rejects_missing_duplicate_or_predeclared_owned_helper(self):
+        self.assert_owned_context_rejected(
+            'href:`${s}`,class:"md-search-result__link",tabIndex:-1',
+            '__bijuxSearchCapabilityTarget', 'Native search renderer boundary')
+
+    def test_native_iife_rejects_missing_or_duplicate_owned_lexical_scope(self):
+        self.assert_owned_context_rejected(
+            '"use strict";(()=>{', '__bijuxSearchCapabilityTarget', 'Native search renderer boundary')
+
+
     def test_altered_upstream_license_rejects_before_output(self):
         owned = self.root / 'owned'
         shutil.copytree(OWNED, owned)
