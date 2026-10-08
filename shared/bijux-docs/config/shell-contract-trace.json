@@ -137,6 +137,22 @@
       "test": "tests/bijux-docs/unit/content-reflow.test.cjs",
       "test_reference": "reader context excludes a native permalink without mutating its heading",
       "applicability": "Detached heading clone excludes decorative permalink/aria-hidden descendants while preserving authored text; actual assistive review remains required."
+    },
+    {
+      "id": "authored-link-intent",
+      "surface": "Native anchor href/target/download/rel/referrerpolicy; private progressive warning annotations",
+      "source": "shared/bijux-docs/scripts/external-links.js",
+      "test": "tests/bijux-docs/ui/generated-specs/external-links.spec.js",
+      "test_reference": "authored target, download, relation and description remain distinct",
+      "applicability": "Generated representative native browser journeys only. Authored source warnings without JavaScript, named-window integration review, assistive technology and accepted consumer migration remain required."
+    },
+    {
+      "id": "external-link-producer-ownership",
+      "surface": "Required assets/javascripts/external-links.js canonical projection and authored destination protection",
+      "source": "shared/bijux-docs/tooling/scripts/project_bijux_docs.py",
+      "test": "tests/test_docs_external_link_projection.py",
+      "test_reference": "test_authored_consumer_file_cannot_be_claimed_as_legacy_generated",
+      "applicability": "Exact missing-producer/protected-authored-file tests. Explicit reviewed authored boundary migration and actual accepted-source consumer projection remain required."
     }
   ],
   "compatibility_retirement": {

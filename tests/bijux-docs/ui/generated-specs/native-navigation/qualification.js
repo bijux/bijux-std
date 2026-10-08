@@ -20,7 +20,7 @@ async function tabTo(page,record,match,maximum=128,reverse=false){
  throw new Error('Ordinary Tab never reached required native control/destination');
 }
 async function startLink(page,record){
- const summary=page.locator('#bijux-node-2');await tabTo(page,record,n=>n.id==='bijux-node-2');
+ const summary=page.locator('#bijux-navigation summary').filter({hasText:/^\s*Platform\s*$/});await expect(summary).toHaveCount(1);const summaryId=await summary.getAttribute('id');demand(Boolean(summaryId),'missing-platform-summary-id','The rendered Platform disclosure must expose an observed stable DOM id');await tabTo(page,record,n=>n.id===summaryId);
  if(!await summary.evaluate(n=>n.parentElement.open)){await page.keyboard.press('Space');await expect.poll(()=>summary.evaluate(n=>n.parentElement.open)).toBe(true);}
  const link=page.locator('#bijux-navigation .bijux-tree a[href]').filter({hasText:/^\s*Getting started\s*$/}).first(),expectedURL=await link.evaluate(n=>n.href);
  await tabTo(page,record,n=>n.href===expectedURL);await page.keyboard.press('Enter');await expect(page).toHaveURL(expectedURL);await expect(page.locator('h1')).toBeVisible();record.destination={expectedURL,finalURL:page.url(),heading:await page.locator('h1').textContent()};
