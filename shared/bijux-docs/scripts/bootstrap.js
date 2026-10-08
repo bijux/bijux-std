@@ -28,13 +28,33 @@
   }
 
   function bindDrawer(signal) {
+    // Native Material headers retain their own drawer; this component requires shared ownership.
+    if (!document.querySelector("header[data-bijux-drawer-target]")) return false;
     const toggle = document.getElementById("__drawer");
     const sidebar = document.querySelector(".md-sidebar--primary");
     const navigation = document.getElementById("bijux-navigation");
     const opener = document.querySelector('[data-bijux-header-control="drawer-toggle"]');
-    if (!toggle || !sidebar || !navigation || !opener) return;
+    if (!toggle || !sidebar || !navigation || !opener) throw new Error("Shared drawer initialization requires its native control, sidebar, tree and opener");
     let open = false;
     let background = [];
+    const initialSidebarInert = sidebar.inert;
+    const remember = (node, names) => names.map(name => [name, node.getAttribute(name)]);
+    const sidebarAttributes = remember(sidebar, ["role", "aria-modal", "aria-label"]);
+    const openerAttributes = remember(opener, ["aria-expanded", "aria-controls", "aria-haspopup"]);
+    const restore = (node, attributes) => {
+      for (const [name, value] of attributes) {
+        if (value === null) node.removeAttribute(name);
+        else node.setAttribute(name, value);
+      }
+    };
+    signal.addEventListener("abort", () => {
+      restoreBackground();
+      sidebar.inert = initialSidebarInert;
+      restore(sidebar, sidebarAttributes);
+      restore(opener, openerAttributes);
+      delete document.body.dataset.bijuxDrawerOpen;
+      delete document.body.dataset.bijuxDrawerReady;
+    }, { once: true });
     const visible = node => node.getClientRects().length && getComputedStyle(node).visibility !== "hidden";
     const focusable = () => [...navigation.querySelectorAll('a[href], button:not([disabled]), summary, [tabindex="0"]')].filter(visible);
 
@@ -116,11 +136,8 @@
       readingIntent = true;
       close(false);
     }, { signal });
-    signal.addEventListener("abort", () => {
-      restoreBackground(); sidebar.inert = false;
-      document.body.dataset.bijuxDrawerOpen = "false";
-    }, { once: true });
     sync();
+    return true;
   }
 
   function bindSearch(signal) {
@@ -265,23 +282,33 @@
 
   function runShellNavigationSync() {
     lifetime?.abort();
+    delete document.body.dataset.bijuxDrawerReady;
+    delete document.body.dataset.bijuxDrawerOpen;
     lifetime = new AbortController();
     closeDrawer = undefined;
-    upgradeControls();
-    bindDrawer(lifetime.signal);
-    bindSearch(lifetime.signal);
-    bindQueryInput(lifetime.signal);
-    shell.searchRecovery?.bind(lifetime.signal);
-    window.dispatchEvent(new Event("bijux:search-location"));
-    shell.detailTabs?.runDetailTabsSync?.();
-    shell.navReveal?.runDesktopNavigationSync?.();
-    if (readingIntent) {
-      readingIntent = false;
-      const heading = document.querySelector(".md-content h1");
-      if (heading) {
-        heading.setAttribute("tabindex", "-1");
-        heading.focus({ preventScroll: true });
+    try {
+      upgradeControls();
+      const drawerBound = bindDrawer(lifetime.signal);
+      bindSearch(lifetime.signal);
+      bindQueryInput(lifetime.signal);
+      shell.searchRecovery?.bind(lifetime.signal);
+      window.dispatchEvent(new Event("bijux:search-location"));
+      shell.detailTabs?.runDetailTabsSync?.();
+      shell.navReveal?.runDesktopNavigationSync?.();
+      if (readingIntent) {
+        readingIntent = false;
+        const heading = document.querySelector(".md-content h1");
+        if (heading) {
+          heading.setAttribute("tabindex", "-1");
+          heading.focus({ preventScroll: true });
+        }
       }
+      // Material's generic JS class does not establish this owned lifecycle.
+      if (drawerBound) document.body.dataset.bijuxDrawerReady = "true";
+    } catch (error) {
+      lifetime.abort();
+      closeDrawer = undefined;
+      throw error;
     }
   }
 

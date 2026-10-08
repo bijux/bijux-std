@@ -78,7 +78,7 @@
   .bijux-header-tools .md-header__source { display: none; }
   .md-header__topic[data-md-component="header-topic"] { display: none; }
 
-  html .md-sidebar.md-sidebar--primary {
+  body[data-bijux-drawer-ready="true"] .md-sidebar.md-sidebar--primary {
     position: fixed;
     top: var(--md-header-height, 3rem);
     bottom: 0;
@@ -99,9 +99,10 @@
     transform: translateX(-100%);
   }
 
-  [dir="rtl"] .md-sidebar.md-sidebar--primary { transform: translateX(100%); }
-  #__drawer:checked ~ .md-container .md-sidebar--primary,
-  #__drawer:checked ~ .md-main .md-sidebar--primary {
+  body[dir="rtl"][data-bijux-drawer-ready="true"] .md-sidebar.md-sidebar--primary,
+  [dir="rtl"] body[data-bijux-drawer-ready="true"] .md-sidebar.md-sidebar--primary { transform: translateX(100%); }
+  body[data-bijux-drawer-ready="true"] #__drawer:checked ~ .md-container .md-sidebar--primary,
+  body[data-bijux-drawer-ready="true"] #__drawer:checked ~ .md-main .md-sidebar--primary {
     visibility: visible;
     transform: translateX(0);
   }
@@ -115,7 +116,7 @@
   }
 
   html { scroll-padding-top: 6rem; }
-  body[data-bijux-drawer-open="true"] { overflow: hidden; }
+  body[data-bijux-drawer-ready="true"][data-bijux-drawer-open="true"] { overflow: hidden; }
 }
 
 @media screen and (max-width: 47.9375em) {
@@ -320,5 +321,80 @@
   .md-header__button[data-bijux-header-control] svg {
     max-inline-size: 100%;
     max-block-size: 100%;
+  }
+}
+
+/* The admitted Material checkbox keeps its native Space activation without scripts. */
+.bijux-native-drawer-label { display: none; }
+
+body:has(> header[data-bijux-drawer-target]):not([data-bijux-drawer-ready="true"]) [data-bijux-header-control="drawer-toggle"],
+body:has(> header[data-bijux-drawer-target]):not([data-bijux-drawer-ready="true"]) [data-bijux-header-control="search-toggle"],
+body:has(> header[data-bijux-drawer-target]):not([data-bijux-drawer-ready="true"]) [data-bijux-control-close],
+body:has(> header[data-bijux-drawer-target]):not([data-bijux-drawer-ready="true"]) .md-overlay { display: none; }
+
+@media screen and (max-width: 76.2344em) {
+  body:has(> header[data-bijux-drawer-target]):not([data-bijux-drawer-ready="true"]) #__drawer {
+    display: block;
+    position: fixed;
+    inset-block-start: 5px;
+    inset-inline-start: 6px;
+    inline-size: 44px;
+    block-size: 44px;
+    margin: 0;
+    opacity: 1;
+    visibility: visible;
+    z-index: 7;
+    accent-color: var(--md-accent-fg-color);
+  }
+
+  body:has(> header[data-bijux-drawer-target]):not([data-bijux-drawer-ready="true"]) #__drawer:focus-visible {
+    outline: 2px solid #fff;
+    outline-offset: 3px;
+  }
+
+  body:has(> header[data-bijux-drawer-target]):not([data-bijux-drawer-ready="true"]) .bijux-native-drawer-label {
+    display: inline-flex;
+    align-items: center;
+    min-block-size: 2.2rem;
+    padding-inline-start: 50px;
+    padding-inline-end: 0.3rem;
+    font-size: 0.64rem;
+    font-weight: 700;
+    cursor: pointer;
+    flex: 0 0 auto;
+  }
+}
+
+/* Native fallback remains in document flow until the owned drawer is ready. */
+@media screen and (max-width: 76.2344em) {
+  body:has(> header[data-bijux-drawer-target]):not([data-bijux-drawer-ready="true"]) .md-sidebar.md-sidebar--primary {
+    display: none;
+    position: static;
+    inset: auto;
+    inline-size: 100%;
+    min-width: 0;
+    max-width: 100%;
+    height: auto;
+    max-height: none;
+    margin: 0;
+    visibility: visible;
+    transform: none;
+    overflow: visible;
+    background: var(--md-default-bg-color);
+  }
+  body:has(> header[data-bijux-drawer-target]):not([data-bijux-drawer-ready="true"]) #__drawer:checked ~ .md-container .md-sidebar--primary,
+  body:has(> header[data-bijux-drawer-target]):not([data-bijux-drawer-ready="true"]) #__drawer:checked ~ .md-main .md-sidebar--primary {
+    display: block;
+    transform: none;
+    box-shadow: none;
+  }
+  body:has(> header[data-bijux-drawer-target]):not([data-bijux-drawer-ready="true"]) .md-main__inner { display: block; }
+
+}
+
+/* Native header focus uses system foreground when forced colors are active. */
+@media (forced-colors: active) {
+  body:has(> header[data-bijux-drawer-target]):not([data-bijux-drawer-ready="true"]) #__drawer:focus-visible {
+    outline-color: CanvasText;
   }
 }
