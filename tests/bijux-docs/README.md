@@ -190,3 +190,5 @@ Popup relationships, product-local search scope and native drawer dismissal are 
 Immutable fixture transport stores each identical rendered payload once and reconstructs the exact manifest/site bytes without links. Diagnostic build logs remain intact; damaged, extra, missing and escaped payloads fail before admission. Native query and invoker journeys have separate bounded engine jobs, with both mandatory in the complete source-bound aggregate.
 
 `make ui-test-reader-accessibility` exercises short-screen drawer traversal, RTL destinations, reader focus and fragment history. The required browser gate assigns its five cases independently to each engine.
+
+`make ui-test-diagram-trust` qualifies scientific labels and descriptions, rejected resource/configuration inputs, and malformed/oversized isolation. Its three cases are independently assigned to every engine; the existing diagram lifecycle gate remains mandatory.
