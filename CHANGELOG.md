@@ -6,14 +6,21 @@ This file records notable repository-level changes for `bijux-std`.
 
 ### Pending review
 
-#### [#211](https://github.com/bijux/bijux-std/pull/211) — test(docs): bind rendered fixtures to effective configuration bytes
+#### [#215](https://github.com/bijux/bijux-std/pull/215) — ci(docs): partition browser execution by viewport ownership
+
+Keep all canonical browser cases while assigning navigation and search scope to smaller viewport jobs.
+
+- Declare exact engine/profile ownership and reject missing, duplicate, moved or nonterminal receipts.
+- Preserve the strict three-minute whole-job limit and bind duration evidence to all registry dependencies.
+
+### Merged pull requests
+
+#### 2026-10-08T21:46:17Z — [#211](https://github.com/bijux/bijux-std/pull/211) — test(docs): bind rendered fixtures to effective configuration bytes
 
 Bind each generated scenario and browser report to the exact effective MkDocs YAML.
 
 - Reject changed, missing or malformed configuration identity and stale success manifests.
 - Preserve private producer inputs while transporting digest-bound metadata and unchanged public files.
-
-### Merged pull requests
 
 #### 2026-10-08T21:30:31Z — [#210](https://github.com/bijux/bijux-std/pull/210) — ci(docs): require complete rendered navigation qualification
 

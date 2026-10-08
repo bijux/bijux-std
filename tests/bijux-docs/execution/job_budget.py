@@ -76,6 +76,11 @@ def qualify(payload: dict, *, groups: dict, engines: tuple | list, run_id: int, 
             'limits': ['Queue is reported separately. Provider performance is observed, not guaranteed. No browser case or release acceptance is inferred.']}
 
 
+def registry_digests(registry_path: Path) -> dict[str, str]:
+    names = ('browser_gate.py', 'browser_partitions.py', 'browser_partitions.json')
+    return {name: hashlib.sha256(registry_path.with_name(name).read_bytes()).hexdigest() for name in names}
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--jobs-json', type=Path, required=True)
@@ -92,6 +97,7 @@ def main() -> int:
                           run_id=args.run_id, attempt=args.attempt, head=args.workflow_head)
         receipt['input_sha256'] = hashlib.sha256(args.jobs_json.read_bytes()).hexdigest()
         receipt['registry_sha256'] = hashlib.sha256(registry_path.read_bytes()).hexdigest()
+        receipt['registry_files_sha256'] = registry_digests(registry_path)
     except (ValueError, KeyError, TypeError, OSError) as error:
         receipt = {'schema': 1, 'status': 'failed', 'error': str(error)}
     receipt['requested_workflow_run_id'] = args.run_id

@@ -1,5 +1,6 @@
 """Reject incomplete, stale and over-budget frontend job observations."""
 import copy
+import tempfile
 import importlib.util
 from pathlib import Path
 import unittest
@@ -103,6 +104,24 @@ class FrontendJobBudgetTests(unittest.TestCase):
         for groups, engines in [({}, self.engines), (self.groups, []), (self.groups, ['chromium', 'chromium']), ({'navigation / fake': []}, self.engines)]:
             with self.subTest(groups=groups, engines=engines), self.assertRaises(ValueError):
                 BUDGET.expected_job_names(groups, engines)
+
+
+    def test_registry_identity_covers_each_execution_dependency(self):
+        artifacts = ROOT / 'artifacts/qualification/browser-partitions-integration'
+        artifacts.mkdir(parents=True, exist_ok=True)
+        with tempfile.TemporaryDirectory(dir=artifacts) as directory:
+            root = Path(directory)
+            for name in ('browser_gate.py', 'browser_partitions.py', 'browser_partitions.json'):
+                (root / name).write_text(name)
+            before = BUDGET.registry_digests(root / 'browser_gate.py')
+            self.assertEqual(set(before), {'browser_gate.py', 'browser_partitions.py', 'browser_partitions.json'})
+            (root / 'browser_partitions.json').write_text('changed declaration')
+            after = BUDGET.registry_digests(root / 'browser_gate.py')
+            self.assertNotEqual(before['browser_partitions.json'], after['browser_partitions.json'])
+            self.assertEqual(before['browser_gate.py'], after['browser_gate.py'])
+            (root / 'browser_partitions.py').unlink()
+            with self.assertRaises(FileNotFoundError):
+                BUDGET.registry_digests(root / 'browser_gate.py')
 
 
 if __name__ == '__main__':
