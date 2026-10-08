@@ -4,6 +4,7 @@ from __future__ import annotations
 import hashlib
 import importlib.util
 import io
+import json
 from pathlib import Path
 import tarfile
 import tempfile
@@ -61,6 +62,36 @@ class FixtureTransferTests(unittest.TestCase):
             with patch.object(GATE, 'ARTIFACTS', root), self.assertRaisesRegex(ValueError, 'Missing, duplicate'):
                 GATE.aggregate()
             self.assertIn('"status": "failed"', (root / 'navigation-qualification.json').read_text())
+
+    def test_failed_job_cannot_leave_passing_final_evidence(self) -> None:
+        for name in ('FIXTURE_RESULT', 'BROWSER_RESULT'):
+            with self.subTest(job=name), tempfile.TemporaryDirectory(dir=ROOT / 'artifacts') as directory:
+                root = Path(directory)
+                with patch.object(GATE, 'ARTIFACTS', root), patch.dict(GATE.os.environ, {name: 'failure'}), self.assertRaisesRegex(ValueError, 'required fixture/browser job'):
+                    GATE.aggregate()
+                self.assertIn('"status": "failed"', (root / 'navigation-qualification.json').read_text())
+
+    def test_producer_observation_and_workflow_are_bound(self) -> None:
+        with tempfile.TemporaryDirectory(dir=ROOT / 'artifacts') as directory:
+            root = Path(directory)
+            observation = {'source': {'sha': 'a' * 40}, 'verification_only': True, 'admission_created': False}
+            paths = ['browser-fixtures.tar.gz', 'renderer-source-observation.json'] + [f'inventories/{suite}.json' for suite in GATE.SUITES]
+            for name in paths:
+                path = root / name
+                path.parent.mkdir(parents=True, exist_ok=True)
+                path.write_text(json.dumps(observation) if name == 'renderer-source-observation.json' else 'immutable artifact')
+            receipt = {'source_head': 'a' * 40, 'workflow_run_id': None, 'workflow_attempt': None,
+                       'artifact_digests': {name: hashlib.sha256((root / name).read_bytes()).hexdigest() for name in paths}}
+            (root / 'producer-envelope.json').write_text(json.dumps(receipt))
+            with patch.object(GATE, 'ARTIFACTS', root), patch.object(GATE.subprocess, 'check_output', return_value='a' * 40), patch.dict(GATE.os.environ, {}, clear=True):
+                self.assertEqual(GATE.verify_producer_envelope(), receipt)
+                (root / 'renderer-source-observation.json').write_text('changed observer')
+                with self.assertRaisesRegex(ValueError, 'digest mismatch'):
+                    GATE.verify_producer_envelope()
+                receipt['workflow_attempt'] = 'previous attempt'
+                (root / 'producer-envelope.json').write_text(json.dumps(receipt))
+                with self.assertRaisesRegex(ValueError, 'workflow/candidate identity mismatch'):
+                    GATE.verify_producer_envelope()
 
 
 if __name__ == '__main__':

@@ -57,6 +57,31 @@ def prepare() -> None:
                 path = ARTIFACTS / directory / name
                 bundle.add(path, arcname=str(path.relative_to(ARTIFACTS)))
     (ARTIFACTS / 'browser-fixtures.sha256').write_text(hashlib.sha256(archive.read_bytes()).hexdigest() + '\n')
+    paths = [archive, ARTIFACTS / 'renderer-source-observation.json'] + [inventory / f'{suite}.json' for suite in SUITES]
+    write_json(ARTIFACTS / 'producer-envelope.json', {
+        'source_head': subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=ROOT, text=True).strip(),
+        'workflow_run_id': os.environ.get('GITHUB_RUN_ID'),
+        'workflow_attempt': os.environ.get('GITHUB_RUN_ATTEMPT'),
+        'artifact_digests': {str(path.relative_to(ARTIFACTS)): hashlib.sha256(path.read_bytes()).hexdigest() for path in paths},
+    })
+
+
+def verify_producer_envelope() -> dict:
+    receipt = json.loads((ARTIFACTS / 'producer-envelope.json').read_text())
+    expected = {'source_head': subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=ROOT, text=True).strip(),
+                'workflow_run_id': os.environ.get('GITHUB_RUN_ID'), 'workflow_attempt': os.environ.get('GITHUB_RUN_ATTEMPT')}
+    if any(receipt.get(key) != value for key, value in expected.items()):
+        raise ValueError('Producer workflow/candidate identity mismatch')
+    paths = ['browser-fixtures.tar.gz', 'renderer-source-observation.json'] + [f'inventories/{suite}.json' for suite in SUITES]
+    if set(receipt.get('artifact_digests', {})) != set(paths):
+        raise ValueError('Producer evidence inventory mismatch')
+    for name in paths:
+        if hashlib.sha256((ARTIFACTS / name).read_bytes()).hexdigest() != receipt['artifact_digests'][name]:
+            raise ValueError('Producer evidence digest mismatch: ' + name)
+    observation = json.loads((ARTIFACTS / 'renderer-source-observation.json').read_text())
+    if observation['source']['sha'] != expected['source_head'] or observation['verification_only'] is not True or observation['admission_created'] is not False:
+        raise ValueError('Renderer observation is not this candidate verification evidence')
+    return receipt
 
 
 def unpack() -> None:
@@ -90,6 +115,7 @@ def install_browser_runtime() -> None:
 
 
 def run(group: str, engine: str) -> None:
+    verify_producer_envelope()
     unpack()
     install_browser_runtime()
     failed = []
@@ -117,8 +143,11 @@ def aggregate() -> None:
     actual = [(path.parent.parent.name, path.parent.name) for path in reports]
     output = ARTIFACTS / 'navigation-qualification.json'
     try:
+        if any(os.environ.get(name, 'success') != 'success' for name in ('FIXTURE_RESULT', 'BROWSER_RESULT')):
+            raise ValueError('A required fixture/browser job failed or was cancelled')
         if len(actual) != len(expected) or set(actual) != expected:
             raise ValueError('Missing, duplicate or unexpected browser shard receipt')
+        producer = verify_producer_envelope()
         evidence = []
         for path in reports:
             report = json.loads(path.read_text())
@@ -131,6 +160,7 @@ def aggregate() -> None:
         tree_digest = hashlib.sha256(json.dumps(hashes, separators=(',', ':'), ensure_ascii=False).encode()).hexdigest()
         if result['source_identity'] != {'head': head, 'tree_sha256': tree_digest, 'files': hashes}:
             raise ValueError('Browser receipts do not qualify this Git candidate')
+        result['producer_envelope'] = producer
         result['inputs'] = [{'path': str(path.relative_to(ARTIFACTS)), 'sha256': hashlib.sha256(path.read_bytes()).hexdigest()} for path in inventories + reports]
     except (ValueError, KeyError, OSError, TypeError, ET.ParseError) as error:
         result = {'schema': 1, 'status': 'failed', 'error': str(error)}
