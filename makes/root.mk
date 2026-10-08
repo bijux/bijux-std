@@ -6,3 +6,5 @@ include makes/help.mk
 include makes/bijux-std.mk
 include makes/bijux-docs.mk
 include makes/contracts.mk
+
+include makes/changelog.mk
