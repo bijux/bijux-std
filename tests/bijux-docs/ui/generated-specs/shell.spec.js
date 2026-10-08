@@ -33,7 +33,11 @@ test("inactive navigation strips remain absent at every responsive boundary", as
 });
 test("phone brand and visually hidden helper text preserve useful space", async ({ page }) => {
   await page.setViewportSize({ width: 320, height: 700 });
+  const logoResponse = page.waitForResponse(response => new URL(response.url()).pathname.endsWith("/assets/bijux_logo.png"));
   await ready(page);
+  const imageResponse = await logoResponse;
+  expect(imageResponse.ok()).toBe(true);
+  expect((await imageResponse.body()).length).toBeLessThanOrEqual(32 * 1024);
   const helper = control(page, "drawer").locator(".md-visually-hidden");
   if (await helper.count()) {
     const box = await helper.boundingBox();
@@ -43,6 +47,14 @@ test("phone brand and visually hidden helper text preserve useful space", async 
   const title = page.locator("[data-bijux-header-topic='site'] .md-ellipsis");
   expect(await title.evaluate((node) => node.clientWidth)).toBeGreaterThanOrEqual(40);
   expect(await page.evaluate(() => document.documentElement.scrollWidth - innerWidth)).toBeLessThanOrEqual(1);
+  await openDrawer(page);
+  const brand = drawer(page).locator(".bijux-nav__title > a.md-logo");
+  await expect(brand).toHaveAccessibleName(/\S/);
+  const logo = brand.locator("img");
+  await expect(logo).toHaveAttribute("alt", "");
+  await expect(logo).toHaveAttribute("width", "48");
+  await expect(logo).toHaveAttribute("height", "48");
+  await expect.poll(() => logo.evaluate(image => image.complete && image.naturalWidth === 128 && image.naturalHeight === 128)).toBe(true);
 });
 test("tablet drawer exposes real destinations through ordinary pointer input", async ({ page }) => {
   await page.setViewportSize({ width: 768, height: 900 });
