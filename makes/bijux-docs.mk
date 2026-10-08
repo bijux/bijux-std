@@ -110,3 +110,7 @@ BIJUX_LINK_POLICY_ORIGIN ?= http://127.0.0.1:4173
 ui-test-link-policy: ui-test-prepare-runtime ## Qualify authored link intent, native journeys and document annotation ownership
 	@PYTHONDONTWRITEBYTECODE=1 "$(UI_TESTS_PYTHON_DIR)/bin/python" "$(UI_TESTS_DIR)/generated/build.py" --output "$(BIJUX_DOCS_ARTIFACTS_DIR)/link-policy-generated" --base-url "$(BIJUX_LINK_POLICY_ORIGIN)"
 	@NPM_CONFIG_CACHE="$(abspath $(UI_TESTS_NPM_CACHE_DIR))" PLAYWRIGHT_BROWSERS_PATH="$(abspath $(UI_TESTS_PLAYWRIGHT_BROWSERS_DIR))" BIJUX_LINK_POLICY_ORIGIN="$(BIJUX_LINK_POLICY_ORIGIN)" BIJUX_GENERATED_ROOT="$(abspath $(BIJUX_DOCS_ARTIFACTS_DIR))/link-policy-generated" BIJUX_UI_ARTIFACT_ROOT="$(abspath $(BIJUX_DOCS_ARTIFACTS_DIR))/link-policy-playwright" BIJUX_UI_FULL_GATE=1 npm --prefix "$(UI_TESTS_RUNTIME_DIR)" exec -- playwright test --config "$(UI_TESTS_DIR)/playwright.links.config.js"
+
+.PHONY: ui-test-history
+ui-test-history: ui-test-prepare-runtime ui-test-fixtures ui-test-unit ## Qualify history through ordinary generated Material journeys
+	@NPM_CONFIG_CACHE="$(abspath $(UI_TESTS_NPM_CACHE_DIR))" PLAYWRIGHT_BROWSERS_PATH="$(abspath $(UI_TESTS_PLAYWRIGHT_BROWSERS_DIR))" BIJUX_UI_ARTIFACT_ROOT="$(abspath $(BIJUX_DOCS_ARTIFACTS_DIR))/history-playwright" BIJUX_UI_FULL_GATE=1 npm --prefix "$(UI_TESTS_RUNTIME_DIR)" exec -- playwright test --config "$(UI_TESTS_DIR)/playwright.history.config.js"
