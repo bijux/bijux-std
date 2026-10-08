@@ -6,6 +6,13 @@ This file records notable repository-level changes for `bijux-std`.
 
 ### Pending review
 
+#### [#208](https://github.com/bijux/bijux-std/pull/208) — docs\(changelog\): record release contracts history
+
+Record 15 reviewed historical PRs concerning release contracts.
+
+- release channel orchestration, publication authentication, command quoting and candidate evidence.
+- Preserve original reviewed titles, verified merge dates and source-history distinctions while retaining all prior PR records.
+
 #### [#207](https://github.com/bijux/bijux-std/pull/207) — docs\(changelog\): record workflow definitions history
 
 Record 21 reviewed historical PRs concerning workflow definition.
