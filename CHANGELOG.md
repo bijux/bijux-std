@@ -174,14 +174,14 @@ Check actual PR records and projection in CI and document the repository author 
 - Add a bounded changelog job and invoke the same checker inside the existing mandatory standards gate, including standards-repository bot authors.
 - Carry author instructions through shared PR templates and expose Make targets without modifying release or deployment workflows.
 
-#### [#191](https://github.com/bijux/bijux-std/pull/191) — feat\(governance\): validate repository pull request change records
+### Merged pull requests
+
+#### 2026-10-08T17:24:44Z — [#191](https://github.com/bijux/bijux-std/pull/191) — feat\(governance\): validate repository pull request change records
 
 Validate exact PR change records and generate a reproducible history without replacing existing release notes.
 
 - Add the offline standard-library validator and shared mirror with managed ownership and meaningful negative controls.
 - Keep existing historical notes intact outside the generated section; workflow enforcement and the full historical import remain separate reviews.
-
-### Merged pull requests
 
 #### 2026-10-08T16:47:44Z — [#189](https://github.com/bijux/bijux-std/pull/189) — fix\(docs\): preserve accessible reader controls and literal input
 

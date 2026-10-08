@@ -9,7 +9,7 @@
     "Add the offline standard-library validator and shared mirror with managed ownership and meaningful negative controls.",
     "Keep existing historical notes intact outside the generated section; workflow enforcement and the full historical import remain separate reviews."
   ],
-  "status": "pending",
-  "merged_at": null,
+  "status": "merged",
+  "merged_at": "2026-10-08T17:24:44Z",
   "breaking": false
 }
