@@ -389,6 +389,16 @@
   justify-content: center;
   transition: background-color 0.16s ease, color 0.16s ease, border-color 0.16s ease, transform 0.16s ease, box-shadow 0.16s ease;
   width: 1.7rem;
+  position: relative;
+}
+
+/* Out-of-flow indications preserve the icon link's established hit area. */
+.bijux-footer-strip__links a > [data-bijux-link-indication] {
+  position: absolute;
+  inset-block-start: 2px;
+  inset-inline-end: 2px;
+  font-size: 0.4em;
+  line-height: 1;
 }
 
 .bijux-footer-strip__links a:hover {
