@@ -109,7 +109,7 @@
   background: transparent;
   border: 0;
   box-shadow: none;
-  color: #0f172a;
+  color: #fff;
   display: inline-flex;
   justify-content: center;
   opacity: 0.92;
@@ -119,7 +119,7 @@
 .bijux-header-tools .bijux-theme-toggle:hover {
   background: transparent;
   box-shadow: none;
-  color: #0f5f73;
+  color: #fff;
   opacity: 1;
   transform: translateY(-1px);
 }
@@ -142,4 +142,10 @@
 .bijux-header-tools .bijux-theme-toggle svg {
   height: 1.05rem;
   width: 1.05rem;
+}
+
+/* Keyboard focus keeps its complete ring inside the masthead even while hovered. */
+.bijux-header-tools .bijux-theme-toggle:focus-visible,
+[data-md-color-scheme="slate"] .bijux-header-tools .bijux-theme-toggle:focus-visible {
+  transform: none;
 }

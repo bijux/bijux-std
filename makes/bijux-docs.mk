@@ -94,3 +94,8 @@ ui-test-native-navigation: ui-test-prepare-runtime ui-test-fixtures ui-test-unit
 .PHONY: ui-test-reader
 ui-test-reader: ui-test-prepare-runtime ui-test-fixtures ui-test-unit ## Qualify wide reader content, source preservation and document disposal
 	@NPM_CONFIG_CACHE="$(abspath $(UI_TESTS_NPM_CACHE_DIR))" PLAYWRIGHT_BROWSERS_PATH="$(abspath $(UI_TESTS_PLAYWRIGHT_BROWSERS_DIR))" BIJUX_UI_ARTIFACT_ROOT="$(abspath $(BIJUX_DOCS_ARTIFACTS_DIR))/reader-playwright" BIJUX_UI_FULL_GATE=1 npm --prefix "$(UI_TESTS_RUNTIME_DIR)" exec -- playwright test --config "$(UI_TESTS_DIR)/playwright.reader.config.js"
+
+.PHONY: ui-test-contrast
+ui-test-contrast: ui-test-prepare-runtime ## Qualify shared text, focus and hit targets in nine engine/profile projects
+	@PYTHONDONTWRITEBYTECODE=1 "$(UI_TESTS_PYTHON_DIR)/bin/python" "$(UI_TESTS_DIR)/generated/build.py" --output "$(BIJUX_DOCS_ARTIFACTS_DIR)/contrast-generated" --base-url "http://127.0.0.1:62599"
+	@NPM_CONFIG_CACHE="$(abspath $(UI_TESTS_NPM_CACHE_DIR))" PLAYWRIGHT_BROWSERS_PATH="$(abspath $(UI_TESTS_PLAYWRIGHT_BROWSERS_DIR))" BIJUX_GENERATED_ROOT="$(abspath $(BIJUX_DOCS_ARTIFACTS_DIR))/contrast-generated" BIJUX_UI_ARTIFACT_ROOT="$(abspath $(BIJUX_DOCS_ARTIFACTS_DIR))/contrast-playwright" BIJUX_UI_FULL_GATE=1 npm --prefix "$(UI_TESTS_RUNTIME_DIR)" exec -- playwright test --config "$(UI_TESTS_DIR)/playwright.contrast.config.js"

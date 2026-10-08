@@ -28,6 +28,7 @@
 }
 
 .bijux-site-tabs .md-tabs__link.bijux-tabs__link--site {
+  opacity: 1;
   align-items: center;
   display: inline-flex;
   min-height: 2.45rem;
@@ -114,6 +115,7 @@
 }
 
 .bijux-tabs__link--hub {
+  color: #fff;
   font-size: 0.7rem;
   padding: 0.4rem 0.72rem;
 }
@@ -125,7 +127,7 @@
 
 .bijux-hub-strip .bijux-tabs__link:hover,
 .bijux-hub-strip .bijux-tabs__item--active .bijux-tabs__link {
-  background: var(--bijux-hub-link-active-bg);
+  background: rgba(0, 0, 0, 0.08);
   border-color: var(--bijux-hub-border);
   box-shadow: var(--bijux-nav-active-shadow);
   color: #fff;
