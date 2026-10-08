@@ -9,7 +9,7 @@
     "Reuse the existing passive ancestor-animation observer without forcing semantic state or cancelling animations.",
     "Verify ordinary no-script drawer opening, summary activation and actual destination navigation in the maintained phone/tablet/desktop journeys."
   ],
-  "status": "pending",
-  "merged_at": null,
+  "status": "merged",
+  "merged_at": "2026-10-08T17:41:36Z",
   "breaking": false
 }
