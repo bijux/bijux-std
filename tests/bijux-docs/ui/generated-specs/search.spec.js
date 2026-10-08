@@ -1,5 +1,5 @@
 const { test, expect, control, phone } = require("./helpers/document");
-const { nativeAnswer } = require("./helpers/search");
+const { nativeAnswer, observeClearWhileTyping, assertClearTarget, clearKnownResults } = require("./helpers/search");
 const query = (page) => page.locator("[data-md-component='search-query']");
 async function search(page) {
   await phone(page, "/bijux-core/");
@@ -10,7 +10,7 @@ async function result(page) {
   await nativeAnswer(page);
 }
 
-test("paste-like text insertion produces results and reset clears query", async ({ page }) => {
+test("paste-like text insertion produces results and reset clears query", async ({ page }, info) => {
   await search(page);
   await page.keyboard.insertText("resilient navigation");
   await result(page);
@@ -46,6 +46,24 @@ test("paste-like text insertion produces results and reset clears query", async 
   await expect(nativeOpener).toHaveCount(1);
   await nativeOpener.click();
   await expect(query(page)).toBeFocused();
+  if (await query(page).inputValue()) {
+    await query(page).press("ControlOrMeta+A");
+    await query(page).press("Backspace");
+    await expect(query(page)).toHaveValue("");
+  }
+  const targets = [];
+  for (const enlarged of [false, true]) {
+    if (enlarged) {
+      await page.setViewportSize({ width: 320, height: 700 });
+      const size = await page.evaluate(() => parseFloat(getComputedStyle(document.documentElement).fontSize));
+      await page.addStyleTag({ content: `html { font-size: ${size * 2}px !important; }` });
+    }
+    const frames = await observeClearWhileTyping(page, "resilient navigation");
+    assertClearTarget(frames);
+    await result(page);
+    targets.push({ enlarged, frames, settled: await clearKnownResults(page, "resilient navigation") });
+  }
+  await info.attach("search-clear-targets", { body: Buffer.from(JSON.stringify(targets, null, 2)), contentType: "application/json" });
 });
 
 test("composition completion yields the final input query", async ({ page }) => {
@@ -130,6 +148,40 @@ test("native desktop search restores visible inline input after Escape from a re
   const answer = await nativeAnswer(page);
   await page.keyboard.press("ArrowDown");
   await expect(answer).toBeFocused();
+  await page.keyboard.press("Escape");
+  await expect(page.locator("#__search")).not.toBeChecked();
+  await expect(query(page)).toBeFocused();
+  await expect(query(page)).toBeVisible();
+  // A rapid return can coalesce in Material's focus stream without a new click.
+  // Keep the public closed/focused journey separate from its cancellation witness.
+  const closedFrames = await page.evaluate(() => new Promise(resolve => {
+    const frames = [];
+    const sample = () => {
+      frames.push({ closed: !document.getElementById("__search").checked,
+        queryFocused: document.activeElement === document.querySelector("[data-md-component='search-query']") });
+      if (frames.length === 3) resolve(frames);
+      else requestAnimationFrame(sample);
+    };
+    requestAnimationFrame(sample);
+  }));
+  expect(closedFrames.every(frame => frame.closed && frame.queryFocused)).toBe(true);
+  await query(page).click();
+  await expect(page.locator("#__search")).toBeChecked();
+  const settledAnswer = await nativeAnswer(page);
+  await page.keyboard.press("ArrowDown");
+  await expect(settledAnswer).toBeFocused();
+  // Passive rendering turns let the native debounced observer read actual result
+  // focus before Escape restores the query. No control state or event is injected.
+  const resultFocus = await settledAnswer.evaluate(node => new Promise(resolve => {
+    const frames = [];
+    const sample = () => {
+      frames.push(node === document.activeElement);
+      if (frames.length === 3) resolve(frames);
+      else requestAnimationFrame(sample);
+    };
+    requestAnimationFrame(sample);
+  }));
+  expect(resultFocus).toEqual([true, true, true]);
   // Observe the actual native debounced focus-open attempt; no UI state is injected.
   await page.evaluate(() => {
     window.bijuxSearchFocusEvidence = [];

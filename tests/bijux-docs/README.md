@@ -179,6 +179,8 @@ complete aggregate as described in [shard reporting](reporting/README.md).
 
 Native history qualification retains exact Back/Forward and authored-fragment routes throughout passive restoration windows. It has its own bounded browser group in every engine. Automatic `navigation.tracking` is excluded from the default shell; an explicitly authored opt-in remains a consumer decision.
 
+Native search reflow qualification observes opening and closing geometry across phone, tablet and desktop boundaries, including real JavaScript-disabled navigation. Each size group has an independent bounded job in every engine.
+
 Diagram rendering and contrast/target journeys run in separate engine jobs. Their independently assigned receipts are both mandatory in the final navigation aggregate. The three-minute budget includes cold browser-image setup, artifact transport and job finalization.
 
 Popup relationships, product-local search scope and native drawer dismissal are qualified together through ordinary generated Material journeys. Exact engine/case inventories remain required in separate bounded groups; grouped source remains qualified against main before acceptance.
