@@ -6,6 +6,13 @@ This file records notable repository-level changes for `bijux-std`.
 
 ### Pending review
 
+#### [#202](https://github.com/bijux/bijux-std/pull/202) — docs\(changelog\): record consumer standards history
+
+Record 14 reviewed historical PRs concerning consumer standards.
+
+- managed consumer capabilities, selected standard pins and authored configuration projection.
+- Preserve original reviewed titles, verified merge dates and source-history distinctions while retaining all prior PR records.
+
 #### [#201](https://github.com/bijux/bijux-std/pull/201) — docs\(changelog\): record standards tooling history
 
 Record 13 reviewed historical PRs concerning standards tooling.
