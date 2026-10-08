@@ -2,13 +2,14 @@
   "use strict";
   const shell = (window.bijuxShell = window.bijuxShell || {});
   if (shell.bootstrap) return;
+  const nativeDrawerLabels = new WeakMap();
   let lifetime;
   let closeDrawer;
   let readingIntent = false;
   const compact = window.matchMedia("(max-width: 76.2344em)");
 
   function upgradeControls() {
-    for (const label of document.querySelectorAll('label[data-bijux-control-target], label.md-header__button[for="__search"]')) {
+    for (const label of document.querySelectorAll('label[data-bijux-control-target], label.md-header__button[for="__search"], label.md-header__button[for="__drawer"]')) {
       const button = document.createElement("button");
       for (const attr of label.attributes) {
         if (!["role", "tabindex"].includes(attr.name)) button.setAttribute(attr.name, attr.value);
@@ -22,6 +23,12 @@
           button.setAttribute("aria-label", label.getAttribute("title") || document.querySelector(".md-search__input")?.getAttribute("aria-label") || "Search");
         }
       }
+      if (label.matches('.md-header__button[for="__drawer"]')) {
+        button.dataset.bijuxHeaderControl = "drawer-toggle";
+        button.dataset.bijuxControlTarget = "__drawer";
+        if (!button.hasAttribute("aria-label")) button.setAttribute("aria-label", label.getAttribute("title") || "Navigation");
+      }
+      if (button.dataset.bijuxControlTarget === "__drawer") nativeDrawerLabels.set(button, label);
       button.replaceChildren(...label.childNodes);
       label.replaceWith(button);
     }
@@ -72,8 +79,44 @@
   }
 
   function bindDrawer(signal) {
-    // Native Material headers retain their own drawer; this component requires shared ownership.
-    if (!document.querySelector("header[data-bijux-drawer-target]")) return false;
+    if (!document.querySelector("header[data-bijux-drawer-target]")) {
+      // Native Material retains its sidebar and backdrop; upgraded buttons own
+      // only activation of the existing checkbox and dismissal focus.
+      const toggle = document.getElementById("__drawer");
+      const opener = document.querySelector('button.md-header__button[data-bijux-control-target="__drawer"]');
+      if (!toggle) return false;
+      const expanded = opener?.getAttribute("aria-expanded");
+      const syncNativeState = () => opener?.setAttribute("aria-expanded", String(toggle.checked));
+      toggle.addEventListener("change", syncNativeState, { signal });
+      signal.addEventListener("abort", () => {
+        if (expanded == null) opener?.removeAttribute("aria-expanded");
+        else opener?.setAttribute("aria-expanded", expanded);
+      }, { once: true });
+      syncNativeState();
+      opener?.addEventListener("click", () => {
+        toggle.checked = !toggle.checked;
+        toggle.dispatchEvent(new Event("change", { bubbles: true }));
+      }, { signal });
+      const closers = [...document.querySelectorAll('button[data-bijux-control-target="__drawer"][data-bijux-control-close]')];
+      signal.addEventListener("abort", () => {
+        for (const control of [opener, ...closers]) {
+          const label = control && nativeDrawerLabels.get(control);
+          if (!label) continue;
+          label.replaceChildren(...control.childNodes);
+          control.replaceWith(label);
+          nativeDrawerLabels.delete(control);
+        }
+      }, { once: true });
+      for (const control of closers) {
+        control.addEventListener("click", () => {
+          const wasOpen = toggle.checked;
+          toggle.checked = false;
+          toggle.dispatchEvent(new Event("change", { bubbles: true }));
+          if (wasOpen && opener?.getClientRects().length && getComputedStyle(opener).visibility !== "hidden") opener.focus({ preventScroll: true });
+        }, { signal });
+      }
+      return false;
+    }
     const toggle = document.getElementById("__drawer");
     const sidebar = document.querySelector(".md-sidebar--primary");
     const navigation = document.getElementById("bijux-navigation");

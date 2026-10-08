@@ -3,7 +3,7 @@ const { defineConfig } = require("@playwright/test");
 const path = require("path");
 const inherited = unsharded(require("./playwright.config"));
 const artifactRoot = path.resolve(process.env.BIJUX_UI_ARTIFACT_ROOT || path.join(__dirname, "../../artifacts/bijux-docs/native-navigation-playwright"));
-const projects = inherited.projects.filter(project => project.name.endsWith("-phone")).map(project => ({ ...project, name: `${project.use.browserName}-native-navigation`, metadata: { required_case_count: 12 } }));
+const projects = inherited.projects.filter(project => project.name.endsWith("-phone")).map(project => ({ ...project, name: `${project.use.browserName}-native-navigation`, metadata: { required_case_count: 13 } }));
 module.exports = configureProjects(defineConfig({
   ...inherited,
   testMatch: "**/native-navigation.spec.js",
