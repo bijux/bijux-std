@@ -122,8 +122,8 @@ class SharedDocsHubTests(unittest.TestCase):
         self.assertNotIn("hub_links:", root_content)
         self.assertIn("repository: fixture", root_content)
         self.assertIn("nav:", root_content)
-        self.assertIn("shared hub current", second.stdout)
-        self.assertIn("root inherits hub", second.stdout)
+        self.assertIn("configuration current: " + str(fixture / "mkdocs.shared.yml"), second.stdout)
+        self.assertIn("configuration current: " + str(fixture / "mkdocs.yml"), second.stdout)
 
     def test_templates_preserve_registry_order_without_secondary_ordering(self) -> None:
         for template in HUB_TEMPLATES:
@@ -221,7 +221,8 @@ class SharedDocsHubTests(unittest.TestCase):
         result = self.run_sync(fixture)
         self.assertEqual(result.returncode, 0, result.stderr)
         after = config.read_text()
-        self.assertIn(authored, after)
+        expected = authored.replace("  - search\n", "  - search\n  - autorefs\n")
+        self.assertIn(expected, after)
         self.assertIn("class: bijux-diagram", after)
         self.assertIn("fence_code_format", after)
         self.assertIn("logo: assets/bijux_logo_hq.png", after)

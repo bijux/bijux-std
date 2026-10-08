@@ -80,5 +80,8 @@
     "security_level": "strict",
     "maximum_source_characters": 50000,
     "maximum_edges": 500
-  }
+  },
+  "retired_extra_javascript": [
+    "assets/javascripts/vendor/mermaid-11.6.0.min.js"
+  ]
 }
