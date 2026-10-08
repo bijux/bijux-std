@@ -6,6 +6,13 @@ This file records notable repository-level changes for `bijux-std`.
 
 ### Pending review
 
+#### [#196](https://github.com/bijux/bijux-std/pull/196) — docs\(changelog\): record maintainer trust history
+
+Record 12 reviewed historical PRs concerning maintainer trust.
+
+- CODEOWNERS, trusted auto-merge author classes, eligibility retries and owner-controlled approval.
+- Preserve original reviewed titles, verified merge dates and source-history distinctions while retaining all prior PR records.
+
 #### [#195](https://github.com/bijux/bijux-std/pull/195) — docs\(changelog\): present concise pull request history
 
 Use a concise PR-led changelog with newest review identities first and preserve historical source notes separately.

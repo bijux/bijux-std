@@ -1,0 +1,15 @@
+{
+  "schema": 1,
+  "pr": 196,
+  "title": "docs(changelog): record maintainer trust history",
+  "type": "docs",
+  "scope": "changelog",
+  "summary": "Record 12 reviewed historical PRs concerning maintainer trust.",
+  "details": [
+    "CODEOWNERS, trusted auto-merge author classes, eligibility retries and owner-controlled approval.",
+    "Preserve original reviewed titles, verified merge dates and source-history distinctions while retaining all prior PR records."
+  ],
+  "status": "pending",
+  "merged_at": null,
+  "breaking": false
+}
