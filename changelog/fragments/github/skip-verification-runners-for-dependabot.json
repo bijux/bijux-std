@@ -1,0 +1,14 @@
+{
+  "schema": 1,
+  "pr": 145,
+  "title": "fix(github): skip verification runners for dependabot",
+  "type": "fix",
+  "scope": "github",
+  "summary": "Dependabot changes avoid expensive generated verification runners.",
+  "details": [
+    "Keep governance and auto-merge checks active while applying the existing author guard to repository verification jobs."
+  ],
+  "status": "merged",
+  "merged_at": "2026-09-07T09:32:23Z",
+  "breaking": false
+}
