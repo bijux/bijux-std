@@ -100,6 +100,7 @@ base templates are inputs to that producer, not competing controllers.
 | `viewport-profile.js` | Shared window profile classifier emits read-only observations. | Viewport source tests and generated responsive-boundary journeys |
 | `nav-state.js`, `detail-tabs.js` | Shared active-path and header-detail state consumes server-rendered destinations. | Navigation projection and deep-page/history journeys |
 | `nav-reveal.js` | Shared container scroll reveal consumes the active navigation state. | Generated resize/navigation journeys; compatibility aliases retained |
+| `content-reflow.js` | Shared progressive annotation of measured code/table overflow; authored source, line anchors, cells, labels and controls remain owned by their authors. | `unit/content-reflow.test.cjs`; `ui/generated-specs/reader-reflow.spec.js` via `ui-test-reader` |
 | `bootstrap.js` | Shared document-lifetime coordinator owns control upgrade, compact drawer/search interaction, binding and disposal. | Search focus/input units; generated shell/drawer/search journeys |
 | `search-recovery.js`, `tooling/material/search-*-adapter.js` | Shared failure UI and admitted index/worker transport; Material worker retains tokenization, ranking, options, and result protocol. | Index/worker/recovery units; search outage/retry/latest-query browser gate |
 | `mermaid-init.js` | Shared sole renderer; lazy admitted vendor renders strictly from preserved authored source. Material must not intercept source fences. | Renderer/dependency units and diagrams browser gate |

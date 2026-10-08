@@ -21,6 +21,14 @@ ROOT = Path(__file__).resolve().parents[3]
 ARTIFACTS = ROOT / "artifacts/bijux-docs"
 MERMAID_SHA256 = "3a93016a73dc82ba890d919f9bbb176f3da9d98341650c0b517f2595cc68fef8"
 MERMAID_URL = "https://cdn.jsdelivr.net/npm/mermaid@11.6.0/dist/mermaid.min.js"
+READER_CODE = (
+    'def inspect_checkpoint(reader):\n    descriptor = "'
+    + "boundary-" * 6
+    + 'input"\n    return reader(descriptor)\n'
+)
+READER_HEADERS = ["Platform", "Compiler", "Data", "Owner", "Boundary", "Final column"]
+READER_ROWS = [["Linux", "Clang", "Owned input", "Reader", "Local surface", "TARGET_FINAL_COLUMN"], ["Darwin", "LLVM", "Source bytes", "Author", "Native region", "Checkpoint preserved"]]
+
 
 
 def digest_tree(root: Path) -> dict[str, str]:
@@ -130,6 +138,11 @@ flowchart LR
 ```
 ''')
     nav.append({"Reading reference": "reading.md"})
+    write_page(docs, "reader-code.md", "Code boundary reference", "A reader can inspect the final token without moving the entire document sideways.\n\n## Boundary example\n\n```python linenums=\"1\"\n" + READER_CODE + "```\n")
+    table = "| " + " | ".join(READER_HEADERS) + " |\n| " + " | ".join(["---"] * len(READER_HEADERS)) + " |\n"
+    table += "\n".join("| " + " | ".join(row) + " |" for row in READER_ROWS)
+    write_page(docs, "reader-table.md", "Table boundary reference", "Each checkpoint keeps its original row, column and header relationships.\n\n## Checkpoint matrix\n\n" + table)
+    nav.extend([{"Code boundary reference": "reader-code.md"}, {"Table boundary reference": "reader-table.md"}])
     return nav
 
 
@@ -234,6 +247,7 @@ def build(shared: Path, output: Path, base_url: str) -> None:
         "vendor": {"url": None if baseline.get("diagram") else MERMAID_URL, "sha256": baseline.get("diagram", {}).get("sha256", MERMAID_SHA256), "source": str(vendor_file)},
         "base_url": base_url, "scenarios": [{"identity": identity, "route": route, "kind": scenario} for identity, route, scenario in scenarios],
         "registry_adaptation": "Canonical keys/order; URLs point to generated local consumers. Long-registry scenario expands labels and adds two entries.",
+        "reader_fixture": {"code": READER_CODE, "code_sha256": hashlib.sha256(READER_CODE.encode()).hexdigest(), "table_headers": READER_HEADERS, "table_rows": READER_ROWS},
         "site_files": digest_tree(site_root),
     }
     (output / "manifest.json").write_text(json.dumps(manifest, indent=2) + "\n")

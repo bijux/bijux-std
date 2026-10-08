@@ -121,6 +121,22 @@
       "test": "tests/bijux-docs/ui/generated-specs/diagrams.spec.js",
       "test_reference": "ordinary instant navigation and light/dark requests preserve the sole renderer and authored source",
       "applicability": "Contract validation or stated admitted generated fixture; actual consumer adoption and applicable manual review remain required."
+    },
+    {
+      "id": "local-reader-scrolling",
+      "surface": "overflowing code and semantic tables (private integration)",
+      "source": "shared/bijux-docs/scripts/content-reflow.js",
+      "test": "tests/bijux-docs/ui/generated-specs/reader-reflow.spec.js",
+      "test_reference": "phone code preserves source and local reader access",
+      "applicability": "Generated code/table ordinary-input scope; diagrams, actual consumers, manual review and no-JavaScript named keyboard mechanism are not qualified."
+    },
+    {
+      "id": "reader-context-label",
+      "surface": "private contextual reader-region names",
+      "source": "shared/bijux-docs/scripts/content-reflow.js",
+      "test": "tests/bijux-docs/unit/content-reflow.test.cjs",
+      "test_reference": "reader context excludes a native permalink without mutating its heading",
+      "applicability": "Detached heading clone excludes decorative permalink/aria-hidden descendants while preserving authored text; actual assistive review remains required."
     }
   ],
   "compatibility_retirement": {

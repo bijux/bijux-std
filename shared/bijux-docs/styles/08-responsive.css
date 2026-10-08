@@ -234,16 +234,17 @@
   }
 
   .md-typeset table:not([class]) {
-    display: block;
+    display: table;
     font-size: 0.8rem;
-    overflow-x: auto;
+    overflow-x: visible;
     white-space: normal;
-    width: 100%;
+    width: auto;
   }
 
   .md-typeset table:not([class]) th,
   .md-typeset table:not([class]) td {
-    min-width: 10.5rem;
+    min-inline-size: min(10.5rem, calc(100vw - 4rem));
+    overflow-wrap: anywhere;
     white-space: normal;
   }
 
