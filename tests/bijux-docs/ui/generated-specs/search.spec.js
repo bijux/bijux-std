@@ -128,7 +128,7 @@ test("native desktop search restores visible inline input after Escape from a re
   await query(page).click();
   await page.keyboard.insertText("resilient navigation");
   const answer = await nativeAnswer(page);
-  for (let traversal = 0; traversal < 16 && !(await answer.evaluate(node => node === document.activeElement)); traversal += 1) await page.keyboard.press("Tab");
+  await page.keyboard.press("ArrowDown");
   await expect(answer).toBeFocused();
   // Observe the actual native debounced focus-open attempt; no UI state is injected.
   await page.evaluate(() => {
