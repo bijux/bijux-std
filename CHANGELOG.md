@@ -8,18 +8,6 @@ cross-repository standards surfaces, not product package release streams.
 The goal of this changelog is to explain standard changes that affect how
 multiple Bijux repositories verify, synchronize, and consume shared contracts.
 
-## Pull request history
-
-### [#189](https://github.com/bijux/bijux-std/pull/189) — fix(docs): preserve accessible reader controls and literal input
-
-Pending review. Keep search metadata readable, distinguish primary navigation
-from breadcrumb landmarks, and preserve ordinary character input outside focused
-search. Explicit Search controls, native result keys, modifiers, Escape and Back
-remain available. Full generated runtime parsing protects existing assets from
-malformed transformations; required browser groups retain raw accessibility evidence.
-
-The authoritative record is [accessible-reader-controls.json](changelog/fragments/docs/accessible-reader-controls.json).
-
 ## Unreleased
 
 ### Changed
@@ -170,3 +158,36 @@ Use this file for changes such as:
 
 Do not use this file for project-specific domain behavior or package-only
 release notes from consuming repositories.
+
+<!-- bijux:pr-history:start -->
+
+## Pull request history
+
+Records describe reviewed repository changes. Pending review is not a merged or published release.
+
+### Pending review
+
+#### [#193](https://github.com/bijux/bijux-std/pull/193) — test\(docs\): settle native drawer before pointer input
+
+Sample native pointer targets after finite drawer transitions and retain the open drawer through summary activation.
+
+- Reuse the existing passive ancestor-animation observer without forcing semantic state or cancelling animations.
+- Verify ordinary no-script drawer opening, summary activation and actual destination navigation in the maintained phone/tablet/desktop journeys.
+
+### Merged pull requests
+
+#### 2026-10-08T17:24:44Z — [#191](https://github.com/bijux/bijux-std/pull/191) — feat\(governance\): validate repository pull request change records
+
+Validate exact PR change records and generate a reproducible history without replacing existing release notes.
+
+- Add the offline standard-library validator and shared mirror with managed ownership and meaningful negative controls.
+- Keep existing historical notes intact outside the generated section; workflow enforcement and the full historical import remain separate reviews.
+
+#### 2026-10-08T16:47:44Z — [#189](https://github.com/bijux/bijux-std/pull/189) — fix\(docs\): preserve accessible reader controls and literal input
+
+Keep search metadata readable, distinguish navigation landmarks, and preserve ordinary character input outside focused search.
+
+- Use the scheme-aware foreground on search metadata and an escaped site-specific primary navigation label.
+- Remove global character-only search activation while retaining named Search controls, editable typing, native result keys, modifiers, Escape and Back.
+- Parse the full generated runtime before emission and require source-bound accessibility and shortcut browser groups.
+<!-- bijux:pr-history:end -->

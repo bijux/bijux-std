@@ -10,7 +10,7 @@
     "Remove global character-only search activation while retaining named Search controls, editable typing, native result keys, modifiers, Escape and Back.",
     "Parse the full generated runtime before emission and require source-bound accessibility and shortcut browser groups."
   ],
-  "status": "pending",
-  "merged_at": null,
+  "status": "merged",
+  "merged_at": "2026-10-08T16:47:44Z",
   "breaking": false
 }
