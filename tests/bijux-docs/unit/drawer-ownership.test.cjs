@@ -7,12 +7,12 @@ class Element extends EventTarget {
  getAttribute(k){return this.attrs[k]??null;}setAttribute(k,v){this.attrs[k]=String(v);}removeAttribute(k){delete this.attrs[k];}
  querySelectorAll(){return [];}contains(n){return n===this;}getClientRects(){return [{}];}focus(){this.focusCount=(this.focusCount||0)+1;}
 }
-function fixture({owned=true,missing=false,initialInert=false,nativeControls=[]}={}){
+function fixture({owned=true,missing=false,initialInert=false,nativeControls=[],backgroundNodes=[]}={}){
  const document=new EventTarget(),toggle=new Element(),sidebar=new Element(),navigation=new Element(),opener=new Element(),compact=new EventTarget(),signal=new AbortController();compact.matches=false;sidebar.inert=initialInert;
- sidebar.attrs={role:'navigation','aria-label':'Authored navigation'};opener.attrs={'aria-controls':'authored-tree'};document.body={dataset:{}};document.querySelectorAll=selector=>selector==='[id]'?[sidebar,navigation].filter(node=>node.getAttribute('id')):selector.includes('data-bijux-control-close')?nativeControls:[];document.getElementById=id=>id==='__drawer'?(missing?null:toggle):id==='bijux-navigation'?navigation:sidebar.getAttribute('id')===id?sidebar:null;
+ sidebar.attrs={role:'navigation','aria-label':'Authored navigation'};opener.attrs={'aria-controls':'authored-tree'};document.body={dataset:{}};document.querySelectorAll=selector=>selector==='[id]'?[sidebar,navigation].filter(node=>node.getAttribute('id')):selector.includes('data-bijux-control-close')?nativeControls:backgroundNodes.filter(node=>selector.split(',').map(value=>value.trim()).includes(node.surface));document.getElementById=id=>id==='__drawer'?(missing?null:toggle):id==='bijux-navigation'?navigation:sidebar.getAttribute('id')===id?sidebar:null;
  document.querySelector=selector=>selector==='header[data-bijux-drawer-target]'?(owned?new Element():null):selector.includes('sidebar')?sidebar:opener;
  const nativeDrawerLabels=new WeakMap();const scope={document,compact,nativeDrawerLabels,signal:signal.signal,Event,getComputedStyle:()=>({visibility:'visible'})};
- return {document,toggle,sidebar,navigation,opener,signal,nativeDrawerLabels,bind:()=>vm.runInNewContext('let closeDrawer;let readingIntent=false;'+helper+fn+'bindDrawer(signal);',scope)};
+ return {document,toggle,sidebar,navigation,opener,compact,signal,nativeDrawerLabels,bind:()=>vm.runInNewContext('let closeDrawer;let readingIntent=false;'+helper+fn+'bindDrawer(signal);',scope)};
 }
 test('native header skips unrelated drawer requirements instead of blocking independent search',()=>{const f=fixture({owned:false,missing:true});assert.equal(f.bind(),false);assert.equal(f.document.body.dataset.bijuxDrawerReady,undefined);f.signal.abort();});
 test('server-owned drawer with missing required native control fails before readiness',()=>{const f=fixture({missing:true});assert.throws(()=>f.bind(),/requires its native control/);assert.equal(f.document.body.dataset.bijuxDrawerReady,undefined);f.signal.abort();});
@@ -55,4 +55,47 @@ test('native abort leaves authored button controls intact when no label was leas
  const close=new Element(),f=fixture({owned:false,nativeControls:[close]});
  f.opener.replaceWith=()=>{throw new Error('Authored button must not be replaced');};close.replaceWith=f.opener.replaceWith;
  f.opener.setAttribute('aria-expanded','authored');f.bind();assert.equal(f.opener.getAttribute('aria-expanded'),'false');f.signal.abort();assert.equal(f.opener.getAttribute('aria-expanded'),'authored');assert.deepEqual(f.document.body.dataset,{});
+});
+
+function headerBackground() {
+  return [".bijux-site-tabs", ".bijux-hub-strip", ".bijux-detail-tabs", ".bijux-course-tabs"].map((surface, index) => {
+    const node = new Element();
+    node.surface = surface;
+    node.inert = index % 2 === 1;
+    return node;
+  });
+}
+for (const restoration of ["close", "abort", "resize"]) {
+  test(`owned modal leases every header navigation background and restores prior state on ${restoration}`, () => {
+    const nodes = headerBackground();
+    const previous = nodes.map(node => node.inert);
+    const f = fixture({ backgroundNodes: nodes });
+    f.compact.matches = true;
+    f.bind();
+    f.toggle.checked = true;
+    f.toggle.dispatchEvent(new Event("change"));
+    assert.equal(f.sidebar.getAttribute("aria-modal"), "true");
+    assert.deepEqual(nodes.map(node => node.inert), [true, true, true, true]);
+    if (restoration === "abort") f.signal.abort();
+    else if (restoration === "resize") {
+      f.compact.matches = false;
+      f.compact.dispatchEvent(new Event("change"));
+    } else {
+      f.toggle.checked = false;
+      f.toggle.dispatchEvent(new Event("change"));
+    }
+    assert.deepEqual(nodes.map(node => node.inert), previous);
+    f.signal.abort();
+    assert.deepEqual(nodes.map(node => node.inert), previous);
+  });
+}
+test("native sidebar controls do not lease header navigation background", () => {
+  const nodes = headerBackground(), previous = nodes.map(node => node.inert);
+  const f = fixture({ owned: false, backgroundNodes: nodes });
+  f.compact.matches = true;
+  f.bind();
+  f.opener.dispatchEvent(new Event("click"));
+  assert.deepEqual(nodes.map(node => node.inert), previous);
+  f.signal.abort();
+  assert.deepEqual(nodes.map(node => node.inert), previous);
 });
