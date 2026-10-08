@@ -6,6 +6,13 @@ This file records notable repository-level changes for `bijux-std`.
 
 ### Pending review
 
+#### [#214](https://github.com/bijux/bijux-std/pull/214) — fix(docs): preserve visible focus through navigation handoff
+
+Keep a usable Menu fallback when navigation is aborted and bring reopened drawer focus into view.
+
+- Give matching instant destinations heading focus while preserving fragments, downloads and other browsing contexts.
+- Revoke stale reading intent on explicit controls or disposal; verify aborted-request keyboard and search recovery.
+
 #### [#212](https://github.com/bijux/bijux-std/pull/212) — fix(docs): expose one site registry and isolate modal navigation
 
 Use one owned desktop site registry and keep compact modal navigation isolated.
