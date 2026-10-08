@@ -1,18 +1,18 @@
-{% macro render(nav_item, path, level) %}
+{%- macro render(nav_item, path, level) -%}
   <li class="bijux-tree__item{{ ' bijux-tree__item--active' if nav_item.active else '' }}">
-    {% if nav_item.children %}
+    {%- if nav_item.children -%}
       <details class="bijux-tree__group"{{ ' open' if nav_item.active else '' }}>
         <summary class="bijux-tree__summary" id="{{ path }}">{{ nav_item.title }}</summary>
         <ul class="md-nav__list bijux-tree__children" aria-labelledby="{{ path }}">
-          {% for child in nav_item.children %}
+          {%- for child in nav_item.children -%}
             {{ render(child, path ~ "-" ~ loop.index, level + 1) }}
-          {% endfor %}
+          {%- endfor -%}
         </ul>
       </details>
-    {% else %}
+    {%- else -%}
       <a href="{{ nav_item.url | url }}" class="md-nav__link{{ ' md-nav__link--active' if nav_item == page else '' }}"{{ ' aria-current="page"' if nav_item == page else '' }}>
         <span class="md-ellipsis">{{ nav_item.title }}</span>
       </a>
-    {% endif %}
+    {%- endif -%}
   </li>
-{% endmacro %}
+{%- endmacro -%}
