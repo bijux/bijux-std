@@ -48,6 +48,7 @@ def source_destination(source: str) -> str:
     if source.startswith('bijux-docs/scripts/') and relative.suffix == '.js' and len(relative.parts) == 3:
         if relative.name == 'nav-sync.js': return 'docs/assets/javascripts/navigation-sync.js'
         if relative.name == 'mermaid-init.js': return 'docs/assets/javascripts/mermaid-init.js'
+        if relative.name == 'external-links.js': return 'docs/assets/javascripts/external-links.js'
         return 'docs/assets/javascripts/shell/' + relative.name
     if source in ('bijux-makes-py/root/docs.mk', 'bijux-makes-py/ci/docs.mk'):
         return 'makes/bijux-py/' + source.removeprefix('bijux-makes-py/')
@@ -202,10 +203,11 @@ def projection(repo: Path, shared: Path) -> list[tuple[Path, Path]]:
         if path.is_file() and path.suffix == '.css':
             files.append((path, repo / 'docs/assets/styles' / path.name))
     for path in sorted((shared / 'scripts').iterdir()):
-        if path.is_file() and path.suffix == '.js' and path.name not in {'nav-sync.js', 'mermaid-init.js'}:
+        if path.is_file() and path.suffix == '.js' and path.name not in {'nav-sync.js', 'mermaid-init.js', 'external-links.js'}:
             files.append((path, repo / 'docs/assets/javascripts/shell' / path.name))
     files.extend((shared / 'scripts' / src, repo / 'docs/assets/javascripts' / dst) for src, dst in (
-        ('nav-sync.js', 'navigation-sync.js'), ('mermaid-init.js', 'mermaid-init.js')))
+        ('nav-sync.js', 'navigation-sync.js'), ('mermaid-init.js', 'mermaid-init.js'),
+        ('external-links.js', 'external-links.js')))
     for path in sorted((shared / 'assets').rglob('*')):
         if path.is_file():
             files.append((path, repo / 'docs/assets' / path.relative_to(shared / 'assets')))

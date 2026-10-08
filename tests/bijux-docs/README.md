@@ -145,3 +145,13 @@ case identities. Explicit shards cannot independently claim complete matrix
 qualification. Ordinary `--project` diagnosis still fails the complete gate
 when another required project is absent. Existing local Make targets remain
 available for complete or focused diagnosis.
+
+`make ui-test-link-policy` builds canonical authored-link fixtures and runs nine
+cases in each of nine engine/profile projects (81 total).
+`BIJUX_LINK_POLICY_ORIGIN` selects the loopback fixture origin (default port 4173).
+The cases preserve authored targets, relations, names/descriptions and downloads;
+use ordinary same-window/Back, new-tab/opener and fragment/history journeys;
+verify actual delivered download bytes; exercise coordinated document replacement
+and an explicit dynamic-extension fixture; and replay exact reviewed consumer
+source as the blanket-target counterfactual. Controlled outside replies prove
+browser semantics, not provider availability or production CSP.
