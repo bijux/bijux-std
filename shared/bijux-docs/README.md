@@ -48,3 +48,12 @@ before writes; a filesystem failure during the copy is not a rollback transactio
 Project `mkdocs.yml` files own only repository identity and project-specific
 MkDocs values; they do not carry a second hub list. Synchronization removes
 an existing root-level hub block after writing the inherited canonical block.
+
+Palette preferences use Material's scoped API with a bounded in-memory fallback
+when browser policy denies storage. Malformed values and palette indexes outside
+the current radio list fall back to usable defaults. The shared early palette
+partial resolves admitted auto, light and dark preferences before the runtime;
+Material continues to own palette radio changes and the native search worker.
+Global theme records are bounded to 2,048 characters; scoped Material records to
+16,384 characters and 32 retained keys. Memory does not persist across reloads.
+Run `make ui-test-preferences` for the three-engine storage and reload journeys.

@@ -21,6 +21,7 @@ function shell(mode = 'auto', order = ['auto', 'light', 'dark'], material = true
     const option = { dataset: {}, listeners: new Map(), selected: false,
       getAttribute: key => attrs.get(key) ?? null,
       addEventListener: (name, callback) => option.listeners.set(name, callback),
+      dispatchEvent: event => option.listeners.get(event.type)?.(event),
     };
     Object.defineProperty(option, 'checked', {
       get: () => option.selected,
@@ -34,13 +35,14 @@ function shell(mode = 'auto', order = ['auto', 'light', 'dark'], material = true
   };
   const body = { getAttribute: key => bodyAttributes.get(key) ?? null,
     setAttribute: (key, value) => bodyAttributes.set(key, value), removeAttribute: key => bodyAttributes.delete(key) };
-  const window = { scrollX: 23, scrollY: 127, scrollTo() {}, dispatchEvent() {},
+  const window = { document$: { subscribe(callback) { callback(); } }, scrollX: 23, scrollY: 127, scrollTo() {}, dispatchEvent() {},
     addEventListener: (name, callback) => events.set(name, callback) };
   if (material) window.__md_set = (key, value) => { writes.push({ key, value }); saved.set(key, value); };
   const document = { body,
     querySelector: () => ({ getAttribute: () => 'bijux:theme' }),
     querySelectorAll: selector => selector.startsWith('input[') ? options : [button] };
   const context = { window, document, localStorage: { getItem: key => saved.get(key) ?? null, setItem: (key, value) => saved.set(key, value) },
+    Event: class { constructor(type) { this.type = type; } },
     CustomEvent: class { constructor(type, details) { this.type = type; this.detail = details.detail; } },
     requestAnimationFrame: callback => callback(), setTimeout: callback => callback(),
     document$: { subscribe(callback) { callback(); } } };
@@ -108,4 +110,59 @@ test('missing Material writer leaves the shared toggle usable', () => {
 
 test('empty palette never writes an invalid Material record', () => {
   assert.equal(shell('dark', []).writes.length, 0);
+});
+
+function scopedPreferences(storage) {
+  const template = readFileSync(path.resolve(__dirname, '../../../shared/bijux-docs/partials/javascripts/base.html'), 'utf8');
+  const script = template.match(/<script>([\s\S]*?)<\/script>/)[1].replace(/\{\{[^}]+\}\}/, '"/"');
+  const context = { URL, location: 'https://bijux.io/', window: { localStorage: storage } };
+  vm.runInNewContext(script, context, { timeout: 1000 });
+  return context;
+}
+
+test('denied scoped storage uses bounded memory without breaking Material callers', () => {
+  const denied = { getItem() { throw new Error('denied'); }, setItem() { throw new Error('denied'); } };
+  const api = scopedPreferences(denied);
+  api.__md_set('__palette', { index: 2, color: { scheme: 'slate' } });
+  assert.equal(api.__md_get('__palette').index, 2);
+  assert.equal(api.__md_get('missing'), null);
+});
+
+test('malformed and oversized scoped records produce an absent preference', () => {
+  for (const raw of ['{broken', 'x'.repeat(16385)]) {
+    assert.equal(scopedPreferences({ getItem: () => raw }).__md_get('__palette'), null);
+  }
+  for (const value of [null, { index: -1, color: {} }, { index: 999, color: {} }, { index: 1.5, color: {} }, { index: 1 }]) {
+    assert.equal(scopedPreferences({ getItem: () => JSON.stringify(value) }).__md_get('__palette'), null);
+  }
+});
+
+test('scoped memory evicts old keys and rejects oversized writes', () => {
+  const api = scopedPreferences({ getItem() { throw new Error('denied'); }, setItem() { throw new Error('denied'); } });
+  for (let index = 0; index < 33; index++) api.__md_set('key' + index, index);
+  assert.equal(api.__md_get('key0'), null);
+  assert.equal(api.__md_get('key32'), 32);
+  api.__md_set('oversized', 'x'.repeat(16385));
+  assert.equal(api.__md_get('oversized'), null);
+  assert.equal(api.__bijux_memory.size, 32);
+});
+
+test('accessible storage removal takes precedence over retained fallback memory', () => {
+  const values = new Map();
+  const api = scopedPreferences({ getItem: key => values.get(key) ?? null, setItem: (key, value) => values.set(key, value) });
+  api.__md_set('preference', 'stored');
+  assert.equal(api.__md_get('preference'), 'stored');
+  values.clear();
+  assert.equal(api.__md_get('preference'), null);
+});
+
+test('explicit storage and scope remain separate from the default Material scope', () => {
+  const values = new Map();
+  const storage = { getItem: key => values.get(key) ?? null, setItem: (key, value) => values.set(key, value) };
+  const api = scopedPreferences(storage);
+  const scope = new URL('https://bijux.io/product/');
+  api.__md_set('preference', 'product', storage, scope);
+  assert.equal(values.get('/product/.' + 'preference'), '"product"');
+  assert.equal(api.__md_get('preference', storage, scope), 'product');
+  assert.equal(api.__md_get('preference'), null);
 });
