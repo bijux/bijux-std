@@ -6,6 +6,13 @@ This file records notable repository-level changes for `bijux-std`.
 
 ### Pending review
 
+#### [#217](https://github.com/bijux/bijux-std/pull/217) — fix(docs): contain focus paint within navigation boundaries
+
+Keep the visible focus ring inside disclosure scroll bounds and masthead repository controls.
+
+- Measure actual clipping and adjacent paint through ordinary keyboard focus and Auto theme transitions.
+- Retain every existing contrast case and detect the historical clipped-ring regression.
+
 #### [#212](https://github.com/bijux/bijux-std/pull/212) — fix(docs): expose one site registry and isolate modal navigation
 
 Use one owned desktop site registry and keep compact modal navigation isolated.
