@@ -28,6 +28,14 @@ class FixtureTransferTests(unittest.TestCase):
             (fixture / 'site/index.html').write_bytes(body)
             manifest = {'site_files': {'index.html': hashlib.sha256(body).hexdigest()},
                         'source_files': {'source.css': hashlib.sha256(b'source').hexdigest()}}
+            configuration = b'site_name: Exact reader\n'
+            config = fixture / 'inputs/hub/mkdocs.yml'
+            config.parent.mkdir(parents=True)
+            config.write_bytes(configuration)
+            manifest['scenarios'] = [{'identity': 'bijux', 'route': '/', 'kind': 'hub',
+                'configuration': {'path': 'inputs/hub/mkdocs.yml',
+                    'sha256': transport.digest(configuration), 'bytes': len(configuration)}}]
+            manifest['configurations_sha256'] = transport.configurations_digest(manifest['scenarios'])
             (fixture / 'manifest.json').write_text(json.dumps(manifest))
         archive = root / 'browser-fixtures.tar.gz'
         transport.pack(producer, GATE.fixture_roots(), archive)
@@ -56,6 +64,7 @@ class FixtureTransferTests(unittest.TestCase):
             with patch.object(GATE, 'ARTIFACTS', root):
                 GATE.unpack()
             self.assertEqual((root / 'generated/site/index.html').read_bytes(), b'exact rendered bytes')
+            self.assertFalse((root / 'generated/inputs').exists())
 
     def test_archive_corruption_fails_before_extraction(self) -> None:
         with tempfile.TemporaryDirectory(dir=ROOT / 'artifacts') as directory:
