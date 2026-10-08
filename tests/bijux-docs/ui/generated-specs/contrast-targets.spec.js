@@ -95,6 +95,22 @@ for (const [scheme, expectedScheme] of [["light", "default"], ["dark", "slate"]]
     const disclosure = page.locator("article details > summary").filter({ hasText: /^Reader disclosure$/ });
     await disclosure.click();
     await expect(page.locator("article details[open] > summary").filter({ hasText: /^Reader disclosure$/ })).toBeVisible();
+    const originalViewport = page.viewportSize();
+    for (const width of [320, 767]) {
+      await page.setViewportSize({ width, height: originalViewport.height });
+      for (const selected of ["Python", "Rust"]) {
+        await page.locator(".tabbed-labels a").getByText(selected, { exact: true }).click();
+        await expect(page.locator(".tabbed-set input:checked")).toHaveAttribute(
+          "id", selected === "Python" ? "__tabbed_1_1" : "__tabbed_1_2");
+        const inactive = page.locator(".tabbed-labels a").getByText(
+          selected === "Python" ? "Rust" : "Python", { exact: true });
+        const text = await measure.textOrIcon(page, inactive);
+        assertText(text);
+        observations.push({ name: `inactive tab at ${width} CSS px`, selected, ...text });
+      }
+    }
+    await page.setViewportSize(originalViewport);
+    await page.locator(".tabbed-labels a").getByText("Python", { exact: true }).click();
     for (const selector of ["h1", ".md-typeset p", ".md-typeset table th", ".md-footer__direction"]) {
       const node = page.locator(selector).first();
       await expect(node).toBeVisible();
@@ -113,6 +129,20 @@ for (const [scheme, expectedScheme] of [["light", "default"], ["dark", "slate"]]
     await expect(page).toHaveURL(/\/reading\/(?:#.*)?$/);
     await expect(page.getByRole("heading", { level: 1, name: /^Rich reading reference/ })).toBeVisible();
     observations.push({ name: "ordinary Previous reader destination and browser Back", outcome: "passed" });
+    const workerURL = "**/assets/javascripts/workers/search*.js";
+    await page.route(workerURL, route => route.fulfill({
+      status: 404, contentType: "text/plain", body: "Controlled unavailable search worker" }));
+    await page.goto("/bijux-core/");
+    await page.locator('[data-bijux-header-control="search-toggle"]').click();
+    await page.locator("[data-md-component='search-query']").fill("resilient navigation");
+    const recovery = page.locator(".bijux-search-recovery [role='status']");
+    await expect(recovery).toContainText("Search is unavailable", { timeout: 12_000 });
+    const feedback = await measure.textOrIcon(page, recovery);
+    assertText(feedback);
+    observations.push({ name: "search worker recovery text", ...feedback });
+    await page.unroute(workerURL);
+    await page.getByRole("button", { name: "Retry search", exact: true }).click();
+    await expect(page.locator(".md-search-result__link:visible").first()).toBeVisible({ timeout: 12_000 });
     await receipt(info, { scheme: expectedScheme, observations, errors, browserName });
     expect(errors).toEqual([]);
   });
