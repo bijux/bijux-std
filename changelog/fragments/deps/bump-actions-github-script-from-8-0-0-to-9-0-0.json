@@ -1,0 +1,15 @@
+{
+  "schema": 1,
+  "pr": 36,
+  "title": "chore(deps): bump actions/github-script from 8.0.0 to 9.0.0",
+  "type": "chore",
+  "scope": "deps",
+  "summary": "Workflow scripting advances from actions/github-script 8.0.0 to 9.0.0.",
+  "details": [
+    "The merged dependency update selects the new action revision; it is distinct from repository-specific script behavior changes.",
+    "Original GitHub merge 52c5ac9651b2b26611ac42f528ee8be5d8e7ad1c is distinct from rewritten main-history delivery 9bcfb333ee8b6b8026487238c2c41af54e5089ce; the merge date is the verified GitHub date."
+  ],
+  "status": "merged",
+  "merged_at": "2026-04-20T20:07:30Z",
+  "breaking": false
+}

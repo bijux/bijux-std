@@ -1,0 +1,15 @@
+{
+  "schema": 1,
+  "pr": 71,
+  "title": "fix(github): advance pages workflow action pins",
+  "type": "fix",
+  "scope": "github",
+  "summary": "Shared Pages deployment uses refreshed immutable action revisions.",
+  "details": [
+    "Select configure-pages 6.0.0 and upload/deploy-pages 5.0.0 in the canonical deployment workflow.",
+    "Original GitHub merge 5d4059e207559a51ed40dac1384693c57347018f is distinct from rewritten main-history delivery aae17bc8df75997d142cf5b06e60706ab1cd5a26; the merge date is the verified GitHub date."
+  ],
+  "status": "merged",
+  "merged_at": "2026-04-28T08:46:31Z",
+  "breaking": false
+}

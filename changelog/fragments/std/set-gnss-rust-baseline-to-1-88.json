@@ -1,0 +1,14 @@
+{
+  "schema": 1,
+  "pr": 123,
+  "title": "chore(std): set GNSS Rust baseline to 1.88",
+  "type": "chore",
+  "scope": "std",
+  "summary": "GNSS build and release toolchains align on Rust 1.88.",
+  "details": [
+    "Generate matching CI, GitHub and crates publication defaults from the repository's workspace baseline."
+  ],
+  "status": "merged",
+  "merged_at": "2026-07-19T20:24:10Z",
+  "breaking": false
+}
