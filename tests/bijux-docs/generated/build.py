@@ -7,6 +7,7 @@ import argparse
 import hashlib
 import importlib.metadata
 import json
+import os
 import shutil
 import subprocess
 import sys
@@ -23,6 +24,8 @@ from fixtures.search_modality import pages as search_modality_pages
 
 ROOT = Path(__file__).resolve().parents[3]
 ARTIFACTS = ROOT / "artifacts/bijux-docs"
+sys.path.insert(0, str(ROOT / "tests/bijux-docs/execution"))
+from fixture_archive import configurations_digest, open_directory, read_file
 MERMAID_SHA256 = "3a93016a73dc82ba890d919f9bbb176f3da9d98341650c0b517f2595cc68fef8"
 MERMAID_URL = "https://cdn.jsdelivr.net/npm/mermaid@11.6.0/dist/mermaid.min.js"
 READER_CODE = (
@@ -204,7 +207,39 @@ def config(baseline: dict, registry: list[dict], identity: str, docs: Path, site
     }
 
 
+def capture_configuration(path: Path, output: Path) -> dict:
+    descriptor = open_directory(path.parent)
+    try:
+        data = read_file(path.name, descriptor)
+    finally:
+        os.close(descriptor)
+    return {"path": path.relative_to(output).as_posix(),
+            "sha256": hashlib.sha256(data).hexdigest(), "bytes": len(data)}
+
+
+def render_configuration(path: Path, output: Path, log_path: Path) -> dict:
+    captured = capture_configuration(path, output)
+    with log_path.open("w") as log:
+        subprocess.run([sys.executable, "-m", "mkdocs", "build", "--strict", "--clean", "--config-file", str(path)],
+                       stdout=log, stderr=subprocess.STDOUT, check=True)
+    if capture_configuration(path, output) != captured:
+        raise RuntimeError("Effective MkDocs configuration changed while rendering: " + captured["path"])
+    return captured
+
+
+def verify_configuration_sources(output: Path, scenarios: list[dict]) -> str:
+    aggregate = configurations_digest(scenarios)
+    for scenario in scenarios:
+        captured = scenario["configuration"]
+        if capture_configuration(output / captured["path"], output) != captured:
+            raise RuntimeError("Effective MkDocs configuration changed before manifest: " + captured["path"])
+    return aggregate
+
+
 def build(shared: Path, output: Path, base_url: str) -> None:
+    output.mkdir(parents=True, exist_ok=True)
+    (output / "manifest.json").unlink(missing_ok=True)
+    captured_scenarios = []
     diagram_sources = diagram_trust_authored_sources()
     original = digest_tree(shared)
     compiler = shared / "tooling/material/build_runtime.py"
@@ -252,8 +287,9 @@ def build(shared: Path, output: Path, base_url: str) -> None:
         cfg_path = work / "mkdocs.yml"
         cfg_path.write_text(yaml.dump(cfg, sort_keys=False))
         log_path = output / f"build-{label}.log"
-        with log_path.open("w") as log:
-            subprocess.run([str(Path(__import__('sys').executable)), "-m", "mkdocs", "build", "--strict", "--clean", "--config-file", str(cfg_path)], stdout=log, stderr=subprocess.STDOUT, check=True)
+        captured = render_configuration(cfg_path, output, log_path)
+        captured_scenarios.append({"identity": identity, "route": route, "kind": scenario,
+                                   "configuration": captured})
         destination = site_root / route.strip("/")
         shutil.copytree(work / "site", destination, dirs_exist_ok=True)
     if original != digest_tree(shared):
@@ -270,7 +306,8 @@ def build(shared: Path, output: Path, base_url: str) -> None:
         "source_identity": "tracked repository source" if owns_source else "untracked artifact source; file digests are authoritative",
         "toolchain": {name: importlib.metadata.version(name) for name in ["mkdocs", "mkdocs-material", "mkdocs-autorefs", "pymdown-extensions"]},
         "vendor": {"url": None if baseline.get("diagram") else MERMAID_URL, "sha256": baseline.get("diagram", {}).get("sha256", MERMAID_SHA256), "source": str(vendor_file)},
-        "base_url": base_url, "scenarios": [{"identity": identity, "route": route, "kind": scenario} for identity, route, scenario in scenarios],
+        "base_url": base_url, "scenarios": captured_scenarios,
+        "configurations_sha256": verify_configuration_sources(output, captured_scenarios),
         "registry_adaptation": "Canonical keys/order; URLs point to generated local consumers. Long-registry scenario expands labels and adds two entries.",
         "diagram_fixture": {"authored_sources": diagram_sources},
         "reader_fixture": {"code": READER_CODE, "code_sha256": hashlib.sha256(READER_CODE.encode()).hexdigest(), "table_headers": READER_HEADERS, "table_rows": READER_ROWS},

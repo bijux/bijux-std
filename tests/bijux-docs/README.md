@@ -41,7 +41,10 @@ viewport/touch profile, not unsupported mobile browser emulation.
 The builder renders nine canonical ecosystem identities plus sparse-navigation
 and expanded-label fixtures. It records registry URL adaptation to the local
 server, original source hashes, Git revision, dirty-candidate classification,
-renderer versions and generated file hashes. Changing source during a build
+renderer versions and generated file hashes. Each scenario also records the exact
+effective MkDocs configuration digest and byte count, with one aggregate identity
+carried through fixture transport and browser reports. Private configuration
+inputs stay with the producer. Changing source or configuration during a build
 rejects that incoherent candidate. Per-scenario strict build logs remain beside
 the manifest. The server exclusively serves the selected output and refuses to
 reuse another existing server.
