@@ -6,6 +6,13 @@ This file records notable repository-level changes for `bijux-std`.
 
 ### Pending review
 
+#### [#199](https://github.com/bijux/bijux-std/pull/199) — docs\(changelog\): record Python verification history
+
+Record 12 reviewed historical PRs concerning python verification.
+
+- Python delivery gates, installed distribution families, security/SBOM evidence and renderer observation.
+- Preserve original reviewed titles, verified merge dates and source-history distinctions while retaining all prior PR records.
+
 #### [#198](https://github.com/bijux/bijux-std/pull/198) — docs\(changelog\): record CI execution history
 
 Record 16 reviewed historical PRs concerning ci execution.
@@ -93,11 +100,39 @@ The required browser matrix runs in bounded parallel jobs with complete source-b
 - Render admitted fixtures once and distribute immutable bundles across twelve engine/journey jobs while retaining all 363 cases.
 - Reject missing, duplicate, failed, skipped or retried coverage and mismatched source, bundle, browser-version or JUnit evidence; instant navigation uses actual Document identity.
 
+#### 2026-10-08T10:51:13Z — [#170](https://github.com/bijux/bijux-std/pull/170) — feat\(docs\): attribute resolved startup source and native exception hooks
+
+Renderer observations identify resolved startup sources and the active exception hook.
+
+- Attribute loaded startup modules, selected symlink targets and actual interpreter callback origins.
+- Reads reject swapped or changing targets, nonregular inputs and oversized files; observation remains separate from publication permission.
+
 #### 2026-10-08T10:29:43Z — [#167](https://github.com/bijux/bijux-std/pull/167) — test\(docs\): record browser versions in contrast qualification
 
 Every contrast test receipt identifies its actual browser version.
 
 - Capture engine versions before execution so source-bound report validation can reject missing or ambiguous runtime evidence.
+
+#### 2026-10-08T09:22:46Z — [#165](https://github.com/bijux/bijux-std/pull/165) — feat\(ci\): retain physical renderer startup and import fingerprints
+
+Renderer observations include physical Python startup and import inputs.
+
+- Record interpreter/stdlib bytes, module origins, bytecode, symlinks and sources outside the package lock, rejecting changes across double capture.
+- The expanded observation remains verification-only and does not approve a publisher runtime.
+
+#### 2026-10-08T07:14:39Z — [#160](https://github.com/bijux/bijux-std/pull/160) — feat\(ci\): retain locked documentation renderer source fingerprints
+
+Documentation CI retains the locked renderer's physical installed-source inventory.
+
+- Record package, native-wheel, Git, platform and Python identity and reject unsafe or changing inputs before writing artifact evidence.
+- Require committed clean source and double capture; fingerprints remain observation rather than runtime or publication admission.
+
+#### 2026-10-08T06:46:49Z — [#159](https://github.com/bijux/bijux-std/pull/159) — fix\(sbom\): bind package audits to candidate source inputs
+
+Package SBOM audits bind to candidate source rather than stale environment inputs.
+
+- Bind selected package/version and project/lock/Make/helper inputs, export frozen offline closures and promote output only after audit and source rechecks.
+- Retain failed output for diagnosis; declared-input provenance does not authenticate an upstream repository or claim a real vulnerability-service scan.
 
 #### 2026-09-07T09:32:23Z — [#145](https://github.com/bijux/bijux-std/pull/145) — fix\(github\): skip verification runners for dependabot
 
@@ -111,17 +146,61 @@ Verification jobs can start independently of policy prerequisite timing.
 
 - Remove the one-shot preflight from generated verify and auto-merge enablement while retaining separate required standards, policy and approval merge checks.
 
+#### 2026-08-28T13:46:28Z — [#142](https://github.com/bijux/bijux-std/pull/142) — perf\(ci\): shard canon supported python tests
+
+Supported-Python verification is sharded by package and interpreter.
+
+- Cover twelve canonical/compatibility packages on Python 3.11-3.14 with twelve-lane concurrency and package-scoped artifacts.
+- Preserve fail-closed supported\_python aggregation across all required combinations.
+
+#### 2026-08-28T13:39:06Z — [#141](https://github.com/bijux/bijux-std/pull/141) — fix\(ci\): isolate installed family build cache
+
+Concurrent installed-family builds keep mutable cache state outside source.
+
+- Place ephemeral uv build cache in the per-job runner directory while retaining wheels under repository artifacts.
+
+#### 2026-08-28T13:25:06Z — [#140](https://github.com/bijux/bijux-std/pull/140) — fix\(ci\): treat canon repository as metadata distribution
+
+Canon's repository package is treated as metadata-only.
+
+- Retain it in the thirteen-distribution build/version contract without importing a nonexistent bijux\_canon\_repository module.
+
+#### 2026-08-28T13:09:22Z — [#139](https://github.com/bijux/bijux-std/pull/139) — fix\(ci\): verify complete canon distribution family
+
+Canon installed-family verification includes all thirteen built distributions.
+
+- Require built wheels to be installed and version-aligned, including the repository workspace distribution.
+
+#### 2026-08-28T12:46:50Z — [#138](https://github.com/bijux/bijux-std/pull/138) — fix\(python\): fail closed and advance api tooling
+
+Python build and recursive Make failures propagate immediately.
+
+- Preserve the first failed nested command and advance the shared OpenAPI tooling to Generator CLI 2.41.0 and Redocly 2.47.0.
+
 #### 2026-08-25T15:56:50Z — [#136](https://github.com/bijux/bijux-std/pull/136) — fix\(github\): resolve synchronized renderer sources
 
 Governance rendering resolves the actual canonical or consumer shared source.
 
 - Use shared in bijux-std and .bijux/shared in consumers, with clear failure when no managed source exists.
 
+#### 2026-08-25T15:52:39Z — [#135](https://github.com/bijux/bijux-std/pull/135) — fix\(security\): require unsuppressed Python evidence
+
+Python security evidence fails closed without hidden suppressions.
+
+- Remove default vulnerability ignore IDs, reject Bandit skips and disabled strict audits, and propagate SBOM pip-audit failures.
+
 #### 2026-08-25T15:50:03Z — [#134](https://github.com/bijux/bijux-std/pull/134) — fix\(github\): validate repository-specific status outputs
 
 Repository-specific check documentation is validated as rendered output.
 
 - Retain byte-identical checks for invariant managed files while comparing rulesets and status guidance through their repository renderer.
+
+#### 2026-08-25T15:40:36Z — [#133](https://github.com/bijux/bijux-std/pull/133) — feat\(standards\): govern Python repository delivery contracts
+
+Python delivery contracts make repository configuration and artifact ownership explicit.
+
+- Centralize documentation and badge semantics and give Canon supported-Python and installed-family CI.
+- Declare the then-current 12-distribution installed and 11-distribution publication families and the verification-ready product gate.
 
 #### 2026-07-23T23:57:13Z — [#128](https://github.com/bijux/bijux-std/pull/128) — fix\(std\): preserve capability manifest ownership
 
@@ -164,6 +243,12 @@ Genomics and GNSS expose explicit foundational Rust CI gates.
 Managed dependency labels and setup-uv pins follow shared policy.
 
 - Align Dependabot labels with the governance taxonomy and refresh setup revisions in documentation and release workflows.
+
+#### 2026-07-04T15:30:23Z — [#103](https://github.com/bijux/bijux-std/pull/103) — fix\(governance\): refresh shared docs manifest
+
+Shared tests preserve consumer full-suite overrides.
+
+- Align canonical hub-strip and Mermaid checks with shared documentation ownership and refresh the matching source digest.
 
 #### 2026-06-28T13:00:54Z — [#100](https://github.com/bijux/bijux-std/pull/100) — fix\(ci\): restore workflow trigger authority
 

@@ -1,0 +1,15 @@
+{
+  "schema": 1,
+  "pr": 170,
+  "title": "feat(docs): attribute resolved startup source and native exception hooks",
+  "type": "feat",
+  "scope": "docs",
+  "summary": "Renderer observations identify resolved startup sources and the active exception hook.",
+  "details": [
+    "Attribute loaded startup modules, selected symlink targets and actual interpreter callback origins.",
+    "Reads reject swapped or changing targets, nonregular inputs and oversized files; observation remains separate from publication permission."
+  ],
+  "status": "merged",
+  "merged_at": "2026-10-08T10:51:13Z",
+  "breaking": false
+}

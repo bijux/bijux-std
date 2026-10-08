@@ -1,0 +1,15 @@
+{
+  "schema": 1,
+  "pr": 142,
+  "title": "perf(ci): shard canon supported python tests",
+  "type": "perf",
+  "scope": "ci",
+  "summary": "Supported-Python verification is sharded by package and interpreter.",
+  "details": [
+    "Cover twelve canonical/compatibility packages on Python 3.11-3.14 with twelve-lane concurrency and package-scoped artifacts.",
+    "Preserve fail-closed supported_python aggregation across all required combinations."
+  ],
+  "status": "merged",
+  "merged_at": "2026-08-28T13:46:28Z",
+  "breaking": false
+}
