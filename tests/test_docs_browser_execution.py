@@ -19,15 +19,35 @@ SPEC.loader.exec_module(GATE)
 
 class FixtureTransferTests(unittest.TestCase):
     def bundle(self, root: Path, name: str, kind: bytes = tarfile.REGTYPE) -> None:
+        transport = GATE.fixture_transport()
+        producer = root / 'producer'
+        body = b'exact rendered bytes'
+        for directory in GATE.fixture_roots():
+            fixture = producer / directory
+            (fixture / 'site').mkdir(parents=True)
+            (fixture / 'site/index.html').write_bytes(body)
+            manifest = {'site_files': {'index.html': hashlib.sha256(body).hexdigest()},
+                        'source_files': {'source.css': hashlib.sha256(b'source').hexdigest()}}
+            (fixture / 'manifest.json').write_text(json.dumps(manifest))
         archive = root / 'browser-fixtures.tar.gz'
-        with tarfile.open(archive, 'w:gz') as bundle:
-            entry = tarfile.TarInfo(name)
-            entry.type = kind
-            entry.linkname = '../../outside' if kind == tarfile.SYMTYPE else ''
-            body = b'exact rendered bytes'
-            entry.size = len(body) if kind == tarfile.REGTYPE else 0
-            bundle.addfile(entry, io.BytesIO(body) if entry.size else None)
-        (root / 'browser-fixtures.sha256').write_text(hashlib.sha256(archive.read_bytes()).hexdigest() + '\n')
+        transport.pack(producer, GATE.fixture_roots(), archive)
+        if name != 'generated/site/index.html' or kind != tarfile.REGTYPE:
+            with tarfile.open(archive) as bundle:
+                members = [(entry.name, bundle.extractfile(entry).read(), entry.type) for entry in bundle]
+            if kind == tarfile.REGTYPE:
+                index = json.loads(members[0][1])
+                index['files'][name] = index['files'].pop('generated/site/index.html')
+                members[0] = ('index.json', json.dumps(index).encode(), tarfile.REGTYPE)
+            else:
+                members[1] = (members[1][0], b'', kind)
+            with tarfile.open(archive, 'w:gz', format=tarfile.USTAR_FORMAT) as bundle:
+                for path, data, entry_kind in members:
+                    entry = tarfile.TarInfo(path)
+                    entry.type = entry_kind
+                    entry.linkname = '../../outside' if entry_kind == tarfile.SYMTYPE else ''
+                    entry.size = len(data) if entry_kind == tarfile.REGTYPE else 0
+                    bundle.addfile(entry, io.BytesIO(data) if entry.size else None)
+        (root / 'browser-fixtures.sha256').write_text(hashlib.sha256(archive.read_bytes()).hexdigest() + chr(10))
 
     def test_exact_fixture_bytes_are_portable(self) -> None:
         with tempfile.TemporaryDirectory(dir=ROOT / 'artifacts') as directory:
@@ -52,7 +72,7 @@ class FixtureTransferTests(unittest.TestCase):
             with self.subTest(name=name), tempfile.TemporaryDirectory(dir=ROOT / 'artifacts') as directory:
                 root = Path(directory)
                 self.bundle(root, name, kind)
-                with patch.object(GATE, 'ARTIFACTS', root), self.assertRaisesRegex(ValueError, 'Unexpected'):
+                with patch.object(GATE, 'ARTIFACTS', root), self.assertRaisesRegex(ValueError, 'fixture path|Unexpected'):
                     GATE.unpack()
                 self.assertFalse((root / 'generated').exists())
 
