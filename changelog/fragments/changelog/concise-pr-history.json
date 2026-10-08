@@ -1,0 +1,15 @@
+{
+  "schema": 1,
+  "pr": 195,
+  "title": "docs(changelog): present concise pull request history",
+  "type": "docs",
+  "scope": "changelog",
+  "summary": "Use a concise PR-led changelog with newest review identities first and preserve historical source notes separately.",
+  "details": [
+    "Replace the version-organized central changelog with the simple repository header and truthful pending/merged PR sections.",
+    "Keep all43previous material statements and verified source/tag distinctions in the foundation archive; historical PR imports and preceding main-history notices remain separately reviewed."
+  ],
+  "status": "pending",
+  "merged_at": null,
+  "breaking": false
+}

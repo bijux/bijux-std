@@ -4,6 +4,15 @@ This file records notable repository-level changes for `bijux-std`.
 
 ## Pull request history
 
+### Pending review
+
+#### [#195](https://github.com/bijux/bijux-std/pull/195) — docs\(changelog\): present concise pull request history
+
+Use a concise PR-led changelog with newest review identities first and preserve historical source notes separately.
+
+- Replace the version-organized central changelog with the simple repository header and truthful pending/merged PR sections.
+- Keep all43previous material statements and verified source/tag distinctions in the foundation archive; historical PR imports and preceding main-history notices remain separately reviewed.
+
 ### Merged pull requests
 
 #### 2026-10-08T17:41:36Z — [#193](https://github.com/bijux/bijux-std/pull/193) — test\(docs\): settle native drawer before pointer input
