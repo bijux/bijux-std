@@ -1,0 +1,15 @@
+{
+  "schema": 1,
+  "pr": null,
+  "title": "feat(governance): require pull request change records and projections",
+  "type": "feat",
+  "scope": "governance",
+  "summary": "Give every standards pull request a reviewed impact record and a reproducible central changelog.",
+  "details": [
+    "Require an exact PR identity, meaningful author-owned fragment and current deterministic projection for adopted repositories without actor exemptions.",
+    "Keep package release histories independent and make consumer adoption explicit; validate records and review events locally without GitHub credentials."
+  ],
+  "status": "pending",
+  "merged_at": null,
+  "breaking": false
+}

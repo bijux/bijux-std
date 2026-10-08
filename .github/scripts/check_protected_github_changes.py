@@ -19,6 +19,8 @@ BASE_PROTECTED_PATHS = {
     ".github/required-status-checks.md",
     ".github/rulesets/main-branch-protection.json",
     ".github/scripts/check_pinned_actions.py",
+    ".github/scripts/changelog.py",
+    "changelog/config.json",
     ".github/scripts/check_protected_github_changes.py",
     ".github/scripts/wait_for_ci.py",
     ".github/workflows/bijux-std.yml",
