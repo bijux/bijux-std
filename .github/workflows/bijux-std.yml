@@ -60,7 +60,6 @@ jobs:
                 bash .bijux/shared/bijux-checks/scripts/validate-shared-contracts.sh
               elif [[ -x "shared/bijux-checks/scripts/validate-shared-contracts.sh" ]]; then
                 make contract-tests
-
               else
                 echo "ERROR: unable to locate shared contract validator" >&2
                 exit 1
@@ -96,7 +95,6 @@ jobs:
             artifacts/bijux-checks
           if-no-files-found: error
 
-
   navigation:
     name: std / navigation
     if: ${{ github.repository == 'bijux/bijux-std' && (github.event_name != 'pull_request' || github.event.pull_request.user.login != 'dependabot[bot]') }}
@@ -127,6 +125,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
           make UI_TESTS_PLAYWRIGHT_BROWSERS_DIR=/ms-playwright ui-test-navigation
 
       - name: Retain navigation qualification
