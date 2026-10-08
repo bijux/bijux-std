@@ -112,7 +112,7 @@ with Path(os.environ["BIJUX_ORIGIN_EVENTS"]).open("a") as log:
     def test_empty_override_preserves_authored_config_default(self):
         result, events = self.make("docs-check")
         self.assertEqual(result.returncode, 0, result.stderr)
-        self.assertEqual(events[-1]["site_url"], "")
+        self.assertIsNone(events[-1]["site_url"])
         self.assertIn("site_url: https://bijux.io/bijux-core/", (self.repo / "mkdocs.yml").read_text())
 
     def test_invalid_origins_reject_before_bootstrap_or_public_mutation(self):

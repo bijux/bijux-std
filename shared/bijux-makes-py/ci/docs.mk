@@ -92,8 +92,8 @@ docs:
 	@mkdir -p "$(DOCS_CACHE_DIR)"
 	@if [ "$(DOCS_PUBLICATION_FRAMEWORK)" = "1" ]; then test "$(strip $(DOCS_BUILD_FLAGS))" = "--strict" || { echo "ERROR: publication producer requires exact --strict render flags" >&2; exit 1; }; fi
 	@if [ "$(DOCS_PUBLICATION_FRAMEWORK)" = "1" ]; then \
-	    XDG_CACHE_HOME="$(DOCS_CACHE_DIR)" $(DOCS_ENV) $(DOCS_BUILD_ENV) ENABLE_SOCIAL_CARDS="$(DOCS_ENABLE_SOCIAL_CARDS)" SITE_URL="$(DOCS_BUILD_SITE_URL)" "$(DOCS_PYTHON)" "$(DOCS_PUBLICATION_RENDERER)" --config "$(patsubst $(PROJECT_DIR)/%,%,$(DOCS_BUILD_CONFIG_FILE))" --site-dir "$(patsubst $(PROJECT_DIR)/%,%,$(DOCS_BUILD_SITE_DIR))" --site-url "$(DOCS_BUILD_SITE_URL)"; \
-	  else XDG_CACHE_HOME="$(DOCS_CACHE_DIR)" $(DOCS_ENV) $(DOCS_BUILD_ENV) ENABLE_SOCIAL_CARDS="$(DOCS_ENABLE_SOCIAL_CARDS)" SITE_URL="$(DOCS_BUILD_SITE_URL)" "$(DOCS_PYTHON)" -m mkdocs build $(DOCS_BUILD_FLAGS) --config-file "$(DOCS_BUILD_CONFIG_FILE)" --site-dir "$(DOCS_BUILD_SITE_DIR)"; fi
+	    XDG_CACHE_HOME="$(DOCS_CACHE_DIR)" $(DOCS_ENV) $(DOCS_BUILD_ENV) ENABLE_SOCIAL_CARDS="$(DOCS_ENABLE_SOCIAL_CARDS)" env -u SITE_URL $(if $(strip $(DOCS_BUILD_SITE_URL)),SITE_URL="$(DOCS_BUILD_SITE_URL)") "$(DOCS_PYTHON)" "$(DOCS_PUBLICATION_RENDERER)" --config "$(patsubst $(PROJECT_DIR)/%,%,$(DOCS_BUILD_CONFIG_FILE))" --site-dir "$(patsubst $(PROJECT_DIR)/%,%,$(DOCS_BUILD_SITE_DIR))" --site-url "$(DOCS_BUILD_SITE_URL)"; \
+	  else XDG_CACHE_HOME="$(DOCS_CACHE_DIR)" $(DOCS_ENV) $(DOCS_BUILD_ENV) ENABLE_SOCIAL_CARDS="$(DOCS_ENABLE_SOCIAL_CARDS)" env -u SITE_URL $(if $(strip $(DOCS_BUILD_SITE_URL)),SITE_URL="$(DOCS_BUILD_SITE_URL)") "$(DOCS_PYTHON)" -m mkdocs build $(DOCS_BUILD_FLAGS) --config-file "$(DOCS_BUILD_CONFIG_FILE)" --site-dir "$(DOCS_BUILD_SITE_DIR)"; fi
 	@$(MAKE) docs-hygiene
 	@echo "✔ Docs built → $(DOCS_BUILD_SITE_DIR)"
 
@@ -149,8 +149,8 @@ docs-check:
 	@mkdir -p "$(DOCS_CACHE_DIR)"
 	@if [ "$(DOCS_PUBLICATION_FRAMEWORK)" = "1" ]; then test "$(strip $(DOCS_BUILD_FLAGS))" = "--strict" || { echo "ERROR: publication producer requires exact --strict render flags" >&2; exit 1; }; fi
 	@if [ "$(DOCS_PUBLICATION_FRAMEWORK)" = "1" ]; then \
-	    XDG_CACHE_HOME="$(DOCS_CACHE_DIR)" $(DOCS_ENV) $(DOCS_CHECK_ENV) ENABLE_SOCIAL_CARDS="$(DOCS_ENABLE_SOCIAL_CARDS)" SITE_URL="$(DOCS_CHECK_SITE_URL)" "$(DOCS_PYTHON)" "$(DOCS_PUBLICATION_RENDERER)" --config "$(patsubst $(PROJECT_DIR)/%,%,$(DOCS_CHECK_CONFIG_FILE))" --site-dir "$(patsubst $(PROJECT_DIR)/%,%,$(DOCS_CHECK_SITE_DIR))" --site-url "$(DOCS_CHECK_SITE_URL)"; \
-	  else XDG_CACHE_HOME="$(DOCS_CACHE_DIR)" $(DOCS_ENV) $(DOCS_CHECK_ENV) ENABLE_SOCIAL_CARDS="$(DOCS_ENABLE_SOCIAL_CARDS)" SITE_URL="$(DOCS_CHECK_SITE_URL)" "$(DOCS_PYTHON)" -m mkdocs build $(DOCS_BUILD_FLAGS) --quiet --config-file "$(DOCS_CHECK_CONFIG_FILE)" --site-dir "$(DOCS_CHECK_SITE_DIR)"; fi
+	    XDG_CACHE_HOME="$(DOCS_CACHE_DIR)" $(DOCS_ENV) $(DOCS_CHECK_ENV) ENABLE_SOCIAL_CARDS="$(DOCS_ENABLE_SOCIAL_CARDS)" env -u SITE_URL $(if $(strip $(DOCS_CHECK_SITE_URL)),SITE_URL="$(DOCS_CHECK_SITE_URL)") "$(DOCS_PYTHON)" "$(DOCS_PUBLICATION_RENDERER)" --config "$(patsubst $(PROJECT_DIR)/%,%,$(DOCS_CHECK_CONFIG_FILE))" --site-dir "$(patsubst $(PROJECT_DIR)/%,%,$(DOCS_CHECK_SITE_DIR))" --site-url "$(DOCS_CHECK_SITE_URL)"; \
+	  else XDG_CACHE_HOME="$(DOCS_CACHE_DIR)" $(DOCS_ENV) $(DOCS_CHECK_ENV) ENABLE_SOCIAL_CARDS="$(DOCS_ENABLE_SOCIAL_CARDS)" env -u SITE_URL $(if $(strip $(DOCS_CHECK_SITE_URL)),SITE_URL="$(DOCS_CHECK_SITE_URL)") "$(DOCS_PYTHON)" -m mkdocs build $(DOCS_BUILD_FLAGS) --quiet --config-file "$(DOCS_CHECK_CONFIG_FILE)" --site-dir "$(DOCS_CHECK_SITE_DIR)"; fi
 	@$(MAKE) docs-hygiene
 	@echo "✔ Docs check passed"
 
