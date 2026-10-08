@@ -13,14 +13,14 @@ Keep the visible focus ring inside disclosure scroll bounds and masthead reposit
 - Measure actual clipping and adjacent paint through ordinary keyboard focus and Auto theme transitions.
 - Retain every existing contrast case and detect the historical clipped-ring regression.
 
-#### [#212](https://github.com/bijux/bijux-std/pull/212) — fix(docs): expose one site registry and isolate modal navigation
+### Merged pull requests
+
+#### 2026-10-08T22:58:03Z — [#212](https://github.com/bijux/bijux-std/pull/212) — fix(docs): expose one site registry and isolate modal navigation
 
 Use one owned desktop site registry and keep compact modal navigation isolated.
 
 - Preserve native Material navigation and restore header inert state on close, resize and disposal.
 - Test every nine-site and eleven-entry growth destination; bind retained-document focus checks to actual document identity.
-
-### Merged pull requests
 
 #### 2026-10-08T22:39:40Z — [#215](https://github.com/bijux/bijux-std/pull/215) — ci(docs): partition browser execution by viewport ownership
 
