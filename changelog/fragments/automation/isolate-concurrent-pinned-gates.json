@@ -1,0 +1,14 @@
+{
+  "schema": 1,
+  "pr": 122,
+  "title": "fix(automation): isolate concurrent pinned gates",
+  "type": "fix",
+  "scope": "automation",
+  "summary": "Concurrent pinned Make gates use independent immutable worktrees and artifacts.",
+  "details": [
+    "Preserve launcher status while isolating source, Cargo and benchmark outputs and rejecting reused dirty inputs."
+  ],
+  "status": "merged",
+  "merged_at": "2026-07-19T20:07:10Z",
+  "breaking": false
+}

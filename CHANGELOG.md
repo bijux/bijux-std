@@ -58,6 +58,52 @@ Keep search metadata readable, distinguish navigation landmarks, and preserve or
 - Remove global character-only search activation while retaining named Search controls, editable typing, native result keys, modifiers, Escape and Back.
 - Parse the full generated runtime before emission and require source-bound accessibility and shortcut browser groups.
 
+#### 2026-10-08T13:49:22Z — [#183](https://github.com/bijux/bijux-std/pull/183) — ci\(docs\): bound browser jobs with immutable fixture transport
+
+Browser CI transports deduplicated immutable fixtures and separates search workloads.
+
+- Store each unique fixture payload once, restore exact manifest/site bytes without links and preserve downloaded diagnostic logs.
+- Give native query and invoker journeys separate engine jobs while retaining all 471 cases and producer/run/source/JUnit identity checks.
+
+#### 2026-10-08T13:35:06Z — [#180](https://github.com/bijux/bijux-std/pull/180) — ci\(docs\): separate diagram and contrast browser budgets
+
+Diagram and contrast browser suites have separate execution budgets.
+
+- Keep both rendering suites required while giving each engine/suite its own bounded job, including report finalization.
+- Preserve existing case identities and complete aggregation rather than treating a successful partial job as matrix completion.
+
+#### 2026-10-08T12:01:05Z — [#173](https://github.com/bijux/bijux-std/pull/173) — test\(docs\): settle natural drawer transitions before hit measurement
+
+Hit-target measurements wait for natural finite drawer transitions to settle.
+
+- Observe ancestor transforms and opacity before sampling geometry and paint, retaining the existing 44px target and ordinary Space/Escape/focus-return assertions.
+- The observer does not finish or cancel animations or alter semantic drawer state.
+
+#### 2026-10-08T11:33:09Z — [#172](https://github.com/bijux/bijux-std/pull/172) — ci\(docs\): qualify browser journeys in bounded parallel jobs
+
+The required browser matrix runs in bounded parallel jobs with complete source-bound aggregation.
+
+- Render admitted fixtures once and distribute immutable bundles across twelve engine/journey jobs while retaining all 363 cases.
+- Reject missing, duplicate, failed, skipped or retried coverage and mismatched source, bundle, browser-version or JUnit evidence; instant navigation uses actual Document identity.
+
+#### 2026-10-08T10:29:43Z — [#167](https://github.com/bijux/bijux-std/pull/167) — test\(docs\): record browser versions in contrast qualification
+
+Every contrast test receipt identifies its actual browser version.
+
+- Capture engine versions before execution so source-bound report validation can reject missing or ambiguous runtime evidence.
+
+#### 2026-09-07T09:32:23Z — [#145](https://github.com/bijux/bijux-std/pull/145) — fix\(github\): skip verification runners for dependabot
+
+Dependabot changes avoid expensive generated verification runners.
+
+- Keep governance and auto-merge checks active while applying the existing author guard to repository verification jobs.
+
+#### 2026-08-28T14:09:39Z — [#143](https://github.com/bijux/bijux-std/pull/143) — fix\(github\): run verification independently of policy checks
+
+Verification jobs can start independently of policy prerequisite timing.
+
+- Remove the one-shot preflight from generated verify and auto-merge enablement while retaining separate required standards, policy and approval merge checks.
+
 #### 2026-08-25T15:56:50Z — [#136](https://github.com/bijux/bijux-std/pull/136) — fix\(github\): resolve synchronized renderer sources
 
 Governance rendering resolves the actual canonical or consumer shared source.
@@ -76,11 +122,65 @@ The shared updater retains ownership of capability-scoped manifests.
 
 - Prevent governance synchronization from restoring unselected language libraries and document the source selection boundary.
 
+#### 2026-07-19T20:07:10Z — [#122](https://github.com/bijux/bijux-std/pull/122) — fix\(automation\): isolate concurrent pinned gates
+
+Concurrent pinned Make gates use independent immutable worktrees and artifacts.
+
+- Preserve launcher status while isolating source, Cargo and benchmark outputs and rejecting reused dirty inputs.
+
+#### 2026-07-19T19:50:31Z — [#121](https://github.com/bijux/bijux-std/pull/121) — fix\(github\): identify prerequisite workflows by path
+
+Prerequisite workflow matching survives display-name changes.
+
+- Identify runs by stable workflow path, retain name compatibility and use the approval path for auto-merge gating.
+
+#### 2026-07-19T16:24:26Z — [#118](https://github.com/bijux/bijux-std/pull/118) — fix\(ci\): govern Genomics fast Rust lanes
+
+Genomics fast CI uses its governed Rust 1.95 toolchain and cache setup.
+
+- Remove the slow-tier workflow and dispatch input and initialize sccache in the foundational jobs.
+
+#### 2026-07-19T16:11:11Z — [#117](https://github.com/bijux/bijux-std/pull/117) — fix\(ci\): unify foundational Rust repository gates
+
+Atlas, Core, Genomics and GNSS share explicit foundational gate identities.
+
+- Call public Make contracts in each format/lint/audit/test job while retaining repository-specific toolchain and dependency setup.
+
+#### 2026-07-19T15:54:46Z — [#116](https://github.com/bijux/bijux-std/pull/116) — fix\(ci\): enforce foundational Rust repository gates
+
+Genomics and GNSS expose explicit foundational Rust CI gates.
+
+- Invoke public format, lint, audit and test Make targets and repair the Genomics aggregate expression that prevented job creation.
+
 #### 2026-07-08T23:47:09Z — [#109](https://github.com/bijux/bijux-std/pull/109) — fix\(github\): repair managed labels and shared workflow pins
 
 Managed dependency labels and setup-uv pins follow shared policy.
 
 - Align Dependabot labels with the governance taxonomy and refresh setup revisions in documentation and release workflows.
+
+#### 2026-06-28T13:00:54Z — [#100](https://github.com/bijux/bijux-std/pull/100) — fix\(ci\): restore workflow trigger authority
+
+Workflow prerequisites distinguish authoritative runs from unrelated events.
+
+- Run GitHub policy directly, ignore wrong-event or zero-job matches and exclude Dependabot-authored PRs from expensive managed CI execution.
+
+#### 2026-06-28T12:05:21Z — [#99](https://github.com/bijux/bijux-std/pull/99) — fix\(ci\): avoid redundant wrapper reruns
+
+Managed wrappers avoid rerunning reviewed work after main merges.
+
+- Use pull\_request and merge\_group instead of push and split Genomics fast prerequisites into parallel lanes with a short aggregator.
+
+#### 2026-05-13T19:52:39Z — [#92](https://github.com/bijux/bijux-std/pull/92) — fix\(github\): fail fast on prerequisite policy failures
+
+Failed approval prerequisites stop dependent jobs promptly.
+
+- Continue waiting for in-flight runs but reject unsuccessful approval and stale events that could unlock work for the same SHA.
+
+#### 2026-05-13T16:22:42Z — [#91](https://github.com/bijux/bijux-std/pull/91) — feat\(github\): gate managed workflows behind prerequisite checks
+
+Expensive managed PR jobs wait for their prerequisite checks.
+
+- Add a shared prerequisite helper and wire standards and owner-approval readiness into generated workflows.
 
 #### 2026-05-01T23:11:37Z — [#86](https://github.com/bijux/bijux-std/pull/86) — fix\(github\): fallback to runner event payload path in pr approval policy
 

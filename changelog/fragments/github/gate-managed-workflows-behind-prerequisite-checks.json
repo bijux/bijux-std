@@ -1,0 +1,14 @@
+{
+  "schema": 1,
+  "pr": 91,
+  "title": "feat(github): gate managed workflows behind prerequisite checks",
+  "type": "feat",
+  "scope": "github",
+  "summary": "Expensive managed PR jobs wait for their prerequisite checks.",
+  "details": [
+    "Add a shared prerequisite helper and wire standards and owner-approval readiness into generated workflows."
+  ],
+  "status": "merged",
+  "merged_at": "2026-05-13T16:22:42Z",
+  "breaking": false
+}

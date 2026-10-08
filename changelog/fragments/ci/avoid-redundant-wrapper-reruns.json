@@ -1,0 +1,14 @@
+{
+  "schema": 1,
+  "pr": 99,
+  "title": "fix(ci): avoid redundant wrapper reruns",
+  "type": "fix",
+  "scope": "ci",
+  "summary": "Managed wrappers avoid rerunning reviewed work after main merges.",
+  "details": [
+    "Use pull_request and merge_group instead of push and split Genomics fast prerequisites into parallel lanes with a short aggregator."
+  ],
+  "status": "merged",
+  "merged_at": "2026-06-28T12:05:21Z",
+  "breaking": false
+}

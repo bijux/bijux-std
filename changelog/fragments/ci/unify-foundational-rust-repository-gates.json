@@ -1,0 +1,14 @@
+{
+  "schema": 1,
+  "pr": 117,
+  "title": "fix(ci): unify foundational Rust repository gates",
+  "type": "fix",
+  "scope": "ci",
+  "summary": "Atlas, Core, Genomics and GNSS share explicit foundational gate identities.",
+  "details": [
+    "Call public Make contracts in each format/lint/audit/test job while retaining repository-specific toolchain and dependency setup."
+  ],
+  "status": "merged",
+  "merged_at": "2026-07-19T16:11:11Z",
+  "breaking": false
+}
