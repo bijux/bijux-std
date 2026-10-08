@@ -6,15 +6,22 @@ This file records notable repository-level changes for `bijux-std`.
 
 ### Pending review
 
-#### [#194](https://github.com/bijux/bijux-std/pull/194) — feat(docs): observe static publication delivery safely
+#### [#210](https://github.com/bijux/bijux-std/pull/210) — ci(docs): require complete rendered navigation qualification
+
+Require successful rendered navigation before the protected standards report can pass.
+
+- Cover every standards PR author and reject missing, skipped, failed or cancelled prerequisite checks.
+- Validate all 54 frontend jobs against the current workflow source and attempt, including execution and cleanup under three minutes; record queue time separately.
+
+### Merged pull requests
+
+#### 2026-10-08T20:10:09Z — [#194](https://github.com/bijux/bijux-std/pull/194) — feat(docs): observe static publication delivery safely
 
 Provide a bounded HTTP smoke check for deployed documentation and retain source-bound observations.
 
 - Check the configured root and deep reader routes, search metadata, published assets and missing-route behavior.
 - Bound response bytes, redirect scope and request deadlines; avoid ambient proxy configuration and reject output paths outside artifacts.
 - Document the distinction between delivery observations, browser qualification and operational availability.
-
-### Merged pull requests
 
 #### 2026-10-08T19:36:02Z — [#209](https://github.com/bijux/bijux-std/pull/209) — docs(changelog): keep pull request history in one file
 
