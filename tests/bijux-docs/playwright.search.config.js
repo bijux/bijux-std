@@ -1,9 +1,10 @@
+const { configureProjects, unsharded } = require("./reporting/projects");
 const { defineConfig } = require("@playwright/test");
 const path = require("path");
-const inherited = require("./playwright.config");
+const inherited = unsharded(require("./playwright.config"));
 const artifactRoot = path.resolve(process.env.BIJUX_UI_ARTIFACT_ROOT || path.join(__dirname, "../../artifacts/bijux-docs/search-playwright"));
 const projects = inherited.projects.filter(project => project.name.endsWith("-phone")).map(project => ({ ...project, metadata: { required_case_count: 14 } }));
-module.exports = defineConfig({
+module.exports = configureProjects(defineConfig({
   ...inherited,
   testMatch: /(?:search|search-worker|search-transport)\.spec\.js$/,
   projects,
@@ -17,4 +18,4 @@ module.exports = defineConfig({
     if (entry[0] === "junit") return [entry[0], { ...entry[1], outputFile: path.join(artifactRoot, "junit.xml") }];
     return entry;
   }),
-});
+}));

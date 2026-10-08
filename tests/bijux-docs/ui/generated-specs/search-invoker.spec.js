@@ -233,8 +233,10 @@ for (const definition of definitions) {
     const route = definition.native
       ? "/fixtures/native-header/"
       : "/bijux-core/";
+    let documentIdentity;
     try {
       await page.goto(info.project.use.baseURL + route);
+      documentIdentity = await page.evaluateHandle(() => document);
       if (!definition.native)
         await expect(page.locator("body")).toHaveAttribute(
           "data-bijux-drawer-ready",
@@ -262,15 +264,21 @@ for (const definition of definitions) {
           .textContent();
         await page.locator("a.md-footer__link--next").click();
         await expect(page).not.toHaveURL(info.project.use.baseURL + route);
-        expect(await page.evaluate(() => performance.timeOrigin)).toBe(
-          timeOrigin,
-        );
+        expect(
+          await page.evaluate(
+            (original) => original === document,
+            documentIdentity,
+          ),
+        ).toBe(true);
         await page.goBack();
         await expect(page).toHaveURL(info.project.use.baseURL + route);
         await expect(page.locator(".md-content h1")).toHaveText(returnHeading);
-        expect(await page.evaluate(() => performance.timeOrigin)).toBe(
-          timeOrigin,
-        );
+        expect(
+          await page.evaluate(
+            (original) => original === document,
+            documentIdentity,
+          ),
+        ).toBe(true);
         evidence.historyTransit = { tabStops: [] };
         await transit(
           page,
@@ -320,17 +328,23 @@ for (const definition of definitions) {
         "leaf destination",
       );
       await expect(toggle(page)).not.toBeChecked();
-      expect(await page.evaluate(() => performance.timeOrigin)).toBe(
-        beforeResultOrigin,
-      );
+      expect(
+        await page.evaluate(
+          (original) => original === document,
+          documentIdentity,
+        ),
+      ).toBe(true);
       await page.goBack();
       await expect(page).toHaveURL(beforeResultURL);
       await expect(page.locator(".md-content h1")).toHaveText(
         beforeResultHeading,
       );
-      expect(await page.evaluate(() => performance.timeOrigin)).toBe(
-        beforeResultOrigin,
-      );
+      expect(
+        await page.evaluate(
+          (original) => original === document,
+          documentIdentity,
+        ),
+      ).toBe(true);
       evidence.returnTransit = { tabStops: [] };
       await transit(
         page,
@@ -357,6 +371,7 @@ for (const definition of definitions) {
         className: document.activeElement.className,
         searchOpen: document.getElementById("__search").checked,
       }));
+      if (documentIdentity) await documentIdentity.dispose();
       await context.close();
       evidence.closed_at = new Date().toISOString();
       fs.writeFileSync(

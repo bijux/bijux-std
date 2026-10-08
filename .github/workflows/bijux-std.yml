@@ -95,71 +95,135 @@ jobs:
             artifacts/bijux-checks
           if-no-files-found: error
 
-  navigation:
-    name: std / navigation
+  navigation-fixtures:
+    name: std / navigation fixtures
     if: ${{ github.repository == 'bijux/bijux-std' && (github.event_name != 'pull_request' || github.event.pull_request.user.login != 'dependabot[bot]') }}
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 3
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Prepare admitted Node runtime
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020
+        with:
+          node-version: '24.21.0'
+      - name: Build and identify strict browser fixtures once
+        shell: bash
+        run: |
+          set -euo pipefail
+          make ui-test-install ui-test-install-docs ui-test-unit ui-test-fixtures
+          PYTHONDONTWRITEBYTECODE=1 artifacts/bijux-docs/python/bin/python \
+            shared/bijux-docs/tooling/security/renderer_fingerprints.py \
+            --output artifacts/bijux-docs/renderer-source-observation.json
+          PYTHONDONTWRITEBYTECODE=1 artifacts/bijux-docs/python/bin/python \
+            tests/bijux-docs/generated/build.py \
+            --output artifacts/bijux-docs/contrast-generated \
+            --base-url http://127.0.0.1:62599
+          python3 tests/bijux-docs/execution/browser_gate.py prepare
+      - name: Retain source-bound fixtures and canonical case inventory
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: docs-navigation-fixtures-${{ github.sha }}-${{ github.run_attempt }}
+          path: |
+            artifacts/bijux-docs/browser-fixtures.tar.gz
+            artifacts/bijux-docs/browser-fixtures.sha256
+            artifacts/bijux-docs/producer-envelope.json
+            artifacts/bijux-docs/inventories
+            artifacts/bijux-docs/renderer-source-observation.json
+            artifacts/bijux-docs/generated/build-*.log
+            artifacts/bijux-docs/contrast-generated/build-*.log
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 14
+
+  navigation-browsers:
+    name: std / navigation ${{ matrix.group }} / ${{ matrix.engine }}
+    needs: navigation-fixtures
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    strategy:
+      fail-fast: false
+      matrix:
+        group: [navigation, search, reader, rendering]
+        engine: [chromium, firefox, webkit]
     container:
-      # Playwright 1.58.2 Noble: matching browsers and system dependencies.
+      # Immutable Playwright 1.58.2 Noble browsers and operating-system dependencies.
       image: mcr.microsoft.com/playwright@sha256:6446946a1d9fd62d9ae501312a2d76a43ee688542b21622056a372959b65d63d
       options: --ipc=host
     steps:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
       - name: Prepare admitted Node runtime
         uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020
         with:
           node-version: '24.21.0'
-
-      - name: Prepare Python fixture renderer
+      - name: Download this run's immutable fixtures
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: docs-navigation-fixtures-${{ github.sha }}-${{ github.run_attempt }}
+          path: artifacts/bijux-docs
+      - name: Execute assigned browser journeys
         shell: bash
-        run: |
-          set -euo pipefail
-          apt-get update
-          apt-get install --no-install-recommends -y make python3-venv
-          make ui-test-install ui-test-install-docs
-
-      - name: Observe locked renderer source for publisher review
-        shell: bash
-        run: |
-          set -euo pipefail
-          git config --global --add safe.directory "$GITHUB_WORKSPACE"
-          PYTHONDONTWRITEBYTECODE=1 artifacts/bijux-docs/python/bin/python \
-            shared/bijux-docs/tooling/security/renderer_fingerprints.py \
-            --output artifacts/bijux-docs/renderer-source-observation.json
-
-      - name: Qualify generated navigation
-        shell: bash
+        env:
+          PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
         run: |
           set -euo pipefail
           git config --global --add safe.directory "$GITHUB_WORKSPACE"
-          # Firefox requires the ephemeral container home to belong to its process user.
           chown "$(id -u):$(id -g)" "$HOME"
-          make UI_TESTS_PLAYWRIGHT_BROWSERS_DIR=/ms-playwright ui-test-navigation ui-test-preferences ui-test-diagrams ui-test-repository ui-test-search ui-test-native-navigation ui-test-reader ui-test-contrast ui-test-search-invoker
-
-      - name: Retain navigation qualification
+          python3 tests/bijux-docs/execution/browser_gate.py run \
+            --group '${{ matrix.group }}' --engine '${{ matrix.engine }}'
+      - name: Retain exact shard receipts and failure diagnostics
         if: always()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
-          name: docs-navigation-${{ github.sha }}
+          name: docs-navigation-${{ matrix.group }}-${{ matrix.engine }}-${{ github.sha }}-${{ github.run_attempt }}
+          path: artifacts/bijux-docs/shards
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 14
+
+  navigation:
+    name: std / navigation
+    if: ${{ always() && github.repository == 'bijux/bijux-std' && (github.event_name != 'pull_request' || github.event.pull_request.user.login != 'dependabot[bot]') }}
+    needs: [navigation-fixtures, navigation-browsers]
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Download canonical inventories
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: docs-navigation-fixtures-${{ github.sha }}-${{ github.run_attempt }}
+          path: artifacts/bijux-docs
+      - name: Download every assigned browser receipt
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          pattern: docs-navigation-*-*-${{ github.sha }}-${{ github.run_attempt }}
+          path: artifacts/bijux-docs/shards
+          merge-multiple: true
+      - name: Require successful jobs and complete unique engine coverage
+        shell: bash
+        env:
+          FIXTURE_RESULT: ${{ needs.navigation-fixtures.result }}
+          BROWSER_RESULT: ${{ needs.navigation-browsers.result }}
+        run: |
+          set -euo pipefail
+          python3 tests/bijux-docs/execution/browser_gate.py aggregate
+          test "$FIXTURE_RESULT" = success
+          test "$BROWSER_RESULT" = success
+      - name: Retain complete navigation qualification
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: docs-navigation-complete-${{ github.sha }}-${{ github.run_attempt }}
           path: |
+            artifacts/bijux-docs/navigation-qualification.json
+            artifacts/bijux-docs/producer-envelope.json
             artifacts/bijux-docs/renderer-source-observation.json
-            artifacts/bijux-docs/generated/manifest.json
-            artifacts/bijux-docs/generated/build-*.log
-            artifacts/bijux-docs/generated/site
-            artifacts/bijux-docs/playwright
-            artifacts/bijux-docs/drawer-playwright
-            artifacts/bijux-docs/preferences-playwright
-            artifacts/bijux-docs/diagram-playwright
-            artifacts/bijux-docs/repository-playwright
-            artifacts/bijux-docs/search-playwright
-            artifacts/bijux-docs/native-navigation-playwright
-            artifacts/bijux-docs/reader-playwright
-            artifacts/bijux-docs/contrast-generated/manifest.json
-            artifacts/bijux-docs/contrast-generated/build.log
-            artifacts/bijux-docs/contrast-playwright
-            artifacts/bijux-docs/search-invoker-playwright
-          if-no-files-found: warn
+            artifacts/bijux-docs/inventories
+            artifacts/bijux-docs/shards/**/qualification.json
+            artifacts/bijux-docs/shards/**/junit.xml
+          if-no-files-found: error
           retention-days: 14
