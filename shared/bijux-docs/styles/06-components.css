@@ -503,3 +503,15 @@
   color: var(--bijux-muted);
   font-size: 0.95rem;
 }
+
+/* Search scope remains visible while native results, loading and recovery change. */
+.bijux-search-scope {
+  margin: 0;
+  padding: 0.55rem 0.8rem;
+  border-block-end: 1px solid var(--md-default-fg-color--lightest);
+  background: var(--md-default-bg-color);
+  color: var(--md-default-fg-color);
+  font-size: 0.64rem;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+}

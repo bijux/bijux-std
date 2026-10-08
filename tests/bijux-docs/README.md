@@ -132,7 +132,7 @@ contracts, renders both fixture origins once and collects each complete suite
 inventory without launching a browser. Its compressed, digest-bound fixture
 archive belongs to the current workflow run and Git candidate.
 
-Eighteen browser jobs divide navigation, search, reader, rendering, link and popup journeys
+Twenty-one browser jobs divide navigation, search, reader, rendering, link and popup journeys
 across Chromium, Firefox and WebKit. Each job downloads that archive and installs
 only the locked Node test runtime. It executes its explicitly assigned projects
 without rebuilding fixtures or repeating renderer tests. Each job has a
@@ -157,3 +157,5 @@ source as the blanket-target counterfactual. Controlled outside replies prove
 browser semantics, not provider availability or production CSP.
 
 `make ui-test-popup-relationships` qualifies actual drawer and search controlled surfaces, authored/generated identity, dialog naming, ordinary keyboard/result journeys and document disposal in all three engines.
+
+`make ui-test-search-scope` qualifies visible local-site search scope across all nine consumer roots and native query/result/Back/Escape journeys in three engines.
