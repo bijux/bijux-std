@@ -1,0 +1,14 @@
+{
+  "schema": 1,
+  "pr": 128,
+  "title": "fix(std): preserve capability manifest ownership",
+  "type": "fix",
+  "scope": "std",
+  "summary": "The shared updater retains ownership of capability-scoped manifests.",
+  "details": [
+    "Prevent governance synchronization from restoring unselected language libraries and document the source selection boundary."
+  ],
+  "status": "merged",
+  "merged_at": "2026-07-23T23:57:13Z",
+  "breaking": false
+}
