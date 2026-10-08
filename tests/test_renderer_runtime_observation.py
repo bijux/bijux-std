@@ -144,10 +144,17 @@ class RuntimeObservationTests(unittest.TestCase):
         module.__file__ = str(target)
         def external_callback(kind, value, trace):
             return None
-        with patch.dict(sys.modules, {"sitecustomize": module}), patch.object(sys, "excepthook", external_callback):
+        apport = types.ModuleType("apport_python_hook")
+        apport_target = self.root / "apport-hook.py"
+        apport_target.write_text("value=2")
+        apport.__file__ = str(apport_target)
+        with patch.dict(sys.modules, {"sitecustomize": module, "apport_python_hook": apport}), patch.object(sys, "excepthook", external_callback):
             observed = self.snapshot()["startup_runtime"]
-        self.assertEqual(observed["customization_modules"][0]["origin"],
+        customizations = {item["module"]: item for item in observed["customization_modules"]}
+        self.assertEqual(customizations["sitecustomize"]["origin"],
                          {"root": "outside-observed-runtime", "path": str(target)})
+        self.assertEqual(customizations["apport_python_hook"]["origin"],
+                         {"root": "outside-observed-runtime", "path": str(apport_target)})
         self.assertFalse(observed["exception_hook_is_interpreter_default"])
         self.assertEqual(observed["exception_hook"]["origin"]["root"], "outside-observed-runtime")
 
