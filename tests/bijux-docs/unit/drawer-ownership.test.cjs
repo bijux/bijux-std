@@ -3,16 +3,19 @@ const fs=require('node:fs'),path=require('node:path'),vm=require('node:vm'),test
 const source=fs.readFileSync(process.env.BOOTSTRAP_SOURCE||path.resolve(__dirname,'../../../shared/bijux-docs/scripts/bootstrap.js'),'utf8');
 const begin=source.indexOf('  function bindDrawer(signal) {'),end=source.indexOf('  function bindSearch(signal) {',begin),fn=source.slice(begin,end),helper=source.slice(source.indexOf('  function bindPopupIdentity('),begin);
 class Element extends EventTarget {
- constructor(){super();this.inert=false;this.checked=false;this.attrs={};this.dataset={};}
+ constructor(){super();this.isConnected=true;this.disabled=false;this.inert=false;this.checked=false;this.attrs={};this.dataset={};}
+ closest(){return this.inertAncestor || null;}hasAttribute(k){return Object.hasOwn(this.attrs,k);}
  getAttribute(k){return this.attrs[k]??null;}setAttribute(k,v){this.attrs[k]=String(v);}removeAttribute(k){delete this.attrs[k];}
- querySelectorAll(){return [];}contains(n){return n===this;}getClientRects(){return [{}];}focus(){this.focusCount=(this.focusCount||0)+1;}
+ querySelectorAll(){return [];}contains(n){return n===this;}getClientRects(){return [{}];}focus(options){this.focusCount=(this.focusCount||0)+1;this.focusOptions=options;}
 }
-function fixture({owned=true,missing=false,initialInert=false,nativeControls=[],backgroundNodes=[]}={}){
+function fixture({owned=true,missing=false,initialInert=false,nativeControls=[],backgroundNodes=[],drawerControls=[],location='https://docs.example/reference/'}={}){
  const document=new EventTarget(),toggle=new Element(),sidebar=new Element(),navigation=new Element(),opener=new Element(),compact=new EventTarget(),signal=new AbortController();compact.matches=false;sidebar.inert=initialInert;
- sidebar.attrs={role:'navigation','aria-label':'Authored navigation'};opener.attrs={'aria-controls':'authored-tree'};document.body={dataset:{}};document.querySelectorAll=selector=>selector==='[id]'?[sidebar,navigation].filter(node=>node.getAttribute('id')):selector.includes('data-bijux-control-close')?nativeControls:backgroundNodes.filter(node=>selector.split(',').map(value=>value.trim()).includes(node.surface));document.getElementById=id=>id==='__drawer'?(missing?null:toggle):id==='bijux-navigation'?navigation:sidebar.getAttribute('id')===id?sidebar:null;
+ sidebar.attrs={role:'navigation','aria-label':'Authored navigation'};opener.attrs={'aria-controls':'authored-tree'};document.body={dataset:{}};document.querySelectorAll=selector=>selector==='[id]'?[sidebar,navigation].filter(node=>node.getAttribute('id')):selector.includes('data-bijux-control-close')?nativeControls:selector==='[data-bijux-control-target="__drawer"]'?drawerControls:backgroundNodes.filter(node=>selector.split(',').map(value=>value.trim()).includes(node.surface));document.getElementById=id=>id==='__drawer'?(missing?null:toggle):id==='bijux-navigation'?navigation:sidebar.getAttribute('id')===id?sidebar:null;
  document.querySelector=selector=>selector==='header[data-bijux-drawer-target]'?(owned?new Element():null):selector.includes('sidebar')?sidebar:opener;
- const nativeDrawerLabels=new WeakMap();const scope={document,compact,nativeDrawerLabels,signal:signal.signal,Event,getComputedStyle:()=>({visibility:'visible'})};
- return {document,toggle,sidebar,navigation,opener,compact,signal,nativeDrawerLabels,bind:()=>vm.runInNewContext('let closeDrawer;let readingIntent=false;'+helper+fn+'bindDrawer(signal);',scope)};
+ const nativeDrawerLabels=new WeakMap();const scope={document,compact,nativeDrawerLabels,signal:signal.signal,Event,URL,queueMicrotask,window:{location:{href:location}},getComputedStyle:()=>({visibility:'visible'})};
+ let state;
+ const consumer=source.slice((source.includes('      const focusReading =') ? source.indexOf('      const focusReading =') : source.indexOf('      if (readingIntent) {')),source.indexOf('      if (drawerBound)'));
+ return {scope,drawerControls,readIntent:()=>state.intent(),consume:()=>state.consume(),document,toggle,sidebar,navigation,opener,compact,signal,nativeDrawerLabels,bind:()=>{state=vm.runInNewContext('let closeDrawer;let readingIntent=false;'+helper+fn+'({bind:()=>bindDrawer(signal),intent:()=>readingIntent,consume:()=>{'+consumer+'}});',scope);return state.bind();}};
 }
 test('native header skips unrelated drawer requirements instead of blocking independent search',()=>{const f=fixture({owned:false,missing:true});assert.equal(f.bind(),false);assert.equal(f.document.body.dataset.bijuxDrawerReady,undefined);f.signal.abort();});
 test('server-owned drawer with missing required native control fails before readiness',()=>{const f=fixture({missing:true});assert.throws(()=>f.bind(),/requires its native control/);assert.equal(f.document.body.dataset.bijuxDrawerReady,undefined);f.signal.abort();});
@@ -98,4 +101,136 @@ test("native sidebar controls do not lease header navigation background", () => 
   assert.deepEqual(nodes.map(node => node.inert), previous);
   f.signal.abort();
   assert.deepEqual(nodes.map(node => node.inert), previous);
+});
+
+function activate(f, { target, download, href = "https://docs.example/product/", ...keys } = {}) {
+  const link = new Element();
+  link.href = href;
+  if (target !== undefined) link.setAttribute("target", target);
+  if (download) link.setAttribute("download", "guide.txt");
+  f.navigation.closest = () => link;
+  const event = new Event("click", { bubbles: true, cancelable: true });
+  Object.assign(event, { button: 0, ...keys });
+  f.navigation.dispatchEvent(event);
+  return event;
+}
+function opened() {
+  const f = fixture();
+  f.compact.matches = true;
+  f.bind();
+  f.toggle.checked = true;
+  f.toggle.dispatchEvent(new Event("change"));
+  return f;
+}
+test("navigation preserves a visible fallback while a pending destination owns reading intent", async () => {
+  const f = opened();
+  activate(f);
+  assert.equal(f.toggle.checked, false);
+  assert.equal(f.opener.focusCount, 1);
+  assert.equal(f.readIntent().href, "https://docs.example/product/");
+  await Promise.resolve();
+  assert.equal(f.readIntent().href, "https://docs.example/product/");
+  f.signal.abort();
+});
+for (const action of [
+  { target: "_blank" }, { target: "named-reader" }, { target: "_parent" },
+  { download: true }, { href: "mailto:reader@example.org" },
+  { ctrlKey: true }, { metaKey: true }, { shiftKey: true }, { altKey: true }, { button: 1 },
+]) {
+  test(`non-current-document navigation preserves browser action ${JSON.stringify(action)}`, async () => {
+    const f = opened();
+    const event = activate(f, action);
+    assert.equal(f.toggle.checked, true);
+    assert.equal(f.opener.focusCount, undefined);
+    assert.equal(f.readIntent(), false);
+    assert.equal(event.defaultPrevented, false);
+    await Promise.resolve();
+    assert.equal(f.readIntent(), false);
+    f.signal.abort();
+  });
+}
+for (const state of ["disconnected", "hidden", "disabled", "inert-ancestor"]) {
+  test(`navigation does not restore an unavailable opener: ${state}`, async () => {
+    const f = opened();
+    if (state === "disconnected") f.opener.isConnected = false;
+    if (state === "hidden") f.opener.getClientRects = () => [];
+    if (state === "disabled") f.opener.disabled = true;
+    if (state === "inert-ancestor") f.opener.inertAncestor = new Element();
+    activate(f);
+    assert.equal(f.opener.focusCount, undefined);
+    await Promise.resolve();
+    f.signal.abort();
+  });
+}
+test("an admitted instant emission owns heading focus only at its actual destination", async () => {
+  const f = opened(), heading = new Element();
+  const event = activate(f);
+  event.preventDefault();
+  await Promise.resolve();
+  f.scope.window.location.href = "https://docs.example/product/";
+  f.document.querySelector = selector => selector === ".md-content h1" ? heading : null;
+  f.consume();
+  assert.equal(heading.focusCount, 1);
+  assert.equal(heading.getAttribute("tabindex"), "-1");
+  assert.equal(f.readIntent(), false);
+  f.consume();
+  assert.equal(heading.focusCount, 1);
+  f.signal.abort();
+});
+test("a mismatched instant emission consumes stale intent without redirecting reader focus", async () => {
+  const f = opened(), heading = new Element();
+  activate(f).preventDefault();
+  await Promise.resolve();
+  f.document.querySelector = selector => selector === ".md-content h1" ? heading : null;
+  f.consume();
+  assert.equal(heading.focusCount, undefined);
+  assert.equal(f.readIntent(), false);
+  f.signal.abort();
+});
+test("current-route native handoff does not leave a heading intent for later lifecycle rebind", async () => {
+  const f = opened(), heading = new Element();
+  activate(f, { target: "_self", href: f.scope.window.location.href });
+  await Promise.resolve();
+  f.document.querySelector = selector => selector === ".md-content h1" ? heading : null;
+  f.consume();
+  assert.equal(heading.focusCount, undefined);
+  assert.equal(f.readIntent(), false);
+  f.signal.abort();
+});
+test("lifetime abort removes navigation fallback and intent mutation", () => {
+  const f = opened();
+  f.signal.abort();
+  activate(f);
+  assert.equal(f.toggle.checked, true);
+  assert.equal(f.readIntent(), false);
+  assert.equal(f.opener.focusCount, undefined);
+});
+
+test("a new ordinary drawer activation revokes an older pending reader destination", () => {
+  const f = fixture();
+  f.drawerControls.push(f.opener);
+  f.compact.matches = true;
+  f.bind();
+  f.opener.dispatchEvent(new Event("click"));
+  activate(f);
+  assert.equal(f.readIntent().href, "https://docs.example/product/");
+  f.opener.dispatchEvent(new Event("click"));
+  assert.equal(f.toggle.checked, true);
+  assert.equal(f.readIntent(), false);
+  f.signal.abort();
+});
+test("same-page fragment actions preserve browser ownership without heading handoff state", () => {
+  const f = opened();
+  const event = activate(f, { href: f.scope.window.location.href + "#reader-section" });
+  assert.equal(event.defaultPrevented, false);
+  assert.equal(f.readIntent(), false);
+  assert.equal(f.toggle.checked, false);
+  assert.ok(f.opener.focusCount > 0);
+  f.signal.abort();
+});
+
+test("reopened drawer permits scrolling its focus target into the panel viewport", () => {
+  const f = opened();
+  assert.equal(f.navigation.focusOptions.preventScroll, false);
+  f.signal.abort();
 });
