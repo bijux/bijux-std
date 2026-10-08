@@ -7,7 +7,7 @@ def fence(source: str) -> str:
     return f"```mermaid\n{source}\n```\n"
 
 
-def pages(docs: Path) -> None:
+def examples() -> list[tuple[str, str, list[tuple[str, str]]]]:
     scientific = [
         ('Comparison meaning', 'flowchart LR\n  accTitle: Scientific comparison\n  accDescr: Compare x with y and probability alpha with beta.\n  A["Comparison x < y; probability α ≤ β"] --> B["Scientific result"]'),
         ('Nested scientific labels', 'flowchart LR\n  accTitle: Nested scientific reading\n  accDescr: A cohort contains control and treatment with a labelled comparison.\n  subgraph Cohort["Nested cohort α ≤ β"]\n    A["Control x < y"] --> B["Treatment"]\n  end\n  classDef scientific fill:#ffffff,stroke:#123456,stroke-width:2px;\n  class A scientific;'),
@@ -29,11 +29,23 @@ def pages(docs: Path) -> None:
         ('Edges exceeding the 500 edge budget', excessive_edges),
         ('Healthy after excessive edges', healthy),
     ]
-    for name, title, examples in [
+    return [
         ('diagram-scientific.md', 'Scientific diagram meaning', scientific),
         ('diagram-resources.md', 'Diagram resource boundaries', resources),
         ('diagram-limits.md', 'Diagram failure isolation', limits),
-    ]:
+    ]
+
+
+def authored_sources() -> dict[str, list[str]]:
+    """Capture controlled source bytes before document compilation or rendering."""
+    return {
+        name.removesuffix(".md"): [source for _, source in entries]
+        for name, _, entries in examples()
+    }
+
+
+def pages(docs: Path) -> None:
+    for name, title, entries in examples():
         body = f'# {title}\n\nEach example retains its exact authored source for reader inspection.\n\n'
-        body += '\n'.join(f'## {heading}\n\n{fence(source)}' for heading, source in examples)
+        body += '\n'.join(f'## {heading}\n\n{fence(source)}' for heading, source in entries)
         (docs / name).write_text(body)
