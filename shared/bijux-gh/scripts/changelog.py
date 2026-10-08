@@ -120,19 +120,16 @@ def project(root: Path) -> str:
     config = configuration(root)
     values = [record for _, record in records(root)]
     pending = sorted((r for r in values if r["status"] == "pending"), key=lambda r: r["pr"], reverse=True)
-    dated = sorted((r for r in values if r["status"] == "merged" and r["merged_at"] is not None), key=lambda r: (r["merged_at"], r["pr"]), reverse=True)
+    dated = sorted((r for r in values if r["status"] == "merged" and r["merged_at"] is not None), key=lambda r: r["pr"], reverse=True)
     undated = sorted((r for r in values if r["status"] == "merged" and r["merged_at"] is None), key=lambda r: r["pr"], reverse=True)
-    lines = ["## Pull request history", "", "Records describe reviewed repository changes. Pending review is not a merged or published release.", ""]
+    lines = ["## Pull request history", ""]
     foundation = root / "changelog/FOUNDATION.md"
     if foundation.exists() or foundation.is_symlink():
         require(foundation.is_file() and not foundation.is_symlink(), "Foundation notes must be an ordinary repository-owned file")
-        lines += ["Audited legacy material and source distinctions are retained in [foundation notes](changelog/FOUNDATION.md).", ""]
     for heading, group in (("Pending review", pending), ("Merged pull requests", dated), ("Merged pull requests with unverified dates", undated)):
         if not group:
             continue
         lines += [f"### {heading}", ""]
-        if heading.endswith("unverified dates"):
-            lines += ["Ordered by PR identity; no verified merge chronology is claimed.", ""]
         for record in group:
             prefix = record["merged_at"] + " — " if record["merged_at"] else ""
             url = f"https://github.com/{config['repository']}/pull/{record['pr']}"
@@ -144,7 +141,8 @@ def project(root: Path) -> str:
         lines += ["No pull request records are present.", ""]
     body = "\n".join(lines)
     if config["mode"] == "pr-history":
-        return "# Changelog\n\nRepository change history for `" + config["repository"] + "`, projected from authoritative `changelog/fragments/` records.\n\n" + body
+        repository = config["repository"].split("/", 1)[1]
+        return "# Changelog\n\nThis file records notable repository-level changes for `" + repository + "`.\n\n" + body
     path = root / "CHANGELOG.md"
     require(not path.is_symlink() and path.is_file(), "Append mode requires an ordinary existing CHANGELOG.md")
     original = path.read_text(encoding="utf-8")
