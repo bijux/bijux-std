@@ -12,6 +12,7 @@ import sys
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from configuration.ordered_assets import validate_effective_assets
+from configuration.shell_contract import mapping, registry, validate_canonical_registry, validate_settings
 
 DIAGRAM_POLICY = json.loads((Path(__file__).resolve().parents[2] / "config/mkdocs-baseline.json").read_text())["diagram"]
 MERMAID_VENDOR = DIAGRAM_POLICY["vendor"]
@@ -19,7 +20,24 @@ MERMAID_SCRIPTS = ("assets/javascripts/mermaid-init.js",)
 
 
 class MkDocsLoader(yaml.SafeLoader):
-    """SafeLoader that tolerates MkDocs python/name tags."""
+    """SafeLoader that tolerates MkDocs python/name tags and rejects shadowed keys."""
+
+    def construct_mapping(self, node, deep=False):
+        # Explicit duplicates are ambiguous even if their final value is valid.
+        # Merge keys retain normal YAML inheritance; only explicit keys collide.
+        seen = set()
+        for key_node, _ in node.value:
+            if key_node.tag == "tag:yaml.org,2002:merge":
+                continue
+            key = self.construct_object(key_node, deep=deep)
+            try:
+                duplicate = key in seen
+                seen.add(key)
+            except TypeError as exc:
+                raise RuntimeError("configuration key must be a scalar") from exc
+            if duplicate:
+                raise RuntimeError(f"duplicate configuration key {key!r} at line {key_node.start_mark.line + 1}")
+        return super().construct_mapping(node, deep=deep)
 
 
 def _construct_unknown(loader: MkDocsLoader, tag_suffix: str, node: yaml.Node):
@@ -37,7 +55,8 @@ MkDocsLoader.add_multi_constructor("", _construct_unknown)
 
 def load_yaml(path: Path) -> dict:
     try:
-        return yaml.load(path.read_text(encoding="utf-8"), Loader=MkDocsLoader) or {}
+        value = yaml.load(path.read_text(encoding="utf-8"), Loader=MkDocsLoader)
+        return mapping({} if value is None else value, str(path), "configuration")
     except Exception as exc:  # pragma: no cover - surfaced in command output
         raise RuntimeError(f"Failed to load {path}: {exc}") from exc
 
@@ -48,16 +67,7 @@ def require(condition: bool, message: str) -> None:
 
 
 def validate_hub_links(hub_links: list[dict], config_name: str) -> None:
-    keys: list[str] = []
-    for idx, link in enumerate(hub_links, start=1):
-        require(isinstance(link, dict), f"{config_name}: hub_links[{idx}] must be a mapping")
-        key = link.get("key")
-        require(bool(key), f"{config_name}: hub_links[{idx}].key is required")
-        require(key not in keys, f"{config_name}: hub_links[{idx}].key '{key}' is duplicated")
-        keys.append(key)
-        require(bool(link.get("label")), f"{config_name}: hub_links[{idx}].label is required")
-        url = link.get("url")
-        require(isinstance(url, str) and url.startswith("http"), f"{config_name}: hub_links[{idx}].url must be absolute")
+    registry(hub_links, config_name)
 
 def validate_mermaid_contract(config: dict, config_name: str, diagram: dict | None = None) -> None:
     diagram = diagram or DIAGRAM_POLICY
@@ -203,19 +213,7 @@ def validate_mkdocs_baseline(config: dict, baseline: dict, config_name: str) -> 
 
 
 def validate_root_contract(config: dict, config_name: str) -> None:
-    extra = config.get("extra") or {}
-    bijux = extra.get("bijux") or {}
-
-    require(isinstance(bijux, dict), f"{config_name}: extra.bijux must be a mapping")
-    require(bool(bijux.get("repository")), f"{config_name}: extra.bijux.repository is required")
-    require(
-        "hub_links" not in bijux,
-        f"{config_name}: extra.bijux.hub_links must be inherited from mkdocs.shared.yml",
-    )
-    if "nav_mode" in bijux:
-        require(bijux["nav_mode"] == "default", f"{config_name}: extra.bijux.nav_mode must be 'default'")
-    if "theme_key" in bijux:
-        require(bijux["theme_key"] == "bijux:theme", f"{config_name}: extra.bijux.theme_key must be 'bijux:theme'")
+    validate_settings(config, config_name, "root")
 
 
 def validate_shared_contract(
@@ -223,19 +221,8 @@ def validate_shared_contract(
     canonical_hub_links: list[dict],
     config_name: str,
 ) -> None:
-    shared_bijux = (config.get("extra") or {}).get("bijux") or {}
-    require(
-        shared_bijux.get("nav_mode") == "default",
-        f"{config_name}: extra.bijux.nav_mode must be 'default'",
-    )
-    require(
-        shared_bijux.get("theme_key") == "bijux:theme",
-        f"{config_name}: extra.bijux.theme_key must be 'bijux:theme'",
-    )
-    require(
-        shared_bijux.get("hub_links") == canonical_hub_links,
-        f"{config_name}: extra.bijux.hub_links must exactly match the canonical shared hub",
-    )
+    shared_bijux = validate_settings(config, config_name, "shared")
+    validate_canonical_registry(shared_bijux["hub_links"], canonical_hub_links, config_name)
     validate_mermaid_contract(config, config_name)
 
 
@@ -248,7 +235,9 @@ if __name__ == "__main__":
 
     # Shared config defines shell policy; root config defines project identity.
     validate_shared_contract(shared_cfg, canonical_hub_links, "mkdocs.shared.yml")
+    validate_root_contract(root_cfg, "mkdocs.yml")
     effective_cfg = merge_mappings(shared_cfg, root_cfg)
+    validate_settings(effective_cfg, "effective MkDocs configuration", "effective")
     validate_mkdocs_baseline(
         effective_cfg,
         mkdocs_baseline,
@@ -257,6 +246,5 @@ if __name__ == "__main__":
 
     validate_mermaid_contract(effective_cfg, "effective MkDocs configuration", mkdocs_baseline["diagram"])
     validate_diagram_asset(repo_root, mkdocs_baseline)
-    validate_root_contract(root_cfg, "mkdocs.yml")
 
     print("Bijux docs contract validation passed")
