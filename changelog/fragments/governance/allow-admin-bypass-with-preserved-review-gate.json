@@ -1,0 +1,15 @@
+{
+  "schema": 1,
+  "pr": 59,
+  "title": "fix(governance): allow admin bypass with preserved review gate",
+  "type": "fix",
+  "scope": "governance",
+  "summary": "Branch protection distinguishes administrator bypass from contributor review requirements.",
+  "details": [
+    "Make enforce_admins configurable and default it off while retaining one required approving review for non-admin contributors.",
+    "Original GitHub merge 05d63cd12b4d96afe4b74dbda1cd1e27bee344e5 is distinct from rewritten main-history delivery a623f872ceb6cf4ba15bc4f6827c68dadbafe64b; the merge date is the verified GitHub date."
+  ],
+  "status": "merged",
+  "merged_at": "2026-04-25T09:37:49Z",
+  "breaking": false
+}

@@ -488,6 +488,12 @@ Consumer CI checks the repository's selected standard commit.
 - Reject malformed pins before fetching and compare synchronized content against the checked-in SHA rather than an incidental standard revision.
 - Advance generated Python workflows to setup-uv 9.0.0.
 
+#### 2026-07-24T02:03:19Z — [#130](https://github.com/bijux/bijux-std/pull/130) — fix\(github\): preserve stable required check identities
+
+Branch protection retains the check names that workflows actually emit.
+
+- Align rulesets and required-check guidance while preserving descriptive workflow titles, avoiding a renamed-check migration deadlock.
+
 #### 2026-07-24T00:09:33Z — [#129](https://github.com/bijux/bijux-std/pull/129) — chore\(github\): refresh PyPI publisher runtime pin
 
 Both trusted and explicit bootstrap PyPI publishing use the 1.14.1 action revision.
@@ -658,6 +664,18 @@ Expensive managed PR jobs wait for their prerequisite checks.
 
 - Add a shared prerequisite helper and wire standards and owner-approval readiness into generated workflows.
 
+#### 2026-05-02T17:39:40Z — [#89](https://github.com/bijux/bijux-std/pull/89) — fix\(github\): restrict main branch merges to merge commits
+
+The shared main-branch contract permits merge commits only.
+
+- Disable ordinary squash/rebase delivery while retaining the documented emergency owner/admin path outside normal PR merging.
+
+#### 2026-05-02T17:30:45Z — [#88](https://github.com/bijux/bijux-std/pull/88) — feat\(github\): align shared governance baseline and pages pipeline
+
+Shared governance requires the intended policy, approval and standards checks.
+
+- Publish the approval workflow and align branch-protection status identities and Pages action pins in generated consumers.
+
 #### 2026-05-01T23:11:37Z — [#86](https://github.com/bijux/bijux-std/pull/86) — fix\(github\): fallback to runner event payload path in pr approval policy
 
 PR approval reads the actual GitHub runner event payload.
@@ -675,6 +693,22 @@ PR approval is explicitly controlled by the repository owner.
 Phylogenetics joins the managed repository catalog.
 
 - Generate its release, dependency-update and workflow-wrapper configuration through the standard build and synchronization paths.
+
+#### 2026-05-01T18:47:26Z — [#82](https://github.com/bijux/bijux-std/pull/82) — fix\(github\): harden rewritten-history policy diff and ignore artifacts dir
+
+Policy checks handle rewritten push ancestry and ignore local run artifacts.
+
+- Compute changed paths safely after history rewriting and keep the repository artifacts directory out of tracked changes.
+
+#### 2026-04-29T11:53:14Z — [#80](https://github.com/bijux/bijux-std/pull/80) — fix\(github\): remove main branch bypass actors
+
+The managed main-branch ruleset no longer includes a bypass actor.
+
+- State that normal main changes merge through pull requests and keep required-check guidance aligned with that policy.
+- Original GitHub merge 9ca9ec98985e03b805e9f9bca91bbc55af424d90 is distinct from rewritten main-history delivery 2ddfe4ee843832440b6b68b131469369bfa036f8; the merge date is the verified GitHub date.
+- Notice: 1 preceding main-history commits occur before this PR in the current first-parent graph. Rewritten history does not establish direct pushes or that this PR first published them.
+- The preceding main-history change exported ARTIFACTS\_DIR for post-test validation and refreshed the matching managed manifest.
+- Full commit subjects, source changes and Git date distinctions: https://github.com/bijux/bijux-std/blob/main/changelog/history/governance-adoption.md
 
 #### 2026-04-29T09:06:13Z — [#79](https://github.com/bijux/bijux-std/pull/79) — docs\(license\): align root licensing with mit metadata
 
@@ -696,6 +730,13 @@ The root README explains repository operations in direct language.
 
 - Retain the operational content while simplifying the repository narrative and top-level description.
 - Original GitHub merge b94662abad6607d25bae01f3ed9a7f2f1fffb383 is distinct from rewritten main-history delivery 6e1eb14b23d2aa938d3de1eb78579cf81d3fe6fd; the merge date is the verified GitHub date.
+
+#### 2026-04-28T11:09:11Z — [#76](https://github.com/bijux/bijux-std/pull/76) — feat\(github\): move live governance to bijux-iac
+
+Live GitHub governance moves to the dedicated bijux-iac authority.
+
+- Remove the embedded Terraform control plane, register the infrastructure repository and direct governance documentation to its ownership boundary.
+- Original GitHub merge 1324a0915511fc60fa4b8c30f998e0e6274b11b1 is distinct from rewritten main-history delivery df9015910f452218d2f563c1b1cf3d1ef8b370af; the merge date is the verified GitHub date.
 
 #### 2026-04-28T10:16:13Z — [#75](https://github.com/bijux/bijux-std/pull/75) — fix\(github\): place telecom ci linux deps in compile jobs
 
@@ -760,6 +801,13 @@ Generated CI wrappers select the managed setup-node 6.4.0 pin.
 - Bring manifest-derived wrappers into alignment with the shared action revision rather than leaving downstream dependency drift.
 - Original GitHub merge e97902f821e8170177c374bfe9e7704c1545f142 is distinct from rewritten main-history delivery a534639834184aafca47abdf95525944725f4e1c; the merge date is the verified GitHub date.
 
+#### 2026-04-27T17:53:26Z — [#66](https://github.com/bijux/bijux-std/pull/66) — fix\(github\): allow std pin as workflow sync control
+
+The exact standard pin is an approved control path for workflow synchronization.
+
+- Allow protected managed workflow changes accompanied by .github/standards/bijux-std.sha while retaining rejection when no approved control file changes.
+- Original GitHub merge ca42c91bced2f226cd16d1c6159775d7dffad225 is distinct from rewritten main-history delivery 0cc2bf56b2c83967a081b7037c25ba70db3dd211; the merge date is the verified GitHub date.
+
 #### 2026-04-27T17:20:09Z — [#65](https://github.com/bijux/bijux-std/pull/65) — fix\(github\): align dependabot renderers
 
 Both governance renderers produce the same Dependabot structure.
@@ -767,12 +815,60 @@ Both governance renderers produce the same Dependabot structure.
 - Regenerate the standards repository configuration through the corrected repository renderer.
 - Original GitHub merge 71bb7e1cbf2802b151147716dc810bab18c5748b is distinct from rewritten main-history delivery 2e674afa8b79d552310e6fdfb5ccbf97c6aa306a; the merge date is the verified GitHub date.
 
+#### 2026-04-27T17:10:02Z — [#64](https://github.com/bijux/bijux-std/pull/64) — fix\(github\): align shared governance source with managed standards
+
+Shared governance source matches the managed repository baseline.
+
+- Align automation identity, required-check names and main-branch rules with their top-level rendered copies.
+- Original GitHub merge 82c887c4d3d4bb548b1f2741fee0af9a184aa5e2 is distinct from rewritten main-history delivery d3cabb3fb8120bc052e16d22cf23eccf9b5e7b83; the merge date is the verified GitHub date.
+
+#### 2026-04-27T16:42:59Z — [#63](https://github.com/bijux/bijux-std/pull/63) — fix\(github\): repair governance plan and managed workflow pins
+
+Governance planning avoids unnecessary Pages metadata resolution.
+
+- Refresh managed Codecov, Labeler and Terraform pins and repair the shared governance digest.
+- Replace the unsuccessful \#60, \#61 and \#62 proposals with this merged correction.
+- Original GitHub merge 488da259e867c9947ca36312bea61672685d76ea is distinct from rewritten main-history delivery 863808f456444d0356b56f342bb6e6b479d05e18; the merge date is the verified GitHub date.
+
+#### 2026-04-25T09:37:49Z — [#59](https://github.com/bijux/bijux-std/pull/59) — fix\(governance\): allow admin bypass with preserved review gate
+
+Branch protection distinguishes administrator bypass from contributor review requirements.
+
+- Make enforce\_admins configurable and default it off while retaining one required approving review for non-admin contributors.
+- Original GitHub merge 05d63cd12b4d96afe4b74dbda1cd1e27bee344e5 is distinct from rewritten main-history delivery a623f872ceb6cf4ba15bc4f6827c68dadbafe64b; the merge date is the verified GitHub date.
+
 #### 2026-04-25T09:36:42Z — [#58](https://github.com/bijux/bijux-std/pull/58) — fix\(github\): harden labeler schema generation and workflow checks
 
 Managed labeler configuration is checked against its action schema.
 
 - Render v5-compatible rule arrays, preserve allowed scalar options and validate the explicit configuration path before labeler execution.
 - Original GitHub merge 3b3098f8a398362dc53da0460c99310cae3e864e is distinct from rewritten main-history delivery 758a3ef5540539e4bfea15e3509b8310e25b300c; the merge date is the verified GitHub date.
+
+#### 2026-04-23T18:35:11Z — [#57](https://github.com/bijux/bijux-std/pull/57) — fix\(governance\): load import targets without readonly env override
+
+Governance import scripts load their target list without overriding a readonly variable.
+
+- Pass the explicit target configuration before the import loop so Terraform can run the intended plan/apply sequence.
+- Original GitHub merge ba0cb9422e16c0d152135bdb529b0e34461bbef7 is distinct from rewritten main-history delivery a4fb77fbe0f529f3c6601128c50a19f0151b46e7; the merge date is the verified GitHub date.
+
+#### 2026-04-23T18:32:10Z — [#56](https://github.com/bijux/bijux-std/pull/56) — fix\(governance\): import existing protections before terraform apply
+
+Branch protection is imported with the correct owner/repository:branch identity.
+
+- Fail on genuine import errors while allowing absent remote protection to be created during bootstrap.
+- Original GitHub merge b86ab8ee35baab9015e9a541db0ad9013ba60428 is distinct from rewritten main-history delivery ea6a8541a84775cfe918b8f98979750b136cec27; the merge date is the verified GitHub date.
+
+#### 2026-04-23T18:29:44Z — [#55](https://github.com/bijux/bijux-std/pull/55) — feat\(governance\): manage main branch protection from bijux-std
+
+Terraform manages main-branch protection for the standards and hub repositories.
+
+- Declare the PR-only review, conversation-resolution and force-push/deletion restrictions for both repositories.
+- Plan/apply workflows import existing protection before operating without a persistent Terraform backend.
+- Original GitHub merge c4a84947d436c8f810f5dca3b71eb475fcea6f9d is distinct from rewritten main-history delivery 705137f9b1e092109e8f758e9bcde2238f1119cc; the merge date is the verified GitHub date.
+- Notice: 6 preceding main-history commits occur before this PR in the current first-parent graph. Rewritten history does not establish direct pushes or that this PR first published them.
+- Preceding main-history changes recorded an Apache-2.0/NOTICE state, documented the Rust deny baseline and deviations, applied/reverted/reapplied generated governance, and refreshed its checksum. Later licensing and standards records remain authoritative.
+- Historical PR54 has no distinct rewritten first-parent delivery anchor; its separately recorded API merge and32-file historical equivalence do not establish direct-push publication.
+- Full commit subjects, source changes and Git date distinctions: https://github.com/bijux/bijux-std/blob/main/changelog/history/governance-adoption.md
 
 #### 2026-04-23T17:29:01Z — [#54](https://github.com/bijux/bijux-std/pull/54) — chore\(github\): sync shared standards and checksum metadata
 
@@ -838,6 +934,13 @@ Rendered Dependabot schedule times use GitHub's HH:MM format.
 - Normalize generated values before GitHub validates consumer dependency-update configurations.
 - Original GitHub merge 76f4f93ff8bc5f851b14ff2153dabbaefa7ca055 is distinct from rewritten main-history delivery a2ff572a0ac361669130cecf1433ad21d3aaf166; the merge date is the verified GitHub date.
 
+#### 2026-04-21T09:58:23Z — [#40](https://github.com/bijux/bijux-std/pull/40) — feat\(github\): harden merge governance and standard checks
+
+Shared merge governance and required check identities are standardized.
+
+- Enforce safe-bot-only automation, add merge-group policy support and align standards and rendered wrapper check names.
+- Original GitHub merge 97f3c4c67aeffa828956d6bb25e47074d19094c4 is distinct from rewritten main-history delivery 6b1e1d093602e46d45746acdce1ccdfd06b153fc; the merge date is the verified GitHub date.
+
 #### 2026-04-21T09:43:10Z — [#39](https://github.com/bijux/bijux-std/pull/39) — fix\(automerge\): enforce PR trust classes and merge-group readiness
 
 Auto-merge eligibility is limited to trusted bot changes on allowed paths.
@@ -880,6 +983,13 @@ Auto-merge enablement retries when a check suite completes.
 
 - Resolve the PR from check\_suite pull requests so automation can act after required checks become successful.
 - Original GitHub merge d35733591734dd43bc8e5286d87f3a3b48c8d472 is distinct from rewritten main-history delivery 6c84f61f9a5a915c429439c657852fd4fd2a74a4; the merge date is the verified GitHub date.
+
+#### 2026-04-19T23:04:35Z — [#32](https://github.com/bijux/bijux-std/pull/32) — fix\(policy\): allow shared manifest as control path
+
+Protected workflow changes can use the shared manifest as their control path.
+
+- Accept the canonical shared-directory manifest while retaining the policy requirement for approved accompanying control metadata.
+- Original GitHub merge 0b8bad88644697e3233a5ff2987ed5d7a09acaaf is distinct from rewritten main-history delivery 708ee14ad4264211484b2ccc604a590425256809; the merge date is the verified GitHub date.
 
 #### 2026-04-19T22:22:00Z — [#28](https://github.com/bijux/bijux-std/pull/28) — fix\(github\): sync shared hash manifest to consumers
 

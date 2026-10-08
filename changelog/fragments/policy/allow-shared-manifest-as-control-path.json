@@ -1,0 +1,15 @@
+{
+  "schema": 1,
+  "pr": 32,
+  "title": "fix(policy): allow shared manifest as control path",
+  "type": "fix",
+  "scope": "policy",
+  "summary": "Protected workflow changes can use the shared manifest as their control path.",
+  "details": [
+    "Accept the canonical shared-directory manifest while retaining the policy requirement for approved accompanying control metadata.",
+    "Original GitHub merge 0b8bad88644697e3233a5ff2987ed5d7a09acaaf is distinct from rewritten main-history delivery 708ee14ad4264211484b2ccc604a590425256809; the merge date is the verified GitHub date."
+  ],
+  "status": "merged",
+  "merged_at": "2026-04-19T23:04:35Z",
+  "breaking": false
+}

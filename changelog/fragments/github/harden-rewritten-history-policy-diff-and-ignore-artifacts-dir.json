@@ -1,0 +1,14 @@
+{
+  "schema": 1,
+  "pr": 82,
+  "title": "fix(github): harden rewritten-history policy diff and ignore artifacts dir",
+  "type": "fix",
+  "scope": "github",
+  "summary": "Policy checks handle rewritten push ancestry and ignore local run artifacts.",
+  "details": [
+    "Compute changed paths safely after history rewriting and keep the repository artifacts directory out of tracked changes."
+  ],
+  "status": "merged",
+  "merged_at": "2026-05-01T18:47:26Z",
+  "breaking": false
+}

@@ -1,0 +1,15 @@
+{
+  "schema": 1,
+  "pr": 57,
+  "title": "fix(governance): load import targets without readonly env override",
+  "type": "fix",
+  "scope": "governance",
+  "summary": "Governance import scripts load their target list without overriding a readonly variable.",
+  "details": [
+    "Pass the explicit target configuration before the import loop so Terraform can run the intended plan/apply sequence.",
+    "Original GitHub merge ba0cb9422e16c0d152135bdb529b0e34461bbef7 is distinct from rewritten main-history delivery a4fb77fbe0f529f3c6601128c50a19f0151b46e7; the merge date is the verified GitHub date."
+  ],
+  "status": "merged",
+  "merged_at": "2026-04-23T18:35:11Z",
+  "breaking": false
+}
