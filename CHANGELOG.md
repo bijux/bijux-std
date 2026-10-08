@@ -100,12 +100,27 @@ Keep search metadata readable, distinguish navigation landmarks, and preserve or
 - Remove global character-only search activation while retaining named Search controls, editable typing, native result keys, modifiers, Escape and Back.
 - Parse the full generated runtime before emission and require source-bound accessibility and shortcut browser groups.
 
+#### 2026-10-08T16:21:36Z — [#188](https://github.com/bijux/bijux-std/pull/188) — fix\(docs\): preserve footer new-tab indication without scripts
+
+Footer profile links describe new-tab behavior before JavaScript runs.
+
+- Author descriptions and tooltips for all four profile links while preserving platform names, destinations and noopener.
+- Keep one runtime annotation and test ordinary script-enabled and no-script navigation, leaving the original document intact and isolating its opener.
+
 #### 2026-10-08T15:22:01Z — [#186](https://github.com/bijux/bijux-std/pull/186) — fix\(docs\): preserve drawer traversal and reader focus on short screens
 
 Short-screen drawers keep hidden links out of Tab order and focused actions visible.
 
 - Exclude descendants of closed disclosures while preserving the first summary and expanded destinations, then scroll each focused action within its owning container.
 - Retain maintained landscape, RTL, modal-resize, new-page focus and fragment/history reader journeys as an independently required group.
+
+#### 2026-10-08T14:32:45Z — [#184](https://github.com/bijux/bijux-std/pull/184) — feat\(docs\): bind embedded readers to native search boundaries
+
+Embedded-reader composition and native search respect the document capability boundary.
+
+- Verify report resources and reconstruction policy, and make native search replace the Document when crossing its initial partition.
+- Deliver the admitted element resize subscriber through its owned frame lifecycle; generated assets, templates and compiler provenance remain reproducible.
+- Unsupported embedded production admission and default public enablement remain closed.
 
 #### 2026-10-08T13:49:22Z — [#183](https://github.com/bijux/bijux-std/pull/183) — ci\(docs\): bound browser jobs with immutable fixture transport
 
@@ -142,6 +157,13 @@ Native search visibly describes its local product-site scope.
 - Preserve the licensed Material partial, owned heading/description relationships and native worker/query/result protocol across consumer-root fixtures.
 - This PR merged into the navigation topic branch, not directly into main; its changes reached main through PR \#176.
 
+#### 2026-10-08T12:43:44Z — [#178](https://github.com/bijux/bijux-std/pull/178) — fix\(docs\): retain readable utility and search recovery colors
+
+Light-theme utility tabs and search recovery states retain readable color pairs.
+
+- Use qualified foreground/background combinations for inactive utilities and pending, unavailable and Retry search states.
+- Keep native search behavior and retain unresolved automated findings and manual qualification limits separately from measured color contrast.
+
 #### 2026-10-08T14:11:21Z — [#176](https://github.com/bijux/bijux-std/pull/176) — fix\(docs\): bind navigation dialogs and product search scope
 
 Navigation controls bind to their actual dialogs and expose product-local search scope.
@@ -149,6 +171,13 @@ Navigation controls bind to their actual dialogs and expose product-local search
 - Lease and restore authored popup identities, preserve accessible query names and identify the current product site in native search.
 - Wire native drawer opening and dismissal through its checkbox-owned surface while retaining keyboard and no-script fallback.
 - This grouped main change incorporates the search-scope work from PR \#179; the topic-only merge is recorded separately.
+
+#### 2026-10-08T13:01:24Z — [#174](https://github.com/bijux/bijux-std/pull/174) — fix\(docs\): preserve authored external link intent
+
+External-link enhancement preserves authored navigation, download and accessible-name intent.
+
+- Add opener protection and visible new-tab descriptions through document-owned annotation leases, retaining authored targets and relation tokens.
+- Dispose owned annotations with the document and retire the historical producer during consumer projection; same-window, download and no-script behavior remain supported.
 
 #### 2026-10-08T12:01:05Z — [#173](https://github.com/bijux/bijux-std/pull/173) — test\(docs\): settle natural drawer transitions before hit measurement
 
@@ -198,6 +227,13 @@ Renderer observations include physical Python startup and import inputs.
 - Record interpreter/stdlib bytes, module origins, bytecode, symlinks and sources outside the package lock, rejecting changes across double capture.
 - The expanded observation remains verification-only and does not approve a publisher runtime.
 
+#### 2026-10-08T08:47:53Z — [#164](https://github.com/bijux/bijux-std/pull/164) — feat\(docs\): expose keyboard scrolling for wide reader content
+
+Wide reader content has a named keyboard-accessible scroll owner.
+
+- Find the actual overflowing code/table surface, including inner numbered-code overflow, and expose ordinary Arrow/Home/End scrolling without adding stops to fitting content.
+- Preserve source, line anchors, cells, selections and descendant controls; dispose annotations/observers with the document and exclude decorative permalink text from contextual labels.
+
 #### 2026-10-08T08:21:45Z — [#163](https://github.com/bijux/bijux-std/pull/163) — feat\(docs\): validate shell configuration and document consumer extensions
 
 Shell configuration rejects ambiguous or incorrectly typed owned fields before rendering.
@@ -225,6 +261,13 @@ Package SBOM audits bind to candidate source rather than stale environment input
 
 - Bind selected package/version and project/lock/Make/helper inputs, export frozen offline closures and promote output only after audit and source rechecks.
 - Retain failed output for diagnosis; declared-input provenance does not authenticate an upstream repository or claim a real vulnerability-service scan.
+
+#### 2026-10-08T06:29:51Z — [#158](https://github.com/bijux/bijux-std/pull/158) — fix\(docs\): preserve native search intent and recover bounded transport
+
+Native search loads bounded transport on intent and recovers without stranding readers.
+
+- Preserve the admitted Material worker, corpus, ranking and result protocol while bounding/cancelling index and worker transport.
+- Coalesce pending edits, retain the query and editing focus, and provide keyboard Cancel/Retry and reliable Escape restoration.
 
 #### 2026-10-08T04:36:06Z — [#157](https://github.com/bijux/bijux-std/pull/157) — fix\(docs\): make repository facts an explicit privacy choice
 
