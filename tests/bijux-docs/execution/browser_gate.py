@@ -26,6 +26,7 @@ GROUPS = {
     'semantics': ('popup-relationships',),
     'search-scope': ('search-scope',),
     'reader-accessibility': ('reader-accessibility',),
+    'diagram-trust': ('diagram-trust',),
     'accessibility-state': ('accessibility-state',),
     'search-reflow-phone': ('search-reflow-phone',),
     'search-reflow-tablet': ('search-reflow-tablet',),
@@ -157,8 +158,8 @@ def aggregate() -> None:
     actual = [(path.parent.parent.name, path.parent.name) for path in reports]
     output = ARTIFACTS / 'navigation-qualification.json'
     try:
-        if any(os.environ.get(name, 'success') != 'success' for name in ('FIXTURE_RESULT', 'BROWSER_RESULT')):
-            raise ValueError('A required fixture/browser job failed or was cancelled')
+        if any(os.environ.get(name, 'success') != 'success' for name in ('FIXTURE_RESULT', 'BROWSER_RESULT', 'COMMAND_RESULT')):
+            raise ValueError('A required fixture/browser job or publication command job failed or was cancelled')
         if len(actual) != len(expected) or set(actual) != expected:
             raise ValueError('Missing, duplicate or unexpected browser shard receipt')
         producer = verify_producer_envelope()
@@ -174,6 +175,10 @@ def aggregate() -> None:
         tree_digest = hashlib.sha256(json.dumps(hashes, separators=(',', ':'), ensure_ascii=False).encode()).hexdigest()
         if result['source_identity'] != {'head': head, 'tree_sha256': tree_digest, 'files': hashes}:
             raise ValueError('Browser receipts do not qualify this Git candidate')
+        commands_spec = importlib.util.spec_from_file_location('publication_commands', TESTS / 'execution/publication_gate.py')
+        commands = importlib.util.module_from_spec(commands_spec)
+        commands_spec.loader.exec_module(commands)
+        result['publication_commands'] = commands.verify(ARTIFACTS / 'publication-commands')
         result['producer_envelope'] = producer
         result['inputs'] = [{'path': str(path.relative_to(ARTIFACTS)), 'sha256': hashlib.sha256(path.read_bytes()).hexdigest()} for path in inventories + reports]
     except (ValueError, KeyError, OSError, TypeError, ET.ParseError) as error:
