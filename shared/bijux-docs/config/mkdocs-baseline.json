@@ -68,6 +68,7 @@
     "assets/javascripts/shell/nav-state.js",
     "assets/javascripts/shell/detail-tabs.js",
     "assets/javascripts/shell/nav-reveal.js",
+    "assets/javascripts/shell/search-recovery.js",
     "assets/javascripts/shell/bootstrap.js",
     "assets/javascripts/navigation-sync.js",
     "assets/javascripts/external-links.js"

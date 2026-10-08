@@ -237,7 +237,8 @@ class SharedDocsHubTests(unittest.TestCase):
         baseline = json.loads((SHARED_DOCS / "config/mkdocs-baseline.json").read_text())
         self.assertEqual(baseline["theme"]["logo"], "assets/bijux_logo.png")
         self.assertEqual(baseline["retired_theme_logos"], ["assets/bijux_logo_hq.png"])
-        self.assertFalse(any("search-recovery" in value for value in baseline["extra_javascript"]))
+        self.assertIn(authored, sync.diagram_content(before))
+        self.assertNotIn("search-recovery", sync.diagram_content(authored))
 
     def test_validator_rejects_second_material_owned_mermaid_fence(self) -> None:
         validator = load_validator()

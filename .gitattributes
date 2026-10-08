@@ -1,0 +1,2 @@
+# Preserve exact compiler-admitted distribution bytes, including native trailing newlines.
+shared/bijux-docs/assets/javascripts/material-search.*.js whitespace=-blank-at-eof linguist-generated=true

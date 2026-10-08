@@ -1,0 +1,117 @@
+#!/usr/bin/env python3
+"""Reproduce admitted Material with owned index and worker recovery boundaries."""
+from __future__ import annotations
+
+import argparse
+import hashlib
+import importlib.metadata
+import json
+from pathlib import Path
+import re
+
+OWNED = Path(__file__).resolve().parent
+SHARED = OWNED.parents[1]
+REPLACEMENT = 'zi=document.forms.namedItem("search")?window.bijuxSearchIndex.observe(ks,Z):tt'
+WORKER_REPLACEMENT = 'function Ei(e,t){let r=window.bijuxSearchWorker.channel(e,T);'
+
+
+def sha256(data: bytes) -> str:
+    return hashlib.sha256(data).hexdigest()
+
+
+def compile_runtime(templates: Path, installed_version: str) -> tuple[str, bytes, dict, bytes]:
+    admitted = json.loads((OWNED / 'admission.json').read_text())
+    if installed_version != admitted['version']:
+        raise ValueError('Unsupported Material version; review admission before compiling')
+    upstream = (templates / admitted['bundle']).read_bytes()
+    base = (templates / 'base.html').read_bytes()
+    source_map = (templates / (admitted['bundle'] + '.map')).read_bytes()
+    worker = (templates / admitted['worker']).read_bytes()
+    for name, data in [('bundle', upstream), ('base_template', base), ('upstream_map', source_map), ('worker', worker)]:
+        if sha256(data) != admitted[name + '_sha256']:
+            raise ValueError('Material ' + name + ' differs from admitted bytes')
+    license_bytes = (OWNED / 'UPSTREAM-LICENSE.txt').read_bytes()
+    if sha256(license_bytes) != admitted['license_sha256']:
+        raise ValueError('Upstream license differs from admission')
+    original = upstream.decode()
+    needle = admitted['needle']
+    if original.count(needle) != 1:
+        raise ValueError('Search-index boundary must occur exactly once')
+    worker_needle = admitted['worker_boundary']
+    if original.count(worker_needle) != 1:
+        raise ValueError('Search-worker boundary must occur exactly once')
+    adapter = (OWNED / 'search-index-adapter.js').read_bytes()
+    worker_adapter = (OWNED / 'search-worker-adapter.js').read_bytes()
+    # The original map describes upstream offsets. Never claim it maps modified bytes.
+    modified = original.replace(needle, REPLACEMENT).replace(worker_needle, WORKER_REPLACEMENT)
+    modified, maps = re.subn(r'(?m)^//# sourceMappingURL=.*(?:\n|$)', '', modified)
+    if maps != 1:
+        raise ValueError('Expected exactly one upstream source-map annotation')
+    runtime = b'/*\n' + license_bytes + b'\n*/\n' + adapter + b'\n' + worker_adapter + b'\n' + modified.encode()
+    digest = sha256(runtime)
+    asset = 'assets/javascripts/material-search.' + digest + '.js'
+    provenance = {
+        'schema': 1, 'upstream_version': installed_version,
+        'upstream_bundle': admitted['bundle'], 'upstream_sha256': admitted['bundle_sha256'],
+        'upstream_base_template_sha256': admitted['base_template_sha256'],
+        'upstream_map_sha256': admitted['upstream_map_sha256'],
+        'upstream_license_sha256': admitted['license_sha256'],
+        'adapter_sha256': sha256(adapter), 'owned_source': 'tooling/material/search-index-adapter.js',
+        'worker_adapter_sha256': sha256(worker_adapter), 'worker_owned_source': 'tooling/material/search-worker-adapter.js',
+        'upstream_worker': admitted['worker'], 'upstream_worker_sha256': admitted['worker_sha256'],
+        'boundary': {'original': needle, 'replacement': REPLACEMENT, 'occurrences': 1},
+        'worker_boundary': {'original': worker_needle, 'replacement': WORKER_REPLACEMENT, 'occurrences': 1},
+        'output_asset': asset, 'output_sha256': digest,
+        'source_map': 'Upstream map applies only to unmodified upstream bundle; compatibility output has no map annotation.',
+        'transport': 'Owned same-origin HTTP index XHR starts only on actual search focus/input/open or a native query/highlight deep link; direct cancel/retry, 45-second nonrenewable total deadline, 8-second no-progress stall bound, 80MiB browser-reported progress-byte limit, 40Mi UTF-16 response/source-character limit and 50,000-document candidate limit. Worker operation deadlines remain separately fixed at 8 seconds.',
+        'limits': ['Index-ready means fetched/admitted index, not worker-ready.', 'File-protocol search is outside admitted HTTP website qualification.', 'Largest actual consumer search corpus and CPU measurements remain required before scale claims.'],
+        'activity_state': {'searching_stage': 'worker-searching', 'ready_after': 'actual latest native RESULT has been delivered to subscribers', 'pending': 'remain searching while queued or in-flight work exists'},
+        'template_extension': {'block': 'extrahead', 'include': 'partials/site-head.html', 'owner': 'consumer', 'optional': True, 'managed_default': False},
+        'query_scheduling': {'in_flight_limit': 1, 'pending_limit': 1, 'settle_ms': 150, 'operation_deadline_ms': 8000, 'obsolete_results': 'discard when a newer native query is pending'},
+        'behavior': 'Native worker algorithm, SETUP/options, query/results, ranking, highlighting and rendering retained. Owned index Observable catches failure before native subscribers; owned native-Subject worker channel contains resource/protocol failures, bounds each actual setup/query operation to 8 seconds without renewal on queued edits, coalesces intermediate input behind a 150ms settle window with one native query in flight and one replaceable pending query, discards superseded results before native rendering, announces searching while work is pending and readiness only after the latest native result reaches subscribers, directly terminates retired workers, and replays cached native SETUP/query on retry without index refetch.',
+    }
+    template = ('{# Native config/layout remain inherited; this reviewed block replaces only the admitted runtime. #}\n'
+                '{% extends "base.html" %}\n'
+                '{% block extrahead %}\n  {{ super() }}\n'
+                '  {% include "partials/site-head.html" ignore missing %}\n{% endblock %}\n'
+                '{% block scripts %}\n'
+                '  <script src="{{ \'' + asset + '\' | url }}"></script>\n'
+                '  {% for script in config.extra_javascript %}\n    {{ script | script_tag }}\n  {% endfor %}\n'
+                '{% endblock %}\n').encode()
+    return asset, runtime, provenance, template
+
+
+def generate(shared: Path, templates: Path, installed_version: str, check: bool = False) -> dict:
+    asset, runtime, provenance, template = compile_runtime(templates, installed_version)
+    expected = {
+        shared / asset: runtime,
+        shared / 'tooling/material/runtime-provenance.json': (json.dumps(provenance, indent=2) + '\n').encode(),
+        shared / 'partials/main.html': template,
+    }
+    stale = sorted((shared / 'assets/javascripts').glob('material-search.*.js'))
+    stale = [path for path in stale if path != shared / asset]
+    if stale:
+        raise ValueError('Preserve previous owned runtime assets; retire them explicitly after review: ' + ', '.join(map(str, stale)))
+    if check:
+        if any(not path.is_file() or path.read_bytes() != data for path, data in expected.items()):
+            raise ValueError('Generated Material compatibility output differs from exact admitted source')
+    else:
+        for path, data in expected.items():
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_bytes(data)
+    return provenance
+
+
+def main() -> None:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('--shared-root', type=Path, default=SHARED)
+    parser.add_argument('--check', action='store_true')
+    args = parser.parse_args()
+    distribution = importlib.metadata.distribution('mkdocs-material')
+    templates = Path(distribution.locate_file('material/templates'))
+    result = generate(args.shared_root.resolve(), templates, distribution.version, args.check)
+    print(json.dumps({'asset': result['output_asset'], 'sha256': result['output_sha256'], 'mode': 'check' if args.check else 'write'}))
+
+
+if __name__ == '__main__':
+    main()

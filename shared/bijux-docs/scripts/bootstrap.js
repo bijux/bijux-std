@@ -8,12 +8,20 @@
   const compact = window.matchMedia("(max-width: 76.2344em)");
 
   function upgradeControls() {
-    for (const label of document.querySelectorAll("label[data-bijux-control-target]")) {
+    for (const label of document.querySelectorAll('label[data-bijux-control-target], label.md-header__button[for="__search"]')) {
       const button = document.createElement("button");
       for (const attr of label.attributes) {
         if (!["role", "tabindex"].includes(attr.name)) button.setAttribute(attr.name, attr.value);
       }
       button.type = "button";
+      if (label.matches('.md-header__button[for="__search"]')) {
+        // Native Material headers share the owned search focus and dismissal contract.
+        button.dataset.bijuxHeaderControl = "search-toggle";
+        button.dataset.bijuxControlTarget = "__search";
+        if (!button.hasAttribute("aria-label")) {
+          button.setAttribute("aria-label", label.getAttribute("title") || document.querySelector(".md-search__input")?.getAttribute("aria-label") || "Search");
+        }
+      }
       button.replaceChildren(...label.childNodes);
       label.replaceWith(button);
     }
@@ -119,8 +127,63 @@
     const toggle = document.getElementById("__search");
     const control = document.querySelector('[data-bijux-header-control="search-toggle"]');
     if (!toggle || !control) return;
-    function sync() { control.setAttribute("aria-expanded", String(toggle.checked)); }
+    const dialog = document.querySelector("[data-md-component='search']");
+    const input = document.querySelector("[data-md-component='search-query']");
+    let closedInlineFocus = false;
+    const visible = node => node && node.getClientRects().length && getComputedStyle(node).visibility !== "hidden";
+    function returnFocus() {
+      if (visible(control)) {
+        closedInlineFocus = false;
+        control.focus({ preventScroll: true });
+      } else if (visible(input)) {
+        // Native Material opens on debounced input focus. Returning the closed
+        // inline invoker retains focus without establishing a new search intent.
+        closedInlineFocus = true;
+        input.focus({ preventScroll: true });
+      }
+    }
+    function inlineIntent() {
+      if (visible(control) || !visible(input) || toggle.checked) return;
+      closedInlineFocus = false;
+      toggle.checked = true;
+      toggle.dispatchEvent(new Event("change", { bubbles: true }));
+    }
+    input?.addEventListener("focus", () => { if (!closedInlineFocus) inlineIntent(); }, { signal });
+    input?.addEventListener("click", inlineIntent, { signal });
+    input?.addEventListener("input", inlineIntent, { signal });
+    input?.addEventListener("keydown", event => {
+      if (!event.ctrlKey && !event.metaKey && !event.altKey &&
+          (event.key.length === 1 || ["Backspace", "Delete", "Enter", "ArrowUp", "ArrowDown"].includes(event.key))) inlineIntent();
+    }, { signal });
+    input?.addEventListener("blur", () => { closedInlineFocus = false; }, { signal });
+    let background = [];
+    let open = false;
+    function restoreBackground() {
+      for (const [node, previous] of background) node.inert = previous;
+      background = [];
+    }
+    function sync() {
+      const wasOpen = open;
+      open = toggle.checked;
+      control.setAttribute("aria-expanded", String(open));
+      control.setAttribute("aria-haspopup", "dialog");
+      restoreBackground();
+      if (!dialog) return;
+      dialog.setAttribute("aria-label", "Search documentation");
+      if (open) {
+        dialog.setAttribute("aria-modal", "true");
+        const nodes = new Set(document.querySelectorAll(".md-content, .md-sidebar, .md-footer"));
+        for (let node = dialog; node.parentElement?.closest("header"); node = node.parentElement) {
+          for (const sibling of node.parentElement.children) if (sibling !== node) nodes.add(sibling);
+        }
+        for (const node of nodes) { background.push([node, node.inert]); node.inert = true; }
+      } else {
+        dialog.removeAttribute("aria-modal");
+        if (wasOpen && !readingIntent) returnFocus();
+      }
+    }
     control.addEventListener("click", () => {
+      closedInlineFocus = false;
       closeDrawer?.(false);
       toggle.checked = !toggle.checked;
       toggle.dispatchEvent(new Event("change", { bubbles: true }));
@@ -128,7 +191,76 @@
       if (toggle.checked) document.querySelector(".md-search__input")?.focus();
     }, { signal });
     toggle.addEventListener("change", sync, { signal });
+    toggle.addEventListener("click", event => {
+      if (!event.isTrusted && ((open && !toggle.checked) || (closedInlineFocus && toggle.checked))) event.preventDefault();
+    }, { capture: true, signal });
+    document.addEventListener("keydown", event => {
+      if (!toggle.checked) return;
+      if (event.key === "Tab" && dialog) {
+        const nodes = [...dialog.querySelectorAll('input, button:not([disabled]), a[href], summary, [tabindex="0"]')]
+          .filter(node => node.getClientRects().length && getComputedStyle(node).visibility !== "hidden");
+        if (!nodes.length) return;
+        event.preventDefault();
+        event.stopImmediatePropagation();
+        const index = nodes.indexOf(document.activeElement);
+        const next = index < 0 ? (event.shiftKey ? nodes.length - 1 : 0) : (index + (event.shiftKey ? -1 : 1) + nodes.length) % nodes.length;
+        nodes[next].focus();
+        return;
+      }
+      if (event.key !== "Escape") return;
+      event.preventDefault();
+      event.stopImmediatePropagation();
+      toggle.checked = false;
+      toggle.dispatchEvent(new Event("change", { bubbles: true }));
+    }, { capture: true, signal });
+    dialog?.addEventListener("click", event => {
+      const link = event.target.closest("a[href]");
+      if (!link || event.ctrlKey || event.metaKey || event.shiftKey || event.altKey || event.button !== 0) return;
+      readingIntent = true;
+      toggle.checked = false;
+      toggle.dispatchEvent(new Event("change", { bubbles: true }));
+    }, { signal });
+    let back = dialog?.querySelector('.md-search__icon[for="__search"]');
+    if (back?.tagName === "LABEL") {
+      const button = document.createElement("button");
+      for (const attr of back.attributes) button.setAttribute(attr.name, attr.value);
+      button.replaceChildren(...back.childNodes);
+      back.replaceWith(button);
+      back = button;
+    }
+    if (back) {
+      back.type = "button";
+      back.setAttribute("aria-label", "Close search");
+      back.addEventListener("click", () => {
+        toggle.checked = false;
+        toggle.dispatchEvent(new Event("change", { bubbles: true }));
+      }, { signal });
+    }
+    document.addEventListener("focusin", event => {
+      if (open && dialog && !dialog.contains(event.target)) dialog.querySelector(".md-search__input")?.focus();
+    }, { signal });
+    signal.addEventListener("abort", restoreBackground, { once: true });
     sync();
+  }
+
+  function bindQueryInput(signal) {
+    const input = document.querySelector("[data-md-component='search-query']");
+    if (input) {
+      // Material's admitted query observer reads keyup; paste, IME and voice emit input.
+      const notify = () => {
+        if (!signal.aborted) input.dispatchEvent(new KeyboardEvent("keyup", { key: "Unidentified", bubbles: true }));
+      };
+      input.addEventListener("input", event => { if (!event.isComposing) notify(); }, { signal });
+      input.addEventListener("compositionend", notify, { signal });
+      let resetJob;
+      input.form?.addEventListener("reset", () => {
+        // The reset default action runs after the event, including its microtasks.
+        // Notify the native query observer in the next task with the cleared value.
+        clearTimeout(resetJob);
+        resetJob = setTimeout(notify, 0);
+      }, { signal });
+      signal.addEventListener("abort", () => clearTimeout(resetJob), { once: true });
+    }
   }
 
   function runShellNavigationSync() {
@@ -138,6 +270,9 @@
     upgradeControls();
     bindDrawer(lifetime.signal);
     bindSearch(lifetime.signal);
+    bindQueryInput(lifetime.signal);
+    shell.searchRecovery?.bind(lifetime.signal);
+    window.dispatchEvent(new Event("bijux:search-location"));
     shell.detailTabs?.runDetailTabsSync?.();
     shell.navReveal?.runDesktopNavigationSync?.();
     if (readingIntent) {

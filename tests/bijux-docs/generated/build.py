@@ -9,6 +9,7 @@ import importlib.metadata
 import json
 import shutil
 import subprocess
+import sys
 import urllib.request
 from pathlib import Path
 
@@ -168,12 +169,14 @@ def config(baseline: dict, registry: list[dict], identity: str, docs: Path, site
 
 def build(shared: Path, output: Path, base_url: str) -> None:
     original = digest_tree(shared)
+    compiler = shared / "tooling/material/build_runtime.py"
+    subprocess.run([sys.executable, "-B", str(compiler), "--shared-root", str(shared), "--check"], check=True, stdout=subprocess.DEVNULL)
     baseline = json.loads((shared / "config/mkdocs-baseline.json").read_text())
     raw_registry = json.loads((shared / "config/hub-links.json").read_text())
     entries = raw_registry if isinstance(raw_registry, list) else raw_registry["hub_links"]
     registry = [{**entry, "url": base_url.rstrip("/") + ("/" if entry["key"] == "bijux" else f"/{entry['key']}/")} for entry in entries]
     scenarios = [(entry["key"], "/" if entry["key"] == "bijux" else f"/{entry['key']}/", "hub" if entry["key"] == "bijux" else "project") for entry in entries]
-    scenarios += [("bijux-core", "/fixtures/empty/", "empty"), ("bijux-core", "/fixtures/long-registry/", "long")]
+    scenarios += [("bijux-core", "/fixtures/empty/", "empty"), ("bijux-core", "/fixtures/long-registry/", "long"), ("bijux-core", "/fixtures/native-header/", "native-header")]
     output.mkdir(parents=True, exist_ok=True)
     site_root = output / "site"
     if site_root.exists():
@@ -188,7 +191,11 @@ def build(shared: Path, output: Path, base_url: str) -> None:
         docs = work / "docs"
         (docs / "assets").mkdir(parents=True)
         shutil.copytree(shared / "assets", docs / "assets", dirs_exist_ok=True)
-        shutil.copytree(shared / "partials", docs / "overrides/partials")
+        shutil.copytree(shared / "partials", docs / "overrides/partials", ignore=shutil.ignore_patterns("main.html"))
+        shutil.copy2(shared / "partials/main.html", docs / "overrides/main.html")
+        if scenario == "native-header":
+            # Exercise the installed Material header, not a fabricated control surrogate.
+            (docs / "overrides/partials/header.html").unlink()
         shutil.copytree(shared / "styles", docs / "assets/styles", ignore=shutil.ignore_patterns("README.md"))
         shutil.copytree(shared / "scripts", docs / "assets/javascripts/shell", ignore=shutil.ignore_patterns("README.md"))
         shutil.copy2(shared / "scripts/nav-sync.js", docs / "assets/javascripts/navigation-sync.js")
