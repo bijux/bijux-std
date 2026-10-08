@@ -235,7 +235,10 @@ report also waits for the applicable rendered qualification:
 Rendered qualification runs for every `bijux-std` pull request, including
 Dependabot, as well as merge groups and main pushes. The existing required
 `std / report` context enforces this dependency without changing the four
-baseline required check names.
+baseline required check names. The report records the actual current-attempt
+frontend job durations and rejects any incomplete or unsuccessful job, or
+assigned execution at or above three minutes. Queue delay is reported
+separately; the budget does not claim control over provider availability.
 
 Separate policy workflows validate GitHub configuration and pull-request
 approval. An owner-authored pull request requires the

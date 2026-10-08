@@ -65,6 +65,18 @@ class RequiredNavigationTests(unittest.TestCase):
         self.assertNotIn('    needs:', checks)
         self.assertNotIn('std / report', checks)
 
+    def test_budget_observation_binds_event_head_and_attempt_with_read_only_access(self):
+        report = job('report')
+        self.assertIn('actions: read', report)
+        self.assertNotIn('actions: write', report)
+        self.assertIn('github.event.pull_request.head.sha || github.event.merge_group.head_sha || github.sha', report)
+        self.assertIn('"run_attempt"] != int(os.environ["GITHUB_RUN_ATTEMPT"])', report)
+        self.assertIn('"head_sha"] != os.environ["EXPECTED_WORKFLOW_HEAD"]', report)
+        self.assertIn('--workflow-head "$EXPECTED_WORKFLOW_HEAD"', report)
+        self.assertIn('artifacts/bijux-docs/job-budget', report)
+        self.assertIn('range(2, math.ceil(jobs["total_count"] / 100) + 1)', report)
+        self.assertLess(report.index('Verify complete frontend job duration'), report.index('Run standards report'))
+
     def test_every_shared_pull_request_author_receives_full_rendered_qualification(self):
         for name in ('navigation-fixtures', 'publication-commands', 'navigation'):
             with self.subTest(job=name):
