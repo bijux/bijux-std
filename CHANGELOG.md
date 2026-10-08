@@ -6,6 +6,13 @@ This file records notable repository-level changes for `bijux-std`.
 
 ### Pending review
 
+#### [#197](https://github.com/bijux/bijux-std/pull/197) — docs\(changelog\): record managed configuration history
+
+Record 16 reviewed historical PRs concerning managed configuration.
+
+- generated manifests, labeler/Dependabot schemas, control digests and renderer parity.
+- Preserve original reviewed titles, verified merge dates and source-history distinctions while retaining all prior PR records.
+
 #### [#196](https://github.com/bijux/bijux-std/pull/196) — docs\(changelog\): record maintainer trust history
 
 Record 12 reviewed historical PRs concerning maintainer trust.
