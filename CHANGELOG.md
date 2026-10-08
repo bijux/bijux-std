@@ -6,6 +6,13 @@ This file records notable repository-level changes for `bijux-std`.
 
 ### Pending review
 
+#### [#205](https://github.com/bijux/bijux-std/pull/205) — docs\(changelog\): record documentation renderer boundaries history
+
+Record 8 reviewed historical PRs concerning docs renderer.
+
+- licensed self-hosted diagrams, fixture admission, owned runtime source and immutable publication commands.
+- Preserve original reviewed titles, verified merge dates and source-history distinctions while retaining all prior PR records.
+
 #### [#204](https://github.com/bijux/bijux-std/pull/204) — docs\(changelog\): record documentation reader behavior history
 
 Record 6 reviewed historical PRs concerning docs reader.
