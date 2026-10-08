@@ -17,6 +17,8 @@ import material.extensions.emoji
 import pymdownx.superfences
 import yaml
 
+from fixtures.diagram_trust import pages as diagram_trust_pages
+
 ROOT = Path(__file__).resolve().parents[3]
 ARTIFACTS = ROOT / "artifacts/bijux-docs"
 MERMAID_SHA256 = "3a93016a73dc82ba890d919f9bbb176f3da9d98341650c0b517f2595cc68fef8"
@@ -62,6 +64,7 @@ def write_page(docs: Path, relative: str, title: str, body: str = "") -> None:
 
 
 def content(docs: Path, scenario: str) -> list[dict]:
+    diagram_trust_pages(docs)
     write_page(docs, "index.md", "Bijux reference" if scenario in {"hub", "rtl"} else "Product overview")
     if scenario == "empty":
         return [{"Home": "index.md"}]
