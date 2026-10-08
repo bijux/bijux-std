@@ -33,13 +33,29 @@ def aggregate(records):
     return digest(json.dumps(records, sort_keys=True, separators=(",", ":")).encode())
 
 
-def validate_bytecode(path: Path):
+def source_link_identity(path: Path, root: Path, *, stdlib=False):
+    """Use the same typed source ownership for inventory and executable caches."""
+    require(stdlib, "Renderer profile: installed runtime symlink forbidden: " + str(path))
+    base = Path(sys.base_prefix).resolve()
+    target = path.resolve()
+    if target.is_relative_to(base):
+        return {'base_interpreter_link': target.relative_to(base).as_posix()}
+    require(path.name in {'sitecustomize.py', 'usercustomize.py'} and path.parent == root,
+            'Renderer profile: external runtime link requires a typed startup adapter: ' + str(path))
+    return {'external_startup_target': str(target)}
+
+
+def validate_bytecode(path: Path, *, root: Path | None = None, stdlib=False):
     require('__pycache__' in path.parts and not path.is_symlink(), "Renderer profile: sourceless/unowned bytecode forbidden")
     try:
         source=Path(importlib.util.source_from_cache(str(path)))
     except ValueError as error:
         raise ProfileError('Renderer profile: unsupported bytecode cache path') from error
-    require(source.is_file() and not source.is_symlink(), 'Renderer profile: bytecode source missing')
+    require(source.is_file(), 'Renderer profile: bytecode source missing: ' + str(source) + ' for cache ' + str(path))
+    if source.is_symlink():
+        require(root is not None and source.is_relative_to(root),
+                'Renderer profile: bytecode source link requires owned stdlib context: ' + str(source) + ' for cache ' + str(path))
+        source_link_identity(source, root, stdlib=stdlib)
     payload=path.read_bytes()
     require(len(payload)>=16 and len(payload)<=32*1024*1024 and payload[:4]==importlib.util.MAGIC_NUMBER,
             'Renderer profile: bytecode format differs from actual interpreter')
@@ -69,21 +85,14 @@ def physical_files(root: Path, *, stdlib=False):
         for name in names:
             path=current/name
             if path.suffix=='.pyc':
-                validate_bytecode(path)
+                validate_bytecode(path, root=root, stdlib=stdlib)
                 continue
             if (current.name.endswith('.dist-info') and name in {'RECORD','INSTALLER','direct_url.json','REQUESTED'}):
                 continue
             require(path.is_file(), "Renderer profile: regular installed source required: "+str(path))
             record={'path':path.relative_to(root).as_posix(),'sha256':digest(path.read_bytes())}
             if path.is_symlink():
-                base=Path(sys.base_prefix).resolve()
-                require(stdlib, "Renderer profile: installed runtime symlink forbidden")
-                if path.resolve().is_relative_to(base):
-                    record['base_interpreter_link']=path.resolve().relative_to(base).as_posix()
-                else:
-                    require(path.name in {'sitecustomize.py','usercustomize.py'} and path.parent==root,
-                            'Renderer profile: external runtime link requires a typed startup adapter')
-                    record['external_startup_target']=str(path.resolve())
+                record.update(source_link_identity(path, root, stdlib=stdlib))
             records.append(record)
     return sorted(records,key=lambda item:item['path'])
 
