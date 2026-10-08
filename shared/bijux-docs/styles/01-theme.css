@@ -3,6 +3,7 @@
   --md-default-bg-color: #f4f6f4;
   --md-default-bg-color--light: #fbfcfa;
   --md-default-fg-color: var(--bijux-ink);
+  --md-default-fg-color--light: var(--bijux-muted);
   --md-primary-fg-color: #0f766e;
   --md-accent-fg-color: #155e75;
   --md-typeset-a-color: #0f5f73;
