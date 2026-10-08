@@ -39,3 +39,15 @@ Shared docs assets are source-of-truth in `assets/`:
 - `assets/site-icons/favicon.ico`
 - `assets/site-icons/apple-touch-icon.png`
 - `assets/site-icons/apple-touch-icon-precomposed.png`
+
+Implementation directories and generated asset README files are excluded from
+public pages and search. Authored `exclude_docs` pathspec rules are preserved;
+the effective rule list must end with `required_exclude_docs` from the baseline,
+so an earlier authored negation cannot reopen implementation content.
+
+Generated destination ownership is recorded in `.bijux/docs-projection.json`.
+Synchronization and source-of-truth checks require an explicit exact accepted
+source checkout, validate recursive projections and preserve consumer-owned
+extensions. See [consumer projection](README.md) for provenance and migration
+requirements. This does not authorize overwriting authored templates or running
+product-specific content generators.

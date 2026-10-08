@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import json
+import re
 from pathlib import Path
 import sys
 
@@ -149,6 +150,44 @@ def remove_root_hub(config_path: Path) -> bool:
     return True
 
 
+def implementation_exclusions(content: str, required: list[str], config_path: Path) -> str:
+    """Preserve authored pathspec rules and end with the mandatory publication boundary."""
+    lines = content.splitlines(keepends=True)
+    indices = [index for index, line in enumerate(lines) if re.match(r'^exclude_docs\s*:', line)]
+    if len(indices) > 1:
+        raise RuntimeError(f'{config_path}: duplicate exclude_docs keys')
+    start = indices[0] if indices else len(lines)
+    end = next((index for index in range(start + 1, len(lines))
+                if lines[index].strip() and leading_spaces(lines[index]) == 0), len(lines))
+    rules = ''
+    if indices:
+        value = lines[start].split(':', 1)[1].strip()
+        if re.fullmatch(r'\|[-+]?(?:\s+#.*)?', value):
+            nonempty = [line for line in lines[start + 1:end] if line.strip()]
+            indent = min((leading_spaces(line) for line in nonempty), default=2)
+            rules = ''.join(line[indent:] for line in lines[start + 1:end])
+        elif value.startswith('"'):
+            try:
+                rules = json.loads(value)
+            except ValueError as exc:
+                raise RuntimeError(f'{config_path}: exclude_docs quoted scalar is unsupported') from exc
+        elif value.startswith("'") and value.endswith("'"):
+            rules = value[1:-1].replace("''", "'")
+        elif not value or value.startswith('#'):
+            rules = ''
+        elif any(value.startswith(char) for char in ('>', '[', '{', '!', '*', '&')):
+            raise RuntimeError(f'{config_path}: exclude_docs must be a literal or plain pathspec string')
+        else:
+            rules = re.split(r'\s+#', value, maxsplit=1)[0] + '\n'
+    if not isinstance(rules, str):
+        raise RuntimeError(f'{config_path}: exclude_docs must be a pathspec string')
+    authored = [rule for rule in rules.splitlines() if rule.strip() not in required]
+    replacement = ['exclude_docs: |\n'] + ['  ' + rule + '\n' for rule in [*authored, *required]]
+    if not indices and lines and not lines[-1].endswith('\n'):
+        lines[-1] += '\n'
+    return ''.join(lines[:start] + replacement + lines[end:])
+
+
 def main() -> int:
     repo_root = Path(sys.argv[1]).resolve() if len(sys.argv) > 1 else Path.cwd()
     if len(sys.argv) > 2:
@@ -161,8 +200,19 @@ def main() -> int:
     shared_config_path = repo_root / "mkdocs.shared.yml"
     root_config_path = repo_root / "mkdocs.yml"
     links = load_hub_links(shared_root)
+    baseline = json.loads((shared_root / 'config/mkdocs-baseline.json').read_text())
+    required = baseline['required_exclude_docs']
+    if not isinstance(required, list) or not required or not all(isinstance(rule, str) and rule.startswith('/') for rule in required):
+        raise RuntimeError('Canonical implementation exclusion policy is missing or invalid')
+    for path in (shared_config_path, root_config_path):
+        implementation_exclusions(path.read_text(), required, path)
     shared_changed = synchronize_shared_config(shared_config_path, links)
     root_changed = remove_root_hub(root_config_path)
+    for path in (shared_config_path, root_config_path):
+        original = path.read_text()
+        updated = implementation_exclusions(original, required, path)
+        if updated != original:
+            path.write_text(updated, encoding='utf-8')
     shared_status = "updated" if shared_changed else "current"
     root_status = "removed duplicate hub" if root_changed else "inherits hub"
     print(f"Bijux MkDocs shared hub {shared_status}: {shared_config_path}")

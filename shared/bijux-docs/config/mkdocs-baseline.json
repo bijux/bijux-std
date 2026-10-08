@@ -2,6 +2,12 @@
   "version": 1,
   "strict": true,
   "use_directory_urls": true,
+  "required_exclude_docs": [
+    "/overrides/",
+    "/hooks/",
+    "/assets/styles/README.md",
+    "/assets/javascripts/shell/README.md"
+  ],
   "dev_addr": "127.0.0.1:8000",
   "theme": {
     "name": "material",

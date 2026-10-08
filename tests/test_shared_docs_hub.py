@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import shutil
 import importlib.util
 from pathlib import Path
 import subprocess
@@ -82,9 +83,13 @@ def load_validator():
 
 class SharedDocsHubTests(unittest.TestCase):
     def fixture(self) -> Path:
-        fixture = Path(tempfile.mkdtemp())
+        artifact_root = REPOSITORY_ROOT / "artifacts/website-delivery"
+        artifact_root.mkdir(parents=True, exist_ok=True)
+        fixture = Path(tempfile.mkdtemp(prefix="hub-projection-", dir=artifact_root))
+        self.addCleanup(shutil.rmtree, fixture)
         shared = fixture / ".bijux/shared/bijux-docs"
         (shared / "config").mkdir(parents=True)
+        shutil.copy2(SHARED_DOCS / "config/mkdocs-baseline.json", shared / "config/mkdocs-baseline.json")
         (shared / "config/hub-links.json").write_text(
             json.dumps(CANONICAL_LINKS, indent=2) + "\n",
             encoding="utf-8",
@@ -128,6 +133,40 @@ class SharedDocsHubTests(unittest.TestCase):
                 self.assertNotIn("canonical_hub_keys", content)
                 self.assertNotIn("ordered_hub_links", content)
                 self.assertEqual(content.count("{% for entry in hub_links %}"), 1)
+
+    def test_sync_preserves_authored_exclusions_and_closes_root_reinclusion(self) -> None:
+        fixture = self.fixture()
+        path = fixture / 'mkdocs.yml'
+        original = path.read_text() + 'exclude_docs: |\n  /private/\n  !/private/public.md\n  !/overrides/**\n'
+        path.write_text(original)
+        result = self.run_sync(fixture)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        updated = path.read_text()
+        self.assertIn('/private/\n  !/private/public.md\n  !/overrides/**', updated)
+        self.assertGreater(updated.index('  /overrides/'), updated.index('  !/overrides/**'))
+        self.assertIn('nav:\n  - Home: index.md', updated)
+        for name in ('mkdocs.yml', 'mkdocs.shared.yml'):
+            self.assertIn('  /hooks/\n', (fixture / name).read_text())
+        before = updated
+        self.assertEqual(self.run_sync(fixture).returncode, 0)
+        self.assertEqual(path.read_text(), before)
+
+    def test_invalid_root_exclusion_fails_before_shared_or_root_mutation(self) -> None:
+        fixture = self.fixture()
+        root = fixture / 'mkdocs.yml'
+        root.write_text(root.read_text() + 'exclude_docs: [/private/]\n')
+        before = {name:(fixture / name).read_bytes() for name in ('mkdocs.yml','mkdocs.shared.yml')}
+        result = self.run_sync(fixture)
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn('exclude_docs must be', result.stderr)
+        self.assertEqual(before, {name:(fixture / name).read_bytes() for name in before})
+
+    def test_contract_rejects_authored_reinclusion_after_implementation_boundary(self) -> None:
+        validator = load_validator()
+        baseline = json.loads((SHARED_DOCS / 'config/mkdocs-baseline.json').read_text())
+        config = {'exclude_docs':'\n'.join([*baseline['required_exclude_docs'], '!/overrides/**'])}
+        with self.assertRaisesRegex(RuntimeError, 'canonical implementation exclusions'):
+            validator.validate_mkdocs_baseline(config, baseline, 'effective')
 
     def test_validator_accepts_shared_hub_and_root_identity(self) -> None:
         validator = load_validator()
@@ -193,6 +232,7 @@ class SharedDocsHubTests(unittest.TestCase):
         theme["icon"] = {"repo": repository_icon}
         theme["features"] = [*required_features, "product.feature"]
         config = {
+            "exclude_docs": "\n".join(["/product-private/", *baseline["required_exclude_docs"]]),
             "strict": baseline["strict"],
             "use_directory_urls": baseline["use_directory_urls"],
             "dev_addr": baseline["dev_addr"],
@@ -220,6 +260,7 @@ class SharedDocsHubTests(unittest.TestCase):
         theme["icon"] = {"repo": repository_icon}
         theme["features"] = required_features[1:]
         config = {
+            "exclude_docs": "\n".join(["/product-private/", *baseline["required_exclude_docs"]]),
             "strict": baseline["strict"],
             "use_directory_urls": baseline["use_directory_urls"],
             "dev_addr": baseline["dev_addr"],
@@ -245,6 +286,7 @@ class SharedDocsHubTests(unittest.TestCase):
         theme["icon"] = {"repo": repository_icon}
         theme["features"] = required_features
         shared = {
+            "exclude_docs": "\n".join(["/product-private/", *baseline["required_exclude_docs"]]),
             "strict": baseline["strict"],
             "use_directory_urls": baseline["use_directory_urls"],
             "dev_addr": baseline["dev_addr"],
