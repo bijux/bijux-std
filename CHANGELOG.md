@@ -6,6 +6,13 @@ This file records notable repository-level changes for `bijux-std`.
 
 ### Pending review
 
+#### [#204](https://github.com/bijux/bijux-std/pull/204) — docs\(changelog\): record documentation reader behavior history
+
+Record 6 reviewed historical PRs concerning docs reader.
+
+- native search recovery, wide-content keyboard scrolling, authored links, recovery contrast and document boundaries.
+- Preserve original reviewed titles, verified merge dates and source-history distinctions while retaining all prior PR records.
+
 #### [#203](https://github.com/bijux/bijux-std/pull/203) — docs\(changelog\): record documentation shell history
 
 Record 16 reviewed historical PRs concerning docs shell.
