@@ -121,6 +121,15 @@ jobs:
           apt-get install --no-install-recommends -y make python3-venv
           make ui-test-install ui-test-install-docs
 
+      - name: Observe locked renderer source for publisher review
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          PYTHONDONTWRITEBYTECODE=1 artifacts/bijux-docs/python/bin/python \
+            shared/bijux-docs/tooling/security/renderer_fingerprints.py \
+            --output artifacts/bijux-docs/renderer-source-observation.json
+
       - name: Qualify generated navigation
         shell: bash
         run: |
@@ -136,6 +145,7 @@ jobs:
         with:
           name: docs-navigation-${{ github.sha }}
           path: |
+            artifacts/bijux-docs/renderer-source-observation.json
             artifacts/bijux-docs/generated/manifest.json
             artifacts/bijux-docs/generated/build-*.log
             artifacts/bijux-docs/generated/site
