@@ -3,6 +3,10 @@ const fs = require("node:fs");
 const path = require("node:path");
 const { test, expect } = require("@playwright/test");
 const measure = require("./contrast-targets/measurement");
+
+test.beforeEach(async ({ browser }, info) => {
+  info.annotations.push({ type: "browser-version", description: browser.version() });
+});
 const root = path.resolve(__dirname, "../../../..");
 const styles = ["06-components.css"];
 

@@ -1,6 +1,10 @@
 "use strict";
 const { test, expect } = require("@playwright/test");
 const measure = require("./contrast-targets/measurement");
+
+test.beforeEach(async ({ browser }, info) => {
+  info.annotations.push({ type: "browser-version", description: browser.version() });
+});
 test("native no-script Navigation retains white focus and 44px hit target", async ({ browser, browserName, baseURL }, info) => {
   const context = await browser.newContext({ javaScriptEnabled: false, baseURL, viewport: { width: 390, height: 844 } });
   try {
