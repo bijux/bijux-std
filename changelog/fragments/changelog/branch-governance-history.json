@@ -1,0 +1,15 @@
+{
+  "schema": 1,
+  "pr": 206,
+  "title": "docs(changelog): record branch governance history",
+  "type": "docs",
+  "scope": "changelog",
+  "summary": "Record 15 reviewed historical PRs concerning branch governance.",
+  "details": [
+    "branch protection authority, import identity, bypass/review behavior, merge method and required check names.",
+    "Preserve original reviewed titles, verified merge dates and source-history distinctions while retaining all prior PR records."
+  ],
+  "status": "pending",
+  "merged_at": null,
+  "breaking": false
+}

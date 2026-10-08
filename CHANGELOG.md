@@ -6,6 +6,13 @@ This file records notable repository-level changes for `bijux-std`.
 
 ### Pending review
 
+#### [#206](https://github.com/bijux/bijux-std/pull/206) — docs\(changelog\): record branch governance history
+
+Record 15 reviewed historical PRs concerning branch governance.
+
+- branch protection authority, import identity, bypass/review behavior, merge method and required check names.
+- Preserve original reviewed titles, verified merge dates and source-history distinctions while retaining all prior PR records.
+
 #### [#205](https://github.com/bijux/bijux-std/pull/205) — docs\(changelog\): record documentation renderer boundaries history
 
 Record 8 reviewed historical PRs concerning docs renderer.
