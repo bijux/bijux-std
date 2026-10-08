@@ -6,14 +6,21 @@ This file records notable repository-level changes for `bijux-std`.
 
 ### Pending review
 
-#### [#211](https://github.com/bijux/bijux-std/pull/211) — test(docs): bind rendered fixtures to effective configuration bytes
+#### [#213](https://github.com/bijux/bijux-std/pull/213) — fix(docs): adopt exact source-bound legacy script defaults
+
+Refresh the complete previous canonical script list from its committed accepted standard source.
+
+- Preserve authored order, attributes, comments, configuration and capabilities outside the exact plain default.
+- Resolve prior ownership from the exact official GitHub authority only when an order conflict needs it.
+
+### Merged pull requests
+
+#### 2026-10-08T21:46:17Z — [#211](https://github.com/bijux/bijux-std/pull/211) — test(docs): bind rendered fixtures to effective configuration bytes
 
 Bind each generated scenario and browser report to the exact effective MkDocs YAML.
 
 - Reject changed, missing or malformed configuration identity and stale success manifests.
 - Preserve private producer inputs while transporting digest-bound metadata and unchanged public files.
-
-### Merged pull requests
 
 #### 2026-10-08T21:30:31Z — [#210](https://github.com/bijux/bijux-std/pull/210) — ci(docs): require complete rendered navigation qualification
 
