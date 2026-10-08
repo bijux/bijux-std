@@ -110,6 +110,7 @@ class FixtureTransferTests(unittest.TestCase):
                 path.parent.mkdir(parents=True, exist_ok=True)
                 path.write_text(json.dumps(observation) if name == 'renderer-source-observation.json' else 'immutable artifact')
             receipt = {'source_head': 'a' * 40, 'workflow_run_id': None, 'workflow_attempt': None,
+                       'partition_registry_sha256': hashlib.sha256(GATE.PARTITIONS.REGISTRY_PATH.read_bytes()).hexdigest(),
                        'artifact_digests': {name: hashlib.sha256((root / name).read_bytes()).hexdigest() for name in paths}}
             (root / 'producer-envelope.json').write_text(json.dumps(receipt))
             with patch.object(GATE, 'ARTIFACTS', root), patch.object(GATE.subprocess, 'check_output', return_value='a' * 40), patch.dict(GATE.os.environ, {}, clear=True):
