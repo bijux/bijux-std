@@ -60,6 +60,14 @@ jobs:
                 bash .bijux/shared/bijux-checks/scripts/validate-shared-contracts.sh
               elif [[ -x "shared/bijux-checks/scripts/validate-shared-contracts.sh" ]]; then
                 make contract-tests
+                if [[ "${GITHUB_REPOSITORY}" == "bijux/bijux-std" ]]; then
+                  make ui-test-install ui-test-install-docs
+                  NPM_CONFIG_CACHE="$PWD/artifacts/bijux-docs/npm-cache" \
+                    PLAYWRIGHT_BROWSERS_PATH="$PWD/artifacts/bijux-docs/playwright/browsers" \
+                    npm --prefix artifacts/bijux-docs/node-runtime exec -- \
+                    playwright install --with-deps chromium firefox webkit
+                  make ui-test-navigation
+                fi
               else
                 echo "ERROR: unable to locate shared contract validator" >&2
                 exit 1
@@ -94,3 +102,17 @@ jobs:
             artifacts/checks
             artifacts/bijux-checks
           if-no-files-found: error
+
+      - name: Retain navigation qualification
+        if: always() && matrix.check == 'contracts' && github.repository == 'bijux/bijux-std'
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: docs-navigation-${{ github.sha }}
+          path: |
+            artifacts/bijux-docs/generated/manifest.json
+            artifacts/bijux-docs/generated/build-*.log
+            artifacts/bijux-docs/generated/site
+            artifacts/bijux-docs/playwright
+            artifacts/bijux-docs/drawer-playwright
+          if-no-files-found: warn
+          retention-days: 14

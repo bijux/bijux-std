@@ -34,6 +34,10 @@ function element(attributes = {}) {
     addEventListener(name, listener) {
       listeners.set(name, listener);
     },
+    dispatchEvent(event) {
+      listeners.get(event.type)?.(event);
+      return true;
+    },
     fire(name) {
       const listener = listeners.get(name);
       assert.ok(listener, `missing ${name} listener`);
@@ -105,6 +109,7 @@ function page({ order = ["auto", "light", "dark"], savedChoice = null, checked =
       getItem(key) { return stored.get(key) ?? null; },
       setItem(key, value) { stored.set(key, value); },
     },
+    Event,
     CustomEvent: class CustomEvent {
       constructor(name, options) {
         this.type = name;

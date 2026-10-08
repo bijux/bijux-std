@@ -4,13 +4,13 @@
   "version": "0.1.0",
   "description": "UI regression checks for bijux-std shared docs shell",
   "scripts": {
-    "test:ui": "playwright test",
-    "test:ui:live-navigation": "playwright test ui/specs/navigation-live-e2e.spec.js --workers=1",
+    "test:ui": "playwright test --config playwright.config.js",
+    "test:ui:live-navigation": "playwright test --config playwright.live.config.js",
     "test:ui:headed": "playwright test --headed",
     "test:ui:debug": "playwright test --debug",
-    "install:browsers": "playwright install chromium"
+    "install:browsers": "playwright install chromium firefox webkit"
   },
   "devDependencies": {
-    "@playwright/test": "^1.54.2"
+    "@playwright/test": "1.58.2"
   }
 }
