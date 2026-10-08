@@ -6,6 +6,13 @@ This file records notable repository-level changes for `bijux-std`.
 
 ### Pending review
 
+#### [#201](https://github.com/bijux/bijux-std/pull/201) — docs\(changelog\): record standards tooling history
+
+Record 13 reviewed historical PRs concerning standards tooling.
+
+- repository automation, aliases, environment readiness, contract validation and exact source integrity.
+- Preserve original reviewed titles, verified merge dates and source-history distinctions while retaining all prior PR records.
+
 #### [#200](https://github.com/bijux/bijux-std/pull/200) — docs\(changelog\): record dependency revisions history
 
 Record 16 reviewed historical PRs concerning dependency revisions.
@@ -141,6 +148,13 @@ Package SBOM audits bind to candidate source rather than stale environment input
 - Bind selected package/version and project/lock/Make/helper inputs, export frozen offline closures and promote output only after audit and source rechecks.
 - Retain failed output for diagnosis; declared-input provenance does not authenticate an upstream repository or claim a real vulnerability-service scan.
 
+#### 2026-10-07T23:16:15Z — [#147](https://github.com/bijux/bijux-std/pull/147) — fix\(std\): verify exact source before preserving managed refresh
+
+Managed refresh verifies the exact requested source before changing consumer files.
+
+- Resolve a named ref once, record origin/ref/full SHA and reject unavailable revisions or dirty/conflicting managed work.
+- Keep staged, unstaged, untracked and legacy user changes intact; dry runs do not mutate managed files.
+
 #### 2026-09-07T09:32:23Z — [#145](https://github.com/bijux/bijux-std/pull/145) — fix\(github\): skip verification runners for dependabot
 
 Dependabot changes avoid expensive generated verification runners.
@@ -189,6 +203,12 @@ Canon installed-family verification includes all thirteen built distributions.
 Python build and recursive Make failures propagate immediately.
 
 - Preserve the first failed nested command and advance the shared OpenAPI tooling to Generator CLI 2.41.0 and Redocly 2.47.0.
+
+#### 2026-08-25T16:01:25Z — [#137](https://github.com/bijux/bijux-std/pull/137) — fix\(std\): scope sibling parity to accepted source
+
+Sibling parity checks compare repositories only at the same accepted standard SHA.
+
+- Keep local mirrors equal to synchronized source while allowing separately promoted consumer pins without false cross-repository drift reports.
 
 #### 2026-08-25T15:56:50Z — [#136](https://github.com/bijux/bijux-std/pull/136) — fix\(github\): resolve synchronized renderer sources
 
@@ -281,17 +301,43 @@ Genomics and GNSS expose explicit foundational Rust CI gates.
 
 - Invoke public format, lint, audit and test Make targets and repair the Genomics aggregate expression that prevented job creation.
 
+#### 2026-07-19T15:37:53Z — [#115](https://github.com/bijux/bijux-std/pull/115) — fix\(std\): validate contracts in consumer repositories
+
+Consumer repositories validate shared contracts without a standards-only Make target.
+
+- Check managed shell/Python/JSON syntax in both canonical and consumer layouts while keeping the standards repository's full unit-contract lane.
+
 #### 2026-07-19T15:11:56Z — [#114](https://github.com/bijux/bijux-std/pull/114) — chore\(github\): refresh shared workflow runtime pins
 
 Shared setup actions use refreshed uv and Node runtime revisions.
 
 - Select setup-uv 8.3.2 and setup-node 7.0.0 in governed workflow sources.
 
+#### 2026-07-19T12:37:45Z — [#113](https://github.com/bijux/bijux-std/pull/113) — feat\(std\): publish shared repository contracts
+
+Repository contracts centralize Rust test defaults and documentation hub ownership.
+
+- Default complete nextest gates to eight workers with explicit overrides preserved and make managed documentation inherit the canonical hub registry.
+- Document capability selection, exact-SHA adoption, integrity checks and standards ownership.
+
+#### 2026-07-18T21:51:12Z — [#111](https://github.com/bijux/bijux-std/pull/111) — feat\(makes\): add shared common and Rust automation contracts
+
+Common and Rust Make libraries provide capability-selected repository automation.
+
+- Add governed environment, guards, entrypoints, pinned gates and Cargo format/lint/test/security/coverage/docs surfaces.
+- Synchronize only selected language capabilities and preserve existing Python behavior and consumer Make graphs.
+
 #### 2026-07-08T23:47:09Z — [#109](https://github.com/bijux/bijux-std/pull/109) — fix\(github\): repair managed labels and shared workflow pins
 
 Managed dependency labels and setup-uv pins follow shared policy.
 
 - Align Dependabot labels with the governance taxonomy and refresh setup revisions in documentation and release workflows.
+
+#### 2026-07-04T18:10:19Z — [#106](https://github.com/bijux/bijux-std/pull/106) — fix\(std\): preserve local environment aliases and workflow path checks
+
+Alias setup preserves repository-owned environment directories.
+
+- Keep existing .venv, .tox, .hypothesis and .benchmarks directories and validate workflow shell preambles through consumer shared paths.
 
 #### 2026-07-04T17:45:05Z — [#105](https://github.com/bijux/bijux-std/pull/105) — fix\(github\): align shared setup-python pins
 
@@ -304,6 +350,12 @@ Shared documentation and release workflows use the setup-python 6.3.0 pin.
 Shared tests preserve consumer full-suite overrides.
 
 - Align canonical hub-strip and Mermaid checks with shared documentation ownership and refresh the matching source digest.
+
+#### 2026-06-28T23:37:39Z — [#102](https://github.com/bijux/bijux-std/pull/102) — fix\(std\): require venv interpreters in python make readiness
+
+Python Make readiness requires an actual virtual-environment interpreter.
+
+- Depend on VENV\_PYTHON rather than a directory that artifact alias setup can create before the interpreter exists.
 
 #### 2026-06-28T13:00:54Z — [#100](https://github.com/bijux/bijux-std/pull/100) — fix\(ci\): restore workflow trigger authority
 
@@ -322,6 +374,12 @@ Managed wrappers avoid rerunning reviewed work after main merges.
 Shared CI setup uses the setup-uv 8.2.0 revision.
 
 - Advance canonical workflow references and their governance directory digest together.
+
+#### 2026-06-26T23:24:19Z — [#97](https://github.com/bijux/bijux-std/pull/97) — feat\(std\): materialize artifact aliases via setup
+
+Setup materializes ignored artifact aliases for repositories and packages.
+
+- Generate local links through the shared setup target instead of requiring tracked artifact symlinks in Python consumers.
 
 #### 2026-05-13T19:52:39Z — [#92](https://github.com/bijux/bijux-std/pull/92) — fix\(github\): fail fast on prerequisite policy failures
 
@@ -347,6 +405,13 @@ PR approval is explicitly controlled by the repository owner.
 
 - Require owner-self-signoff for bijux-authored PRs and an approving bijux review for other authors through a managed approval workflow.
 
+#### 2026-04-29T09:06:13Z — [#79](https://github.com/bijux/bijux-std/pull/79) — docs\(license\): align root licensing with mit metadata
+
+Root licensing files match the repository's MIT declaration.
+
+- Replace Apache-2.0 metadata with MIT text and restore the corresponding NOTICE file.
+- Original GitHub merge 6c2774cbb9e832b35123d1375155961291026ec6 is distinct from rewritten main-history delivery 7916807c0b4e8f0bc50ba88041ac0f7d92574d54; the merge date is the verified GitHub date.
+
 #### 2026-04-28T11:51:50Z — [#78](https://github.com/bijux/bijux-std/pull/78) — fix\(github\): align managed workflow action pins
 
 Managed Codecov, Labeler and Pages action revisions remain aligned.
@@ -354,12 +419,33 @@ Managed Codecov, Labeler and Pages action revisions remain aligned.
 - Refresh shared sources and generated copies, and remove stale active copies that belong to shared governance ownership.
 - Original GitHub merge 8259f570a298527385d786a74b23294d0a6465a2 is distinct from rewritten main-history delivery 04ae756ab3f1cf0539609d03102e028a7cc80544; the merge date is the verified GitHub date.
 
+#### 2026-04-28T11:35:25Z — [#77](https://github.com/bijux/bijux-std/pull/77) — docs\(readme\): rewrite repo narrative in direct voice
+
+The root README explains repository operations in direct language.
+
+- Retain the operational content while simplifying the repository narrative and top-level description.
+- Original GitHub merge b94662abad6607d25bae01f3ed9a7f2f1fffb383 is distinct from rewritten main-history delivery 6e1eb14b23d2aa938d3de1eb78579cf81d3fe6fd; the merge date is the verified GitHub date.
+
+#### 2026-04-28T09:20:47Z — [#72](https://github.com/bijux/bijux-std/pull/72) — fix\(docs\): normalize local shared manifest lookups
+
+Shared documentation verification resolves canonical manifest paths correctly.
+
+- Normalize local lookups to the shared/... entries recorded in the directory manifest, avoiding false source-of-truth mismatch reports.
+- Original GitHub merge a44a4e85b09714ce8863c9573ef1059e843b5e8e is distinct from rewritten main-history delivery fd6620e031a4c3349b99251c635f9d0bfb0b4c30; the merge date is the verified GitHub date.
+
 #### 2026-04-28T08:46:31Z — [#71](https://github.com/bijux/bijux-std/pull/71) — fix\(github\): advance pages workflow action pins
 
 Shared Pages deployment uses refreshed immutable action revisions.
 
 - Select configure-pages 6.0.0 and upload/deploy-pages 5.0.0 in the canonical deployment workflow.
 - Original GitHub merge 5d4059e207559a51ed40dac1384693c57347018f is distinct from rewritten main-history delivery aae17bc8df75997d142cf5b06e60706ab1cd5a26; the merge date is the verified GitHub date.
+
+#### 2026-04-27T20:06:01Z — [#70](https://github.com/bijux/bijux-std/pull/70) — fix\(std\): preserve package artifact aliases in shared makes
+
+Shared cleanup preserves package-root artifact aliases.
+
+- Avoid deleting tracked .hypothesis symlinks and keep package artifact links intact across Make clean targets.
+- Original GitHub merge 214f8c6e8881a97a258e57c450badb74a5fb7b5c is distinct from rewritten main-history delivery 61c178422a23cb4336863d8b49395a8493f9d5a3; the merge date is the verified GitHub date.
 
 #### 2026-04-27T19:26:51Z — [#69](https://github.com/bijux/bijux-std/pull/69) — fix\(std\): align governance checks with rendered repo config
 
@@ -544,6 +630,15 @@ Auto-merge guidance describes the trusted CODEOWNER-author policy.
 
 - Document the required-check condition for enabling auto-merge on eligible owner-authored changes.
 - Original GitHub merge 128e8496069bc658bcfa56a2014fffa048889922 is distinct from rewritten main-history delivery 594401a470fdf968ed442efac46537ae75889435; the merge date is the verified GitHub date.
+
+#### 2026-04-18T23:09:33Z — [#4](https://github.com/bijux/bijux-std/pull/4) — fix: harden standards sync and governance checks
+
+Standards synchronization and auto-merge checks handle changing repository state safely.
+
+- Resolve non-sibling roots, report YAML failures clearly and include the managed auto-merge workflow in normal synchronization.
+- Match approvals to the current head and live PR state while handling stale workflow directories safely.
+- The original title has no scope; the fragment scope identifies editorial ownership without changing that historical title.
+- Original GitHub merge d66f87e3319765adb2de66e9102c3fdeee201aa1 is distinct from rewritten main-history delivery f4050194f723ed021cf7a25b632db3b31acd729f; the merge date is the verified GitHub date.
 
 #### 2026-04-18T21:51:27Z — [#2](https://github.com/bijux/bijux-std/pull/2) — feat\(github\): add CODEOWNERS and align main PR gate for auto-merge
 

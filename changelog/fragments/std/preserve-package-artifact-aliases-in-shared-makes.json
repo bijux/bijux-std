@@ -1,0 +1,15 @@
+{
+  "schema": 1,
+  "pr": 70,
+  "title": "fix(std): preserve package artifact aliases in shared makes",
+  "type": "fix",
+  "scope": "std",
+  "summary": "Shared cleanup preserves package-root artifact aliases.",
+  "details": [
+    "Avoid deleting tracked .hypothesis symlinks and keep package artifact links intact across Make clean targets.",
+    "Original GitHub merge 214f8c6e8881a97a258e57c450badb74a5fb7b5c is distinct from rewritten main-history delivery 61c178422a23cb4336863d8b49395a8493f9d5a3; the merge date is the verified GitHub date."
+  ],
+  "status": "merged",
+  "merged_at": "2026-04-27T20:06:01Z",
+  "breaking": false
+}
