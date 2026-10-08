@@ -116,17 +116,29 @@ responses, and actual Previous reader navigation with browser Back. The three
 phone projects additionally exercise native Navigation with JavaScript disabled.
 Desktop cases require the compact drawer control to be hidden.
 
-The negative fixture replaces only 06-components.css with its exact authored
+The reader-direction negative fixture loads 06-components.css with its exact authored
 preimage from 56730b993878c0f6d0ba3f4ed1ff9d60c6bb1d92, whose digest is checked
 by the measurement unit test. It must detect hidden phone reader directions or
 insufficient visible direction contrast. Diagnostic glyph-paint removal is used
 only to sample backgrounds; behavior always uses ordinary input.
+
+The same negative case also loads the exact 07-utilities.css preimage from
+9bb8ed253f3b3eea9084b48abb97a4b99bdf3ccb, checks its digest, and proves that
+ordinary keyboard focus reaches a control whose external ring is clipped.
 
 Receipts and traces live under artifacts/bijux-docs/contrast-playwright; the
 immutable fixture manifest lives under artifacts/bijux-docs/contrast-generated.
 This bounded gate does not certify all components, every consumer, axe findings,
 manual assistive testing or physical operating-system high contrast. WebKit
 forced-color emulation is qualified as source response only.
+
+The same cases also qualify disclosure and repository focus at scroll and
+masthead boundaries. Ordinary Tab/Shift+Tab traverses the controls; the outline
+must fit every clipping ancestor and contrast with actual adjacent screenshot
+paint. Auto changes and returns the OS color scheme while the control remains
+focused. Forced-colors uses unmodified paint, because hiding an outline can
+change or retain UA-forced paint. These measurements do not certify physical
+system palettes or assistive-technology usability.
 
 ## Parallel CI qualification
 

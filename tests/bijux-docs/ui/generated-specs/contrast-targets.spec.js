@@ -3,12 +3,13 @@ const fs = require("node:fs");
 const path = require("node:path");
 const { test, expect } = require("@playwright/test");
 const measure = require("./contrast-targets/measurement");
+const focusBoundary = require("./contrast-targets/focus-boundary");
 
 test.beforeEach(async ({ browser }, info) => {
   info.annotations.push({ type: "browser-version", description: browser.version() });
 });
 const root = path.resolve(__dirname, "../../../..");
-const styles = ["06-components.css"];
+const styles = ["06-components.css", "07-utilities.css"];
 
 async function receipt(info, data) {
   await info.attach("rendered-contrast.json", { body: Buffer.from(JSON.stringify(data, null, 2)), contentType: "application/json" });
@@ -24,6 +25,55 @@ async function openDrawer(page) {
     await page.keyboard.press("Escape");
     await expect(menu).toBeFocused();
   }
+}
+
+async function boundaryControls(page, browserName, info, { scheme, forced = false }) {
+  const observations = [];
+  const menu = page.locator('[data-bijux-header-control="drawer-toggle"]');
+  const compact = await menu.isVisible();
+  const repository = page.locator("header .md-source");
+  const controls = [];
+  if (await repository.isVisible()) controls.push(["repository", repository]);
+  if (compact) {
+    await focusBoundary.tabTo(page, menu, browserName);
+    await page.keyboard.press("Space");
+    await expect(page.locator("#__drawer")).toBeChecked();
+  }
+  controls.push(["navigation disclosure", page.locator(".bijux-tree summary").first()]);
+  for (const [name, control] of controls) {
+    await expect(control).toBeVisible();
+    await focusBoundary.tabTo(page, control, browserName);
+    const qualify = async state => {
+      const observed = await focusBoundary.observe(page, control);
+      expect(observed.focused).toBe(true);
+      expect(observed.focusVisible).toBe(true);
+      expect(observed.outlineStyle).toBe("solid");
+      expect(observed.width).toBeGreaterThanOrEqual(2);
+      expect(observed.boundary.contained, `${name}: entire ring inside actual clipping surfaces`).toBe(true);
+      // WebKit's media simulation does not establish native OS palette paint.
+      if (!forced || browserName !== "webkit") expect(observed.paint.minimum).toBeGreaterThanOrEqual(3);
+      observations.push({ name, state, ...observed });
+      await info.attach(`boundary-${name.replaceAll(" ", "-")}-${state}.png`, {
+        body: await page.screenshot(), contentType: "image/png" });
+    };
+    await qualify(forced ? "forced" : scheme);
+    if (!forced) {
+      const opposite = scheme === "light" ? "dark" : "light";
+      await expect(page.locator("[data-bijux-theme-toggle]")).toHaveAttribute("data-bijux-theme-mode", "auto");
+      await page.emulateMedia({ colorScheme: opposite });
+      await expect(page.locator("body")).toHaveAttribute("data-md-color-scheme", opposite === "dark" ? "slate" : "default");
+      await qualify(`auto-${opposite}`);
+      await page.emulateMedia({ colorScheme: scheme });
+      await expect(page.locator("body")).toHaveAttribute("data-md-color-scheme", scheme === "dark" ? "slate" : "default");
+      await qualify(`auto-return-${scheme}`);
+    }
+  }
+  if (compact) {
+    await page.keyboard.press("Escape");
+    await expect(page.locator("#__drawer")).not.toBeChecked();
+    await expect(menu).toBeFocused();
+  }
+  return observations;
 }
 
 for (const [scheme, expectedScheme] of [["light", "default"], ["dark", "slate"]]) {
@@ -74,6 +124,7 @@ for (const [scheme, expectedScheme] of [["light", "default"], ["dark", "slate"]]
     }
     const palette = page.locator("[data-bijux-theme-toggle]");
     await expect(palette).toBeVisible();
+    observations.push(...await boundaryControls(page, browserName, info, { scheme }));
     for (const hover of [false, true]) {
       if (hover) await palette.hover();
       const icon = await measure.textOrIcon(page, palette.locator("svg"), { icon: true });
@@ -83,6 +134,12 @@ for (const [scheme, expectedScheme] of [["light", "default"], ["dark", "slate"]]
     for (const selector of [".bijux-hub-tab", ".bijux-site-tabs .bijux-tabs__link"]) {
       const links = page.locator(selector);
       if (!await links.count() || !await links.first().isVisible()) continue;
+      // Keyboard traversal can leave a horizontally scrollable strip at another link.
+      // Return through ordinary focus, then advance so the normal sample is unfocused.
+      await focusBoundary.tabTo(page, links.first(), browserName);
+      await page.keyboard.press(browserName === "webkit" ? "Alt+Tab" : "Tab");
+      await expect(links.first()).not.toBeFocused();
+      await page.mouse.move(page.viewportSize().width / 2, page.viewportSize().height / 2);
       for (const hover of [false, true]) {
         if (hover) await links.first().hover();
         const text = await measure.textOrIcon(page, links.first());
@@ -174,7 +231,8 @@ test("forced color focus preserves meaningful control and native target", async 
   // WebKit emulates the media query without the OS palette remapping Chromium/Firefox apply.
   if (browserName !== "webkit") expect(focused.ratio).toBeGreaterThanOrEqual(3);
   await info.attach("forced-color-keyboard-focus.png", { body: await page.screenshot(), contentType: "image/png" });
-  await receipt(info, { browserName, forced, focused,
+  const boundaries = await boundaryControls(page, browserName, info, { forced: true });
+  await receipt(info, { browserName, forced, focused, boundaries,
     classification: browserName === "webkit" ? "source response only; native OS forced paint unqualified" : "browser emulated forced paint; physical OS/assistive validation remains open" });
 });
 
@@ -194,5 +252,22 @@ test("historical shared CSS exposes the repaired contrast regression", async ({ 
     observed = { visible, ...(await measure.textOrIcon(page, direction)) };
     expect(observed.minimum).toBeLessThan(observed.threshold);
   }
-  await receipt(info, { classification: "exact historical authored CSS counterfactual; hidden or deficient reader direction is detected", observed });
+  await page.goto("/");
+  await expect(page.locator("body")).toHaveAttribute("data-bijux-drawer-ready", "true");
+  const menu = page.locator('[data-bijux-header-control="drawer-toggle"]');
+  let control = page.locator("header .md-source");
+  if (await menu.isVisible()) {
+    await focusBoundary.tabTo(page, menu, info.project.use.browserName);
+    await page.keyboard.press("Space");
+    await expect(page.locator("#__drawer")).toBeChecked();
+    control = page.locator(".bijux-tree summary").first();
+  }
+  await focusBoundary.tabTo(page, control, info.project.use.browserName);
+  const clippedFocus = await focusBoundary.observe(page, control);
+  expect(clippedFocus.focused).toBe(true);
+  expect(clippedFocus.focusVisible).toBe(true);
+  expect(clippedFocus.boundary.contained).toBe(false);
+  expect(clippedFocus.boundary.clippedBy.length).toBeGreaterThan(0);
+  await info.attach("historical-clipped-focus.png", { body: await page.screenshot(), contentType: "image/png" });
+  await receipt(info, { classification: "exact historical authored CSS detects deficient reader direction and clipped focus", observed, clippedFocus });
 });
