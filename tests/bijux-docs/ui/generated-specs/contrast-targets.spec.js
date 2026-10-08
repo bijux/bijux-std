@@ -45,6 +45,14 @@ async function boundaryControls(page, browserName, info, { scheme, forced = fals
     await focusBoundary.tabTo(page, control, browserName);
     const qualify = async state => {
       const observed = await focusBoundary.observe(page, control);
+      const attachment = `boundary-${name.replaceAll(" ", "-")}-${state}`;
+      // Failed geometry must retain the clipping surfaces that caused rejection.
+      await info.attach(`${attachment}.json`, {
+        body: Buffer.from(JSON.stringify({ name, state, browserName, forced,
+          url: page.url(), viewport: page.viewportSize(), ...observed }, null, 2)),
+        contentType: "application/json" });
+      await info.attach(`${attachment}.png`, {
+        body: await page.screenshot(), contentType: "image/png" });
       expect(observed.focused).toBe(true);
       expect(observed.focusVisible).toBe(true);
       expect(observed.outlineStyle).toBe("solid");
@@ -53,8 +61,6 @@ async function boundaryControls(page, browserName, info, { scheme, forced = fals
       // WebKit's media simulation does not establish native OS palette paint.
       if (!forced || browserName !== "webkit") expect(observed.paint.minimum).toBeGreaterThanOrEqual(3);
       observations.push({ name, state, ...observed });
-      await info.attach(`boundary-${name.replaceAll(" ", "-")}-${state}.png`, {
-        body: await page.screenshot(), contentType: "image/png" });
     };
     await qualify(forced ? "forced" : scheme);
     if (!forced) {
