@@ -1,0 +1,140 @@
+{
+  "schema": 1,
+  "engines": [
+    "chromium",
+    "firefox",
+    "webkit"
+  ],
+  "profiles": [
+    "phone",
+    "compact",
+    "desktop"
+  ],
+  "groups": {
+    "navigation-phone": [
+      {
+        "suite": "navigation",
+        "profile": "phone"
+      }
+    ],
+    "navigation-compact": [
+      {
+        "suite": "navigation",
+        "profile": "compact"
+      }
+    ],
+    "navigation-desktop": [
+      {
+        "suite": "navigation",
+        "profile": "desktop"
+      }
+    ],
+    "navigation-controls": [
+      {
+        "suite": "drawer"
+      },
+      {
+        "suite": "preferences"
+      },
+      {
+        "suite": "repository"
+      }
+    ],
+    "search": [
+      {
+        "suite": "search"
+      }
+    ],
+    "search-invoker": [
+      {
+        "suite": "search-invoker"
+      }
+    ],
+    "reader": [
+      {
+        "suite": "native-navigation"
+      },
+      {
+        "suite": "reader"
+      }
+    ],
+    "diagrams": [
+      {
+        "suite": "diagrams"
+      }
+    ],
+    "contrast": [
+      {
+        "suite": "contrast"
+      }
+    ],
+    "links": [
+      {
+        "suite": "links"
+      }
+    ],
+    "history": [
+      {
+        "suite": "history"
+      }
+    ],
+    "semantics": [
+      {
+        "suite": "popup-relationships"
+      }
+    ],
+    "search-scope-phone": [
+      {
+        "suite": "search-scope",
+        "profile": "phone"
+      }
+    ],
+    "search-scope-compact": [
+      {
+        "suite": "search-scope",
+        "profile": "compact"
+      }
+    ],
+    "search-scope-desktop": [
+      {
+        "suite": "search-scope",
+        "profile": "desktop"
+      }
+    ],
+    "reader-accessibility": [
+      {
+        "suite": "reader-accessibility"
+      }
+    ],
+    "diagram-trust": [
+      {
+        "suite": "diagram-trust"
+      }
+    ],
+    "accessibility-state": [
+      {
+        "suite": "accessibility-state"
+      }
+    ],
+    "search-shortcut-modality": [
+      {
+        "suite": "search-shortcut-modality"
+      }
+    ],
+    "search-reflow-phone": [
+      {
+        "suite": "search-reflow-phone"
+      }
+    ],
+    "search-reflow-tablet": [
+      {
+        "suite": "search-reflow-tablet"
+      }
+    ],
+    "search-reflow-desktop": [
+      {
+        "suite": "search-reflow-desktop"
+      }
+    ]
+  }
+}

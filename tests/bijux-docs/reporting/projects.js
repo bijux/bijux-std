@@ -1,15 +1,17 @@
 "use strict";
 const originals = new WeakMap();
+const { profiles } = require("../execution/browser_partitions.json");
 function unsharded(config) { return originals.get(config) || config; }
 function configureProjects(config, env = process.env) {
   const canonical = unsharded(config), projects = canonical.projects;
-  const engine = env.BIJUX_UI_BROWSER_ENGINE, names = env.BIJUX_UI_PROJECTS;
-  if ((Object.hasOwn(env, "BIJUX_UI_BROWSER_ENGINE") && !engine) || (Object.hasOwn(env, "BIJUX_UI_PROJECTS") && !names)) throw new Error("Explicit project selection must not be empty");
+  const engine = env.BIJUX_UI_BROWSER_ENGINE, names = env.BIJUX_UI_PROJECTS, profile = env.BIJUX_UI_PROFILE;
+  if ((Object.hasOwn(env, "BIJUX_UI_BROWSER_ENGINE") && !engine) || (Object.hasOwn(env, "BIJUX_UI_PROJECTS") && !names) || (Object.hasOwn(env, "BIJUX_UI_PROFILE") && !profile)) throw new Error("Explicit project selection must not be empty");
+  if (profile && (!engine || names || !profiles.includes(profile))) throw new Error("Viewport profile requires an assigned engine and admitted profile");
   if (engine && names) throw new Error("Choose browser engine or exact projects, not both");
   if (engine && !["chromium", "firefox", "webkit"].includes(engine)) throw new Error("Unknown browser engine");
   const requested = names?.split(",").map(name => name.trim());
   if (requested && (requested.some(name => !name) || new Set(requested).size !== requested.length || requested.some(name => !projects.some(project => project.name === name)))) throw new Error("Unknown, empty or duplicate project selection");
-  const selected = projects.filter(project => engine ? project.use.browserName === engine : requested ? requested.includes(project.name) : true);
+  const selected = projects.filter(project => engine ? project.use.browserName === engine && (!profile || project.name === `${engine}-${profile}`) : requested ? requested.includes(project.name) : true);
   if (!selected.length) throw new Error("Project selection must execute cases");
   const shard = Boolean(engine || names);
   const junit = config.reporter.find(entry => Array.isArray(entry) && entry[0] === "junit")?.[1]?.outputFile;
