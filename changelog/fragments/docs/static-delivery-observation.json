@@ -1,0 +1,16 @@
+{
+  "schema": 1,
+  "pr": 194,
+  "title": "feat(docs): observe bounded static delivery contracts",
+  "type": "feat",
+  "scope": "docs",
+  "summary": "Observe declared static HTTP delivery with confined transport budgets and honest sampled source attribution.",
+  "details": [
+    "Check canonical documents, a typed search corpus and real known destination/anchor, nonempty critical assets and truthful missing routes.",
+    "Bound redirect-chain payloads and transport phases, avoid ambient proxies, and retain source digests plus optional sampled manifest comparisons.",
+    "Keep rendered navigation, browser search, scheduling, uptime and accepted live deployment qualification separate from HTTP smoke."
+  ],
+  "status": "pending",
+  "merged_at": null,
+  "breaking": false
+}
