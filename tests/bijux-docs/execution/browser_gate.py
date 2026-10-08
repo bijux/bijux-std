@@ -9,7 +9,6 @@ import os
 from pathlib import Path
 import shutil
 import subprocess
-import tarfile
 import xml.etree.ElementTree as ET
 
 ROOT = Path(__file__).resolve().parents[3]
@@ -45,6 +44,18 @@ def playwright() -> str:
     return str(ARTIFACTS / 'node-runtime/node_modules/.bin/playwright')
 
 
+def fixture_roots() -> list[str]:
+    return sorted({str(Path(environment(suite, ARTIFACTS / 'inventories' / suite)['BIJUX_GENERATED_ROOT']).relative_to(ARTIFACTS)) for suite in SUITES})
+
+
+def fixture_transport():
+    path = TESTS / 'execution/fixture_archive.py'
+    spec = importlib.util.spec_from_file_location('fixture_transport', path)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
 def prepare() -> None:
     if 'BIJUX_UI_BROWSER_ENGINE' in os.environ or 'BIJUX_UI_PROJECTS' in os.environ:
         raise ValueError('Canonical inventory must not select projects')
@@ -54,11 +65,8 @@ def prepare() -> None:
         config = TESTS / f'playwright.{suite}.config.js'
         subprocess.run(['node', str(TESTS / 'reporting/inventory.js'), '--config', str(config), '--output', str(inventory / f'{suite}.json')], cwd=ROOT, env=env, check=True)
     archive = ARTIFACTS / 'browser-fixtures.tar.gz'
-    with tarfile.open(archive, 'w:gz', compresslevel=1) as bundle:
-        for directory in ('generated', 'contrast-generated'):
-            for name in ('manifest.json', 'site'):
-                path = ARTIFACTS / directory / name
-                bundle.add(path, arcname=str(path.relative_to(ARTIFACTS)))
+    receipt = fixture_transport().pack(ARTIFACTS, fixture_roots(), archive)
+    print('Fixture transport: ' + json.dumps(receipt, sort_keys=True))
     (ARTIFACTS / 'browser-fixtures.sha256').write_text(hashlib.sha256(archive.read_bytes()).hexdigest() + '\n')
     paths = [archive, ARTIFACTS / 'renderer-source-observation.json'] + [inventory / f'{suite}.json' for suite in SUITES]
     write_json(ARTIFACTS / 'producer-envelope.json', {
@@ -92,12 +100,7 @@ def unpack() -> None:
     expected = (ARTIFACTS / 'browser-fixtures.sha256').read_text().strip()
     if len(expected) != 64 or hashlib.sha256(archive.read_bytes()).hexdigest() != expected:
         raise ValueError('Fixture archive digest mismatch')
-    with tarfile.open(archive) as bundle:
-        for member in bundle.getmembers():
-            name = Path(member.name)
-            if name.is_absolute() or '..' in name.parts or not name.parts or name.parts[0] not in ('generated', 'contrast-generated') or not (member.isfile() or member.isdir()):
-                raise ValueError('Unexpected fixture archive member')
-        bundle.extractall(ARTIFACTS, filter='data')
+    fixture_transport().unpack(archive, ARTIFACTS, fixture_roots(), expected)
 
 
 def install_browser_runtime() -> None:
