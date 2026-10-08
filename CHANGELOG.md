@@ -6,6 +6,13 @@ This file records notable repository-level changes for `bijux-std`.
 
 ### Pending review
 
+#### [#212](https://github.com/bijux/bijux-std/pull/212) — fix(docs): expose one site registry and isolate modal navigation
+
+Use one owned desktop site registry and keep compact modal navigation isolated.
+
+- Preserve native Material navigation and restore header inert state on close, resize and disposal.
+- Test every nine-site and eleven-entry growth destination; bind retained-document focus checks to actual document identity.
+
 #### [#210](https://github.com/bijux/bijux-std/pull/210) — ci(docs): require complete rendered navigation qualification
 
 Require successful rendered navigation before the protected standards report can pass.
