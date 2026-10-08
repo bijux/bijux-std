@@ -1,0 +1,15 @@
+{
+  "schema": 1,
+  "pr": 186,
+  "title": "fix(docs): preserve drawer traversal and reader focus on short screens",
+  "type": "fix",
+  "scope": "docs",
+  "summary": "Short-screen drawers keep hidden links out of Tab order and focused actions visible.",
+  "details": [
+    "Exclude descendants of closed disclosures while preserving the first summary and expanded destinations, then scroll each focused action within its owning container.",
+    "Retain maintained landscape, RTL, modal-resize, new-page focus and fragment/history reader journeys as an independently required group."
+  ],
+  "status": "merged",
+  "merged_at": "2026-10-08T15:22:01Z",
+  "breaking": false
+}

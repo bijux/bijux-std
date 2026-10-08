@@ -1,0 +1,15 @@
+{
+  "schema": 1,
+  "pr": 179,
+  "title": "feat(docs): describe native search scope on every product site",
+  "type": "feat",
+  "scope": "docs",
+  "summary": "Native search visibly describes its local product-site scope.",
+  "details": [
+    "Preserve the licensed Material partial, owned heading/description relationships and native worker/query/result protocol across consumer-root fixtures.",
+    "This PR merged into the navigation topic branch, not directly into main; its changes reached main through PR #176."
+  ],
+  "status": "merged",
+  "merged_at": "2026-10-08T13:49:36Z",
+  "breaking": false
+}
