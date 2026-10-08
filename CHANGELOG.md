@@ -6,14 +6,21 @@ This file records notable repository-level changes for `bijux-std`.
 
 ### Pending review
 
-#### [#215](https://github.com/bijux/bijux-std/pull/215) — ci(docs): partition browser execution by viewport ownership
+#### [#218](https://github.com/bijux/bijux-std/pull/218) — docs(docs): reference parametrized reader acceptance precisely
+
+Point the reader contract trace to its maintained parametrized executable declaration.
+
+- Preserve all behavior, applicability and compatibility records.
+- Correct the stale literal case reference and its shared-directory digest.
+
+### Merged pull requests
+
+#### 2026-10-08T22:39:40Z — [#215](https://github.com/bijux/bijux-std/pull/215) — ci(docs): partition browser execution by viewport ownership
 
 Keep all canonical browser cases while assigning navigation and search scope to smaller viewport jobs.
 
 - Declare exact engine/profile ownership and reject missing, duplicate, moved or nonterminal receipts.
 - Preserve the strict three-minute whole-job limit and bind duration evidence to all registry dependencies.
-
-### Merged pull requests
 
 #### 2026-10-08T21:46:17Z — [#211](https://github.com/bijux/bijux-std/pull/211) — test(docs): bind rendered fixtures to effective configuration bytes
 
