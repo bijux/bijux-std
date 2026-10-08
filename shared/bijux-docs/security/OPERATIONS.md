@@ -30,8 +30,54 @@ route behavior. Retain scoped response classifications, elapsed time and counts;
 do not retain search text, query strings, response bodies or visitor storage.
 HTTP observation complements ordinary-input browser qualification and cannot
 certify the rendered menu, every route, global uptime or visitor Web Vitals.
-Automated smoke runner integration and live qualification require their own
-current evidence; this reconstruction library does not supply those receipts.
+The HTTP component below supplies local observation. Scheduled integration and
+actual consumer live qualification require their own current evidence; the
+publication admission library does not supply those operating receipts.
+
+### Bounded HTTP observation
+
+Run `security/monitor.py` from the actual repository root with its real production
+canonical root, a declared deep route, critical asset and known public search term:
+
+```sh
+python3 .bijux/shared/bijux-docs/security/monitor.py \
+  --root "http://127.0.0.1:$fixture_port/bijux-core/" \
+  --canonical-root https://bijux.io/bijux-core/ \
+  --deep-path guide/ --asset-path assets/stylesheets/actual-critical-asset.css \
+  --query "$known_public_term" --timeout 10 \
+  --output artifacts/website-observation/http.json
+```
+
+Replace those declared routes/assets with actual site paths. Std uses
+`shared/bijux-docs/security/monitor.py`; consumer copies remain managed. Public
+observation requires `--live` and the identical HTTPS `bijux.io` product root.
+The result covers document title/canonical/link presence, typed search data, a
+fetched known result and its anchor, a nonempty/non-HTML asset and truthful 404.
+It records actual module/URL-validator digests and owned local Git identity where
+available, without claiming that this checkout identifies an accepted deployment.
+
+Optional `--manifest artifacts/website-security/site.manifest.json` first verifies
+the retained publication artifact through the existing admission API, then compares
+each successful sampled response with its declared file digest. This identifies
+sampled expected bytes; it does not observe every deployed file or requalify source.
+Missing, changed or wrong-identity retained artifacts fail before observation.
+
+Requests connect directly, without inherited proxy settings, cookies or browser
+storage. Redirects stay inside the declared product and consume the same payload
+budget, including intermediate bodies. The report declares at most four HTTP
+requests per selected target and an 8 MiB payload ceiling per redirect chain.
+Each transport phase/read uses the remaining deadline; underlying OS DNS/TLS/connect
+interruption is not an absolute wall-clock guarantee. Identity content encoding is
+requested; an unexpected encoding fails without unlimited decompression. Header
+values are retained as presence/digests, not raw policy text. Bodies, title/search
+text and the input term are not retained. Keep reports under the repository's
+`artifacts/` and apply the selected retention policy.
+
+This HTTP component cannot detect CSS-hidden menus, qualify ordinary keyboard
+input or certify all-user availability. Pair it with the existing actual browser
+journeys. Consumer owner/cadence/region configuration, approved scheduling,
+deduplication/notification and live deployment identity remain separately pending;
+no facility is created or activated by this command.
 
 ## Capability and privacy decisions
 
