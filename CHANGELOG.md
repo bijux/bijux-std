@@ -6,14 +6,21 @@ This file records notable repository-level changes for `bijux-std`.
 
 ### Pending review
 
-#### [#218](https://github.com/bijux/bijux-std/pull/218) — docs(docs): reference parametrized reader acceptance precisely
+#### [#218](https://github.com/bijux/bijux-std/pull/218) — test(docs): keep shell acceptance executable and reject runtime errors
 
-Point the reader contract trace to its maintained parametrized executable declaration.
+Bind shell behaviour to executable reader cases and reject uncaught runtime failures in every shell journey.
 
-- Preserve all behavior, applicability and compatibility records.
-- Correct the stale literal case reference and its shared-directory digest.
+- Reference the actual parametrized local-reader acceptance without adding a duplicate gate.
+- Reuse the shared automatic runtime-error guard, preserving all canonical case identities and browser coverage.
 
 ### Merged pull requests
+
+#### 2026-10-08T23:19:00Z — [#214](https://github.com/bijux/bijux-std/pull/214) — fix(docs): preserve visible focus through navigation handoff
+
+Keep a usable Menu fallback when navigation is aborted and bring reopened drawer focus into view.
+
+- Give matching instant destinations heading focus while preserving fragments, downloads and other browsing contexts.
+- Revoke stale reading intent on explicit controls or disposal; verify aborted-request keyboard and search recovery.
 
 #### 2026-10-08T22:58:03Z — [#212](https://github.com/bijux/bijux-std/pull/212) — fix(docs): expose one site registry and isolate modal navigation
 
