@@ -27,7 +27,7 @@ markdown_extensions:
   - pymdownx.superfences:
       custom_fences:
         - name: mermaid
-          class: mermaid
+          class: bijux-diagram
           format: !!python/name:pymdownx.superfences.fence_code_format
 extra:
   bijux:
@@ -36,7 +36,6 @@ extra:
     theme_key: bijux:theme
   social: []
 extra_javascript:
-  - assets/javascripts/vendor/mermaid-11.6.0.min.js
   - assets/javascripts/mermaid-init.js
 """
 
@@ -179,7 +178,7 @@ class SharedDocsHubTests(unittest.TestCase):
                 }
             },
             "markdown_extensions": [
-                {"pymdownx.superfences": {"custom_fences": [{"name": "mermaid"}]}}
+                {"pymdownx.superfences": {"custom_fences": [{"name": "mermaid", "class": "bijux-diagram"}]}}
             ],
             "extra_javascript": list(validator.MERMAID_SCRIPTS),
         }
@@ -189,6 +188,77 @@ class SharedDocsHubTests(unittest.TestCase):
             {"extra": {"bijux": {"repository": "fixture"}}},
             "root",
         )
+
+    def test_validator_rejects_material_intercepted_diagram_fence(self) -> None:
+        validator = load_validator()
+        config = {"markdown_extensions": [{"pymdownx.superfences": {"custom_fences": [{"name": "mermaid", "class": "mermaid"}]}}], "extra_javascript": list(validator.MERMAID_SCRIPTS)}
+        with self.assertRaisesRegex(RuntimeError, "avoid Material external renderer"):
+            validator.validate_mermaid_contract(config, "effective")
+
+    def test_validator_rejects_eager_diagram_vendor(self) -> None:
+        validator = load_validator()
+        config = {"markdown_extensions": [{"pymdownx.superfences": {"custom_fences": [{"name": "mermaid", "class": "bijux-diagram"}]}}], "extra_javascript": [*validator.MERMAID_SCRIPTS, validator.MERMAID_VENDOR]}
+        with self.assertRaisesRegex(RuntimeError, "lazy-loaded"):
+            validator.validate_mermaid_contract(config, "effective")
+
+    def test_sync_projects_single_owner_diagram_contract_from_legacy_configuration(self) -> None:
+        fixture = self.fixture()
+        config = fixture / "mkdocs.shared.yml"
+        config.write_text(config.read_text().replace("class: bijux-diagram", "class: mermaid") + "  - assets/javascripts/vendor/mermaid-11.6.0.min.js\n")
+        result = self.run_sync(fixture)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        content = config.read_text()
+        self.assertIn("name: mermaid", content)
+        self.assertIn("class: bijux-diagram", content)
+        self.assertNotIn("vendor/mermaid-11.6.0.min.js", content)
+        self.assertIn("fence_code_format", content)
+
+    def test_diagram_migration_preserves_logo_and_unrelated_configuration(self) -> None:
+        fixture = self.fixture()
+        config = fixture / "mkdocs.shared.yml"
+        authored = '\ntheme:\n  logo: assets/bijux_logo_hq.png\nplugins:\n  - search\n  - authored-plugin\n'
+        config.write_text(config.read_text().replace("class: bijux-diagram", "class: mermaid") + authored)
+        result = self.run_sync(fixture)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        after = config.read_text()
+        self.assertIn(authored, after)
+        self.assertIn("class: bijux-diagram", after)
+        self.assertIn("fence_code_format", after)
+        self.assertIn("logo: assets/bijux_logo_hq.png", after)
+        self.assertNotIn("logo: assets/bijux_logo.png", after)
+        baseline = json.loads((SHARED_DOCS / "config/mkdocs-baseline.json").read_text())
+        self.assertEqual(baseline["theme"]["logo"], "assets/bijux_logo_hq.png")
+        self.assertFalse(any("search-recovery" in value for value in baseline["extra_javascript"]))
+
+    def test_validator_rejects_second_material_owned_mermaid_fence(self) -> None:
+        validator = load_validator()
+        config = {"markdown_extensions": [{"pymdownx.superfences": {"custom_fences": [
+            {"name": "mermaid", "class": "bijux-diagram"},
+            {"name": "mermaid", "class": "mermaid"},
+        ]}}], "extra_javascript": list(validator.MERMAID_SCRIPTS)}
+        with self.assertRaisesRegex(RuntimeError, "avoid Material external renderer"):
+            validator.validate_mermaid_contract(config, "effective")
+
+    def test_validator_rejects_mapping_form_eager_vendor(self) -> None:
+        validator = load_validator()
+        config = {"markdown_extensions": [{"pymdownx.superfences": {"custom_fences": [
+            {"name": "mermaid", "class": "bijux-diagram"}
+        ]}}], "extra_javascript": [*validator.MERMAID_SCRIPTS, {"path": validator.MERMAID_VENDOR, "defer": True}]}
+        with self.assertRaisesRegex(RuntimeError, "lazy-loaded"):
+            validator.validate_mermaid_contract(config, "effective")
+
+    def test_projected_vendor_digest_rejects_altered_renderer(self) -> None:
+        validator = load_validator()
+        fixture = self.fixture()
+        baseline = json.loads((SHARED_DOCS / "config/mkdocs-baseline.json").read_text())
+        source = SHARED_DOCS / "assets" / baseline["diagram"]["vendor"].removeprefix("assets/")
+        destination = fixture / "docs" / baseline["diagram"]["vendor"]
+        destination.parent.mkdir(parents=True)
+        shutil.copy2(source, destination)
+        validator.validate_diagram_asset(fixture, baseline)
+        destination.write_bytes(destination.read_bytes() + b"\n/* altered */\n")
+        with self.assertRaisesRegex(RuntimeError, "digest differs"):
+            validator.validate_diagram_asset(fixture, baseline)
 
     def test_validator_rejects_root_hub_duplication(self) -> None:
         validator = load_validator()

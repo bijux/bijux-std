@@ -4,14 +4,15 @@
 from __future__ import annotations
 
 import json
+import hashlib
+import re
 import yaml
 from pathlib import Path
 import sys
 
-MERMAID_SCRIPTS = (
-    "assets/javascripts/vendor/mermaid-11.6.0.min.js",
-    "assets/javascripts/mermaid-init.js",
-)
+DIAGRAM_POLICY = json.loads((Path(__file__).resolve().parents[2] / "config/mkdocs-baseline.json").read_text())["diagram"]
+MERMAID_VENDOR = DIAGRAM_POLICY["vendor"]
+MERMAID_SCRIPTS = ("assets/javascripts/mermaid-init.js",)
 
 
 class MkDocsLoader(yaml.SafeLoader):
@@ -55,7 +56,8 @@ def validate_hub_links(hub_links: list[dict], config_name: str) -> None:
         url = link.get("url")
         require(isinstance(url, str) and url.startswith("http"), f"{config_name}: hub_links[{idx}].url must be absolute")
 
-def validate_mermaid_contract(config: dict, config_name: str) -> None:
+def validate_mermaid_contract(config: dict, config_name: str, diagram: dict | None = None) -> None:
+    diagram = diagram or DIAGRAM_POLICY
     markdown_extensions = config.get("markdown_extensions") or []
     require(
         isinstance(markdown_extensions, list),
@@ -71,10 +73,8 @@ def validate_mermaid_contract(config: dict, config_name: str) -> None:
         custom_fences = superfences.get("custom_fences") or []
         for fence in custom_fences:
             if isinstance(fence, dict) and fence.get("name") == "mermaid":
+                require(fence.get("class") == diagram["fence_class"], f"{config_name}: Mermaid fence class must be bijux-diagram to avoid Material external renderer")
                 mermaid_fence_present = True
-                break
-        if mermaid_fence_present:
-            break
     require(
         mermaid_fence_present,
         f"{config_name}: markdown_extensions must include a pymdownx.superfences mermaid custom fence",
@@ -85,11 +85,23 @@ def validate_mermaid_contract(config: dict, config_name: str) -> None:
         isinstance(extra_javascript, list),
         f"{config_name}: extra_javascript must be a list",
     )
+    for script in extra_javascript:
+        path = script if isinstance(script, str) else script.get("path", "") if isinstance(script, dict) else ""
+        require(not re.search(r"(?:^|/)mermaid(?:[-.]\d[^/]*)?(?:\.min)?\.js(?:[?#]|$)", path), f"{config_name}: Mermaid vendor must be lazy-loaded, not eager extra_javascript")
     for script in MERMAID_SCRIPTS:
         require(
             script in extra_javascript,
             f"{config_name}: extra_javascript must include {script}",
         )
+
+def validate_diagram_asset(repo_root: Path, baseline: dict) -> None:
+    diagram = baseline.get("diagram") or {}
+    require(diagram.get("fence_class") == "bijux-diagram", "baseline: diagram fence must avoid Material interception")
+    require(diagram.get("security_level") == "strict", "baseline: diagram security must be strict")
+    require(isinstance(diagram.get("vendor"), str) and re.fullmatch(r"assets/javascripts/vendor/mermaid-[0-9]+\.[0-9]+\.[0-9]+(?:[-.A-Za-z0-9]*)\.js", diagram["vendor"]), "baseline: diagram vendor must identify an owned versioned bundle")
+    asset = repo_root / "docs" / diagram["vendor"]
+    require(asset.is_file(), f"Missing packaged diagram vendor {asset}")
+    require(hashlib.sha256(asset.read_bytes()).hexdigest() == diagram.get("sha256"), "Packaged diagram vendor digest differs from baseline")
 
 
 def shared_docs_root(repo_root: Path) -> Path:
@@ -246,6 +258,8 @@ if __name__ == "__main__":
         "effective MkDocs configuration",
     )
 
+    validate_mermaid_contract(effective_cfg, "effective MkDocs configuration", mkdocs_baseline["diagram"])
+    validate_diagram_asset(repo_root, mkdocs_baseline)
     validate_root_contract(root_cfg, "mkdocs.yml")
 
     print("Bijux docs contract validation passed")

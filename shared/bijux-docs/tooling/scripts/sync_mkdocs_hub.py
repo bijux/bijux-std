@@ -150,6 +150,25 @@ def remove_root_hub(config_path: Path) -> bool:
     return True
 
 
+def synchronize_diagram_contract(config_path: Path) -> bool:
+    """Keep the named language while preventing Material's external renderer interception."""
+    original = config_path.read_text(encoding="utf-8")
+    pattern = r"(?P<indent> +)- name: mermaid\s*\n(?P<body>(?:(?P=indent)  .*\n)*)"
+    def replace_fence(match: re.Match[str]) -> str:
+        indent, body = match.group('indent'), match.group('body')
+        line = indent + '  class: bijux-diagram\n'
+        if re.search(r'^ +class:', body, re.MULTILINE):
+            body = re.sub(r'^ +class:[^\n]*\n', line, body, flags=re.MULTILINE)
+        else:
+            body = line + body
+        return indent + '- name: mermaid\n' + body
+    updated = re.sub(pattern, replace_fence, original)
+    updated = re.sub(r'^ +- [\"\']?assets/javascripts/vendor/mermaid-[0-9][A-Za-z0-9.+_-]*\.js[\"\']? *(?:#[^\n]*)?\n', '', updated, flags=re.MULTILINE)
+    if updated == original:
+        return False
+    config_path.write_text(updated, encoding="utf-8")
+    return True
+
 def implementation_exclusions(content: str, required: list[str], config_path: Path) -> str:
     """Preserve authored pathspec rules and end with the mandatory publication boundary."""
     lines = content.splitlines(keepends=True)
@@ -213,6 +232,8 @@ def main() -> int:
         updated = implementation_exclusions(original, required, path)
         if updated != original:
             path.write_text(updated, encoding='utf-8')
+    synchronize_diagram_contract(shared_config_path)
+    synchronize_diagram_contract(root_config_path)
     shared_status = "updated" if shared_changed else "current"
     root_status = "removed duplicate hub" if root_changed else "inherits hub"
     print(f"Bijux MkDocs shared hub {shared_status}: {shared_config_path}")
