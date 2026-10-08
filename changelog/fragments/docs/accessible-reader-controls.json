@@ -1,0 +1,16 @@
+{
+  "schema": 1,
+  "pr": 189,
+  "title": "fix(docs): preserve accessible reader controls and literal input",
+  "type": "fix",
+  "scope": "docs",
+  "summary": "Keep search metadata readable, distinguish navigation landmarks, and preserve ordinary character input outside focused search.",
+  "details": [
+    "Use the scheme-aware foreground on search metadata and an escaped site-specific primary navigation label.",
+    "Remove global character-only search activation while retaining named Search controls, editable typing, native result keys, modifiers, Escape and Back.",
+    "Parse the full generated runtime before emission and require source-bound accessibility and shortcut browser groups."
+  ],
+  "status": "pending",
+  "merged_at": null,
+  "breaking": false
+}

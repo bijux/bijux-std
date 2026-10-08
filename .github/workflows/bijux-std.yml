@@ -197,7 +197,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        group: [navigation, search, search-invoker, reader, diagrams, contrast, links, history, semantics, search-scope, search-reflow-phone, search-reflow-tablet, search-reflow-desktop, reader-accessibility, diagram-trust]
+        group: [navigation, search, search-invoker, reader, diagrams, contrast, links, history, semantics, search-scope, search-reflow-phone, search-reflow-tablet, search-reflow-desktop, reader-accessibility, diagram-trust, accessibility-state, search-shortcut-modality]
         engine: [chromium, firefox, webkit]
     container:
       # Immutable Playwright 1.58.2 Noble browsers and operating-system dependencies.

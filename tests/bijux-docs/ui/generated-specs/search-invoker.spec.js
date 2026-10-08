@@ -180,18 +180,28 @@ async function transit(page, definition, evidence) {
   await page.keyboard.press("ControlOrMeta+A");
   await expect(toggle(page)).not.toBeChecked();
   if (inline) await page.keyboard.press(tabKey(page));
-  // Retain all three global shortcuts implemented by the admitted Material bundle.
+  // Character-only keys outside the focused search component cannot take over input.
+  evidence.characterDefaults = [];
   for (const key of ["/", "f", "s"]) {
     await page.keyboard.press(key);
-    await expect(toggle(page)).toBeChecked();
-    await expect(query(page)).toBeFocused();
-    await page.keyboard.press("Escape");
     await expect(toggle(page)).not.toBeChecked();
-    await expect(invoker).toBeFocused();
-    if (inline) await page.keyboard.press(tabKey(page));
+    await expect(query(page)).not.toBeFocused();
+    evidence.characterDefaults.push({ key, ...await page.evaluate(() => ({
+      tag: document.activeElement.tagName,
+      name: document.activeElement.getAttribute("aria-label"),
+      searchOpen: document.getElementById("__search").checked,
+      queryFocused: document.activeElement === document.querySelector("[data-md-component=search-query]"),
+    })) });
   }
   evidence.shortcut =
-    "Unmodified slash/f/s open; Escape restores; modified select retains closed state";
+    "Global slash/f/s do not activate search; browser defaults, focused typing and explicit invokers remain available";
+  await focusThroughTab(page, invoker, evidence.tabStops, true);
+  if (inline) {
+    await expect(toggle(page)).toBeChecked();
+    await page.keyboard.press("Escape");
+  }
+  await expect(invoker).toBeFocused();
+  await expect(toggle(page)).not.toBeChecked();
 }
 
 for (const definition of definitions) {

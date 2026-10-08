@@ -8,6 +8,18 @@ cross-repository standards surfaces, not product package release streams.
 The goal of this changelog is to explain standard changes that affect how
 multiple Bijux repositories verify, synchronize, and consume shared contracts.
 
+## Pull request history
+
+### [#189](https://github.com/bijux/bijux-std/pull/189) — fix(docs): preserve accessible reader controls and literal input
+
+Pending review. Keep search metadata readable, distinguish primary navigation
+from breadcrumb landmarks, and preserve ordinary character input outside focused
+search. Explicit Search controls, native result keys, modifiers, Escape and Back
+remain available. Full generated runtime parsing protects existing assets from
+malformed transformations; required browser groups retain raw accessibility evidence.
+
+The authoritative record is [accessible-reader-controls.json](changelog/fragments/docs/accessible-reader-controls.json).
+
 ## Unreleased
 
 ### Changed

@@ -27,6 +27,8 @@ GROUPS = {
     'search-scope': ('search-scope',),
     'reader-accessibility': ('reader-accessibility',),
     'diagram-trust': ('diagram-trust',),
+    'accessibility-state': ('accessibility-state',),
+    'search-shortcut-modality': ('search-shortcut-modality',),
     'search-reflow-phone': ('search-reflow-phone',),
     'search-reflow-tablet': ('search-reflow-tablet',),
     'search-reflow-desktop': ('search-reflow-desktop',),

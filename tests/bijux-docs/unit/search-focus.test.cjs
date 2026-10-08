@@ -54,13 +54,13 @@ function shortcut(f, modifiers = {}, target) {
   f.document.dispatchEvent(event);
   return event;
 }
-test("modal shortcut opens before focusing its hidden query", () => {
+test("character-only keys keep modal search closed and preserve their default behavior", () => {
   for (const key of ["/", "f", "s"]) {
     const f = fixture({ modal: true });
     const event = shortcut(f, { key });
-    assert.equal(event.defaultPrevented, true);
-    assert.equal(f.toggle.checked, true);
-    assert.equal(f.document.activeElement, f.query);
+    assert.equal(event.defaultPrevented, false);
+    assert.equal(f.toggle.checked, false);
+    assert.notEqual(f.document.activeElement, f.query);
     f.lifetime.abort();
   }
 });
@@ -80,7 +80,7 @@ test("editable fields retain the literal slash without opening modal search", ()
   assert.equal(f.toggle.checked, false);
   f.lifetime.abort();
 });
-test("inline desktop shortcut remains owned by native Material", () => {
+test("inline desktop has no owned global character action", () => {
   const f = fixture({ inline: true });
   assert.equal(shortcut(f).defaultPrevented, false);
   assert.equal(f.toggle.checked, false);

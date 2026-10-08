@@ -146,3 +146,11 @@ ui-test-reader-accessibility: ui-test-prepare-runtime ui-test-fixtures ui-test-u
 .PHONY: ui-test-diagram-trust
 ui-test-diagram-trust: ui-test-prepare-runtime ui-test-fixtures ui-test-unit ## Qualify scientific diagram meaning and renderer trust boundaries
 	@NPM_CONFIG_CACHE="$(abspath $(UI_TESTS_NPM_CACHE_DIR))" PLAYWRIGHT_BROWSERS_PATH="$(abspath $(UI_TESTS_PLAYWRIGHT_BROWSERS_DIR))" BIJUX_UI_ARTIFACT_ROOT="$(abspath $(BIJUX_DOCS_ARTIFACTS_DIR))/diagram-trust-playwright" BIJUX_UI_FULL_GATE=1 npm --prefix "$(UI_TESTS_RUNTIME_DIR)" exec -- playwright test --config "$(UI_TESTS_DIR)/playwright.diagram-trust.config.js"
+
+.PHONY: ui-test-accessibility-state
+ui-test-accessibility-state: ui-test-prepare-runtime ui-test-fixtures ui-test-unit ## Scan actual document drawer and search accessibility states
+	@NPM_CONFIG_CACHE="$(abspath $(UI_TESTS_NPM_CACHE_DIR))" PLAYWRIGHT_BROWSERS_PATH="$(abspath $(UI_TESTS_PLAYWRIGHT_BROWSERS_DIR))" BIJUX_UI_ARTIFACT_ROOT="$(abspath $(BIJUX_DOCS_ARTIFACTS_DIR))/accessibility-state-playwright" BIJUX_UI_FULL_GATE=1 npm --prefix "$(UI_TESTS_RUNTIME_DIR)" exec -- playwright test --config "$(UI_TESTS_DIR)/playwright.accessibility-state.config.js"
+
+.PHONY: ui-test-search-shortcut-modality
+ui-test-search-shortcut-modality: ui-test-prepare-runtime ui-test-fixtures ui-test-unit ## Qualify literal reader input and explicit native search invocation
+	@NPM_CONFIG_CACHE="$(abspath $(UI_TESTS_NPM_CACHE_DIR))" PLAYWRIGHT_BROWSERS_PATH="$(abspath $(UI_TESTS_PLAYWRIGHT_BROWSERS_DIR))" BIJUX_UI_ARTIFACT_ROOT="$(abspath $(BIJUX_DOCS_ARTIFACTS_DIR))/search-shortcut-modality-playwright" BIJUX_UI_FULL_GATE=1 npm --prefix "$(UI_TESTS_RUNTIME_DIR)" exec -- playwright test --config "$(UI_TESTS_DIR)/playwright.search-shortcut-modality.config.js"

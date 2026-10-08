@@ -53,6 +53,76 @@ class MaterialRuntimeTests(unittest.TestCase):
         self.assertIn(asset.encode(), template)
         self.assertIn(b'config.extra_javascript', template)
 
+    def test_character_only_global_subscription_is_removed_without_changing_focused_keyboard(self):
+        admitted = json.loads((OWNED / 'admission.json').read_text())
+        upstream = (self.templates / admitted['bundle']).read_text()
+        asset, output, record, _ = runtime.compile_runtime(self.templates, self.version)
+        policy = record['global_character_shortcuts']
+        self.assertEqual(policy['disabled_keys'], ['/', 'f', 's'])
+        self.assertEqual(policy['occurrences'], 1)
+        self.assertEqual(policy['replacement'], ';')
+        self.assertEqual(upstream.count(policy['original']), 1)
+        self.assertNotIn(policy['original'].encode(), output)
+        # The entire adjacent native search keyboard subscription stays byte-identical.
+        start = upstream.rfind('r.pipe(', 0, upstream.index(policy['original']))
+        focused = upstream[start:upstream.index(policy['original'])]
+        self.assertIn('ArrowUp', focused)
+        self.assertIn('ArrowDown', focused)
+        self.assertIn('Escape', focused)
+        self.assertIn(focused.encode(), output)
+        self.assertIn(record['output_sha256'], asset)
+
+    def test_character_shortcut_boundary_rejects_missing_or_duplicate_reviewed_source(self):
+        templates = self.copied_templates()
+        owned = self.root / 'character-shortcut-owned'
+        shutil.copytree(OWNED, owned)
+        admitted = json.loads((owned / 'admission.json').read_text())
+        bundle = templates / admitted['bundle']
+        original = bundle.read_text()
+        needle = runtime.GLOBAL_CHARACTER_SHORTCUTS
+        self.assertEqual(original.count(needle), 1)
+        for changed in (original.replace(needle, ''), original + needle):
+            with self.subTest(occurrences=changed.count(needle)):
+                bundle.write_text(changed)
+                current = dict(admitted, bundle_sha256=hashlib.sha256(bundle.read_bytes()).hexdigest())
+                (owned / 'admission.json').write_text(json.dumps(current))
+                with mock.patch.object(runtime, 'OWNED', owned), self.assertRaisesRegex(ValueError, 'character-only search shortcut boundary must occur exactly once'):
+                    runtime.generate(self.root / 'shared', templates, self.version)
+                self.assertFalse((self.root / 'shared').exists())
+
+    def test_complete_generated_script_is_parsed_by_the_actual_admitted_node(self):
+        _, output, record, _ = runtime.compile_runtime(self.templates, self.version)
+        runtime.validate_generated_javascript(output)
+        self.assertEqual(record['syntax_validation']['parser'], 'Node.js vm.Script')
+        self.assertEqual(record['syntax_validation']['required_version'], 'v24.21.0')
+
+    def test_malformed_final_adapter_rejects_before_changing_existing_output(self):
+        shared = self.root / 'shared'
+        runtime.generate(shared, self.templates, self.version)
+        before = {str(path.relative_to(shared)): path.read_bytes() for path in shared.rglob('*') if path.is_file()}
+        owned = self.root / 'malformed-final-owned'
+        shutil.copytree(OWNED, owned)
+        adapter = owned / 'search-worker-adapter.js'
+        adapter.write_bytes(adapter.read_bytes() + b'\n(() => {')
+        with mock.patch.object(runtime, 'OWNED', owned), self.assertRaisesRegex(ValueError, 'rejected by admitted JavaScript parser'):
+            runtime.generate(shared, self.templates, self.version)
+        self.assertEqual(before, {str(path.relative_to(shared)): path.read_bytes() for path in shared.rglob('*') if path.is_file()})
+
+    def test_malformed_final_native_separator_cannot_replace_a_valid_existing_bundle(self):
+        shared = self.root / 'shared'
+        runtime.generate(shared, self.templates, self.version)
+        before = {str(path.relative_to(shared)): path.read_bytes() for path in shared.rglob('*') if path.is_file()}
+        malformed = lambda source: source.replace(runtime.GLOBAL_CHARACTER_SHORTCUTS, '')
+        with mock.patch.object(runtime, 'without_global_character_shortcuts', side_effect=malformed), self.assertRaisesRegex(ValueError, 'rejected by admitted JavaScript parser'):
+            runtime.generate(shared, self.templates, self.version)
+        self.assertEqual(before, {str(path.relative_to(shared)): path.read_bytes() for path in shared.rglob('*') if path.is_file()})
+
+    def test_exact_check_does_not_require_an_output_emission_parser(self):
+        shared = self.root / 'shared'
+        runtime.generate(shared, self.templates, self.version)
+        with mock.patch.object(runtime.subprocess, 'run', side_effect=AssertionError('check must compare exact prequalified output')):
+            runtime.generate(shared, self.templates, self.version, check=True)
+
     def test_head_extension_changes_template_only_and_remains_optional_consumer_content(self):
         asset, output, record, template = runtime.compile_runtime(self.templates, self.version)
         self.assertEqual(record["template_extension"], {
