@@ -103,3 +103,7 @@ ui-test-contrast: ui-test-prepare-runtime ## Qualify shared text, focus and hit 
 .PHONY: ui-test-search-invoker
 ui-test-search-invoker: ui-test-prepare-runtime ui-test-fixtures ui-test-unit ## Qualify modal and native inline search invocation, keyboard defaults and header reachability
 	@NPM_CONFIG_CACHE="$(abspath $(UI_TESTS_NPM_CACHE_DIR))" PLAYWRIGHT_BROWSERS_PATH="$(abspath $(UI_TESTS_PLAYWRIGHT_BROWSERS_DIR))" BIJUX_UI_ARTIFACT_ROOT="$(abspath $(BIJUX_DOCS_ARTIFACTS_DIR))/search-invoker-playwright" BIJUX_UI_FULL_GATE=1 npm --prefix "$(UI_TESTS_RUNTIME_DIR)" exec -- playwright test --config "$(UI_TESTS_DIR)/playwright.search-invoker.config.js"
+
+.PHONY: ui-test-publication-commands
+ui-test-publication-commands: ## Qualify the exact installed renderer command boundaries separately from browser fixtures
+	@PYTHONDONTWRITEBYTECODE=1 python3 "$(UI_TESTS_DIR)/execution/publication_gate.py" run --python "$(UI_TESTS_PYTHON_DIR)/bin/python" --output "$(BIJUX_DOCS_ARTIFACTS_DIR)/publication-commands"

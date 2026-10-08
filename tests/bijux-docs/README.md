@@ -145,3 +145,5 @@ case identities. Explicit shards cannot independently claim complete matrix
 qualification. Ordinary `--project` diagnosis still fails the complete gate
 when another required project is absent. Existing local Make targets remain
 available for complete or focused diagnosis.
+
+Renderer command qualification owns a separate three-minute job. It executes exactly three source-bound Make journeys and retains before/after public bytes, per-case command output and installed lock identity. The final navigation aggregate independently rehashes every command receipt and requires its job success. Unsupported runtime profiles prove rejection before public mutation and keep positive qualification pending; they grant no publication approval.

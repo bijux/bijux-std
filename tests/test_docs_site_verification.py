@@ -142,6 +142,38 @@ class DocsSiteVerificationTests(unittest.TestCase):
 
 
 
+    def make_profile(self, python):
+        (self.repo/'Makefile').write_text('PROJECT_DIR := $(CURDIR)\nPROJECT_ARTIFACTS_DIR := artifacts\n'
+            'MKDOCS_CFG := $(CURDIR)/mkdocs.yml\nDOCS_PYTHON := '+str(python)+'\n'
+            'DOCS_BUILD_CONFIG_FILE := $(CURDIR)/mkdocs.yml\nDOCS_CHECK_CONFIG_FILE := $(CURDIR)/mkdocs.yml\n'
+            'DOCS_BUILD_SITE_DIR := $(CURDIR)/artifacts/docs/site\nDOCS_CHECK_SITE_DIR := $(CURDIR)/artifacts/docs/site\n'
+            'DOCS_BUILD_PREPARE_TARGETS :=\nDOCS_CHECK_PREPARE_TARGETS :=\n'
+            'DOCS_BUILD_FLAGS := --strict\ninclude '+str(ROOT/'shared/bijux-makes-py/ci/docs.mk')+'\n')
+
+    def test_source_rejection_precedes_profile_output_cleanup(self):
+        self.make_profile(sys.executable)
+        (self.repo/'mkdocs.yml').write_text('site_name: Fixture\nsite_url: '+self.url+'\n')
+        with (self.repo/'Makefile').open('a') as stream:
+            stream.write('DOCS_CHECK_PRE_CLEAN_PATHS := artifacts/docs/site\n')
+        before=(self.site/'index.html').read_bytes()
+        result=subprocess.run(['make','docs-check'],cwd=self.repo,
+            env={**self.env,'BIJUX_STD_LOCAL_VERIFY':'0','BIJUX_STD_ROOT':''},capture_output=True,text=True)
+        self.assertNotEqual(result.returncode,0)
+        self.assertIn('BIJUX_STD_ROOT',result.stderr)
+        self.assertEqual((self.site/'index.html').read_bytes(),before)
+
+    def test_rebuilding_deploy_path_rejects_before_any_renderer_or_publication(self):
+        makefile=self.repo/'Makefile'
+        makefile.write_text('PROJECT_DIR := $(CURDIR)\nMKDOCS_CFG := $(CURDIR)/mkdocs.yml\n'
+            'DOCS_PYTHON := '+sys.executable+'\ninclude '+str(ROOT/'shared/bijux-makes-py/ci/docs.mk')+'\n')
+        (self.repo/'mkdocs.yml').write_text('Invalid fixture; deployment must not load or build it')
+        result=subprocess.run(['make','docs-deploy'],cwd=self.repo,capture_output=True,text=True)
+        self.assertNotEqual(result.returncode,0)
+        self.assertIn('reviewed GitHub Pages workflow',result.stderr)
+        self.assertIn('PRODUCTION-VERIFICATION.md',result.stderr)
+        self.assertNotIn('Traceback',result.stderr)
+        self.assertFalse((self.repo/'artifacts/website-security/build-identity.json').exists())
+
 
 if __name__=='__main__':
     unittest.main()

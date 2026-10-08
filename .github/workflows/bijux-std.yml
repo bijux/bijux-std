@@ -95,6 +95,34 @@ jobs:
             artifacts/bijux-checks
           if-no-files-found: error
 
+  publication-commands:
+    name: std / publication commands
+    if: ${{ github.repository == 'bijux/bijux-std' && (github.event_name != 'pull_request' || github.event.pull_request.user.login != 'dependabot[bot]') }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Install the exact command fixture renderer
+        shell: bash
+        run: make ui-test-install-docs
+      - name: Execute source-bound renderer commands
+        shell: bash
+        run: |
+          set -euo pipefail
+          PYTHONDONTWRITEBYTECODE=1 python3 tests/bijux-docs/execution/publication_gate.py run \
+            --python artifacts/bijux-docs/python/bin/python \
+            --output artifacts/bijux-docs/publication-commands
+      - name: Retain command receipts and mutation witnesses
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: docs-publication-commands-${{ github.sha }}-${{ github.run_attempt }}
+          path: artifacts/bijux-docs/publication-commands
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 14
+
   navigation-fixtures:
     name: std / navigation fixtures
     if: ${{ github.repository == 'bijux/bijux-std' && (github.event_name != 'pull_request' || github.event.pull_request.user.login != 'dependabot[bot]') }}
@@ -186,7 +214,7 @@ jobs:
   navigation:
     name: std / navigation
     if: ${{ always() && github.repository == 'bijux/bijux-std' && (github.event_name != 'pull_request' || github.event.pull_request.user.login != 'dependabot[bot]') }}
-    needs: [navigation-fixtures, navigation-browsers]
+    needs: [navigation-fixtures, navigation-browsers, publication-commands]
     runs-on: ubuntu-latest
     timeout-minutes: 3
     steps:
@@ -203,16 +231,23 @@ jobs:
           pattern: docs-navigation-*-*-${{ github.sha }}-${{ github.run_attempt }}
           path: artifacts/bijux-docs/shards
           merge-multiple: true
+      - name: Download exact renderer command evidence
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: docs-publication-commands-${{ github.sha }}-${{ github.run_attempt }}
+          path: artifacts/bijux-docs/publication-commands
       - name: Require successful jobs and complete unique engine coverage
         shell: bash
         env:
           FIXTURE_RESULT: ${{ needs.navigation-fixtures.result }}
           BROWSER_RESULT: ${{ needs.navigation-browsers.result }}
+          COMMAND_RESULT: ${{ needs.publication-commands.result }}
         run: |
           set -euo pipefail
           python3 tests/bijux-docs/execution/browser_gate.py aggregate
           test "$FIXTURE_RESULT" = success
           test "$BROWSER_RESULT" = success
+          test "$COMMAND_RESULT" = success
       - name: Retain complete navigation qualification
         if: always()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
@@ -220,6 +255,7 @@ jobs:
           name: docs-navigation-complete-${{ github.sha }}-${{ github.run_attempt }}
           path: |
             artifacts/bijux-docs/navigation-qualification.json
+            artifacts/bijux-docs/publication-commands
             artifacts/bijux-docs/producer-envelope.json
             artifacts/bijux-docs/renderer-source-observation.json
             artifacts/bijux-docs/inventories
