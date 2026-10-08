@@ -93,6 +93,13 @@ Keep search metadata readable, distinguish navigation landmarks, and preserve or
 - Remove global character-only search activation while retaining named Search controls, editable typing, native result keys, modifiers, Escape and Back.
 - Parse the full generated runtime before emission and require source-bound accessibility and shortcut browser groups.
 
+#### 2026-10-08T15:22:01Z — [#186](https://github.com/bijux/bijux-std/pull/186) — fix\(docs\): preserve drawer traversal and reader focus on short screens
+
+Short-screen drawers keep hidden links out of Tab order and focused actions visible.
+
+- Exclude descendants of closed disclosures while preserving the first summary and expanded destinations, then scroll each focused action within its owning container.
+- Retain maintained landscape, RTL, modal-resize, new-page focus and fragment/history reader journeys as an independently required group.
+
 #### 2026-10-08T13:49:22Z — [#183](https://github.com/bijux/bijux-std/pull/183) — ci\(docs\): bound browser jobs with immutable fixture transport
 
 Browser CI transports deduplicated immutable fixtures and separates search workloads.
@@ -100,12 +107,41 @@ Browser CI transports deduplicated immutable fixtures and separates search workl
 - Store each unique fixture payload once, restore exact manifest/site bytes without links and preserve downloaded diagnostic logs.
 - Give native query and invoker journeys separate engine jobs while retaining all 471 cases and producer/run/source/JUnit identity checks.
 
+#### 2026-10-08T15:09:46Z — [#182](https://github.com/bijux/bijux-std/pull/182) — fix\(docs\): constrain native search opening to the viewport
+
+Native search opening remains within the viewport at phone and tablet boundaries.
+
+- Constrain overlay geometry and remove scale/translation that inflates the root during opening without changing native query or result behavior.
+- Keep real hit areas, reader navigation and backdrop dismissal, with phone, tablet and desktop checks in separate bounded jobs.
+
+#### 2026-10-08T13:14:33Z — [#181](https://github.com/bijux/bijux-std/pull/181) — fix\(docs\): preserve native history restoration by default
+
+Shared defaults preserve native Back URL restoration.
+
+- Exclude optional navigation.tracking from the default while retaining instant navigation, authored anchors, TOC following and consumer-authored opt-ins.
+- Maintain separate history journeys for direct routes, Back/Forward and document continuity.
+
 #### 2026-10-08T13:35:06Z — [#180](https://github.com/bijux/bijux-std/pull/180) — ci\(docs\): separate diagram and contrast browser budgets
 
 Diagram and contrast browser suites have separate execution budgets.
 
 - Keep both rendering suites required while giving each engine/suite its own bounded job, including report finalization.
 - Preserve existing case identities and complete aggregation rather than treating a successful partial job as matrix completion.
+
+#### 2026-10-08T13:49:36Z — [#179](https://github.com/bijux/bijux-std/pull/179) — feat\(docs\): describe native search scope on every product site
+
+Native search visibly describes its local product-site scope.
+
+- Preserve the licensed Material partial, owned heading/description relationships and native worker/query/result protocol across consumer-root fixtures.
+- This PR merged into the navigation topic branch, not directly into main; its changes reached main through PR \#176.
+
+#### 2026-10-08T14:11:21Z — [#176](https://github.com/bijux/bijux-std/pull/176) — fix\(docs\): bind navigation dialogs and product search scope
+
+Navigation controls bind to their actual dialogs and expose product-local search scope.
+
+- Lease and restore authored popup identities, preserve accessible query names and identify the current product site in native search.
+- Wire native drawer opening and dismissal through its checkbox-owned surface while retaining keyboard and no-script fallback.
+- This grouped main change incorporates the search-scope work from PR \#179; the topic-only merge is recorded separately.
 
 #### 2026-10-08T12:01:05Z — [#173](https://github.com/bijux/bijux-std/pull/173) — test\(docs\): settle natural drawer transitions before hit measurement
 
@@ -121,6 +157,13 @@ The required browser matrix runs in bounded parallel jobs with complete source-b
 - Render admitted fixtures once and distribute immutable bundles across twelve engine/journey jobs while retaining all 363 cases.
 - Reject missing, duplicate, failed, skipped or retried coverage and mismatched source, bundle, browser-version or JUnit evidence; instant navigation uses actual Document identity.
 
+#### 2026-10-08T11:14:13Z — [#171](https://github.com/bijux/bijux-std/pull/171) — fix\(docs\): preserve header traversal around modal search
+
+Owned headers expose one modal search invoker and permit keyboard traversal past search.
+
+- Keep native desktop inline search while removing the duplicate owned query field and compact breakpoint leakage.
+- Restore usable close actions and modal focus transit without placing negative-tabindex native results in the Tab cycle; Arrow/Enter result navigation remains available.
+
 #### 2026-10-08T10:51:13Z — [#170](https://github.com/bijux/bijux-std/pull/170) — feat\(docs\): attribute resolved startup source and native exception hooks
 
 Renderer observations identify resolved startup sources and the active exception hook.
@@ -134,12 +177,33 @@ Every contrast test receipt identifies its actual browser version.
 
 - Capture engine versions before execution so source-bound report validation can reject missing or ambiguous runtime evidence.
 
+#### 2026-10-08T10:00:59Z — [#166](https://github.com/bijux/bijux-std/pull/166) — fix\(docs\): retain readable controls and reachable reader targets
+
+Footer navigation and masthead controls retain readable, reachable targets.
+
+- Restore phone footer direction labels, desktop hit areas, complete focus rings and correct hidden-drawer specificity.
+- Maintain rendered contrast and target measurements while keeping unresolved gradient/popup findings and manual conformance limits explicit.
+
 #### 2026-10-08T09:22:46Z — [#165](https://github.com/bijux/bijux-std/pull/165) — feat\(ci\): retain physical renderer startup and import fingerprints
 
 Renderer observations include physical Python startup and import inputs.
 
 - Record interpreter/stdlib bytes, module origins, bytecode, symlinks and sources outside the package lock, rejecting changes across double capture.
 - The expanded observation remains verification-only and does not approve a publisher runtime.
+
+#### 2026-10-08T08:21:45Z — [#163](https://github.com/bijux/bijux-std/pull/163) — feat\(docs\): validate shell configuration and document consumer extensions
+
+Shell configuration rejects ambiguous or incorrectly typed owned fields before rendering.
+
+- Validate namespaces, Boolean flags, YAML shadowing and ordered registry records with field-specific diagnostics.
+- Preserve product fields, plugins, tags and legitimate merges and document extension, token, observation and lifecycle ownership.
+
+#### 2026-10-08T07:56:58Z — [#162](https://github.com/bijux/bijux-std/pull/162) — fix\(docs\): preserve native navigation before shell readiness
+
+Navigation remains usable before, without or after failed shell enhancement.
+
+- Render a visible native checkbox label and complete in-flow tree until a successful owned mount activates the modal drawer.
+- Restore authored fallback after failed mounting and retain independent native Material header/search behavior.
 
 #### 2026-10-08T07:14:39Z — [#160](https://github.com/bijux/bijux-std/pull/160) — feat\(ci\): retain locked documentation renderer source fingerprints
 
@@ -155,12 +219,39 @@ Package SBOM audits bind to candidate source rather than stale environment input
 - Bind selected package/version and project/lock/Make/helper inputs, export frozen offline closures and promote output only after audit and source rechecks.
 - Retain failed output for diagnosis; declared-input provenance does not authenticate an upstream repository or claim a real vulnerability-service scan.
 
+#### 2026-10-08T04:36:06Z — [#157](https://github.com/bijux/bijux-std/pull/157) — fix\(docs\): make repository facts an explicit privacy choice
+
+Repository statistics become an explicit authored privacy choice.
+
+- Require Boolean extra.bijux.repository\_facts opt-in before mounting Material's repository facts requests.
+- Keep repository navigation and meaningful compact accessible names independent of optional provider metadata.
+
+#### 2026-10-08T03:58:29Z — [#156](https://github.com/bijux/bijux-std/pull/156) — perf\(docs\): deliver compact branding with preserved author configuration
+
+Shared branding uses the compact existing PNG instead of the large raster.
+
+- Declare intrinsic dimensions and a decorative image inside the named brand link while preserving custom logos and icon fallback.
+- Migrate only the exact retired common scalar and retain the high-quality asset for cached-page compatibility.
+
+#### 2026-10-08T03:32:14Z — [#155](https://github.com/bijux/bijux-std/pull/155) — perf\(docs\): trim repeated whitespace from complete navigation
+
+Complete navigation emits less repeated indentation without changing destinations.
+
+- Trim template block-edge whitespace while preserving labels, escaping, disclosure hierarchy and active-state attributes; the tree stays native and static.
+
 #### 2026-10-08T03:08:10Z — [#154](https://github.com/bijux/bijux-std/pull/154) — feat\(docs\): preserve authored configuration when projecting required assets
 
 Consumer configuration loads required shared assets without discarding authored settings.
 
 - Merge canonical CSS/script/plugin lists while preserving hooks, options and relative asset order; reject ambiguous plans before writing.
 - Offer read-only drift checks and retire only the exact obsolete eager Mermaid reference.
+
+#### 2026-10-08T01:42:00Z — [#152](https://github.com/bijux/bijux-std/pull/152) — fix\(docs\): retain usable preferences when browser storage fails
+
+Theme and search controls remain usable when browser storage is denied.
+
+- Validate stored palette records, provide bounded scoped memory fallback and keep Material radio ownership and reader scroll position.
+- Memory fallback covers the current document session; denied storage does not imply persistence across reload.
 
 #### 2026-10-08T01:11:00Z — [#151](https://github.com/bijux/bijux-std/pull/151) — fix\(docs\): preserve authored extensions during standard projection
 
@@ -169,12 +260,25 @@ Documentation projection preserves consumer-authored extensions and file ownersh
 - Record generated ownership against accepted GitHub source and verify prior bytes before changing templates, assets or configuration.
 - Preserve clean authored overrides, ignored files, staged work and symlinks; retire only unchanged generated files and project nested content recursively.
 
+#### 2026-10-08T00:31:47Z — [#150](https://github.com/bijux/bijux-std/pull/150) — fix\(docs\): restore complete responsive navigation and drawer intent
+
+Compact headers and drawers retain complete, reachable documentation navigation.
+
+- Replace the scoped sidebar with a native disclosure tree containing parent, deep-page and all nine ecosystem destinations.
+- Use named compact buttons, focus containment/restoration and user-intent preservation across delayed Material resets.
+
 #### 2026-10-07T23:16:15Z — [#147](https://github.com/bijux/bijux-std/pull/147) — fix\(std\): verify exact source before preserving managed refresh
 
 Managed refresh verifies the exact requested source before changing consumer files.
 
 - Resolve a named ref once, record origin/ref/full SHA and reject unavailable revisions or dirty/conflicting managed work.
 - Keep staged, unstaged, untracked and legacy user changes intact; dry runs do not mutate managed files.
+
+#### 2026-10-07T23:10:08Z — [#146](https://github.com/bijux/bijux-std/pull/146) — fix\(docs\): preserve material palette storage lifecycle
+
+Palette storage retains Material's option identity across restore and synchronization.
+
+- Store and recalculate the native option index when choices reorder, reject detached controls and preserve valid auto/light/dark fallback behavior.
 
 #### 2026-09-07T09:32:23Z — [#145](https://github.com/bijux/bijux-std/pull/145) — fix\(github\): skip verification runners for dependabot
 
@@ -286,6 +390,12 @@ Shared and generated workflows select checkout 7.0.1 and setup-python 7.0.0.
 Managed Python and API jobs use refreshed setup action revisions.
 
 - Select setup-uv 8.3.2, setup-node 7.0.0 and setup-java 5.6.0 with contracts that reject stale generated revisions.
+
+#### 2026-07-19T21:33:30Z — [#125](https://github.com/bijux/bijux-std/pull/125) — fix\(docs\): preserve canonical hub registry order
+
+Hub navigation follows the canonical registry's membership and order.
+
+- Render desktop and mobile destinations directly from hub-links.json and remove duplicate validator/template ordering rules.
 
 #### 2026-07-19T20:24:10Z — [#123](https://github.com/bijux/bijux-std/pull/123) — chore\(std\): set GNSS Rust baseline to 1.88
 
