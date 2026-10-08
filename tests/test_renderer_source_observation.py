@@ -132,7 +132,7 @@ class RendererObservationTests(unittest.TestCase):
              self.assertRaisesRegex(observer.ObservationError, "committed"):
             observer.source_snapshot(self.root)
 
-    def observe_fixture(self, package_captures=None, sources=None):
+    def observe_fixture(self, package_captures=None, sources=None, runtimes=None):
         path = self.root / observer.SOURCE_PATHS[1]
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_bytes(b"sample==1.0\n")
@@ -140,7 +140,8 @@ class RendererObservationTests(unittest.TestCase):
         snapshots = sources or [{"sha": "a" * 40}, {"sha": "a" * 40}]
         with patch.object(observer, "__file__", str(self.root / observer.SOURCE_PATHS[0])), \
              patch.object(observer, "source_snapshot", side_effect=snapshots), \
-             patch.object(observer, "observe_packages", side_effect=captures):
+             patch.object(observer, "observe_packages", side_effect=captures), \
+             patch.object(observer, "runtime_snapshot", side_effect=runtimes or [{"verification_only": True}, {"verification_only": True}]):
             return observer.observe(self.root)
 
     def test_source_and_dependency_races_fail_before_report_creation(self):
@@ -150,6 +151,11 @@ class RendererObservationTests(unittest.TestCase):
             self.observe_fixture([self.packages(), altered])
         with self.assertRaisesRegex(observer.ObservationError, "Source changed"):
             self.observe_fixture(sources=[{"sha": "a" * 40}, {"sha": "b" * 40}])
+        self.assertFalse((self.root / "artifacts").exists())
+
+    def test_runtime_race_is_rejected_before_report_creation(self):
+        with self.assertRaisesRegex(observer.ObservationError, "Physical renderer runtime changed"):
+            self.observe_fixture(runtimes=[{"sha256": "a" * 64}, {"sha256": "b" * 64}])
         self.assertFalse((self.root / "artifacts").exists())
 
     def test_genuine_observation_never_admits_profile_or_uses_receipt_authority(self):
