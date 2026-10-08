@@ -85,7 +85,8 @@ class StaticPolicyTests(unittest.TestCase):
         with tempfile.TemporaryDirectory(dir=parent) as directory:
             site = Path(directory)
             plan = self.redirect(site)
-            with patch.object(csp, "admitted_scripts", return_value=({"window.bijuxTrusted = true;"}, "")):
+            with patch.object(csp, "admitted_scripts", return_value=({"window.bijuxTrusted = true;"}, "")), \
+                 patch.object(csp, "policy_inputs", return_value={"unit_fixture": "captured policy inputs"}):
                 operation(site, plan)
 
     def test_normalized_redirect_gets_early_route_specific_policy(self):
@@ -156,7 +157,8 @@ class StaticPolicyTests(unittest.TestCase):
             first.write_text(self.html())
             late.write_text(self.html("window.unreviewed=1;"))
             before = {p: p.read_bytes() for p in site.iterdir()}
-            with patch.object(csp, "admitted_scripts", return_value=({"window.bijuxTrusted = true;"}, "")):
+            with patch.object(csp, "admitted_scripts", return_value=({"window.bijuxTrusted = true;"}, "")), \
+                 patch.object(csp, "policy_inputs", return_value={"unit_fixture": "captured policy inputs"}):
                 with self.assertRaises(csp.PolicyError):
                     csp.apply(site, site, site)
             self.assertEqual(before, {p: p.read_bytes() for p in site.iterdir()})

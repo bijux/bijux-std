@@ -22,8 +22,24 @@
     "replacement": "function Ei(e,t){let r=window.bijuxSearchWorker.channel(e,T);",
     "occurrences": 1
   },
-  "output_asset": "assets/javascripts/material-search.cbbd27023cd7c8b14f390052a578fea5da8b159620b2d1e724b5c0783f870cc0.js",
-  "output_sha256": "cbbd27023cd7c8b14f390052a578fea5da8b159620b2d1e724b5c0783f870cc0",
+  "element_resize_owned_source": "tooling/material/element-resize-delivery.js",
+  "element_resize_sha256": "c673a8ff4d509c9af14b4a6c9692c7d29feb5a6f32fc129140e4a2169153e4c9",
+  "element_resize_boundary": {
+    "original": "new ResizeObserver(e=>e.forEach(t=>cn.next(t)))",
+    "replacement": "__bijuxElementResizeObserver(t=>cn.next(t))",
+    "occurrences": 1,
+    "helper_scope": "admitted native IIFE; no global observer or error interception"
+  },
+  "search_capability_owned_source": "tooling/material/search-capability-boundary.js",
+  "search_capability_sha256": "6fb3c73a902a0bb3cd80ef665297529fb5f4cdf63cfc42d24ecd2ef65a5596d2",
+  "search_capability_renderer": {
+    "original": "href:`${s}`,class:\"md-search-result__link\",tabIndex:-1",
+    "replacement": "href:`${s}`,target:__bijuxSearchCapabilityTarget(s),class:\"md-search-result__link\",tabIndex:-1",
+    "occurrences": 1,
+    "helper_scope": "unique admitted native runtime IIFE"
+  },
+  "output_asset": "assets/javascripts/material-search.9e8f363e42b59d96988c7dfcb7529365e1fbc58a9a307836bee4eb7b0d676290.js",
+  "output_sha256": "9e8f363e42b59d96988c7dfcb7529365e1fbc58a9a307836bee4eb7b0d676290",
   "source_map": "Upstream map applies only to unmodified upstream bundle; compatibility output has no map annotation.",
   "transport": "Owned same-origin HTTP index XHR starts only on actual search focus/input/open or a native query/highlight deep link; direct cancel/retry, 45-second nonrenewable total deadline, 8-second no-progress stall bound, 80MiB browser-reported progress-byte limit, 40Mi UTF-16 response/source-character limit and 50,000-document candidate limit. Worker operation deadlines remain separately fixed at 8 seconds.",
   "limits": [
