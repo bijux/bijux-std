@@ -218,14 +218,27 @@ the checks.
 ## CI and Review Governance
 
 The primary workflow,
-[`.github/workflows/bijux-std.yml`](.github/workflows/bijux-std.yml), runs three
-independent lanes without fail-fast behavior:
+[`.github/workflows/bijux-std.yml`](.github/workflows/bijux-std.yml), keeps
+standards and contract checks independent for early feedback. Its required
+report also waits for the applicable rendered qualification:
 
 - `std / standard` verifies managed GitHub checksums, pinned actions, and the
   standards contract;
 - `std / contracts` runs the contract test suite;
-- `std / report` executes the shared check runner and uploads its report even
-  when investigation requires artifact inspection.
+- `std / report` requires successful standards/contracts and, in `bijux-std`,
+  the complete navigation and publication aggregate before running the shared
+  check runner. Failed, cancelled or skipped rendered jobs cannot leave this
+  required context green. Consumers require the std-only navigation aggregate
+  to be explicitly inapplicable; their product-owned publication gates remain
+  separate. Reports are retained for investigation.
+
+Rendered qualification runs for every `bijux-std` pull request, including
+Dependabot, as well as merge groups and main pushes. The existing required
+`std / report` context enforces this dependency without changing the four
+baseline required check names. The report records the actual current-attempt
+frontend job durations and rejects any incomplete or unsuccessful job, or
+assigned execution at or above three minutes. Queue delay is reported
+separately; the budget does not claim control over provider availability.
 
 Separate policy workflows validate GitHub configuration and pull-request
 approval. An owner-authored pull request requires the
