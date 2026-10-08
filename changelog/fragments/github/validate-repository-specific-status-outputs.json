@@ -1,0 +1,14 @@
+{
+  "schema": 1,
+  "pr": 134,
+  "title": "fix(github): validate repository-specific status outputs",
+  "type": "fix",
+  "scope": "github",
+  "summary": "Repository-specific check documentation is validated as rendered output.",
+  "details": [
+    "Retain byte-identical checks for invariant managed files while comparing rulesets and status guidance through their repository renderer."
+  ],
+  "status": "merged",
+  "merged_at": "2026-08-25T15:50:03Z",
+  "breaking": false
+}

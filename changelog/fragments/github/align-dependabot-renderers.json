@@ -1,0 +1,15 @@
+{
+  "schema": 1,
+  "pr": 65,
+  "title": "fix(github): align dependabot renderers",
+  "type": "fix",
+  "scope": "github",
+  "summary": "Both governance renderers produce the same Dependabot structure.",
+  "details": [
+    "Regenerate the standards repository configuration through the corrected repository renderer.",
+    "Original GitHub merge 71bb7e1cbf2802b151147716dc810bab18c5748b is distinct from rewritten main-history delivery 2e674afa8b79d552310e6fdfb5ccbf97c6aa306a; the merge date is the verified GitHub date."
+  ],
+  "status": "merged",
+  "merged_at": "2026-04-27T17:20:09Z",
+  "breaking": false
+}
