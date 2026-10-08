@@ -1,0 +1,15 @@
+{
+  "schema": 1,
+  "pr": 18,
+  "title": "fix(workflows): migrate upload-artifact to node24 runtime",
+  "type": "fix",
+  "scope": "workflows",
+  "summary": "Shared artifact uploads use the Node24 action runtime.",
+  "details": [
+    "Advance upload-artifact pins in canonical templates and the active reusable CI entrypoint.",
+    "Original GitHub merge 9707f77e0d656a83eb8f3482f41d9926d75c7771 is distinct from rewritten main-history delivery 9e61f45c9c5f14240e0ec8bcac2758f8aaa60602; the merge date is the verified GitHub date."
+  ],
+  "status": "merged",
+  "merged_at": "2026-04-19T14:01:43Z",
+  "breaking": false
+}
