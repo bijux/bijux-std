@@ -132,7 +132,7 @@ contracts, renders both fixture origins once and collects each complete suite
 inventory without launching a browser. Its compressed, digest-bound fixture
 archive belongs to the current workflow run and Git candidate.
 
-Twelve browser jobs divide navigation, search, reader and rendering journeys
+Fifteen browser jobs divide navigation, search, reader, rendering and link journeys
 across Chromium, Firefox and WebKit. Each job downloads that archive and installs
 only the locked Node test runtime. It executes its explicitly assigned projects
 without rebuilding fixtures or repeating renderer tests. Each job has a

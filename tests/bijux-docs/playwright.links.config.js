@@ -1,6 +1,7 @@
+const { configureProjects, unsharded } = require("./reporting/projects");
 const { defineConfig } = require("@playwright/test"),
   path = require("node:path");
-const inherited = require("./playwright.config");
+const inherited = unsharded(require("./playwright.config"));
 const artifactRoot = path.resolve(
   process.env.BIJUX_UI_ARTIFACT_ROOT ||
     path.join(__dirname, "../../artifacts/bijux-docs/link-policy-playwright"),
@@ -15,7 +16,7 @@ const projects = inherited.projects.map((project) => ({
   name: project.name + "-links",
   metadata: { required_case_count: 9 },
 }));
-module.exports = defineConfig({
+module.exports = configureProjects(defineConfig({
   ...inherited,
   testMatch: "**/external-links.spec.js",
   projects,
@@ -53,4 +54,4 @@ module.exports = defineConfig({
       ];
     return entry;
   }),
-});
+}));
