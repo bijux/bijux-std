@@ -19,7 +19,8 @@ GROUPS = {
     'navigation': ('navigation', 'drawer', 'preferences', 'repository'),
     'search': ('search', 'search-invoker'),
     'reader': ('native-navigation', 'reader'),
-    'rendering': ('diagrams', 'contrast'),
+    'diagrams': ('diagrams',),
+    'contrast': ('contrast',),
 }
 ENGINES = ('chromium', 'firefox', 'webkit')
 SUITES = tuple(suite for group in GROUPS.values() for suite in group)

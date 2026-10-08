@@ -145,3 +145,5 @@ case identities. Explicit shards cannot independently claim complete matrix
 qualification. Ordinary `--project` diagnosis still fails the complete gate
 when another required project is absent. Existing local Make targets remain
 available for complete or focused diagnosis.
+
+Diagram rendering and contrast/target journeys run in separate engine jobs. Their independently assigned receipts are both mandatory in the final navigation aggregate. The three-minute budget includes cold browser-image setup, artifact transport and job finalization.
