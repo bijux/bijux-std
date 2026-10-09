@@ -6,6 +6,10 @@ This file records notable repository-level changes for `bijux-std`.
 
 ### Pending review
 
+#### [#259](https://github.com/bijux/bijux-std/pull/259) — feat(docs): govern shared stylesheet precedence and token ownership
+
+Enforce reviewed declaration priorities, unlayered shared styles and a closed import graph; remove unnecessary footer priority flags and bind owned token references to exact definition scopes.
+
 ### Merged pull requests
 
 #### 2026-10-09T21:28:33Z — [#253](https://github.com/bijux/bijux-std/pull/253) — fix(docs): retain native reader context after diagram layout changes
