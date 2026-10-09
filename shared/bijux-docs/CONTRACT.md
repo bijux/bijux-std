@@ -82,6 +82,29 @@ or generic Make entrypoints require their own explicit admission boundary.
 Do not infer that every consumer runner is admitted from copied shared files.
 See [Material adapter admission](tooling/material/README.md).
 
+## Owned payload accounting
+
+`tooling/quality/performance/payloads.py` reconciles the preferred and retained
+compatibility logos, the optional Mermaid library and its retained notices
+against an exact committed standard, the canonical `.bijux/docs-projection.json`
+and an existing served directory. Run it from the standard checkout:
+
+```sh
+python shared/bijux-docs/tooling/quality/performance/payloads.py \
+  --repo-root "$REPOSITORY_ROOT" --site-dir artifacts/site \
+  --standard-root "$BIJUX_STD_ROOT" --standard-sha "$BIJUX_STD_SHA" \
+  --output artifacts/qualification/payloads.json
+```
+
+The preferred PNG must retain its reviewed 128×128 intrinsic dimensions and
+the existing 32 KiB ceiling. The tool checks committed/projection/served bytes,
+vendor provenance, integrity and retained notices without changing custom
+branding or icon fallback. Its report measures local raw file bytes; decoded
+response, encoded response and transfer bytes including headers remain unknown
+until separately observed. An observed zero is distinct from an unknown value.
+This static qualification does not certify cache/compression behavior, physical
+sharpness, rendered custom branding, remote acceptance or live delivery.
+
 ## Shared ownership and verification
 
 Every row has one behavior producer. Product configuration/content and Material
