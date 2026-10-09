@@ -153,9 +153,29 @@ class RequiredNavigationTests(unittest.TestCase):
                 self.assertIn("github.repository == 'bijux/bijux-std'", source)
                 self.assertNotIn('dependabot', source)
         aggregate = job('navigation')
-        self.assertIn('needs: [navigation-fixtures, navigation-browsers, publication-commands, renderer-controls, frontend-browser-faults, frontend-public-faults]', aggregate)
-        for variable in ('FIXTURE_RESULT', 'BROWSER_RESULT', 'COMMAND_RESULT', 'RENDERER_RESULT'):
+        self.assertIn('needs: [navigation-fixtures, navigation-browsers, publication-commands, renderer-controls, frontend-browser-faults, frontend-public-faults, persisted-native-reader]', aggregate)
+        for variable in ('FIXTURE_RESULT', 'BROWSER_RESULT', 'COMMAND_RESULT', 'RENDERER_RESULT', 'PERSISTED_RESULT'):
             self.assertIn('test "$' + variable + '" = success', aggregate)
+
+
+    def test_native_cached_reader_is_a_required_separate_capability_job(self):
+        native = job('persisted-native-reader')
+        self.assertIn('name: std / persisted native reader / chromium', native)
+        self.assertIn('timeout-minutes: 3', native)
+        self.assertIn('persisted_reader.py run', native)
+        self.assertIn('include-hidden-files: true', native)
+        self.assertIn('if-no-files-found: error', native)
+        aggregate = job('navigation')
+        self.assertIn('PERSISTED_RESULT: ${{ needs.persisted-native-reader.result }}', aggregate)
+        self.assertIn('Download exact cached native reader evidence', aggregate)
+        self.assertIn('artifacts/bijux-docs/persisted-reader', aggregate)
+        execution = aggregate.split('      - name: Require successful jobs and complete unique engine coverage\n', 1)[1]
+        execution = execution.split('        run: |\n', 1)[1]
+        script = '\n'.join(line[10:] for line in execution.splitlines()).split('python3', 1)[0]
+        for outcome in ('success', 'failure', 'cancelled', 'skipped', '', 'pending'):
+            env = {**os.environ, 'FAULT_BROWSER_RESULT': 'success', 'FAULT_PUBLIC_RESULT': 'success', 'PERSISTED_RESULT': outcome}
+            actual = subprocess.run(['bash', '--noprofile', '--norc', '-c', script], env=env, capture_output=True)
+            self.assertEqual(actual.returncode == 0, outcome == 'success')
 
 
 if __name__ == '__main__':

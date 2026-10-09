@@ -93,7 +93,7 @@ class FixtureTransferTests(unittest.TestCase):
             self.assertIn('"status": "failed"', (root / 'navigation-qualification.json').read_text())
 
     def test_failed_job_cannot_leave_passing_final_evidence(self) -> None:
-        for name in ('FIXTURE_RESULT', 'BROWSER_RESULT', 'COMMAND_RESULT', 'RENDERER_RESULT'):
+        for name in ('FIXTURE_RESULT', 'BROWSER_RESULT', 'COMMAND_RESULT', 'RENDERER_RESULT', 'PERSISTED_RESULT'):
             with self.subTest(job=name), tempfile.TemporaryDirectory(dir=ROOT / 'artifacts') as directory:
                 root = Path(directory)
                 with patch.object(GATE, 'ARTIFACTS', root), patch.dict(GATE.os.environ, {name: 'failure'}), self.assertRaisesRegex(ValueError, 'required fixture/browser job'):
@@ -104,7 +104,7 @@ class FixtureTransferTests(unittest.TestCase):
         with tempfile.TemporaryDirectory(dir=ROOT / 'artifacts') as directory:
             root = Path(directory)
             observation = {'source': {'sha': 'a' * 40}, 'verification_only': True, 'admission_created': False}
-            paths = ['browser-fixtures.tar.gz', 'renderer-source-observation.json'] + [f'inventories/{suite}.json' for suite in GATE.SUITES]
+            paths = ['browser-fixtures.tar.gz', 'renderer-source-observation.json'] + [f'inventories/{suite}.json' for suite in (*GATE.SUITES, GATE.PERSISTED_SUITE)]
             for name in paths:
                 path = root / name
                 path.parent.mkdir(parents=True, exist_ok=True)
