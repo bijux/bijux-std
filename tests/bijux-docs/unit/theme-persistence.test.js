@@ -102,6 +102,7 @@ function page({ order = ["auto", "light", "dark"], savedChoice = null, checked =
     dispatchEvent() {},
   };
   const context = {
+    location: { href: "https://bijux.io/reader/" },
     document,
     document$: { subscribe(callback) { callback(); } },
     window,

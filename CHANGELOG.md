@@ -6,11 +6,19 @@ This file records notable repository-level changes for `bijux-std`.
 
 ### Pending review
 
-#### [#258](https://github.com/bijux/bijux-std/pull/258) — feat(docs): select owned interactive reports through python make
+#### [#257](https://github.com/bijux/bijux-std/pull/257) — fix(docs): validate public artifact redirect and asset destinations
 
-Select committed interactive report ownership consistently through Python Make and publication validation. Validate source selection before cleanup so refusals preserve verified output, and qualify every renderer and Make duty in seven bounded source-owned groups.
+Reject redirect cycles and private destinations, normalize Unicode hostname boundaries, and validate responsive, stylesheet and SVG resources against actual public assets and symbols. Preserve harmless scientific SVG metadata while refusing internal entity authority.
 
 ### Merged pull requests
+
+#### 2026-10-09T21:28:33Z — [#253](https://github.com/bijux/bijux-std/pull/253) — fix(docs): retain native reader context after diagram layout changes
+
+Preserve authored reading context through diagram layout changes and native history, defer restoration until pageshow, and yield palette callbacks to trusted reader input. Retain source inspection across proven cached entries using a private entry-bound snapshot, with a required full-Chromium native cache qualification alongside the unchanged three-engine history cases.
+
+#### 2026-10-09T20:59:39Z — [#258](https://github.com/bijux/bijux-std/pull/258) — feat(docs): select owned interactive reports through python make
+
+Select committed interactive report ownership consistently through Python Make and publication validation. Validate source selection before cleanup so refusals preserve verified output, and qualify every renderer and Make duty in seven bounded source-owned groups.
 
 #### 2026-10-09T18:52:16Z — [#256](https://github.com/bijux/bijux-std/pull/256) — feat(docs): reconstruct committed interactive report ownership
 

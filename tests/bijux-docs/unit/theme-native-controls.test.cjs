@@ -54,7 +54,7 @@ function nativePalette() {
     : selector.includes('label.md-header__button') ? controls.filter(node => node.tagName === 'LABEL') : [];
   document.createElement = element;
   const stored = new Map();
-  const context = { document, window: { document$: { subscribe(callback) {init = callback; callback();} },
+  const context = { document, location: new URL('https://example.test/reader/'), window: { document$: { subscribe(callback) {init = callback; callback();} },
     dispatchEvent() {}, addEventListener() {}, scrollTo() {}, matchMedia() {return {matches:false};} },
     localStorage: {getItem:key => stored.get(key) ?? null,setItem:(key,value) => stored.set(key,value)},
     Event: class { constructor(type) {this.type = type;} },

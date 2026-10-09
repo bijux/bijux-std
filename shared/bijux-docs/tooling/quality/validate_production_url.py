@@ -9,7 +9,13 @@ from urllib.parse import urlsplit
 
 def development_host(hostname: str) -> bool:
     """Classify literal/local names without contacting DNS or assuming a public origin."""
-    hostname = hostname.rstrip('.').lower()
+    try:
+        # Normalize Unicode dots and compatibility characters before literal or
+        # suffix classification. Stdlib IDNA is a conservative admission boundary,
+        # rather than a complete implementation of browser UTS46 processing.
+        hostname = hostname.encode('idna').decode('ascii').rstrip('.').lower()
+    except UnicodeError:
+        return True
     if hostname == 'localhost' or hostname.endswith(('.localhost', '.invalid', '.internal', '.test', '.local', '.lan', '.home', '.home.arpa')):
         return True
     try:

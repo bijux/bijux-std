@@ -188,10 +188,14 @@ class FrontendJobBudgetTests(unittest.TestCase):
             catalogue = owner / 'catalogue'
             catalogue.mkdir()
             (catalogue / 'execution.py').write_text("GROUPS = {'source': ('test_source',)}\n")
-            for name in ('browser_gate.py', 'browser_partitions.py', 'browser_partitions.json', 'renderer_controls.py', 'node_events.cjs'):
+            for name in ('browser_gate.py', 'browser_partitions.py', 'browser_partitions.json', 'renderer_controls.py', 'node_events.cjs', 'persisted_reader.py'):
                 (root / name).write_text(name)
+            for name in ('playwright.persisted-reader-history.config.js', 'ui/generated-specs/persisted-reader-history.spec.js'):
+                path = owner / name
+                path.parent.mkdir(parents=True, exist_ok=True)
+                path.write_text(name)
             before = BUDGET.registry_digests(root / 'browser_gate.py')
-            self.assertEqual(set(before), {'browser_gate.py', 'browser_partitions.py', 'browser_partitions.json', 'renderer_controls.py', 'node_events.cjs', 'catalogue/execution.py'})
+            self.assertEqual(set(before), {'browser_gate.py', 'browser_partitions.py', 'browser_partitions.json', 'renderer_controls.py', 'node_events.cjs', 'persisted_reader.py', 'playwright.persisted-reader-history.config.js', 'ui/generated-specs/persisted-reader-history.spec.js', 'catalogue/execution.py'})
             (root / 'browser_partitions.json').write_text('changed declaration')
             after = BUDGET.registry_digests(root / 'browser_gate.py')
             self.assertNotEqual(before['browser_partitions.json'], after['browser_partitions.json'])

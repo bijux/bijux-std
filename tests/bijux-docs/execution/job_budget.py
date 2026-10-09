@@ -63,7 +63,7 @@ def expected_job_names(groups: dict, engines: tuple | list) -> set[str]:
     require(len(set(engines)) == len(engines), 'Duplicate canonical engine')
     require(all(isinstance(x, str) and x and '/' not in x for x in [*groups, *engines]), 'Invalid canonical group or engine')
     return catalogue_job_names() | renderer_job_names() | {'std / navigation fixtures', 'std / navigation', 'std / publication commands',
-            'std / frontend public artifact fault controls'} | {
+            'std / frontend public artifact fault controls', 'std / persisted native reader / chromium'} | {
         f'std / frontend fault controls / {engine}' for engine in engines
     } | {
         f'std / navigation {group} / {engine}' for group in groups for engine in engines
@@ -147,8 +147,10 @@ def qualify(payload: dict, *, groups: dict, engines: tuple | list, run_id: int, 
 
 
 def registry_digests(registry_path: Path) -> dict[str, str]:
-    names = ('browser_gate.py', 'browser_partitions.py', 'browser_partitions.json', 'renderer_controls.py', 'node_events.cjs')
+    names = ('browser_gate.py', 'browser_partitions.py', 'browser_partitions.json', 'renderer_controls.py', 'node_events.cjs', 'persisted_reader.py')
     digests = {name: hashlib.sha256(registry_path.with_name(name).read_bytes()).hexdigest() for name in names}
+    for name in ('playwright.persisted-reader-history.config.js', 'ui/generated-specs/persisted-reader-history.spec.js'):
+        digests[name] = hashlib.sha256((registry_path.parent.parent / name).read_bytes()).hexdigest()
     catalogue = registry_path.parent.parent / 'catalogue/execution.py'
     digests['catalogue/execution.py'] = hashlib.sha256(catalogue.read_bytes()).hexdigest()
     return digests
