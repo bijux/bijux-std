@@ -2,7 +2,7 @@ const fs = require("node:fs");
 const path = require("node:path");
 const registry = JSON.parse(fs.readFileSync(path.resolve(__dirname, "../../../../shared/bijux-docs/config/hub-links.json"), "utf8"));
 const { test, expect } = require("./helpers/document");
-const { tabTo } = require("./contrast-targets/measurement");
+const { tabTo, settle } = require("./contrast-targets/measurement");
 const control = (page, kind) => page.locator(`[data-bijux-header-control='${kind}-toggle']`);
 const drawer = (page) => page.locator(".md-sidebar--primary");
 const exposedLinks = (page) => drawer(page).locator("a:visible");
@@ -81,6 +81,79 @@ async function registryDestination(page, link, expected) {
   await page.keyboard.press("Escape");
   await expect(control(page, "drawer")).toBeFocused();
 }
+
+async function mastheadGeometry(page, firstContent = false) {
+  await page.evaluate(() => document.fonts.ready);
+  const observed = await page.locator("header").first().evaluate(header => {
+    const box = node => { const r = node.getBoundingClientRect(); return { left:r.left, right:r.right, top:r.top, bottom:r.bottom, width:r.width, height:r.height }; };
+    const exposed = node => { const r = node.getBoundingClientRect(), s = getComputedStyle(node); return r.width > 0 && r.height > 0 && s.visibility !== "hidden" && !node.closest("[hidden]"); };
+    const controls = [...header.querySelectorAll("[data-bijux-header-control], [data-bijux-theme-toggle]")].filter(exposed).map(node => {
+      const rect = box(node), hit = document.elementFromPoint((rect.left + rect.right) / 2, (rect.top + rect.bottom) / 2);
+      return { name:node.getAttribute("aria-label"), rect, hit:hit === node || node.contains(hit) };
+    });
+    const helpers = [...header.querySelectorAll("[data-bijux-header-control] .md-visually-hidden")].map(box);
+    const content = [document.querySelector("main h1"), document.querySelector("main .md-typeset > p")].map(node => {
+      if (!node) return null;
+      const rect = box(node), hit = document.elementFromPoint((rect.left + rect.right) / 2, (rect.top + rect.bottom) / 2);
+      return { text:node.textContent.trim(), rect, hit:hit === node || node.contains(hit) };
+    });
+    return { header:box(header), controls, helpers, content, viewport:{width:innerWidth,height:innerHeight} };
+  });
+  for (const entry of observed.controls) {
+    expect(entry.name, "Every exposed utility retains an accessible name").toMatch(/\S/);
+    expect(entry.rect.width).toBeGreaterThanOrEqual(44);
+    expect(entry.rect.height).toBeGreaterThanOrEqual(44);
+    expect(entry.rect.left).toBeGreaterThanOrEqual(0);
+    expect(entry.rect.right).toBeLessThanOrEqual(observed.viewport.width + 1);
+    expect(entry.rect.top).toBeGreaterThanOrEqual(observed.header.top - 1);
+    expect(entry.rect.bottom).toBeLessThanOrEqual(observed.header.bottom + 1);
+    expect(entry.hit, `${entry.name} owns an ordinary visible pointer target`).toBe(true);
+  }
+  for (let a = 0; a < observed.controls.length; a++) for (let b = a + 1; b < observed.controls.length; b++) {
+    const one = observed.controls[a].rect, two = observed.controls[b].rect;
+    expect(one.right <= two.left + 1 || two.right <= one.left + 1 || one.bottom <= two.top + 1 || two.bottom <= one.top + 1, "Utility controls do not overlap").toBe(true);
+  }
+  for (const helper of observed.helpers) {
+    expect(helper.width, "Helper text remains visually hidden").toBeLessThanOrEqual(1);
+    expect(helper.height).toBeLessThanOrEqual(1);
+  }
+  if (firstContent) for (const entry of observed.content) {
+    expect(entry, "The initial viewport contains the heading and authored reading text").not.toBeNull();
+    expect(entry.text).toMatch(/\S/);
+    expect(entry.rect.top).toBeGreaterThanOrEqual(observed.header.bottom - 1);
+    expect(entry.rect.bottom).toBeLessThanOrEqual(observed.viewport.height + 1);
+    expect(entry.hit, "Visible reading content is not covered by navigation").toBe(true);
+  }
+}
+async function drawerBrandGeometry(page) {
+  await settle(drawer(page));
+  const observed = await drawer(page).locator(".bijux-nav__title").evaluate(title => {
+    const box = node => { const r = node.getBoundingClientRect(); return { left:r.left, right:r.right, top:r.top, bottom:r.bottom }; };
+    const nodes = [title.querySelector("img"), title.querySelector(".bijux-nav__site-name"), title.querySelector("[data-bijux-control-close]")];
+    const parts = nodes.map(node => ({ rect:box(node), text:node.textContent.trim() }));
+    const name = nodes[1], range = document.createRange(); range.selectNodeContents(name);
+    const glyphs = [...range.getClientRects()].map(r => ({ left:r.left, right:r.right, top:r.top, bottom:r.bottom }));
+    const clips = [];
+    for (let node = name; node; node = node.parentElement) {
+      const style = getComputedStyle(node);
+      if (["hidden","clip","auto","scroll"].includes(style.overflowX) || ["hidden","clip","auto","scroll"].includes(style.overflowY)) clips.push({ rect:box(node), x:style.overflowX !== "visible", y:style.overflowY !== "visible" });
+    }
+    return { rect:box(title), parts, glyphs, clips, width:innerWidth, height:innerHeight };
+  });
+  expect(observed.parts[1].text).toBe("Bijux");
+  for (const part of observed.parts) {
+    expect(part.rect.left).toBeGreaterThanOrEqual(observed.rect.left - 1);
+    expect(part.rect.right).toBeLessThanOrEqual(Math.min(observed.rect.right, observed.width) + 1);
+    expect(part.rect.top).toBeGreaterThanOrEqual(observed.rect.top - 1);
+    expect(part.rect.bottom).toBeLessThanOrEqual(Math.min(observed.rect.bottom, observed.height) + 1);
+  }
+  for (let index = 1; index < observed.parts.length; index++) expect(observed.parts[index - 1].rect.right).toBeLessThanOrEqual(observed.parts[index].rect.left + 1);
+  for (const glyph of observed.glyphs) for (const clip of observed.clips) {
+    if (clip.x) { expect(glyph.left).toBeGreaterThanOrEqual(clip.rect.left - 1); expect(glyph.right).toBeLessThanOrEqual(clip.rect.right + 1); }
+    if (clip.y) { expect(glyph.top).toBeGreaterThanOrEqual(clip.rect.top - 1); expect(glyph.bottom).toBeLessThanOrEqual(clip.rect.bottom + 1); }
+  }
+}
+
 test("inactive navigation strips remain absent at every responsive boundary", async ({ page }) => {
   for (const width of [320, 767, 768, 820, 1024, 1219, 1220, 1440]) {
     await page.setViewportSize({ width, height: 900 });
@@ -91,6 +164,7 @@ test("inactive navigation strips remain absent at every responsive boundary", as
     expect(painted, `Hidden navigation painted at ${width}px`).toBe(0);
     const height = await page.locator("header").first().evaluate((node) => node.getBoundingClientRect().height);
     expect(height, `Masthead height at ${width}px`).toBeLessThanOrEqual(width < 768 ? 72 : width < 1220 ? 112 : 160);
+    await mastheadGeometry(page, true);
     if (width >= 1220) {
       await expect(page.locator("header .bijux-hub-strip")).toBeVisible();
       await expect(page.locator(".md-sidebar--primary .bijux-site-registry")).toBeHidden();
@@ -103,6 +177,10 @@ test("inactive navigation strips remain absent at every responsive boundary", as
       await expect(control(page, "drawer")).toBeFocused();
     }
   }
+  await page.setViewportSize({ width:568, height:320 });
+  await ready(page);
+  expect(await page.locator("header").first().evaluate(node => node.getBoundingClientRect().height)).toBeLessThanOrEqual(64);
+  await mastheadGeometry(page, true);
 });
 test("phone brand and visually hidden helper text preserve useful space", async ({ page }) => {
   await page.setViewportSize({ width: 320, height: 700 });
@@ -128,6 +206,34 @@ test("phone brand and visually hidden helper text preserve useful space", async 
   await expect(logo).toHaveAttribute("width", "48");
   await expect(logo).toHaveAttribute("height", "48");
   await expect.poll(() => logo.evaluate(image => image.complete && image.naturalWidth === 128 && image.naturalHeight === 128)).toBe(true);
+  await drawerBrandGeometry(page);
+  await page.keyboard.press("Escape");
+  for (const width of [320,390]) {
+    for (const enlarged of [false,true]) {
+      await page.setViewportSize({ width, height:844 });
+      await ready(page);
+      if (enlarged) {
+        const size = await page.evaluate(() => parseFloat(getComputedStyle(document.documentElement).fontSize));
+        await page.addStyleTag({ content:`html { font-size:${size * 2}px !important; } * { line-height:1.5 !important; letter-spacing:.12em !important; word-spacing:.16em !important; } p { margin-block-end:2em !important; }` });
+      } else {
+        await expect(title).toHaveText("Bijux");
+        const text = await title.evaluate(node => ({ client:node.clientWidth, scroll:node.scrollWidth }));
+        expect(text.scroll, "Ordinary 320px identity is not ellipsized").toBeLessThanOrEqual(text.client + 1);
+      }
+      await mastheadGeometry(page);
+      expect(await page.evaluate(() => document.documentElement.scrollWidth - innerWidth)).toBeLessThanOrEqual(1);
+      await openDrawer(page);
+      await drawerBrandGeometry(page);
+      await drawer(page).getByRole("button", { name:"Close navigation", exact:true }).click();
+      await expect(page.locator("#__drawer")).not.toBeChecked();
+      await expect(control(page,"drawer")).toBeFocused();
+      await control(page,"search").click();
+      await expect(page.locator("#__search")).toBeChecked();
+      await expect(page.locator("[data-md-component='search-query']")).toBeFocused();
+      await page.keyboard.press("Escape");
+      await expect(control(page,"search")).toBeFocused();
+    }
+  }
 });
 test("tablet drawer exposes real destinations through ordinary pointer input", async ({ page }) => {
   await page.setViewportSize({ width: 768, height: 900 });
