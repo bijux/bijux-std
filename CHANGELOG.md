@@ -6,14 +6,22 @@ This file records notable repository-level changes for `bijux-std`.
 
 ### Pending review
 
-#### [#224](https://github.com/bijux/bijux-std/pull/224) — test(docs): verify authored reader history policy inheritance
+#### [#223](https://github.com/bijux/bijux-std/pull/223) — fix(docs): capture committed publication source and callback inputs
+
+Bind publication inputs to their exact committed Git bytes without treating ignored run caches as source.
+
+- Verify tracked paths, HEAD blobs and executable modes independently of index flags, and reject source changes during capture.
+- Require reviewed callback source and every declared asset input to match committed captured bytes before rendering and revalidation.
+- Retain verification fixtures and all renderer, shared authority, public output and approved-profile checks.
+
+### Merged pull requests
+
+#### 2026-10-09T01:46:38Z — [#224](https://github.com/bijux/bijux-std/pull/224) — test(docs): verify authored reader history policy inheritance
 
 Make the product-owned reader URL policy explicit when a legacy inherited feature list enables anchor tracking.
 
 - Verify actual MkDocs list replacement while retaining theme settings, plugins and required capabilities.
 - Preserve deliberate tracking opt-ins and qualify exact Back/Forward URLs separately from visible reading context.
-
-### Merged pull requests
 
 #### 2026-10-09T01:32:43Z — [#221](https://github.com/bijux/bijux-std/pull/221) — test(docs): verify compact reading space and control geometry
 
@@ -22,12 +30,6 @@ Require useful first-screen reading space and unobstructed compact controls in e
 - Check actual heading/text visibility, utility names/targets/hits, hidden helper spans, and drawer logo/name/Close geometry.
 - Preserve canonical cases and the runtime-error guard; retain exact counterexamples and wider viewport/manual qualification limits.
 
-#### [#218](https://github.com/bijux/bijux-std/pull/218) — test(docs): keep shell acceptance executable and reject runtime errors
-
-Bind shell behaviour to executable reader cases and reject uncaught runtime failures in every shell journey.
-
-- Reference the actual parametrized local-reader acceptance without adding a duplicate gate.
-- Reuse the shared automatic runtime-error guard, preserving all canonical case identities and browser coverage.
 
 #### 2026-10-09T01:13:15Z — [#222](https://github.com/bijux/bijux-std/pull/222) — fix(docs): resolve redirect canonicals before route qualification
 
