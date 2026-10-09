@@ -69,8 +69,10 @@ function theme() {
     return { dataset: {}, checked: false, listeners: new Map(), getAttribute(key) { return attributes[key] ?? null; }, addEventListener(name, callback) { this.listeners.set(name, callback); } };
   });
   const window = { document$: { subscribe(callback) { mount = callback; callback(); } }, scrollX: 0, scrollY: 0, scrollTo() {}, matchMedia() { return { matches: true }; }, dispatchEvent(event) { notices.push(event); }, addEventListener() {}, __md_set(key, value) { saved.set(key, value); } };
-  const document = { body: { setAttribute(key, value) { bodyAttributes.set(key, value); }, removeAttribute(key) { bodyAttributes.delete(key); }, getAttribute(key) { return bodyAttributes.get(key); } }, querySelector() { return { getAttribute() { return 'bijux:theme'; } }; }, querySelectorAll(selector) { return selector.startsWith('input[') ? options : []; } };
-  vm.runInNewContext(source('theme-persistence.js'), { window, document, localStorage: { getItem(key) { return saved.get(key) ?? null; }, setItem(key, value) { saved.set(key, value); } }, CustomEvent: EventRecord, Event: EventRecord, document$: { subscribe(callback) { mount = callback; callback(); } }, requestAnimationFrame(callback) { callback(); }, setTimeout(callback) { callback(); } }, { timeout: 1000 });
+  const article = {};
+  const themeMarker = { getAttribute() { return 'bijux:theme'; } };
+  const document = { body: { setAttribute(key, value) { bodyAttributes.set(key, value); }, removeAttribute(key) { bodyAttributes.delete(key); }, getAttribute(key) { return bodyAttributes.get(key); } }, querySelector(selector) { return selector === '.md-content__inner' ? article : themeMarker; }, querySelectorAll(selector) { return selector.startsWith('input[') ? options : []; } };
+  vm.runInNewContext(source('theme-persistence.js'), { window, document, location: new URL('https://example.test/reader/'), localStorage: { getItem(key) { return saved.get(key) ?? null; }, setItem(key, value) { saved.set(key, value); } }, CustomEvent: EventRecord, Event: EventRecord, document$: { subscribe(callback) { mount = callback; callback(); } }, requestAnimationFrame(callback) { callback(); }, setTimeout(callback) { callback(); } }, { timeout: 1000 });
   return { notices, options, bodyAttributes, mount: () => mount() };
 }
 

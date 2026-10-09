@@ -32,6 +32,10 @@ async function position(link) {
     y: scrollY,
     height: document.documentElement.scrollHeight,
     viewport: innerHeight,
+    maxScroll: Math.max(0, document.documentElement.scrollHeight - innerHeight),
+    readerState: history.state?.bijuxDiagramReaderPosition ?? null,
+    nativeEvents: window.bijuxNativeReaderEvents ?? [],
+    readerScrollCalls: window.bijuxNativeReaderScrollCalls ?? [],
     rect: node.getBoundingClientRect().toJSON(),
     navigation: performance.getEntriesByType("navigation").map(entry => ({
       type: entry.type, name: entry.name,
@@ -47,6 +51,25 @@ test("native same-window diagram Back and Forward retain the authored reader pos
   });
   await page.exposeFunction("bijuxObserveNativeDeparture", event => clicks.push(event));
   await page.addInitScript(() => {
+    window.bijuxNativeReaderEvents = [];
+    window.bijuxNativeReaderScrollCalls = [];
+    const nativeScrollTo = window.scrollTo;
+    window.scrollTo = function (...args) {
+      const value = nativeScrollTo.apply(this, args);
+      window.bijuxNativeReaderScrollCalls.push({ args, stack: new Error().stack, url: location.href,
+        y: scrollY, height: document.documentElement.scrollHeight, viewport: innerHeight,
+        maxScroll: Math.max(0, document.documentElement.scrollHeight - innerHeight) });
+      return value;
+    };
+    for (const type of ["pageshow", "pagehide"]) window.addEventListener(type, event => {
+      const link = document.querySelector("#reader-native-next");
+      window.bijuxNativeReaderEvents.push({ type, persisted: event.persisted, trusted: event.isTrusted,
+        url: location.href, timeOrigin: performance.timeOrigin, y: scrollY,
+        height: document.documentElement.scrollHeight, viewport: innerHeight,
+        maxScroll: Math.max(0, document.documentElement.scrollHeight - innerHeight),
+        readerState: history.state?.bijuxDiagramReaderPosition ?? null,
+        top: link?.getBoundingClientRect().top ?? null });
+    });
     document.addEventListener("click", event => {
       const link = event.target.closest?.("#reader-native-next");
       if (link && event.isTrusted) window.bijuxObserveNativeDeparture({
@@ -72,7 +95,8 @@ test("native same-window diagram Back and Forward retain the authored reader pos
     expect(departure?.trusted).toBe(true);
     expect(departure.url).toBe(reader(origin));
     records.push({ label: "trusted native departure", departure, documents });
-    await page.goBack();
+    const firstBack = await page.goBack();
+    records.push({ label: "first native Back response", response: firstBack ? { url: firstBack.url(), status: firstBack.status() } : null });
     await expect(page).toHaveURL(departure.url);
     await rendered(page);
     records.push({ label: "native Back geometry before assertion", ...await position(link) });
@@ -82,6 +106,33 @@ test("native same-window diagram Back and Forward retain the authored reader pos
     await page.goForward();
     await expect(article(page).locator("h1")).toHaveText(/^Table boundary reference(?:¶)?$/);
     records.push({ label: "native Forward exact URL", ...await observeRoute(page, checkpoint(origin)) });
+
+    // Opening authored diagram source changes layout independently of reader identity.
+    await page.goBack();
+    await rendered(page);
+    await page.setViewportSize({ width: 320, height: 780 });
+    await figures(page).locator(".bijux-diagram-source > summary").first().click();
+    await expect(figures(page).locator("details[open]")).toHaveCount(1);
+    const disclosedDiagrams = await figures(page).evaluateAll(nodes => nodes.map(node => node.getBoundingClientRect().height));
+    await link.click();
+    await expect(page).toHaveURL(checkpoint(origin));
+    const compactDeparture = clicks.at(-1);
+    expect(compactDeparture?.trusted).toBe(true);
+    records.push({ label: "trusted compact native departure", compactDeparture, disclosedDiagrams });
+    const compactBack = await page.goBack();
+    records.push({ label: "compact native Back response", response: compactBack ? { url: compactBack.url(), status: compactBack.status() } : null });
+    await rendered(page);
+    const restoredDiagrams = await figures(page).evaluateAll(nodes => nodes.map(node => node.getBoundingClientRect().height));
+    const compactReturned = await position(link);
+    records.push({ label: "compact native Back geometry before assertion", compactDeparture, disclosedDiagrams, restoredDiagrams,
+      desiredScroll: compactReturned.y + compactReturned.rect.top - compactDeparture.rect.top,
+      absoluteOffset: Math.abs(compactReturned.rect.top - compactDeparture.rect.top),
+      ...compactReturned });
+    expect(restoredDiagrams).not.toEqual(disclosedDiagrams);
+    await expect(link).toBeInViewport();
+    await expect.poll(() => link.evaluate((node, top) => Math.abs(node.getBoundingClientRect().top - top), compactDeparture.rect.top),
+      { message: "Native Back retains the clicked reader offset after actual diagram source layout changes" }).toBeLessThan(1);
+    records.push({ label: "diagram source native Back context", compactDeparture, disclosedDiagrams, restoredDiagrams, ...await position(link) });
   } finally {
     await attach(info, records);
   }

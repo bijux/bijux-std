@@ -38,10 +38,12 @@ function shell(mode = 'auto', order = ['auto', 'light', 'dark'], material = true
   const window = { document$: { subscribe(callback) { callback(); } }, scrollX: 23, scrollY: 127, scrollTo() {}, dispatchEvent() {},
     addEventListener: (name, callback) => events.set(name, callback) };
   if (material) window.__md_set = (key, value) => { writes.push({ key, value }); saved.set(key, value); };
+  const article = {};
+  const themeMarker = { getAttribute: () => 'bijux:theme' };
   const document = { body,
-    querySelector: () => ({ getAttribute: () => 'bijux:theme' }),
+    querySelector: selector => selector === '.md-content__inner' ? article : themeMarker,
     querySelectorAll: selector => selector.startsWith('input[') ? options : selector === '[data-bijux-theme-toggle]' ? [button] : [] };
-  const context = { window, document, localStorage: { getItem: key => saved.get(key) ?? null, setItem: (key, value) => saved.set(key, value) },
+  const context = { window, document, location: new URL('https://example.test/reader/'), localStorage: { getItem: key => saved.get(key) ?? null, setItem: (key, value) => saved.set(key, value) },
     Event: class { constructor(type) { this.type = type; } },
     CustomEvent: class { constructor(type, details) { this.type = type; this.detail = details.detail; } },
     requestAnimationFrame: callback => callback(), setTimeout: callback => callback(),

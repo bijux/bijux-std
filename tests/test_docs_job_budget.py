@@ -188,10 +188,14 @@ class FrontendJobBudgetTests(unittest.TestCase):
             catalogue = owner / 'catalogue'
             catalogue.mkdir()
             (catalogue / 'execution.py').write_text("GROUPS = {'source': ('test_source',)}\n")
-            for name in ('browser_gate.py', 'browser_partitions.py', 'browser_partitions.json', 'renderer_controls.py', 'node_events.cjs'):
+            for name in ('browser_gate.py', 'browser_partitions.py', 'browser_partitions.json', 'renderer_controls.py', 'node_events.cjs', 'persisted_reader.py'):
                 (root / name).write_text(name)
+            for name in ('playwright.persisted-reader-history.config.js', 'ui/generated-specs/persisted-reader-history.spec.js'):
+                path = owner / name
+                path.parent.mkdir(parents=True, exist_ok=True)
+                path.write_text(name)
             before = BUDGET.registry_digests(root / 'browser_gate.py')
-            self.assertEqual(set(before), {'browser_gate.py', 'browser_partitions.py', 'browser_partitions.json', 'renderer_controls.py', 'node_events.cjs', 'catalogue/execution.py'})
+            self.assertEqual(set(before), {'browser_gate.py', 'browser_partitions.py', 'browser_partitions.json', 'renderer_controls.py', 'node_events.cjs', 'persisted_reader.py', 'playwright.persisted-reader-history.config.js', 'ui/generated-specs/persisted-reader-history.spec.js', 'catalogue/execution.py'})
             (root / 'browser_partitions.json').write_text('changed declaration')
             after = BUDGET.registry_digests(root / 'browser_gate.py')
             self.assertNotEqual(before['browser_partitions.json'], after['browser_partitions.json'])
@@ -222,9 +226,9 @@ class FrontendJobBudgetTests(unittest.TestCase):
         owner.mkdir(parents=True, exist_ok=True)
         with tempfile.TemporaryDirectory(dir=owner) as directory:
             path = Path(directory) / 'renderer_controls.py'
-            path.write_text("GROUPS = ('renderer', 'passive-reader')\n")
+            path.write_text("GROUPS = ('renderer', 'passive-reader', 'interactive-reports', 'interactive-make-dispatch', 'interactive-make-refusal', 'interactive-make-docs', 'interactive-make-docs-check')\n")
             self.assertEqual(BUDGET.renderer_job_names(path),
-                             {'std / renderer controls / renderer', 'std / renderer controls / passive-reader'})
+                             {'std / renderer controls / '+name for name in ('renderer', 'passive-reader', 'interactive-reports', 'interactive-make-dispatch', 'interactive-make-refusal', 'interactive-make-docs', 'interactive-make-docs-check')})
             for source in ["GROUPS = ()", "GROUPS = ['renderer']", "GROUPS = ('renderer', 'renderer')",
                            "GROUPS = ('renderer/unknown',)", "GROUPS = (1,)", "GROUPS = ([],)",
                            "GROUPS = tuple(['renderer'])", "GROUPS = ('renderer',)\nGROUPS = ('passive-reader',)"]:
@@ -234,7 +238,7 @@ class FrontendJobBudgetTests(unittest.TestCase):
 
     def test_every_renderer_partition_is_independently_required_and_budgeted(self):
         wanted = BUDGET.renderer_job_names()
-        self.assertEqual(wanted, {'std / renderer controls / renderer', 'std / renderer controls / passive-reader'})
+        self.assertEqual(wanted, {'std / renderer controls / '+name for name in ('renderer', 'passive-reader', 'interactive-reports', 'interactive-make-dispatch', 'interactive-make-refusal', 'interactive-make-docs', 'interactive-make-docs-check')})
         self.assertEqual({row['name'] for row in self.verify()['jobs']
                           if row['name'].startswith('std / renderer controls / ')}, wanted)
         baseline = copy.deepcopy(self.data)
