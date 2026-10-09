@@ -16,6 +16,14 @@ Make real frontend regressions fail required CI before promotion.
 
 ### Merged pull requests
 
+#### 2026-10-09T02:01:13Z — [#223](https://github.com/bijux/bijux-std/pull/223) — fix(docs): bind publication source and callback inputs to committed git
+
+Bind publication inputs to their exact committed Git bytes without treating ignored run caches as source.
+
+- Verify tracked paths, HEAD blobs and executable modes independently of index flags, and reject source changes during capture.
+- Require reviewed callback source and every declared asset input to match committed captured bytes before rendering and revalidation.
+- Retain verification fixtures and all renderer, shared authority, public output and approved-profile checks.
+
 #### 2026-10-09T01:46:38Z — [#224](https://github.com/bijux/bijux-std/pull/224) — test(docs): verify authored reader history policy inheritance
 
 Make the product-owned reader URL policy explicit when a legacy inherited feature list enables anchor tracking.
