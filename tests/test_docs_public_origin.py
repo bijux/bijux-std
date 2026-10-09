@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import json
+import importlib.util
 import os
 from pathlib import Path
 import shutil
@@ -11,11 +12,13 @@ import tempfile
 import unittest
 
 ROOT = Path(__file__).resolve().parents[1]
+ARTIFACTS = Path(os.environ.get("BIJUX_PUBLIC_ORIGIN_TEST_ARTIFACTS_ROOT",
+                               ROOT / "artifacts/website-delivery/public-origins"))
 
 
 class DocsPublicOriginTests(unittest.TestCase):
     def setUp(self):
-        folder = ROOT / "artifacts/website-delivery/public-origins"
+        folder = ARTIFACTS
         folder.mkdir(parents=True, exist_ok=True)
         self.sandbox = tempfile.TemporaryDirectory(prefix="origin-admission-", dir=folder)
         self.addCleanup(self.sandbox.cleanup)
@@ -79,7 +82,7 @@ with Path(os.environ["BIJUX_ORIGIN_EVENTS"]).open("a") as log:
                                  *(f"{name}={value}" for name, value in variables.items())],
                                 cwd=self.repo, env=self.env, text=True, capture_output=True, timeout=15)
         events = [json.loads(line) for line in self.events.read_text().splitlines()] if self.events.exists() else []
-        receipts = ROOT / "artifacts/website-delivery/public-origins/receipts"
+        receipts = ARTIFACTS / "receipts"
         receipts.mkdir(exist_ok=True)
         existing = list(receipts.glob(self._testMethodName + "-*.json"))
         (receipts / f"{self._testMethodName}-{len(existing)}.json").write_text(json.dumps({
@@ -133,6 +136,52 @@ with Path(os.environ["BIJUX_ORIGIN_EVENTS"]).open("a") as log:
         self.assertIn("validator is unavailable", result.stderr)
         self.assertEqual(events, [])
         self.assertTrue(self.seed.is_file())
+
+    def policy(self):
+        spec = importlib.util.spec_from_file_location("owned_origin_policy", self.validator)
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+        return module
+
+    def test_unicode_loopback_origins_reject_before_build_mutation(self):
+        for goal, variable in (("docs", "DOCS_BUILD_SITE_URL"), ("docs-check", "DOCS_CHECK_SITE_URL")):
+            for host in ("127\u30020.0.1", "127\uff0e0.0.1", "127\uff610.0.1", "\uff10x7f.0.0.1"):
+                with self.subTest(goal=goal, host=host):
+                    result, events = self.make(goal, **{variable: "https://" + host + "/"})
+                    self.assertNotEqual(result.returncode, 0)
+                    self.assertIn("local/private/reserved/development hostname", result.stderr)
+                    self.assertEqual(events, [])
+                    self.assertEqual(self.seed.read_text(), "Existing qualified documentation")
+
+    def test_unicode_public_hosts_preserve_public_origin_admission(self):
+        policy = self.policy()
+        for host in ("b\u00fccher.de", "caf\u00e9.example.com", "bijux\u3002io", "bijux\uff0eio"):
+            with self.subTest(host=host):
+                self.assertFalse(policy.development_host(host))
+                self.assertEqual(policy.validate("https://" + host + "/docs/"), "https://" + host + "/docs/")
+
+    def test_unicode_private_suffixes_and_compatibility_literals_are_private(self):
+        policy = self.policy()
+        for host in ("assets.private\u3002internal", "assets.private\uff0einternal", "assets.private\uff61internal",
+                     "assets.local\u3002home.arpa", "\uff11\uff12\uff17.0.0.1", "\uff10x7f.0.0.1"):
+            with self.subTest(host=host):
+                self.assertTrue(policy.development_host(host))
+
+    def test_literal_ip_and_development_boundaries_survive_host_normalization(self):
+        policy = self.policy()
+        for host in ("localhost.", "127.1", "2130706433", "0177.0.0.1", "0x7f.0.0.1", "192.168.1.2",
+                     "10.0.0.1", "169.254.1.2", "::1", "fc00::1", "fe80::1", "224.0.0.1"):
+            with self.subTest(host=host):
+                self.assertTrue(policy.development_host(host))
+        for host in ("bijux.io", "8.8.8.8", "2001:4860:4860::8888"):
+            with self.subTest(host=host):
+                self.assertFalse(policy.development_host(host))
+
+    def test_unsupported_idna_hosts_fail_closed(self):
+        policy = self.policy()
+        for host in ("\ud800.example.com", "a..example.com", "a" * 64 + ".example.com"):
+            with self.subTest(host=host):
+                self.assertTrue(policy.development_host(host))
 
     def test_source_authority_rejection_still_precedes_cleaning(self):
         self.write_makefile(source_exit=3)
