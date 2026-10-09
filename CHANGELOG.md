@@ -12,7 +12,7 @@ Capture the actual hosted Linux runtime for Canon's exact documentation dependen
 
 - Keep the canonical fixture environment unchanged and bind all 36 dependency pins to reviewed source/lock provenance.
 - Reuse physical package, runtime, startup and callback observers in a read-only 3-minute job; retain actual source/run/attempt evidence.
-- Compare cached numeric constants by exact IEEE representation, retaining NaN set multiplicity and rejecting altered executable fields.
+- Compare cached numeric constants by exact IEEE representation and preserve non-reflexive reference graphs, rejecting altered values, aliases and executable fields.
 - Keep profile approval, consumer acceptance, authored build and publication separate; the prerequisite #226 is accepted.
 
 ### Merged pull requests
