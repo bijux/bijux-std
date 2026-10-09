@@ -14,9 +14,9 @@ Capture the actual hosted Linux runtime for Canon's exact documentation dependen
 - Reuse physical package, runtime, startup and callback observers in a read-only 3-minute job; retain actual source/run/attempt evidence.
 - Compare cached numeric constants by exact IEEE representation and preserve non-reflexive reference graphs, rejecting altered values, aliases and executable fields.
 - Keep profile approval, consumer acceptance, authored build and publication separate; the prerequisite #226 is accepted.
+- Compare legitimate large unordered constant sets with explicit search frames while preserving NaN reference bijections, typed payloads, multiplicity and the fail-closed search budget.
 
 ### Merged pull requests
-- Compare legitimate large unordered constant sets with explicit search frames while preserving NaN reference bijections, typed payloads, multiplicity and the fail-closed search budget.
 
 
 #### 2026-10-09T03:07:07Z — [#226](https://github.com/bijux/bijux-std/pull/226) — fix(docs): admit reviewed revision history capability
