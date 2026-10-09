@@ -2,7 +2,7 @@ const fs = require("node:fs");
 const path = require("node:path");
 const registry = JSON.parse(fs.readFileSync(path.resolve(__dirname, "../../../../shared/bijux-docs/config/hub-links.json"), "utf8"));
 const { test, expect } = require("./helpers/document");
-const { tabTo, settle } = require("./contrast-targets/measurement");
+const { tabTo, settle, focus: measureFocus } = require("./contrast-targets/measurement");
 const control = (page, kind) => page.locator(`[data-bijux-header-control='${kind}-toggle']`);
 const drawer = (page) => page.locator(".md-sidebar--primary");
 const exposedLinks = (page) => drawer(page).locator("a:visible");
@@ -227,16 +227,57 @@ async function mastheadGeometry(page, firstContent = false) {
     const exposed = node => { const r = node.getBoundingClientRect(), s = getComputedStyle(node); return r.width > 0 && r.height > 0 && s.visibility !== "hidden" && !node.closest("[hidden]"); };
     const controls = [...header.querySelectorAll("[data-bijux-header-control], [data-bijux-theme-toggle]")].filter(exposed).map(node => {
       const rect = box(node), hit = document.elementFromPoint((rect.left + rect.right) / 2, (rect.top + rect.bottom) / 2);
-      return { name:node.getAttribute("aria-label"), rect, hit:hit === node || node.contains(hit) };
+      return { kind:node.getAttribute("data-bijux-header-control") || "theme-toggle", name:node.getAttribute("aria-label"), rect, hit:hit === node || node.contains(hit) };
     });
     const helpers = [...header.querySelectorAll("[data-bijux-header-control] .md-visually-hidden")].map(box);
+    const titles = [...header.querySelectorAll("[data-bijux-header-topic]")].filter(exposed).map(node => {
+      const text = node.querySelector(".md-ellipsis"), glyphs = [], clips = [];
+      const walker = document.createTreeWalker(text, NodeFilter.SHOW_TEXT);
+      for (let leaf = walker.nextNode(); leaf; leaf = walker.nextNode()) {
+        const start = leaf.textContent.search(/\S/), end = leaf.textContent.search(/\s*$/);
+        if (start < 0) continue;
+        const range = document.createRange(); range.setStart(leaf, start); range.setEnd(leaf, end);
+        for (const rect of range.getClientRects()) glyphs.push({ left:rect.left, right:rect.right, top:rect.top, bottom:rect.bottom });
+      }
+      for (let ancestor = text; ancestor; ancestor = ancestor.parentElement) {
+        const style = getComputedStyle(ancestor);
+        if (["hidden","clip","auto","scroll"].includes(style.overflowX) || ["hidden","clip","auto","scroll"].includes(style.overflowY))
+          clips.push({ rect:box(ancestor), x:style.overflowX !== "visible", y:style.overflowY !== "visible" });
+      }
+      return { kind:node.getAttribute("data-bijux-header-topic"), text:text.textContent.trim(), rect:box(text),
+        scrollWidth:text.scrollWidth, clientWidth:text.clientWidth, glyphs, clips };
+    });
     const content = [document.querySelector("main h1"), document.querySelector("main .md-typeset > p")].map(node => {
       if (!node) return null;
       const rect = box(node), hit = document.elementFromPoint((rect.left + rect.right) / 2, (rect.top + rect.bottom) / 2);
       return { text:node.textContent.trim(), rect, hit:hit === node || node.contains(hit) };
     });
-    return { header:box(header), controls, helpers, content, viewport:{width:innerWidth,height:innerHeight} };
+    return { header:box(header), controls, helpers, titles, content, viewport:{width:innerWidth,height:innerHeight} };
   });
+  await test.info().attach(`masthead-${observed.viewport.width}x${observed.viewport.height}-${observed.titles[0]?.clientWidth || 0}.json`,
+    { body:Buffer.from(JSON.stringify(observed, null, 2)), contentType:"application/json" });
+  const expectedControls = observed.viewport.width < 1220 ? ["drawer-toggle", "search-toggle", "theme-toggle"] : ["search-toggle", "theme-toggle"];
+  expect(observed.controls.map(entry => entry.kind).sort(), "Required utilities survive the actual width and text sizing; an empty census cannot pass").toEqual(expectedControls);
+  expect(observed.titles.length, "Only one title layer may be exposed").toBe(observed.viewport.width < 1220 ? 1 : 0);
+  for (const title of observed.titles) {
+    expect(title.kind).toBe("site");
+    expect(title.text).toBe("Bijux");
+    expect(title.glyphs.length, "The visible identity has actual rendered text glyphs").toBeGreaterThan(0);
+    expect(title.scrollWidth, "The complete visible identity is not ellipsized").toBeLessThanOrEqual(title.clientWidth + 1);
+    for (const glyph of title.glyphs) {
+      expect(glyph.left).toBeGreaterThanOrEqual(0);
+      expect(glyph.right).toBeLessThanOrEqual(observed.viewport.width + 1);
+      for (const clip of title.clips) {
+        if (clip.x) { expect(glyph.left).toBeGreaterThanOrEqual(clip.rect.left - 1); expect(glyph.right).toBeLessThanOrEqual(clip.rect.right + 1); }
+        if (clip.y) { expect(glyph.top).toBeGreaterThanOrEqual(clip.rect.top - 1); expect(glyph.bottom).toBeLessThanOrEqual(clip.rect.bottom + 1); }
+      }
+      for (const utility of observed.controls) {
+        const rect = utility.rect;
+        expect(glyph.right <= rect.left + 1 || rect.right <= glyph.left + 1 || glyph.bottom <= rect.top + 1 || rect.bottom <= glyph.top + 1,
+          "Identity glyphs do not compete with utility targets").toBe(true);
+      }
+    }
+  }
   for (const entry of observed.controls) {
     expect(entry.name, "Every exposed utility retains an accessible name").toMatch(/\S/);
     expect(entry.rect.width).toBeGreaterThanOrEqual(44);
@@ -292,8 +333,11 @@ async function drawerBrandGeometry(page) {
   }
 }
 
-test("inactive navigation strips remain absent at every responsive boundary", async ({ page }) => {
-  for (const width of [320, 767, 768, 820, 1024, 1219, 1220, 1440]) {
+test("inactive navigation strips remain absent at every responsive boundary", async ({ page }, info) => {
+  // Each engine's phone assignment owns the supplemental matrix once; existing
+  // phone/compact/desktop journeys retain their original boundary assertions.
+  const supplemental = info.project.name.endsWith("-phone") ? [360, 412, 769, 1100, 1221, 1280, 1920] : [];
+  for (const width of [320, 767, 768, 820, 1024, 1219, 1220, 1440, ...supplemental]) {
     await page.setViewportSize({ width, height: 900 });
     await ready(page);
     const hidden = page.locator("[data-bijux-detail-strip][hidden], [data-bijux-course-strip][hidden]");
@@ -319,8 +363,14 @@ test("inactive navigation strips remain absent at every responsive boundary", as
   await ready(page);
   expect(await page.locator("header").first().evaluate(node => node.getBoundingClientRect().height)).toBeLessThanOrEqual(64);
   await mastheadGeometry(page, true);
+  if (info.project.name.endsWith("-phone")) {
+    await page.setViewportSize({ width:667, height:320 });
+    await ready(page, "/platform/");
+    expect(await page.locator("header").first().evaluate(node => node.getBoundingClientRect().height)).toBeLessThanOrEqual(64);
+    await mastheadGeometry(page, true);
+  }
 });
-test("phone brand and visually hidden helper text preserve useful space", async ({ page }) => {
+test("phone brand and visually hidden helper text preserve useful space", async ({ page }, info) => {
   await page.setViewportSize({ width: 320, height: 700 });
   const logoResponse = page.waitForResponse(response => new URL(response.url()).pathname.endsWith("/assets/bijux_logo.png"));
   await ready(page);
@@ -346,10 +396,11 @@ test("phone brand and visually hidden helper text preserve useful space", async 
   await expect.poll(() => logo.evaluate(image => image.complete && image.naturalWidth === 128 && image.naturalHeight === 128)).toBe(true);
   await drawerBrandGeometry(page);
   await page.keyboard.press("Escape");
-  for (const width of [320,390]) {
+  const supplementaryWidths = info.project.name.endsWith("-phone") ? [360,412,767,768,769,820,1024,1100,1219,1220,1221,1280,1440,1920] : [];
+  for (const width of [320,390,...supplementaryWidths]) {
     for (const enlarged of [false,true]) {
       await page.setViewportSize({ width, height:844 });
-      await ready(page);
+      await ready(page, "/platform/");
       if (enlarged) {
         const size = await page.evaluate(() => parseFloat(getComputedStyle(document.documentElement).fontSize));
         await page.addStyleTag({ content:`html { font-size:${size * 2}px !important; } * { line-height:1.5 !important; letter-spacing:.12em !important; word-spacing:.16em !important; } p { margin-block-end:2em !important; }` });
@@ -360,17 +411,31 @@ test("phone brand and visually hidden helper text preserve useful space", async 
       }
       await mastheadGeometry(page);
       expect(await page.evaluate(() => document.documentElement.scrollWidth - innerWidth)).toBeLessThanOrEqual(1);
-      await openDrawer(page);
-      await drawerBrandGeometry(page);
-      await drawer(page).getByRole("button", { name:"Close navigation", exact:true }).click();
-      await expect(page.locator("#__drawer")).not.toBeChecked();
-      await expect(control(page,"drawer")).toBeFocused();
-      await control(page,"search").click();
-      await expect(page.locator("#__search")).toBeChecked();
-      await expect(page.locator("[data-md-component='search-query']")).toBeFocused();
-      await page.keyboard.press("Escape");
-      await expect(control(page,"search")).toBeFocused();
+      // The existing 320/390 input journeys own every activation assertion;
+      // supplemental widths qualify the same controls' geometry and names.
+      if (width === 320 || width === 390) {
+        if (width < 1220) {
+          await openDrawer(page);
+          await drawerBrandGeometry(page);
+          await drawer(page).getByRole("button", { name:"Close navigation", exact:true }).click();
+          await expect(page.locator("#__drawer")).not.toBeChecked();
+          await expect(control(page,"drawer")).toBeFocused();
+        }
+        await control(page,"search").click();
+        await expect(page.locator("#__search")).toBeChecked();
+        await expect(page.locator("[data-md-component='search-query']")).toBeFocused();
+        await page.keyboard.press("Escape");
+        await expect(control(page,"search")).toBeFocused();
+      }
     }
+  }
+  if (info.project.name.endsWith("-phone")) for (const width of [568,667]) {
+    await page.setViewportSize({ width, height:320 });
+    await ready(page, "/platform/");
+    const size = await page.evaluate(() => parseFloat(getComputedStyle(document.documentElement).fontSize));
+    await page.addStyleTag({ content:`html { font-size:${size * 2}px !important; } * { line-height:1.5 !important; letter-spacing:.12em !important; word-spacing:.16em !important; } p { margin-block-end:2em !important; }` });
+    await mastheadGeometry(page);
+    expect(await page.evaluate(() => document.documentElement.scrollWidth - innerWidth)).toBeLessThanOrEqual(1);
   }
 });
 test("tablet drawer exposes real destinations through ordinary pointer input", async ({ page }) => {
@@ -518,6 +583,59 @@ test("empty and expanded-registry fixtures retain useful navigation", async ({ p
     await touchJourney(browser, info, touchPage => lastAndCurrentRegistry(touchPage, info, expected, "/fixtures/long-registry/", "touch"));
   }
 });
+async function nativeHeaderGeometry(page, expectedTitle, info) {
+  const observed = await page.locator("header").evaluate(header => {
+    const bounds = node => { const r = node.getBoundingClientRect(); return { left:r.left, right:r.right, top:r.top, bottom:r.bottom }; };
+    const glyphs = node => {
+      const walk = document.createTreeWalker(node, NodeFilter.SHOW_TEXT), rectangles = [];
+      for (let text = walk.nextNode(); text; text = walk.nextNode()) {
+        if (!text.textContent.trim()) continue;
+        const range = document.createRange(); range.selectNodeContents(text);
+        for (const r of range.getClientRects()) rectangles.push({ left:r.left, right:r.right, top:r.top, bottom:r.bottom });
+      }
+      return rectangles;
+    };
+    const title = header.querySelector("[data-bijux-header-topic='site'] .md-ellipsis");
+    const label = header.querySelector("label[for='__drawer'].bijux-native-drawer-label");
+    const clipping = [];
+    for (let ancestor = title; ancestor; ancestor = ancestor.parentElement) {
+      const style = getComputedStyle(ancestor);
+      if (["hidden","clip","auto","scroll"].includes(style.overflowX) || ["hidden","clip","auto","scroll"].includes(style.overflowY))
+        clipping.push({ rect:bounds(ancestor), x:style.overflowX !== "visible", y:style.overflowY !== "visible" });
+    }
+    return { title:title.textContent.trim(), titleGlyphs:glyphs(title), labelGlyphs:glyphs(label),
+      label:label.textContent.trim(), labelFor:label.htmlFor, header:bounds(header),
+      rootFont:parseFloat(getComputedStyle(document.documentElement).fontSize),
+      checkbox:bounds(document.querySelector("#__drawer")), clipping, width:innerWidth,
+      documentWidth:document.documentElement.scrollWidth };
+  });
+  await info.attach(`native-enlarged-${page.viewportSize().width}-${expectedTitle}.json`,
+    { body:Buffer.from(JSON.stringify(observed, null, 2)), contentType:"application/json" });
+  await info.attach(`native-enlarged-${page.viewportSize().width}-${expectedTitle}.png`,
+    { body:await page.screenshot(), contentType:"image/png" });
+  expect(observed.title).toBe(expectedTitle);
+  expect(observed.label).toBe("Navigation");
+  expect(observed.labelFor).toBe("__drawer");
+  expect(observed.labelGlyphs.length).toBeGreaterThan(0);
+  expect(observed.titleGlyphs.length).toBeGreaterThan(0);
+  for (const glyph of observed.labelGlyphs) {
+    expect(glyph.top, "Navigation text stays beside its native checkbox").toBeGreaterThanOrEqual(observed.checkbox.top);
+    expect(glyph.bottom, "Navigation text stays beside its native checkbox").toBeLessThanOrEqual(observed.checkbox.bottom);
+  }
+  for (const glyph of observed.titleGlyphs) {
+    expect(glyph.left).toBeGreaterThanOrEqual(0);
+    expect(glyph.right).toBeLessThanOrEqual(observed.width);
+    for (const clip of observed.clipping) {
+      if (clip.x) { expect(glyph.left).toBeGreaterThanOrEqual(clip.rect.left); expect(glyph.right).toBeLessThanOrEqual(clip.rect.right); }
+      if (clip.y) { expect(glyph.top).toBeGreaterThanOrEqual(clip.rect.top); expect(glyph.bottom).toBeLessThanOrEqual(clip.rect.bottom); }
+    }
+    const target = observed.checkbox;
+    expect(glyph.right <= target.left || target.right <= glyph.left || glyph.bottom <= target.top || target.bottom <= glyph.top,
+      "Complete identity does not compete with the native navigation target").toBe(true);
+  }
+  expect(observed.documentWidth).toBeLessThanOrEqual(observed.width);
+}
+
 test("no-script generated document retains ordinary destination links", async ({ browser }, info) => {
   const context = await browser.newContext({ javaScriptEnabled: false, viewport: { width: 390, height: 844 } });
   try {
@@ -557,6 +675,44 @@ test("no-script generated document retains ordinary destination links", async ({
       await reading.click();
       await expect(page).toHaveURL(/\/reading\/$/);
       await expect(page.locator("h1")).toBeVisible();
+    }
+    // Qualify enlargement once per engine; the other viewport profiles retain
+    // the unchanged ordinary fallback journey above.
+    if (info.project.name.endsWith("-phone")) for (const width of [320,390]) {
+      for (const [route, title] of [["/", "Bijux"], ["/bijux-pollenomics/", "bijux-pollenomics"]]) {
+        const preferenceContext = await browser.newContext({ javaScriptEnabled:false, viewport:{ width, height:844 } });
+        const preferencePage = await preferenceContext.newPage();
+        try {
+          await preferencePage.goto(new URL(route, info.project.use.baseURL).href);
+          const font = await preferencePage.evaluate(() => parseFloat(getComputedStyle(document.documentElement).fontSize));
+          const preference = `html { font-size:${font * 2}px !important; } * { line-height:1.5 !important; letter-spacing:.12em !important; word-spacing:.16em !important; } p { margin-block-end:2em !important; }`;
+          // Deliver user CSS without relying on no-script DOM insertion events.
+          const style = async request => {
+            const response = await request.fetch();
+            await request.fulfill({ response, body:await response.text() + "\n" + preference });
+          };
+          await preferencePage.route("**/assets/styles/08-responsive.css", style);
+          try {
+            await preferencePage.reload();
+            expect(await preferencePage.evaluate(() => parseFloat(getComputedStyle(document.documentElement).fontSize))).toBe(font * 2);
+            await nativeHeaderGeometry(preferencePage, title, info);
+            const native = preferencePage.getByRole("checkbox", { name:"Navigation", exact:true });
+            await tabTo(preferencePage, native, browser.browserType().name());
+            const focus = await measureFocus(preferencePage, native);
+            expect(focus.focusVisible).toBe(true);
+            expect(focus.ratio).toBeGreaterThanOrEqual(3);
+            expect(focus.rectangle.width).toBeGreaterThanOrEqual(44);
+            expect(focus.rectangle.height).toBeGreaterThanOrEqual(44);
+            expect(focus.centerOwned).toBe(true);
+            await preferencePage.keyboard.press("Space");
+            await expect(native).toBeChecked();
+            await expect(drawer(preferencePage)).toBeVisible();
+            await preferencePage.keyboard.press("Space");
+            await expect(native).not.toBeChecked();
+            await expect(native).toBeFocused();
+          } finally { await preferencePage.unroute("**/assets/styles/08-responsive.css", style); }
+        } finally { await preferenceContext.close(); }
+      }
     }
   } finally {
     await context.close();
