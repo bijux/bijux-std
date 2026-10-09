@@ -4,7 +4,7 @@ const source=fs.readFileSync(process.env.BOOTSTRAP_SOURCE||path.resolve(__dirnam
 const begin=source.indexOf('  function bindDrawer(signal) {'),end=source.indexOf('  function bindSearch(signal) {',begin),fn=source.slice(begin,end),helper=source.slice(source.indexOf('  function bindPopupIdentity('),begin);
 class Element extends EventTarget {
  constructor(){super();this.isConnected=true;this.disabled=false;this.inert=false;this.checked=false;this.attrs={};this.dataset={};}
- closest(){return this.inertAncestor || null;}hasAttribute(k){return Object.hasOwn(this.attrs,k);}
+ closest(){return this.inertAncestor || null;}matches(selector){return selector.toUpperCase()===this.tagName;}hasAttribute(k){return Object.hasOwn(this.attrs,k);}
  getAttribute(k){return this.attrs[k]??null;}setAttribute(k,v){this.attrs[k]=String(v);}removeAttribute(k){delete this.attrs[k];}
  querySelectorAll(){return [];}contains(n){return n===this;}getClientRects(){return [{}];}focus(options){this.focusCount=(this.focusCount||0)+1;this.focusOptions=options;}
 }
@@ -15,7 +15,7 @@ function fixture({owned=true,missing=false,initialInert=false,nativeControls=[],
  const nativeDrawerLabels=new WeakMap();const scope={document,compact,nativeDrawerLabels,signal:signal.signal,Event,URL,queueMicrotask,window:{location:{href:location}},getComputedStyle:()=>({visibility:'visible'})};
  let state;
  const consumer=source.slice((source.includes('      const focusReading =') ? source.indexOf('      const focusReading =') : source.indexOf('      if (readingIntent) {')),source.indexOf('      if (drawerBound)'));
- return {scope,drawerControls,readIntent:()=>state.intent(),consume:()=>state.consume(),document,toggle,sidebar,navigation,opener,compact,signal,nativeDrawerLabels,bind:()=>{state=vm.runInNewContext('let closeDrawer;let readingIntent=false;'+helper+fn+'({bind:()=>bindDrawer(signal),intent:()=>readingIntent,consume:()=>{'+consumer+'}});',scope);return state.bind();}};
+ return {scope,drawerControls,readIntent:()=>state.intent(),consume:()=>state.consume(),document,toggle,sidebar,navigation,opener,compact,signal,nativeDrawerLabels,bind:()=>{state=vm.runInNewContext('let closeDrawer;let readingIntent=false;const disconnectedReader=false;'+helper+fn+'({bind:()=>bindDrawer(signal),intent:()=>readingIntent,consume:()=>{'+consumer+'}});',scope);return state.bind();}};
 }
 test('native header skips unrelated drawer requirements instead of blocking independent search',()=>{const f=fixture({owned:false,missing:true});assert.equal(f.bind(),false);assert.equal(f.document.body.dataset.bijuxDrawerReady,undefined);f.signal.abort();});
 test('server-owned drawer with missing required native control fails before readiness',()=>{const f=fixture({missing:true});assert.throws(()=>f.bind(),/requires its native control/);assert.equal(f.document.body.dataset.bijuxDrawerReady,undefined);f.signal.abort();});
@@ -163,7 +163,7 @@ for (const state of ["disconnected", "hidden", "disabled", "inert-ancestor"]) {
   });
 }
 test("an admitted instant emission owns heading focus only at its actual destination", async () => {
-  const f = opened(), heading = new Element();
+  const f = opened(), heading = new Element(); heading.tagName = "H1";
   const event = activate(f);
   event.preventDefault();
   await Promise.resolve();
@@ -178,7 +178,7 @@ test("an admitted instant emission owns heading focus only at its actual destina
   f.signal.abort();
 });
 test("a mismatched instant emission consumes stale intent without redirecting reader focus", async () => {
-  const f = opened(), heading = new Element();
+  const f = opened(), heading = new Element(); heading.tagName = "H1";
   activate(f).preventDefault();
   await Promise.resolve();
   f.document.querySelector = selector => selector === ".md-content h1" ? heading : null;
@@ -188,7 +188,7 @@ test("a mismatched instant emission consumes stale intent without redirecting re
   f.signal.abort();
 });
 test("current-route native handoff does not leave a heading intent for later lifecycle rebind", async () => {
-  const f = opened(), heading = new Element();
+  const f = opened(), heading = new Element(); heading.tagName = "H1";
   activate(f, { target: "_self", href: f.scope.window.location.href });
   await Promise.resolve();
   f.document.querySelector = selector => selector === ".md-content h1" ? heading : null;
