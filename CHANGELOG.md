@@ -6,15 +6,23 @@ This file records notable repository-level changes for `bijux-std`.
 
 ### Pending review
 
-#### [#237](https://github.com/bijux/bijux-std/pull/237) — fix(docs): retain authored labels for reused navigation pages
+#### [#239](https://github.com/bijux/bijux-std/pull/239) — ci(docs): bound concurrent browser container provisioning
+
+Limit concurrent cold browser-container pulls while preserving complete qualification and the three-minute whole-job limit.
+
+- Bound the unchanged browser matrix to 12 concurrent jobs per run.
+- Retain all engines, profiles, 645 cases, runtime pins and failure-rejecting receipts.
+- Record provider startup failures separately from frontend assertion failures; qualify the current source before acceptance.
+
+### Merged pull requests
+
+#### 2026-10-09T07:25:36Z — [#237](https://github.com/bijux/bijux-std/pull/237) — fix(docs): retain authored labels for reused navigation pages
 
 Keep each reused page occurrence’s authored navigation name while preserving its route and content identity.
 
 - Match the authored parent and source before recovering aliases such as Overview instead of a reused Home title.
 - Preserve provider Link labels and single-Page titles, using one occurrence census in the existing shared macros.
 - Verify alias, mismatch and provider controls without closing separate active-ancestor semantics.
-
-### Merged pull requests
 
 #### 2026-10-09T07:06:31Z — [#238](https://github.com/bijux/bijux-std/pull/238) — ci(docs): bound contrast jobs by viewport ownership
 
