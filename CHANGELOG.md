@@ -6,14 +6,22 @@ This file records notable repository-level changes for `bijux-std`.
 
 ### Pending review
 
-#### [#222](https://github.com/bijux/bijux-std/pull/222) — fix(docs): resolve redirect canonicals before route qualification
+#### [#223](https://github.com/bijux/bijux-std/pull/223) — fix(docs): capture owned publication source apart from run aliases
+
+Capture clean tracked publication inputs without treating ignored test-cache aliases as source.
+
+- Retain exact tracked-source ownership, dirty/untracked rejection and tracked symlink checks.
+- Keep actual renderer input, shared authority, public output and approved-profile validation intact.
+
+
+### Merged pull requests
+
+#### 2026-10-09T01:13:15Z — [#222](https://github.com/bijux/bijux-std/pull/222) — fix(docs): resolve redirect canonicals before route qualification
 
 Resolve relative redirect canonicals against their source route before checking the built destination and sitemap.
 
 - Preserve exact absolute canonicals for content pages and reject foreign, missing, escaped or query/fragment redirect targets.
 - Validate nested redirect controls and the unchanged real Canon corpus of 371 routes and 2,292 search entries.
-
-### Merged pull requests
 
 #### 2026-10-09T00:59:18Z — [#217](https://github.com/bijux/bijux-std/pull/217) — fix(docs): contain focus paint within navigation boundaries
 
