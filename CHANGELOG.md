@@ -13,6 +13,15 @@ Use pip 26.2 in the active isolated catalogue verification environment.
 - Match both release hashes to published package files and retain the exact 43-distribution runtime guard.
 - Preserve the default renderer lock and frozen historical admission profiles; verification remains separate from production approval.
 
+#### [#245](https://github.com/bijux/bijux-std/pull/245) — feat(docs): integrate source-owned standalone reader discovery
+
+Make passive report notices reachable through native documentation Return/Search links and source-owned search/sitemap entries.
+
+- Bind exact tracked purposes to real delivered native targets; independently rederive search, sitemap and gzip composition.
+- Retain original report body bytes and restrictive CSP; unknown or mutated standalone routes remain rejected.
+- Correct ordinary filenames ending in index.html and qualify six current three-engine reader journeys without claiming full consumer publication.
+
+
 ### Merged pull requests
 
 #### 2026-10-09T12:24:07Z — [#243](https://github.com/bijux/bijux-std/pull/243) — feat(docs): qualify committed catalogue reader sources

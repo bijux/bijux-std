@@ -51,6 +51,8 @@ def _report_capability(report, bodies):
 
 def _descriptor_inputs(descriptor):
     inputs = [descriptor["config"], *descriptor["producer_inputs"]]
+    if descriptor.get("reader_purpose") is not None:
+        inputs.append(descriptor["reader_purpose"])
     for report in descriptor["reports"]:
         inputs.append(report["source"])
         inputs.extend(
@@ -130,6 +132,10 @@ def plan_embedded_reports(
         repo_root, source_sha, _descriptor_inputs(descriptor)
     )
     _, initial_bundle = bundle_identity(site)
+    from .reader import purposes, insert, sitemap, search_index
+    reader_purposes = purposes(repo_root, site, descriptor)
+    reader_sitemap = sitemap(site, product_base, set(reader_purposes))
+    reader_index = search_index(site, reader_purposes)
     if (
         build_receipt.get("bundle_sha256") is not None
         and build_receipt["bundle_sha256"] != initial_bundle
@@ -287,7 +293,7 @@ def plan_embedded_reports(
         )
         if original.decode().count("<head>") != 1:
             raise AdmissionError("report head boundary is ambiguous")
-        normalized = original.decode().replace("<head>", "<head>" + marker, 1)
+        normalized = insert(original.decode().replace("<head>", "<head>" + marker, 1), output, reader_purposes.get(output))
         capability = _report_capability(report, bodies)
         records.append(
             {
@@ -374,6 +380,9 @@ def plan_embedded_reports(
         "resolved_config_sha256": build_receipt["resolved_config_sha256"],
         "site_url": product_base,
         "initial_bundle_sha256": initial_bundle,
+        "reader_purposes": reader_purposes,
+        "reader_sitemap": reader_sitemap,
+        "reader_index": reader_index,
         "records": records,
         "navigation": navigation,
         "limitations": [
@@ -437,6 +446,11 @@ def final_receipt(plan, final_build_receipt, final_policy_records):
     expected_inputs = source_inputs(
         Path(plan["repo"]), plan["source_sha"], _descriptor_inputs(descriptor)
     )
+    from .reader import purposes, insert, verify_sitemap, verify_search_index
+    if purposes(Path(plan["repo"]), site, descriptor) != plan.get("reader_purposes", {}):
+        raise AdmissionError("reader purpose differs from independently tracked source")
+    verify_sitemap(plan, site)
+    verify_search_index(plan, site)
     if expected_inputs != plan["source_inputs"]:
         raise AdmissionError("plan source input closure differs")
     _config(Path(plan["repo"]), descriptor, plan["build_receipt"])
@@ -517,6 +531,7 @@ def final_receipt(plan, final_build_receipt, final_policy_records):
                 + '">',
                 1,
             )
+            expected_html = insert(expected_html, record["path"], plan.get("reader_purposes", {}).get(record["path"]))
             expected_html = normalize(
                 expected_html, record["path"], plan["site_url"], ownership
             )["normalized_html"]

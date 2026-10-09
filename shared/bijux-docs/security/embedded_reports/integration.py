@@ -71,6 +71,9 @@ def inputs(plan):
         "resolved_config_sha256": plan["resolved_config_sha256"],
         "build_receipt_sha256": plan["build_receipt_sha256"],
         "initial_bundle_sha256": plan["initial_bundle_sha256"],
+        "reader_purposes_sha256": digest(canonical(plan.get("reader_purposes", {}))),
+        "reader_sitemap_sha256": digest(canonical(plan.get("reader_sitemap"))),
+        "reader_index_sha256": digest(canonical(plan.get("reader_index"))),
         "navigation_sha256": digest(
             canonical(
                 [
@@ -187,6 +190,13 @@ def verify_composition(
             "candidate embedded receipts cannot claim publication qualification"
         )
     descriptor = json_data(descriptor_path.read_bytes())
+    if retained["site_url"] != descriptor["site_url"]:
+        raise AdmissionError("embedded site identity differs from source-owned descriptor")
+    from .reader import purposes, insert, verify_sitemap, verify_search_index
+    if purposes(repo, Path(site), descriptor) != retained.get("reader_purposes", {}):
+        raise AdmissionError("reader purpose differs from independently tracked source")
+    verify_sitemap(retained, Path(site))
+    verify_search_index(retained, Path(site))
     plan = copy.deepcopy(retained)
     plan["scope"] = "source-owned-embedded-report-plan"
     plan.pop("applied")
@@ -210,6 +220,7 @@ def verify_composition(
                 + '">',
                 1,
             )
+            unlinked = insert(unlinked, record["path"], retained.get("reader_purposes", {}).get(record["path"]))
             link_plan = normalize(
                 unlinked, record["path"], retained["site_url"], ownership
             )
@@ -345,6 +356,8 @@ def verify_composition(
     return {
         "receipt": receipt,
         "capabilities": {r["path"]: r["capability"] for r in plan["records"]},
+        "site_url": descriptor["site_url"],
+        "reader_purposes": retained.get("reader_purposes", {}),
         "report_routes": {
             r["path"] for r in plan["records"] if r["kind"] == "owned-report"
         },

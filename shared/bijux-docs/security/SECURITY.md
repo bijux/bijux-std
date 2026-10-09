@@ -123,6 +123,21 @@ Ordinary user-followed anchors remain navigation. This capability preserves the
 existing interactive report contract and does not qualify reader discovery,
 provider behaviour, a hosted renderer or publication by itself.
 
+A descriptor may bind `reader_purpose` to an exact tracked JSON input containing
+reviewed report titles, descriptions, documentation routes and native search
+queries. The passive report receives reversible Return and Search links; the
+ordinary Material index and sitemap receive independently derived entries.
+Native targets must exist with their actual configuration and search worker.
+Search/index/sitemap/gzip changes participate in the same source-bound preflight
+and final verification as the report. Unknown reports retain ordinary route
+requirements; a path or receipt flag alone cannot exempt them.
+
+Candidate route qualification accepts `--embedded-csp-report`,
+`--completed-build-receipt` and `--source-sha` together and independently verifies
+the exact composition before interpreting standalone routes. This verification
+remains distinct from production dispatcher, renderer profile and consumer
+publication qualification.
+
 The publication manifest identifies every public file, the exact standard/source,
 policy and four retained receipts: clean source, completed actual renderer, passed
 route/search/public URL checks and applied early CSP. All artifact receipts must

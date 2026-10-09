@@ -249,8 +249,14 @@ def apply(site: Path, shared: Path, material_templates: Path, redirect_plan: dic
             raise PolicyError("Embedded processor/source/config inputs changed during preflight")
     if policy_inputs(shared, material_templates) != static_inputs or hashlib.sha256(Path(__file__).read_bytes()).hexdigest() != processor_sha256:
         raise PolicyError("Canonical/dependency executable policy inputs changed during preflight")
+    additional_writes = []
+    if admission is not None:
+        from importlib import import_module
+        additional_writes = import_module(admission.__package__ + ".reader").sitemap_writes(embedded_plan, site)
     for path, updated, _, _ in writes:
         path.write_text(updated)
+    for path, content in additional_writes:
+        path.write_bytes(content)
     report = {"schema": 1, "material": MATERIAL_VERSION, "pages": len(writes),
             "processor_sha256": processor_sha256, "policy_inputs": static_inputs,
             "policy": "early-meta-hashes", "script_hashes": sorted({h for _, _, hs, _ in writes for h in hs}),
