@@ -34,7 +34,7 @@ function setup({ state = null, type = "navigate", figures = true, anchors = [] }
     currentScript: { src: "https://example.test/assets/mermaid-init.js" },
     readyState: "loading",
     querySelector: () => figures ? {} : null,
-    querySelectorAll: () => anchors,
+    querySelectorAll: selector => selector === ".md-content article a[href]" ? anchors : [],
     addEventListener: (name, callback) => listen("document:", name, callback),
   };
   const context = {
@@ -47,7 +47,7 @@ function setup({ state = null, type = "navigate", figures = true, anchors = [] }
   // layout-frame completion without fabricating a Mermaid implementation.
   const observed = source.replace(
     /\}\)\(\);\s*$/,
-    'window.readerTestRestore = typeof restoreReaderPosition === "function" ? restoreReaderPosition : null;})();',
+    'window.readerTestRestore = typeof restoreReaderPosition === "function" ? () => restoreReaderPosition(generation) : null;})();',
   );
   vm.runInNewContext(observed, context);
   return {
@@ -332,4 +332,100 @@ test("own fields on null-prototype reader records preserve native Back restorati
   assert.equal(app.history.state, state);
   assert.equal(app.history.state.author, "retained");
   assert.equal(app.writes.length, 0);
+});
+
+
+test("persisted pageshow acquires the freshly captured current history entry", () => {
+  const app = setup();
+  const fresh = { ...position, x: 12, y: 8700 };
+  app.fire("window", "pagehide");
+  app.history.state = { bijuxDiagramReaderPosition: fresh, author: "retained" };
+  app.fire("window", "pageshow", { persisted: true });
+  app.restore();
+  app.flush();
+  assert.deepEqual(JSON.parse(JSON.stringify(app.scrolls)), [{ left: 12, top: 8700, behavior: "instant" }]);
+  assert.equal(app.history.state.author, "retained");
+  assert.equal(app.writes.length, 0);
+});
+
+test("persisted pageshow replaces stale layout work with the fresh entry anchor", () => {
+  const link = anchor({ top: 1275 });
+  const app = setup({ state: { bijuxDiagramReaderPosition: position }, type: "back_forward", anchors: [link] });
+  app.restore();
+  app.fire("window", "pagehide");
+  app.history.state = { bijuxDiagramReaderPosition: { ...position, x: 19, y: 8700,
+    context: { href: link.href, text: link.textContent, top: 250 } } };
+  app.fire("window", "pageshow", { persisted: true });
+  app.restore();
+  app.flush();
+  assert.deepEqual(JSON.parse(JSON.stringify(app.scrolls)), [{ left: 19, top: 14025, behavior: "instant" }]);
+  assert.equal(app.writes.length, 0);
+});
+
+test("pagehide after persisted pageshow cancels its newly queued layout restoration", () => {
+  const app = setup();
+  app.history.state = { bijuxDiagramReaderPosition: position };
+  app.fire("window", "pageshow", { persisted: true });
+  app.restore();
+  app.fire("window", "pagehide");
+  app.flush();
+  assert.equal(app.scrolls.length, 0);
+});
+
+for (const type of ["navigate", "reload"]) {
+  test(`ordinary pageshow does not acquire an owned entry on ${type}`, () => {
+    const app = setup({ type, state: { bijuxDiagramReaderPosition: position } });
+    app.fire("window", "pageshow", { persisted: false });
+    app.restore();
+    app.flush();
+    assert.equal(app.scrolls.length, 0);
+  });
+}
+
+for (const [name, state] of [
+  ["missing marker", { author: "retained" }],
+  ["array state", []],
+  ["primitive state", "author"],
+  ["boxed state", new String("author")],
+  ["inherited marker", Object.create({ bijuxDiagramReaderPosition: position })],
+  ...invalidPositions.map((value, index) => [`invalid position ${index}`, { bijuxDiagramReaderPosition: value }]),
+  ...["owner", "version", "href", "x", "y"].map(field => {
+    const own = { ...position };
+    delete own[field];
+    return [`inherited ${field}`, { bijuxDiagramReaderPosition: Object.assign(Object.create({ [field]: position[field] }), own) }];
+  }),
+]) {
+  test(`persisted pageshow rejects ${name} without reviving prior owned state`, () => {
+    const app = restoredReader();
+    app.fire("window", "pagehide");
+    app.history.state = state;
+    app.fire("window", "pageshow", { persisted: true });
+    app.restore();
+    app.flush();
+    assert.equal(app.scrolls.length, 0);
+    assert.equal(app.writes.length, 0);
+    assert.equal(app.history.state, state);
+  });
+}
+
+for (const type of ["pointerdown", "touchstart", "wheel", "keydown"]) {
+  test(`trusted ${type} after persisted pageshow retains reader control`, () => {
+    const app = setup();
+    app.history.state = { bijuxDiagramReaderPosition: position };
+    app.fire("window", "pageshow", { persisted: true });
+    app.restore();
+    app.fire("window", type, { isTrusted: true });
+    app.flush();
+    assert.equal(app.scrolls.length, 0);
+  });
+}
+
+test("synthetic input after persisted pageshow cannot cancel the fresh owned entry", () => {
+  const app = setup();
+  app.history.state = { bijuxDiagramReaderPosition: position };
+  app.fire("window", "pageshow", { persisted: true });
+  app.restore();
+  app.fire("window", "wheel", { isTrusted: false });
+  app.flush();
+  assert.equal(app.scrolls.length, 1);
 });

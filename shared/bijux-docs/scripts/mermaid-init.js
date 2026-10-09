@@ -11,14 +11,17 @@
   // departure position in the owning history entry, never in a URL-wide cache.
   const readerHistoryKey = "bijuxDiagramReaderPosition";
   const navigation = performance.getEntriesByType("navigation")[0];
-  const readerState = history.state;
-  const savedReader = Object.prototype.toString.call(readerState) === "[object Object]" &&
-    Object.prototype.hasOwnProperty.call(readerState, readerHistoryKey) ? readerState[readerHistoryKey] : null;
-  const ownsReaderPosition = Object.prototype.toString.call(savedReader) === "[object Object]" &&
-    ["owner", "version", "href", "x", "y"].every(key => Object.prototype.hasOwnProperty.call(savedReader, key));
-  let readerRestoration = navigation?.type === "back_forward" && ownsReaderPosition && savedReader.owner === "bijux-docs" && savedReader.version === 1 &&
-    savedReader.href === location.href && Number.isFinite(savedReader.x) && savedReader.x >= 0 &&
-    Number.isFinite(savedReader.y) && savedReader.y >= 0 ? savedReader : null;
+  function ownedReaderPosition() {
+    const state = history.state;
+    const saved = Object.prototype.toString.call(state) === "[object Object]" &&
+      Object.prototype.hasOwnProperty.call(state, readerHistoryKey) ? state[readerHistoryKey] : null;
+    if (Object.prototype.toString.call(saved) !== "[object Object]" ||
+        !["owner", "version", "href", "x", "y"].every(key => Object.prototype.hasOwnProperty.call(saved, key)) ||
+        saved.owner !== "bijux-docs" || saved.version !== 1 || saved.href !== location.href ||
+        !Number.isFinite(saved.x) || saved.x < 0 || !Number.isFinite(saved.y) || saved.y < 0) return null;
+    return saved;
+  }
+  let readerRestoration = navigation?.type === "back_forward" ? ownedReaderPosition() : null;
 
   function cancelReaderRestoration(event) {
     if (event.isTrusted) readerRestoration = null;
@@ -234,5 +237,11 @@
     captureReaderPosition(link);
   }, true);
   window.addEventListener("pagehide", () => { readerRestoration = null; generation += 1; });
-  window.addEventListener("pageshow", event => { if (event.persisted) request(); });
+  window.addEventListener("pageshow", event => {
+    if (!event.persisted) return;
+    // A persisted document keeps its script realm, but departure updates belong
+    // to the current history entry. Reacquire only that entry after pagehide.
+    readerRestoration = ownedReaderPosition();
+    request();
+  });
 })();
