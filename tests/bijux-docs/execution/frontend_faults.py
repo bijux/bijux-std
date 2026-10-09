@@ -16,9 +16,13 @@ ROOT = Path(__file__).resolve().parents[3]
 TESTS = ROOT / 'tests/bijux-docs'
 OUT = ROOT / 'artifacts/bijux-docs/frontend-faults'
 ENGINES = ('chromium', 'firefox', 'webkit')
-FAULT_ERRORS = ('Hidden navigation must not paint',
-                'Ordinary navigation toggle must actually open',
-                'bijux frontend runtime fault witness')
+FAULT_CONTROLS = {
+    'unmodified production ribbons and ordinary drawer input qualify': None,
+    'painted hidden ribbons fail the real navigation assertion': 'Hidden navigation must not paint',
+    'blocked ordinary toggle fails actual opened-state acceptance': 'Ordinary navigation toggle must actually open',
+    'trusted palette activation rejects uncaught runtime failure': 'bijux frontend runtime fault witness',
+}
+FAULT_ERRORS = tuple(error for error in FAULT_CONTROLS.values() if error)
 
 
 def load(path: Path, name: str):
@@ -85,12 +89,18 @@ def validate_pair(clean: dict, fault: dict):
             raise ValueError('Fault JUnit execution/status differs')
     if any(row['status'] != 'passed' or row['errors'] for row in clean['results']):
         raise ValueError('Clean controls did not all pass')
-    failures = [row for row in fault['results'] if row['status'] == 'failed']
-    if len(failures) != 3 or any(not any(error in '\n'.join(row['errors']) for row in failures)
-                                 for error in FAULT_ERRORS):
-        raise ValueError('All three intended real fault failures required')
-    if sum(row['status'] == 'passed' for row in fault['results']) != 1:
-        raise ValueError('Unmodified ordinary-input control must still pass')
+    expected = {case['id']: case for case in fault['expected_cases']}
+    if len(expected) != len(FAULT_CONTROLS) or {case.get('title') for case in expected.values()} != set(FAULT_CONTROLS):
+        raise ValueError('Exact named frontend fault controls are required')
+    for row in fault['results']:
+        title = expected[row['case_id']]['title']
+        error = FAULT_CONTROLS[title]
+        if error is None:
+            if row['status'] != 'passed' or row['errors']:
+                raise ValueError('Unmodified ordinary-input control must still pass')
+        elif row['status'] != 'failed' or not any(error in message for message in row['errors']):
+            raise ValueError('Intended real fault must fail its exact named case: ' + title)
+
 
 
 def browser(engine: str):

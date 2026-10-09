@@ -31,7 +31,7 @@ class FrontendFaultReceiptTests(unittest.TestCase):
             self.pair.append({'status': 'passed' if mode == 'clean' else 'failed', 'qualification_kind': 'assigned_engine_shard',
                              'source_identity': {'head': 'unit-controlled-source'}, 'fixture_identity': {'manifest_sha256': 'unit-controlled-bundle'},
                              'canonical_projects': [{'name': 'chromium-phone', 'count': 4}], 'assigned_project_names': ['chromium-phone'],
-                             'expected_cases': [{'id': str(n)} for n in range(4)], 'results': rows,
+                             'expected_cases': [{'id': str(n), 'title': title} for n, title in enumerate(GATE.FAULT_CONTROLS)], 'results': rows,
                              'junit': {'path': str(file), 'sha256': hashlib.sha256(file.read_bytes()).hexdigest()}})
 
     def test_complete_actual_shape_accepts_only_exact_expected_statuses(self):
@@ -68,10 +68,35 @@ class FrontendFaultReceiptTests(unittest.TestCase):
         self.reject(lambda pair: pair[1]['results'][2].update(annotations=[]), 'engine version')
 
     def test_unrelated_assertion_failure_does_not_prove_fault(self):
-        self.reject(lambda pair: pair[1]['results'][2].update(errors=['unrelated timeout']), 'intended real fault')
+        self.reject(lambda pair: pair[1]['results'][2].update(errors=['unrelated timeout']), 'Intended real fault')
 
     def test_clean_failure_rejected(self):
         self.reject(lambda pair: pair[0]['results'][2].update(status='failed', errors=['source failure']), 'Clean controls')
+
+    def test_fault_error_cannot_certify_another_named_case(self):
+        def swap(pair):
+            rows = pair[1]['results']
+            rows[1]['errors'], rows[2]['errors'] = rows[2]['errors'], rows[1]['errors']
+        self.reject(swap, 'exact named case')
+
+    def test_failed_unmodified_control_cannot_replace_a_fault(self):
+        def substitute(pair):
+            rows = pair[1]['results']
+            rows[0]['status'], rows[1]['status'] = 'failed', 'passed'
+            rows[0]['errors'], rows[1]['errors'] = rows[1]['errors'], []
+        self.reject(substitute, 'Unmodified ordinary-input control')
+
+    def test_unknown_named_control_cannot_certify_coverage(self):
+        def rename(pair):
+            for report in pair:
+                report['expected_cases'][1]['title'] = 'unrelated assertion'
+        self.reject(rename, 'Exact named frontend fault controls')
+
+    def test_duplicate_named_control_cannot_replace_missing_category(self):
+        def duplicate(pair):
+            for report in pair:
+                report['expected_cases'][1]['title'] = report['expected_cases'][2]['title']
+        self.reject(duplicate, 'Exact named frontend fault controls')
 
     def test_corrupt_actual_junit_rejected(self):
         Path(self.pair[1]['junit']['path']).write_text('corrupt')
