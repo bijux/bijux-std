@@ -8,12 +8,20 @@ This file records notable repository-level changes for `bijux-std`.
 
 #### [#231](https://github.com/bijux/bijux-std/pull/231) — fix(docs): bind reviewed historical asset migration to source evidence
 
-Allow the explicitly reviewed old44 script-list migration when its standard predates the canonical baseline file.
+Allow the explicitly reviewed historical script-list migrations when their standard predates the canonical baseline file.
 
-- Bind the full predecessor and twelve actual source hashes to the accepted registry.
+- Bind both full predecessor refs (44e9153 and 10f073d) and each twelve-file source digest set to the reviewed registry.
+- Select the committed Core predecessor without widening fallback to unknown or customized asset lists.
 - Distinguish nine shared destinations from the authored external-link predecessor; preserve rejection of custom order, comments, attributes and unknown missing baselines.
 
 ### Merged pull requests
+
+#### 2026-10-09T04:14:27Z — [#230](https://github.com/bijux/bijux-std/pull/230) — ci(docs): compress complete public fault evidence for transport
+
+Reduce artifact download cost without changing retained source or fault evidence.
+
+- Compress the complete public-fault upload at level 1, retaining every member and exact payload hash.
+- Guard the full upload/download paths, failure evidence and unchanged three-minute job limit.
 
 #### 2026-10-09T03:45:10Z — [#227](https://github.com/bijux/bijux-std/pull/227) — test(docs): verify native drawer activation and registry input
 
