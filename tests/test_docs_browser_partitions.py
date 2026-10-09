@@ -36,9 +36,9 @@ def inventories() -> dict:
 class BrowserPartitionTests(unittest.TestCase):
     def test_all_canonical_projects_have_exactly_one_owner(self) -> None:
         assignments = PARTITIONS.plan(inventories())
-        self.assertEqual(len(PARTITIONS.GROUPS), 26)
-        self.assertEqual(len(PARTITIONS.SUITES), 24)
-        self.assertEqual(len(assignments), 90)
+        self.assertEqual(len(PARTITIONS.GROUPS), 27)
+        self.assertEqual(len(PARTITIONS.SUITES), 25)
+        self.assertEqual(len(assignments), 93)
         claimed = [(suite, name) for (_, suite), names in assignments.items() for name in names]
         expected = [(suite, project['name']) for suite, data in inventories().items() for project in data['canonical_projects']]
         self.assertCountEqual(claimed, expected)
@@ -47,6 +47,8 @@ class BrowserPartitionTests(unittest.TestCase):
         self.assertEqual(assignments[('search-scope-desktop-firefox', 'search-scope')], ['firefox-desktop'])
         self.assertEqual(assignments[('navigation-controls-chromium', 'drawer')], ['chromium-phone'])
         for engine in PARTITIONS.ENGINES:
+            self.assertEqual(assignments[(f'navigation-destinations-{engine}', 'navigation-destinations')],
+                             [f'{engine}-phone'])
             self.assertEqual(assignments[(f'semantics-{engine}', 'content')],
                              [f'{engine}-{profile}' for profile in PARTITIONS.REGISTRY['profiles']])
             self.assertEqual(assignments[(f'registry-overflow-{engine}', 'registry-overflow')],
@@ -63,7 +65,7 @@ class BrowserPartitionTests(unittest.TestCase):
         self.assertEqual(engines, list(PARTITIONS.ENGINES))
         self.assertIn('timeout-minutes: 3', job)
         self.assertIn('fail-fast: false', job)
-        self.assertEqual(len(groups) * len(engines), 78)
+        self.assertEqual(len(groups) * len(engines), 81)
 
     def test_contrast_profiles_preserve_all_thirty_nine_canonical_cases(self) -> None:
         data = inventories()
