@@ -12,6 +12,10 @@ Reject automatic redirect cycles and private destinations, validate every respon
 
 ### Merged pull requests
 
+#### 2026-10-09T18:24:41Z — [#254](https://github.com/bijux/bijux-std/pull/254) — test(docs): qualify independent storage denial journeys
+
+Require getter, read and write denial independently through initial load, session theme, instant navigation and cross-site reading across all three engines.
+
 #### 2026-10-09T17:51:20Z — [#255](https://github.com/bijux/bijux-std/pull/255) — test(docs): bound authored navigation journeys by ancestry
 
 Give every authored root, section and nested route a bounded disjoint journey in all three phone engines while preserving the original overview case and existing deadlines.
