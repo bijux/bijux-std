@@ -348,5 +348,59 @@ class WorkflowArtifactTransportTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, 'byte limit'): api.json('repos/bijux/bijux-std/actions/runs/123')
 
 
+class WorkflowAdmissionDeadlineTests(unittest.TestCase):
+    def test_one_absolute_deadline_covers_all_requests_and_never_restarts(self):
+        now = [0.0]
+        class Opener:
+            def __init__(self): self.timeouts = []
+            def open(self, request, timeout):
+                self.timeouts.append(timeout)
+                response = io.BytesIO(b'{"id":1}'); response.status = 200; response.headers = {}
+                return response
+        opener = Opener()
+        api = ARTIFACTS.GitHubAPI('bijux/bijux-std', 'private-token', opener=opener,
+                                  deadline_seconds=10, clock=lambda: now[0])
+        api.json('repos/bijux/bijux-std/actions/runs/123')
+        now[0] = 7
+        api.json('repos/bijux/bijux-std/actions/runs/123')
+        self.assertEqual(opener.timeouts, [10, 3])
+        now[0] = 10
+        with self.assertRaisesRegex(ValueError, 'deadline expired'): api.json('repos/bijux/bijux-std/actions/runs/123')
+        self.assertEqual(len(opener.timeouts), 2)
+
+    def test_slow_chunk_bodies_refresh_live_socket_remaining_timeout_and_refuse_expiry(self):
+        now, timeouts, reads = [0.0], [], []
+        class Socket:
+            def settimeout(self, timeout): timeouts.append(timeout)
+        class Response(io.BytesIO):
+            status = 200
+            headers = {}
+            fp = type('FP', (), {'raw': type('Raw', (), {'_sock': Socket()})()})()
+            def read1(self, size):
+                reads.append(size); now[0] += 4
+                return b'x'
+        class Opener:
+            def open(self, request, timeout): return Response()
+        api = ARTIFACTS.GitHubAPI('bijux/bijux-std', 'private-token', opener=Opener(),
+                                  deadline_seconds=10, clock=lambda: now[0])
+        with self.assertRaisesRegex(ValueError, 'deadline expired'): api.archive(33)
+        self.assertEqual(timeouts, [10, 6, 2])
+        self.assertEqual(len(reads), 3)
+        self.assertTrue(all(size <= 64 * 1024 for size in reads))
+
+    def test_deadline_cannot_be_disabled_or_raised_and_reservation_precedes_body_expansion(self):
+        for value in (0, 121, True):
+            with self.subTest(value=value):
+                with self.assertRaisesRegex(ValueError, '120 seconds'):
+                    ARTIFACTS.GitHubAPI('bijux/bijux-std', 'private-token', deadline_seconds=value)
+        body = archive([('ordinary', b'bytes')])
+        def refused(size):
+            self.assertEqual(size, 5)
+            raise ValueError('shared expanded budget refused')
+        with patch.object(zipfile.ZipFile, 'read', side_effect=AssertionError('expanded before reservation')):
+            with self.assertRaisesRegex(ValueError, 'shared expanded budget'):
+                ARTIFACTS.archive_members(body, 'sha256:' + hashlib.sha256(body).hexdigest(), reserve=refused)
+
+
 if __name__ == '__main__':
     unittest.main()

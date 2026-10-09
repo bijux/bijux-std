@@ -21,6 +21,7 @@ ARTIFACTS.__file__ = str(_SOURCE)
 exec(compile(_SOURCE.read_bytes(), str(_SOURCE), 'exec'), ARTIFACTS.__dict__)
 _CREATED = object()
 MAX_REFRESHES = 32
+MAX_INPUT_ARCHIVE_BYTES = 2 * 1024 * 1024 * 1024
 
 
 def require(condition: bool, message: str) -> None:
@@ -118,6 +119,7 @@ class SourceObservation:
         require(_created is _CREATED, 'Source observation must be created by live API source verification')
         self._api, self._observed = api, copy.deepcopy(observed)
         self._cache, self._inputs, self._specs, self._refreshes = {}, {}, {}, []
+        self._report_observations = []
         self._lock = Lock()
 
     @property
@@ -152,6 +154,9 @@ class SourceObservation:
                 and len(set(names)) == len(names), 'Finite unique source-owned job names are required')
         return sorted(names)
 
+    def _current_report(self, row: dict) -> bool:
+        return row.get('name') == 'std / report' and row.get('run_attempt') == self.identity['attempt']
+
     def refresh(self, names) -> None:
         """One coherent current-source boundary for all needed owners, not one query per artifact."""
         names = self._names(names)
@@ -176,7 +181,9 @@ class SourceObservation:
                 'Refreshed latest owner run/source/attempt differs')
         selected = {row['name']: row for row in latest}
         original = {row['name']: row for row in self._observed['latest']['jobs']}
-        require(all(name in original and selected.get(name) == original[name] for name in names),
+        require(all(name in original and name in selected
+                    and (ARTIFACTS.job_identity(selected[name]) == ARTIFACTS.job_identity(original[name])
+                         if self._current_report(original[name]) else selected[name] == original[name]) for name in names),
                 'Source-owned latest execution changed since observation')
         frame['status'] = 'passed'
 
@@ -189,8 +196,18 @@ class SourceObservation:
         self.refresh(names)
         def verify(name):
             expected = latest[name]
-            observed = self.json('repos/' + self.repository + '/actions/jobs/' + str(expected['id']))
-            require(observed == expected, 'Authoritative job differs from source latest/history observation')
+            endpoint = 'repos/' + self.repository + '/actions/jobs/' + str(expected['id'])
+            if self._current_report(expected):
+                # Only this current reporting execution may change while its
+                # own budget controller is observing it. Never cache active rows.
+                observed = self._api.json(endpoint)
+                with self._lock:
+                    self._report_observations.append({'endpoint': endpoint, 'job': copy.deepcopy(observed)})
+                require(ARTIFACTS.job_identity(observed) == ARTIFACTS.job_identity(expected),
+                        'Authoritative current report execution identity changed')
+            else:
+                observed = self.json(endpoint)
+                require(observed == expected, 'Authoritative job differs from source latest/history observation')
             return observed
         with ThreadPoolExecutor(max_workers=min(workers, len(names))) as executor:
             records = list(executor.map(verify, names))
@@ -214,10 +231,31 @@ class SourceObservation:
         jobs = {row['name']: row for row in self.verify_jobs(owner_names, workers)}
         now = now or datetime.now(timezone.utc)
         require(now.tzinfo is not None, 'Input admission expiry timezone is required')
+        # Fetch each exact needed artifact once in parallel before pure pin
+        # verification. Other roles do not cause serial network queries.
+        metadata = self._observed['artifacts']['artifacts']
+        endpoints = []
+        for spec in roles.values():
+            job = jobs[spec['job_name']]
+            name = spec['artifact_prefix'] + '-' + self.identity['checkout_sha'] + '-' + str(job['run_attempt'])
+            matches = [row for row in metadata if row.get('name') == name]
+            require(len(matches) == 1, 'Missing or duplicate exact owned artifact')
+            endpoints.append('repos/' + self.repository + '/actions/artifacts/' + str(matches[0]['id']))
+        with ThreadPoolExecutor(max_workers=min(workers, len(endpoints))) as executor:
+            list(executor.map(self.json, endpoints))
         pins = {role: ARTIFACTS._owner_pin(self, self._observed, role, spec, jobs[spec['job_name']], now)
                 for role, spec in roles.items()}
         require(len({pin['artifact']['id'] for pin in pins.values()}) == len(pins), 'Distinct input roles share an artifact ID')
+        require(sum(pin['artifact']['size_in_bytes'] for pin in pins.values()) <= MAX_INPUT_ARCHIVE_BYTES,
+                'Admitted compressed input union exceeds byte limit')
         self.refresh(owner_names)
+        expanded = sum(len(data) for role, item in self._inputs.items() if role in roles for data in item._files.values())
+        reservation_lock = Lock()
+        def reserve(size):
+            nonlocal expanded
+            with reservation_lock:
+                expanded += size
+                require(expanded <= ARTIFACTS.MAX_EXPANDED_BYTES, 'Admitted input union exceeds byte limit')
         def body(role):
             pin = pins[role]
             if role in self._inputs:
@@ -225,7 +263,7 @@ class SourceObservation:
                 return self._inputs[role]
             data = self._api.archive(pin['artifact']['id'])
             require(len(data) == pin['artifact']['size_in_bytes'], 'Input API artifact byte count differs')
-            return ArtifactInput(pin, ARTIFACTS.archive_members(data, pin['artifact']['digest']), _created=_CREATED)
+            return ArtifactInput(pin, ARTIFACTS.archive_members(data, pin['artifact']['digest'], reserve=reserve), _created=_CREATED)
         with ThreadPoolExecutor(max_workers=min(workers, len(roles))) as executor:
             inputs = dict(zip(roles, executor.map(body, roles)))
         require(sum(len(data) for item in inputs.values() for data in item._files.values()) <= ARTIFACTS.MAX_EXPANDED_BYTES,
@@ -240,6 +278,7 @@ class SourceObservation:
                 'collector': self.identity, 'observation': self.observation,
                 'authoritative_per_id': copy.deepcopy(self._cache),
                 'refresh_observations': copy.deepcopy(self._refreshes),
+                'current_report_observations': copy.deepcopy(self._report_observations),
                 'inputs': {role: item.pointer() for role, item in sorted(self._inputs.items())},
                 'limits': ['Audit JSON cannot recreate source admission.',
                            'Recovery is scoped to heads owned by the workflow repository; ordinary fork qualification remains separate.',

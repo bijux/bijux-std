@@ -14,6 +14,7 @@ import os
 from pathlib import Path, PurePosixPath
 import re
 import stat
+import time
 from urllib.error import HTTPError, URLError
 from urllib.parse import urlsplit
 from urllib.request import Request, build_opener, HTTPRedirectHandler
@@ -60,7 +61,7 @@ class NoRedirect(HTTPRedirectHandler):
 class GitHubAPI:
     """Read-only bounded API transport; signed CDN requests never carry a token."""
 
-    def __init__(self, repository: str, token: str, *, opener=None):
+    def __init__(self, repository: str, token: str, *, opener=None, deadline_seconds=120, clock=time.monotonic):
         require(isinstance(repository, str) and re.fullmatch(r'[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+', repository),
                 'Invalid repository identity')
         require(all(part not in ('.', '..') for part in repository.split('/')), 'Invalid repository identity')
@@ -68,6 +69,14 @@ class GitHubAPI:
                 'API token is required')
         self.repository, self._token = repository, token
         self._opener = opener or build_opener(NoRedirect())
+        require(type(deadline_seconds) in (int, float) and 0 < deadline_seconds <= 120,
+                'API admission deadline must be within 120 seconds')
+        self._clock, self._deadline = clock, clock() + deadline_seconds
+
+    def remaining(self) -> float:
+        remaining = self._deadline - self._clock()
+        require(remaining > 0, 'API admission deadline expired')
+        return min(60, remaining)
 
     def _read(self, url: str, *, authenticated: bool, maximum: int) -> tuple[int, dict, bytes]:
         parsed = urlsplit(url)
@@ -80,7 +89,7 @@ class GitHubAPI:
             headers['Authorization'] = 'Bearer ' + self._token
         request = Request(url, headers=headers, method='GET')
         try:
-            response = self._opener.open(request, timeout=60)
+            response = self._opener.open(request, timeout=self.remaining())
         except HTTPError as error:
             if error.code in (301, 302, 303, 307, 308):
                 location = error.headers.get('Location')
@@ -97,8 +106,24 @@ class GitHubAPI:
             length = response.headers.get('Content-Length')
             if length is not None:
                 require(length.isdecimal() and int(length) <= maximum, 'Transport exceeds byte limit')
-            data = response.read(maximum + 1)
-            require(len(data) <= maximum, 'Transport exceeds byte limit')
+            chunks, count = [], 0
+            while True:
+                timeout = self.remaining()
+                # urllib HTTPResponse.read1 performs one socket read. Reset its
+                # live socket deadline before each chunk, including slow bodies.
+                raw = getattr(getattr(response, 'fp', None), 'raw', None)
+                socket = getattr(raw, '_sock', None)
+                if socket is not None:
+                    socket.settimeout(timeout)
+                read = getattr(response, 'read1', response.read)
+                chunk = read(min(64 * 1024, maximum + 1 - count))
+                self.remaining()
+                if not chunk:
+                    break
+                count += len(chunk)
+                require(count <= maximum, 'Transport exceeds byte limit')
+                chunks.append(chunk)
+            data = b''.join(chunks)
             return response.status, dict(response.headers), data
 
     def json(self, endpoint: str) -> dict:
@@ -161,6 +186,14 @@ def pages(fetch, endpoint: str, key: str) -> dict:
     raise ValueError('API pagination limit exceeded')
 
 
+def job_identity(row: dict) -> tuple:
+    """List reads may straddle lifecycle transitions, never execution identity."""
+    require(all(positive(row.get(key)) for key in ('id', 'run_id', 'run_attempt'))
+            and isinstance(row.get('name'), str) and bool(row['name']) and sha(row.get('head_sha')),
+            'Invalid job execution identity')
+    return tuple(row.get(key) for key in ('id', 'name', 'run_id', 'run_attempt', 'head_sha'))
+
+
 def observe(api, identity: dict) -> dict:
     """Capture run, checkout, workflow, complete latest/history and artifact metadata."""
     required = {'run_id', 'attempt', 'head', 'checkout_sha', 'source_tree', 'workflow_id', 'workflow_path', 'head_branch'}
@@ -196,7 +229,8 @@ def observe(api, identity: dict) -> dict:
         require(row.get('run_id') == identity['run_id'] and row.get('head_sha') == identity['head']
                 and positive(row.get('run_attempt')) and row['run_attempt'] <= identity['attempt'], 'History run/source/attempt mismatch')
     for row in latest['jobs']:
-        require(histories.get(row['id']) == row, 'Latest job is absent or differs from complete history')
+        require(histories.get(row['id']) is not None and job_identity(histories[row['id']]) == job_identity(row),
+                'Latest job is absent or differs from complete history')
         siblings = [item for item in history['jobs'] if item.get('name') == row.get('name')]
         require(max(item['run_attempt'] for item in siblings) == row['run_attempt']
                 and sum(item['run_attempt'] == row['run_attempt'] for item in siblings) == 1,
@@ -273,7 +307,7 @@ def _owner_pin(api, observation: dict, role: str, spec: dict, job: dict, now: da
             'limits': ['API transport ownership does not certify internal receipt/source/configuration bodies.']}
 
 
-def archive_members(data: bytes, expected_digest: str) -> dict[str, bytes]:
+def archive_members(data: bytes, expected_digest: str, *, reserve=None) -> dict[str, bytes]:
     """Validate the complete bounded ZIP before creating any output."""
     require(isinstance(data, bytes) and 0 < len(data) <= MAX_ARCHIVE_BYTES, 'Invalid artifact archive size')
     require(isinstance(expected_digest, str) and re.fullmatch(r'sha256:[a-f0-9]{64}', expected_digest)
@@ -297,13 +331,17 @@ def archive_members(data: bytes, expected_digest: str) -> dict[str, bytes]:
                 require(not item.flag_bits & 1 and 0 <= item.file_size <= MAX_MEMBER_BYTES, 'Artifact member is encrypted or unbounded')
                 total += item.file_size
                 require(total <= MAX_EXPANDED_BYTES, 'Expanded artifact exceeds byte limit')
+            ordinary = {item.filename for item in entries if not item.is_dir()}
+            require(bool(ordinary), 'Artifact must contain ordinary files')
+            require(all('/'.join(name.split('/')[:index]) not in ordinary
+                        for name in names for index in range(1, len(name.split('/')))), 'Artifact file/directory collision')
+            if reserve is not None:
+                reserve(total)
+            for item in entries:
                 if not item.is_dir():
                     body = archive.read(item)
                     require(len(body) == item.file_size, 'Artifact member byte count differs')
-                    files[name] = body
-            require(bool(files), 'Artifact must contain ordinary files')
-            require(all('/'.join(name.split('/')[:index]) not in files
-                        for name in names for index in range(1, len(name.split('/')))), 'Artifact file/directory collision')
+                    files[item.filename] = body
     except (zipfile.BadZipFile, RuntimeError, NotImplementedError) as error:
         raise ValueError('Invalid artifact ZIP') from error
     return files

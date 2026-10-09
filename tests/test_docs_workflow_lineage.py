@@ -254,5 +254,94 @@ class WorkflowInputLineageTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, 'concurrency'): source.verify_jobs(names, workers=9)
 
 
+class WorkflowCollectionObservationTests(unittest.TestCase):
+    set_body = WorkflowInputLineageTests.set_body
+    observe = WorkflowInputLineageTests.observe
+
+    def setUp(self):
+        WorkflowInputLineageTests.setUp(self)
+
+    def test_unrelated_lifecycle_transition_preserves_identity_without_qualifying_changed_needed_owner(self):
+        unrelated = {**copy.deepcopy(self.job), 'id': 44, 'name': 'independent owner', 'status': 'in_progress',
+                     'conclusion': None, 'completed_at': None}
+        finished = {**copy.deepcopy(unrelated), 'status': 'completed', 'conclusion': 'success',
+                    'completed_at': self.job['completed_at']}
+        self.responses[self.paths['run'] + '/jobs?filter=latest&per_page=100&page=1'] = {'total_count': 2, 'jobs': [self.job, unrelated]}
+        self.responses[self.paths['run'] + '/jobs?filter=all&per_page=100&page=1'] = {'total_count': 2, 'jobs': [self.job, finished]}
+        self.responses['repos/bijux/bijux-std/actions/jobs/44'] = finished
+        source = self.observe()
+        source.admit(self.roles, now=self.now)
+        self.assertEqual(source.observation['latest']['jobs'][1]['status'], 'in_progress')
+        self.assertEqual(source.observation['history']['jobs'][1]['conclusion'], 'success')
+        with self.assertRaisesRegex(ValueError, 'Authoritative job differs'): source.verify_jobs([unrelated['name']])
+        unrelated['head_sha'] = 'e' * 40
+        with self.assertRaisesRegex(ValueError, 'differs from complete history'): self.observe()
+
+    def test_current_report_lifecycle_can_evolve_but_new_owner_and_artifact_roles_cannot(self):
+        latest = {**copy.deepcopy(self.job), 'id': 44, 'name': 'std / report', 'status': 'in_progress',
+                  'conclusion': None, 'completed_at': None}
+        authoritative = {**copy.deepcopy(latest), 'steps': [*latest['steps'], {'name': 'Observe budgets', 'status': 'in_progress', 'conclusion': None}]}
+        self.responses[self.paths['run'] + '/jobs?filter=latest&per_page=100&page=1'] = {'total_count': 2, 'jobs': [self.job, latest]}
+        self.responses[self.paths['run'] + '/jobs?filter=all&per_page=100&page=1'] = {'total_count': 2, 'jobs': [self.job, authoritative]}
+        self.responses['repos/bijux/bijux-std/actions/jobs/44'] = authoritative
+        source = self.observe()
+        self.assertEqual(source.verify_jobs(['std / report'])[0], authoritative)
+        authoritative.update(status='completed', conclusion='success', completed_at=self.job['completed_at'])
+        self.responses[self.paths['run'] + '/jobs?filter=latest&per_page=100&page=1']['jobs'][1] = authoritative
+        self.assertEqual(source.verify_jobs(['std / report'])[0]['conclusion'], 'success')
+        self.assertEqual(len(source.export_record()['current_report_observations']), 2)
+        self.assertEqual(source.observation['latest']['jobs'][1]['status'], 'in_progress')
+        for key, value in [('id', 55), ('run_attempt', 1), ('head_sha', 'e' * 40)]:
+            with self.subTest(key=key):
+                self.responses['repos/bijux/bijux-std/actions/jobs/44'] = {**authoritative, key: value}
+                with self.assertRaisesRegex(ValueError, 'report execution identity'): source.verify_jobs(['std / report'])
+        self.responses['repos/bijux/bijux-std/actions/jobs/44'] = authoritative
+        self.responses[self.paths['job']] = {**self.job, 'steps': []}
+        with self.assertRaisesRegex(ValueError, 'Authoritative job differs'): source.verify_jobs([self.job['name']])
+
+    def test_exact_needed_artifact_metadata_is_parallel_and_cached_before_pin_verification(self):
+        jobs, artifacts, roles = [], [], {}
+        for index in range(8):
+            job = {**copy.deepcopy(self.job), 'id': 100 + index, 'name': 'native-' + str(index)}
+            artifact = {**copy.deepcopy(self.artifact), 'id': 200 + index,
+                        'name': 'native-' + str(index) + '-' + self.identity['checkout_sha'] + '-2'}
+            jobs.append(job); artifacts.append(artifact)
+            roles['native-' + str(index)] = {**self.roles['fixtures'], 'job_name': job['name'], 'artifact_prefix': 'native-' + str(index)}
+            self.responses['repos/bijux/bijux-std/actions/jobs/' + str(job['id'])] = job
+            self.responses['repos/bijux/bijux-std/actions/artifacts/' + str(artifact['id'])] = artifact
+            self.bodies[artifact['id']] = self.body
+        self.responses[self.paths['run'] + '/jobs?filter=latest&per_page=100&page=1'] = {'total_count': 8, 'jobs': jobs}
+        self.responses[self.paths['run'] + '/jobs?filter=all&per_page=100&page=1'] = {'total_count': 8, 'jobs': jobs}
+        self.responses[self.paths['run'] + '/artifacts?per_page=100&page=1'] = {'total_count': 8, 'artifacts': artifacts}
+        original = self.api.json; lock = Lock(); active = maximum = 0
+        def delayed(endpoint):
+            nonlocal active, maximum
+            if '/actions/artifacts/' not in endpoint: return original(endpoint)
+            with lock: active += 1; maximum = max(maximum, active)
+            try:
+                time.sleep(.025)
+                return original(endpoint)
+            finally:
+                with lock: active -= 1
+        self.api.json = delayed
+        source = self.observe(); admitted = source.admit(roles, workers=4, now=self.now)
+        self.assertEqual(len(admitted), 8)
+        self.assertTrue(2 <= maximum <= 4)
+        self.assertEqual(len([call for call in self.api.calls if isinstance(call, str) and '/actions/artifacts/' in call]), 8)
+        source.admit(roles, workers=4, now=self.now)
+        self.assertEqual(len([call for call in self.api.calls if isinstance(call, str) and '/actions/artifacts/' in call]), 8)
+
+    def test_compressed_union_and_expanded_union_are_bounded_before_any_input_admission(self):
+        source = self.observe()
+        from unittest.mock import patch
+        with patch.object(LINEAGE, 'MAX_INPUT_ARCHIVE_BYTES', len(self.body) - 1):
+            with self.assertRaises(ValueError): source.admit(self.roles, now=self.now)
+        self.assertEqual(source.export_record()['inputs'], {})
+        source = self.observe()
+        with patch.object(LINEAGE.ARTIFACTS, 'MAX_EXPANDED_BYTES', 1):
+            with self.assertRaisesRegex(ValueError, 'Expanded'): source.admit(self.roles, now=self.now)
+        self.assertEqual(source.export_record()['inputs'], {})
+
+
 if __name__ == '__main__':
     unittest.main()
