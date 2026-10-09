@@ -10,11 +10,11 @@ This file records notable repository-level changes for `bijux-std`.
 
 Forward one explicitly selected committed interactive report owner through the existing Python Make delivery and checks. Require a separate bounded Make qualification job while preserving the complete renderer case union.
 
-#### [#256](https://github.com/bijux/bijux-std/pull/256) — feat(docs): reconstruct committed interactive report ownership
+### Merged pull requests
+
+#### 2026-10-09T18:52:16Z — [#256](https://github.com/bijux/bijux-std/pull/256) — feat(docs): reconstruct committed interactive report ownership
 
 Render explicitly selected committed interactive report recipes and independently reconstruct their resource, bootstrap and provider authority. Execute captured processor source bytes to preserve provenance across stale bytecode caches.
-
-### Merged pull requests
 
 #### 2026-10-09T18:24:41Z — [#254](https://github.com/bijux/bijux-std/pull/254) — test(docs): qualify independent storage denial journeys
 
