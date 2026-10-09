@@ -6,15 +6,22 @@ This file records notable repository-level changes for `bijux-std`.
 
 ### Pending review
 
-#### [#217](https://github.com/bijux/bijux-std/pull/217) — fix(docs): contain focus paint within navigation boundaries
+#### [#222](https://github.com/bijux/bijux-std/pull/222) — fix(docs): resolve redirect canonicals before route qualification
+
+Resolve relative redirect canonicals against their source route before checking the built destination and sitemap.
+
+- Preserve exact absolute canonicals for content pages and reject foreign, missing, escaped or query/fragment redirect targets.
+- Validate nested redirect controls and the unchanged real Canon corpus of 371 routes and 2,292 search entries.
+
+### Merged pull requests
+
+#### 2026-10-09T00:59:18Z — [#217](https://github.com/bijux/bijux-std/pull/217) — fix(docs): contain focus paint within navigation boundaries
 
 Keep the visible focus ring inside disclosure scroll bounds and masthead repository controls.
 
 - Measure actual clipping and adjacent paint through ordinary keyboard focus and Auto theme transitions.
 - Retain every existing contrast case and detect the historical clipped-ring regression.
 - Admit focus geometry only after passive layout and finite-transition settlement; retain raw samples and strict clipping assertions.
-
-### Merged pull requests
 
 #### 2026-10-09T00:47:06Z — [#218](https://github.com/bijux/bijux-std/pull/218) — test(docs): keep shell acceptance executable and reject runtime errors
 
