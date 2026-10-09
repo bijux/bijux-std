@@ -30,7 +30,7 @@ class FrontendJobBudgetTests(unittest.TestCase):
         receipt = self.verify()
         self.assertEqual(receipt['maximum_seconds'], 179.999)
         self.assertEqual(receipt['maximum_queue_seconds'], 300)
-        self.assertEqual(receipt['executed_jobs'], 17)
+        self.assertEqual(receipt['executed_jobs'], 18)
 
     def test_report_can_be_running_while_completed_dependencies_are_checked(self):
         report = next(j for j in self.data['jobs'] if j['name'] == 'std / report')
@@ -121,7 +121,7 @@ class FrontendJobBudgetTests(unittest.TestCase):
         self.assertEqual(self.data, original)
         receipt = BUDGET.qualify(refreshed, groups=self.groups, engines=self.engines,
             run_id=123, attempt=2, head=self.head)
-        self.assertEqual(receipt['executed_jobs'], 17)
+        self.assertEqual(receipt['executed_jobs'], 18)
         self.assertEqual(receipt['maximum_seconds'], 179.999)
 
     def test_incomplete_fresh_row_and_completed_steps_cannot_infer_success(self):
@@ -188,10 +188,10 @@ class FrontendJobBudgetTests(unittest.TestCase):
             catalogue = owner / 'catalogue'
             catalogue.mkdir()
             (catalogue / 'execution.py').write_text("GROUPS = {'source': ('test_source',)}\n")
-            for name in ('browser_gate.py', 'browser_partitions.py', 'browser_partitions.json'):
+            for name in ('browser_gate.py', 'browser_partitions.py', 'browser_partitions.json', 'renderer_controls.py', 'node_events.cjs'):
                 (root / name).write_text(name)
             before = BUDGET.registry_digests(root / 'browser_gate.py')
-            self.assertEqual(set(before), {'browser_gate.py', 'browser_partitions.py', 'browser_partitions.json', 'catalogue/execution.py'})
+            self.assertEqual(set(before), {'browser_gate.py', 'browser_partitions.py', 'browser_partitions.json', 'renderer_controls.py', 'node_events.cjs', 'catalogue/execution.py'})
             (root / 'browser_partitions.json').write_text('changed declaration')
             after = BUDGET.registry_digests(root / 'browser_gate.py')
             self.assertNotEqual(before['browser_partitions.json'], after['browser_partitions.json'])
@@ -202,6 +202,19 @@ class FrontendJobBudgetTests(unittest.TestCase):
             (root / 'browser_partitions.py').unlink()
             with self.assertRaises(FileNotFoundError):
                 BUDGET.registry_digests(root / 'browser_gate.py')
+
+
+    def test_renderer_controls_are_required_terminal_success_and_under_budget(self):
+        target = next(job for job in self.data['jobs'] if job['name'] == 'std / renderer controls')
+        baseline = copy.deepcopy(target)
+        for field, value in [('status', 'queued'), ('conclusion', 'failure'),
+                             ('conclusion', 'cancelled'), ('conclusion', 'skipped'),
+                             ('completed_at', '2026-01-01T00:08:00Z')]:
+            with self.subTest(field=field, value=value):
+                target.update(baseline)
+                target[field] = value
+                with self.assertRaises(ValueError):
+                    self.verify()
 
 
     def test_every_catalogue_job_is_owned_and_budgeted(self):
@@ -253,7 +266,7 @@ class FrontendJobBudgetTests(unittest.TestCase):
         refreshed = self.refresh(lambda identifier: completed)
         self.assertEqual(self.data['jobs'][0]['head_sha'], self.head)
         self.assertEqual(BUDGET.qualify(refreshed, groups=self.groups, engines=self.engines,
-                         run_id=123, attempt=2, head=self.head)['executed_jobs'], 17)
+                         run_id=123, attempt=2, head=self.head)['executed_jobs'], 18)
         with self.assertRaisesRegex(ValueError, 'Refreshed job identity'):
             self.refresh(lambda identifier: {**completed, 'head_sha': 'b' * 40})
 
