@@ -227,6 +227,56 @@ The shared asset inventory and versions are authoritative in the baseline and
 compiler provenance, rather than repeated vendor URLs in this document.
 
 
+## Stylesheet declaration ownership
+
+Material's admitted `base.html` loads its main stylesheet, palette stylesheet
+when configured, and then `extra_css` in effective configuration order. The
+canonical `styles/extra.css` imports tokens, theme, layout, header, navigation,
+content, components, utilities and responsive adaptations in that order.
+Consumer additions retain their declared position around the canonical asset;
+an authored root list replaces the inherited list. Additional consumer styles
+do not acquire ownership of private shell display, drawer or hidden states.
+
+[`config/cascade-contract.json`](config/cascade-contract.json) records the exact
+shared declaration exceptions. Each priority exception identifies its file,
+conditional ancestry, selector list, property and value, with owner, reason and
+necessity status. Duplicate fallback exceptions additionally preserve value
+order. Existing `vh` followed by `dvh` declarations retain engines without
+dynamic viewport units; this is not permission for arbitrary repeated properties.
+
+| Existing exception | Intent and remaining evidence |
+| --- | --- |
+| Dark diagram paint in `01-theme.css` | Integrates with emitted Mermaid SVG rules. Static source inventory does not qualify every diagram class's contrast or prove every priority necessary. |
+| Footer grid, transparent surface and directional margins in `06-components.css` | Preserve current shared footer composition against Material. These four priorities have `necessity_unproven`; an actual rendered removal control is required before describing them as unavoidable. |
+| Hidden and accessible-name geometry in `07-utilities.css` | Preserve the accepted unconditional hidden-state rule, its `until-found` distinction and offscreen label geometry. The policy cannot waive `display:none!important`. |
+| Conditional navigation presentation in `08-responsive.css` | Retain one exposed presentation and native fallback under the admitted viewport/readiness conditions. Cross-rule competition remains a rendered behavior duty. |
+| Reduced-motion duration/count in `08-responsive.css` | Reader preference takes precedence over component animation declarations. Native platform and assistive evaluation remains separate. |
+
+The declaration guard parses actual source using the already pinned Stylis
+parser from the diagram toolchain. It verifies installed diagram manifest/lock
+and parser source provenance before import; it does not install dependencies.
+An existing qualified build may be selected explicitly:
+
+```sh
+BIJUX_DIAGRAM_DEPENDENCIES=artifacts/website-security/dependencies/build \
+  node shared/bijux-docs/tooling/quality/styles/cascade.mjs
+python3 -m unittest discover -s tests -p test_docs_cascade_contract.py -v
+```
+
+The second command uses the same environment selection when it is exported.
+Diagnostics include parsed declaration source-end line/column, selector,
+conditional ancestry, property and conflicting values. Unknown priorities,
+unreviewed same-block duplicates, stale exception records, missing imported
+styles and changed parser ownership fail. Case, comments and escaped priority
+identifiers cannot bypass the guard; quoted text is not interpreted as priority.
+
+This is a bounded declaration policy, not a general CSS validity or selector
+specificity checker. It does not certify computed Material/shared/consumer
+precedence, complete token purposes/override scopes, all competing state rules,
+responsive media/attribute agreement, or light/dark/forced-color behavior.
+Those source, rendered, consumer, manual and live duties retain their own
+verification; a source guard must not weaken existing hidden/focus tests.
+
 ## Reader history and optional scroll tracking
 
 The shared baseline preserves native authored fragment destinations and browser
