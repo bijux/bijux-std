@@ -14,6 +14,9 @@ OWNED = Path(__file__).resolve().parent
 SHARED = OWNED.parents[1]
 REPLACEMENT = 'zi=document.forms.namedItem("search")?window.bijuxSearchIndex.observe(ks,Z):tt'
 WORKER_REPLACEMENT = 'function Ei(e,t){let r=window.bijuxSearchWorker.channel(e,T);'
+FRAGMENT_SCROLL_BOUNDARY = 'function gn(e){let t=x("a",{href:e});t.addEventListener("click",r=>r.stopPropagation()),t.click()}'
+FRAGMENT_SCROLL_REPLACEMENT = 'function gn(e){__bijuxScrollCurrentFragment(e)}'
+
 GLOBAL_CHARACTER_SHORTCUTS = ',r.pipe(g(({mode:c})=>c==="global")).subscribe(c=>{switch(c.type){case"f":case"s":case"/":i.focus(),i.select(),c.claim();break}});'
 
 
@@ -83,10 +86,14 @@ def compile_runtime(templates: Path, installed_version: str) -> tuple[str, bytes
     resize_replacement = '__bijuxElementResizeObserver(t=>cn.next(t))'
     if original.count(resize_needle) != 1 or '__bijuxElementResizeObserver' in original:
         raise ValueError('Native resize delivery differs from admitted unique context')
+    if original.count(FRAGMENT_SCROLL_BOUNDARY) != 1 or '__bijuxScrollCurrentFragment' in original:
+        raise ValueError('Native fragment restoration boundary must occur exactly once')
+    fragment_scroll = (OWNED / 'fragment-restoration.js').read_bytes()
+    modified = modified.replace(FRAGMENT_SCROLL_BOUNDARY, FRAGMENT_SCROLL_REPLACEMENT)
     resize = (OWNED / 'element-resize-delivery.js').read_bytes()
     modified = modified.replace(resize_needle, resize_replacement)
     navigation = (OWNED / 'search-capability-boundary.js').read_bytes()
-    modified = modified.replace(renderer_needle, renderer_replacement).replace(opening, opening + navigation.decode() + resize.decode())
+    modified = modified.replace(renderer_needle, renderer_replacement).replace(opening, opening + navigation.decode() + resize.decode() + fragment_scroll.decode())
     modified, maps = re.subn(r'(?m)^//# sourceMappingURL=.*(?:\n|$)', '', modified)
     if maps != 1:
         raise ValueError('Expected exactly one upstream source-map annotation')
@@ -105,6 +112,9 @@ def compile_runtime(templates: Path, installed_version: str) -> tuple[str, bytes
         'boundary': {'original': needle, 'replacement': REPLACEMENT, 'occurrences': 1},
         'worker_boundary': {'original': worker_needle, 'replacement': WORKER_REPLACEMENT, 'occurrences': 1},
         'global_character_shortcuts': {'original': GLOBAL_CHARACTER_SHORTCUTS, 'replacement': ';', 'occurrences': 1, 'disabled_keys': ['/', 'f', 's'], 'retained': 'Focused native query/result keyboard subscriptions and browser modifier defaults.'},
+        'fragment_restoration_owned_source': 'tooling/material/fragment-restoration.js',
+        'fragment_restoration_sha256': sha256(fragment_scroll),
+        'fragment_restoration_boundary': {'original': FRAGMENT_SCROLL_BOUNDARY, 'replacement': FRAGMENT_SCROLL_REPLACEMENT, 'occurrences': 1, 'behavior': 'Scroll only the fragment of the current native history entry; do not queue a redundant native anchor navigation.'},
         'element_resize_owned_source': 'tooling/material/element-resize-delivery.js',
         'element_resize_sha256': sha256(resize),
         'element_resize_boundary': {'original': resize_needle, 'replacement': resize_replacement, 'occurrences': 1, 'helper_scope': 'admitted native IIFE; no global observer or error interception'},

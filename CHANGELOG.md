@@ -15,6 +15,13 @@ Keep policy checks bound to the reviewed PR event when main advances.
 
 ### Merged pull requests
 
+#### 2026-10-09T00:01:42Z — [#219](https://github.com/bijux/bijux-std/pull/219) — fix(docs): restore fragments without redundant native navigation
+
+Keep browser Back from resurrecting the fragment a reader just left.
+
+- Restore only the current history entry through the uniquely admitted Material helper, preserving native target reveal and sequential focus.
+- Bind the readable helper, generated runtime and exact boundary in source-derived provenance; retain race failures and native-semantics comparisons.
+
 #### 2026-10-08T23:36:47Z — [#216](https://github.com/bijux/bijux-std/pull/216) — fix(docs): expose one contextual navigation surface
 
 Keep the complete sidebar as the visible local navigation when duplicate contextual ribbons are unnecessary.
