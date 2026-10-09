@@ -85,6 +85,19 @@ class RequiredNavigationTests(unittest.TestCase):
         self.assertIn('          if-no-files-found: error\n', transport)
         self.assertIn('        if: always()\n', transport)
 
+    def test_public_fault_upload_preserves_complete_evidence_with_bounded_compression(self):
+        public = job('frontend-public-faults')
+        transport = public.split('      - name: Retain real public fixture and mutated artifact receipts\n', 1)[1]
+        self.assertIn('    timeout-minutes: 3\n', public)
+        self.assertIn('        if: always()\n', transport)
+        self.assertIn('          path: artifacts/bijux-docs/frontend-faults/public\n', transport)
+        self.assertIn('          if-no-files-found: error\n', transport)
+        self.assertIn('          compression-level: 1\n', transport)
+        self.assertNotIn('\n            !', transport)
+        aggregate = job('navigation')
+        self.assertIn('          path: artifacts/bijux-docs/frontend-faults/public\n', aggregate)
+        self.assertIn('          name: docs-frontend-faults-public-${{ github.sha }}-${{ github.run_attempt }}\n', aggregate)
+
     def test_every_shared_pull_request_author_receives_full_rendered_qualification(self):
         for name in ('navigation-fixtures', 'publication-commands', 'navigation'):
             with self.subTest(job=name):

@@ -18,6 +18,13 @@ Capture the actual hosted Linux runtime for Canon's exact documentation dependen
 
 ### Merged pull requests
 
+#### 2026-10-09T04:14:27Z — [#230](https://github.com/bijux/bijux-std/pull/230) — ci(docs): compress complete public fault evidence for transport
+
+Reduce artifact download cost without changing retained source or fault evidence.
+
+- Compress the complete public-fault upload at level 1, retaining every member and exact payload hash.
+- Guard the full upload/download paths, failure evidence and unchanged three-minute job limit.
+
 #### 2026-10-09T03:45:10Z — [#227](https://github.com/bijux/bijux-std/pull/227) — test(docs): verify native drawer activation and registry input
 
 Require ordinary pointer, trusted touch, Space and Enter to open the drawer once and Escape to restore its trigger.
