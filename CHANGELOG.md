@@ -17,6 +17,14 @@ Verify explicitly owned passive reports before publication and compare retained 
 
 ### Merged pull requests
 
+#### 2026-10-09T13:43:49Z — [#246](https://github.com/bijux/bijux-std/pull/246) — chore(deps): bump pip in catalogue verification
+
+Use pip 26.2 in the active isolated catalogue verification environment.
+
+- Match both release hashes to published package files and retain the exact 43-distribution runtime guard.
+- Preserve the default renderer lock and frozen historical admission profiles; verification remains separate from production approval.
+
+
 #### 2026-10-09T12:59:14Z — [#245](https://github.com/bijux/bijux-std/pull/245) — feat(docs): integrate source-owned standalone reader discovery
 
 Make passive report notices reachable through native documentation Return/Search links and source-owned search/sitemap entries.
