@@ -118,6 +118,12 @@ jobs:
           EXPECTED_WORKFLOW_HEAD: ${{ github.event.pull_request.head.sha || github.event.merge_group.head_sha || github.sha }}
         run: |
           set -euo pipefail
+          if [[ "$GITHUB_RUN_ATTEMPT" -gt 1 ]]; then
+            python3 tests/bijux-docs/execution/job_budget.py --observe-latest \
+              --run-id "$GITHUB_RUN_ID" --attempt "$GITHUB_RUN_ATTEMPT" \
+              --workflow-head "$EXPECTED_WORKFLOW_HEAD" \
+              --output artifacts/bijux-docs/job-budget/qualification.json
+          else
           python3 - <<'PYTHON'
           import importlib.util, json, math, os, pathlib, time, urllib.request
           output = pathlib.Path("artifacts/bijux-docs/job-budget")
@@ -167,6 +173,7 @@ jobs:
             --run-id "$GITHUB_RUN_ID" --attempt "$GITHUB_RUN_ATTEMPT" \
             --workflow-head "$EXPECTED_WORKFLOW_HEAD" \
             --output artifacts/bijux-docs/job-budget/qualification.json
+          fi
       - name: Run standards report
         shell: bash
         run: |
@@ -187,7 +194,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
-          name: bijux-checks-report
+          name: bijux-checks-report-${{ github.sha }}-${{ github.run_attempt }}
           path: |
             artifacts/checks
             artifacts/bijux-checks
