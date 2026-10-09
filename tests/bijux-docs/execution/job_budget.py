@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import argparse
+import ast
 from datetime import datetime
 import hashlib
 import json
@@ -16,11 +17,33 @@ def require(condition: bool, message: str) -> None:
         raise ValueError(message)
 
 
+def catalogue_job_names(source: Path | None = None) -> set[str]:
+    """Read the source-owned catalogue selection without executing its renderer."""
+    path = source or Path(__file__).resolve().parents[1] / 'catalogue/execution.py'
+    require(path.is_file() and not path.is_symlink(), 'Catalogue execution registry must be ordinary source')
+    require(path.stat().st_size <= 256 * 1024, 'Catalogue execution registry is unbounded')
+    try:
+        tree = ast.parse(path.read_text())
+        declarations = [node.value for node in tree.body if isinstance(node, ast.Assign)
+                        and any(isinstance(target, ast.Name) and target.id == 'GROUPS' for target in node.targets)]
+        require(len(declarations) == 1, 'Exactly one catalogue GROUPS declaration is required')
+        groups = ast.literal_eval(declarations[0])
+    except (SyntaxError, ValueError, TypeError, RecursionError) as error:
+        raise ValueError('Catalogue execution registry must be a literal GROUPS declaration') from error
+    require(isinstance(groups, dict) and 0 < len(groups) <= 32, 'Catalogue execution groups are invalid')
+    require(all(isinstance(name, str) and re.fullmatch(r'[a-z][a-z0-9-]*', name)
+                and isinstance(selections, tuple) and bool(selections)
+                and all(isinstance(selection, str) and re.fullmatch(r'[A-Za-z_]\w*(?:\.[A-Za-z_]\w*){0,2}', selection)
+                        for selection in selections)
+                for name, selections in groups.items()), 'Catalogue execution selection is invalid')
+    return {'std / catalogue ' + name for name in groups}
+
+
 def expected_job_names(groups: dict, engines: tuple | list) -> set[str]:
     require(bool(groups) and bool(engines), 'Canonical browser groups and engines are required')
     require(len(set(engines)) == len(engines), 'Duplicate canonical engine')
     require(all(isinstance(x, str) and x and '/' not in x for x in [*groups, *engines]), 'Invalid canonical group or engine')
-    return {'std / navigation fixtures', 'std / navigation', 'std / publication commands',
+    return catalogue_job_names() | {'std / navigation fixtures', 'std / navigation', 'std / publication commands',
             'std / frontend public artifact fault controls'} | {
         f'std / frontend fault controls / {engine}' for engine in engines
     } | {
@@ -106,7 +129,10 @@ def qualify(payload: dict, *, groups: dict, engines: tuple | list, run_id: int, 
 
 def registry_digests(registry_path: Path) -> dict[str, str]:
     names = ('browser_gate.py', 'browser_partitions.py', 'browser_partitions.json')
-    return {name: hashlib.sha256(registry_path.with_name(name).read_bytes()).hexdigest() for name in names}
+    digests = {name: hashlib.sha256(registry_path.with_name(name).read_bytes()).hexdigest() for name in names}
+    catalogue = registry_path.parent.parent / 'catalogue/execution.py'
+    digests['catalogue/execution.py'] = hashlib.sha256(catalogue.read_bytes()).hexdigest()
+    return digests
 
 
 def main() -> int:

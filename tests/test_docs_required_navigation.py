@@ -26,9 +26,10 @@ def gate():
 
 
 class RequiredNavigationTests(unittest.TestCase):
-    def run_gate(self, repository, checks='success', navigation='success'):
+    def run_gate(self, repository, checks='success', navigation='success', catalogue=None):
         env = {**os.environ, 'GITHUB_REPOSITORY': repository,
-               'CHECK_RESULT': checks, 'NAVIGATION_RESULT': navigation}
+               'CHECK_RESULT': checks, 'NAVIGATION_RESULT': navigation,
+               'CATALOGUE_RESULT': catalogue if catalogue is not None else ('success' if repository == 'bijux/bijux-std' else 'skipped')}
         return subprocess.run(['bash', '--noprofile', '--norc', '-c', gate()],
                               env=env, capture_output=True, text=True)
 
@@ -53,11 +54,25 @@ class RequiredNavigationTests(unittest.TestCase):
     def test_required_report_materializes_after_failed_prerequisites(self):
         report = job('report')
         self.assertIn('name: std / report\n', report)
-        self.assertIn('needs: [checks, navigation]', report)
+        self.assertIn('needs: [checks, navigation, catalogue-renderer]', report)
         self.assertIn('if: ${{ always() &&', report)
         self.assertIn('CHECK_RESULT: ${{ needs.checks.result }}', report)
         self.assertIn('NAVIGATION_RESULT: ${{ needs.navigation.result }}', report)
         self.assertLess(report.index('Require applicable source and rendered checks'), report.index('Run standards report'))
+
+    def test_incomplete_catalogue_execution_cannot_green_required_report(self):
+        for result in ('failure', 'cancelled', 'skipped', ''):
+            with self.subTest(result=result):
+                self.assertNotEqual(self.run_gate('bijux/bijux-std', catalogue=result).returncode, 0)
+
+    def test_catalogue_execution_has_exact_disjoint_groups_and_retained_evidence(self):
+        source = job('catalogue-renderer')
+        self.assertIn('timeout-minutes: 3', source)
+        self.assertIn('group: [source, renderer, typed-entrypoint, tracked-entrypoint]', source)
+        self.assertIn('make ui-test-install-catalogue', source)
+        self.assertIn('make ui-test-catalogue UI_CATALOGUE_GROUP=', source)
+        self.assertIn('if: always()', source)
+        self.assertIn('if-no-files-found: error', source)
 
     def test_early_standards_and_contracts_do_not_wait_for_browser_jobs(self):
         checks = job('checks')
