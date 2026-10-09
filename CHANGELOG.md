@@ -6,15 +6,22 @@ This file records notable repository-level changes for `bijux-std`.
 
 ### Pending review
 
-#### [#223](https://github.com/bijux/bijux-std/pull/223) — fix(docs): capture committed publication source and callback inputs
+#### [#226](https://github.com/bijux/bijux-std/pull/226) — fix(docs): admit reviewed revision history capability
+
+Preserve the existing Canon revision-date plugin while validating its real Git history and callback ownership.
+
+- Admit revision-date-localized 1.5.1 after payload comparison with the reviewed 1.5.3 implementation.
+- Test version boundaries, registered callback inputs and tracked-history ownership; keep renderer-profile approval separate.
+
+### Merged pull requests
+
+#### 2026-10-09T02:01:13Z — [#223](https://github.com/bijux/bijux-std/pull/223) — fix(docs): capture committed publication source and callback inputs
 
 Bind publication inputs to their exact committed Git bytes without treating ignored run caches as source.
 
 - Verify tracked paths, HEAD blobs and executable modes independently of index flags, and reject source changes during capture.
 - Require reviewed callback source and every declared asset input to match committed captured bytes before rendering and revalidation.
 - Retain verification fixtures and all renderer, shared authority, public output and approved-profile checks.
-
-### Merged pull requests
 
 #### 2026-10-09T01:46:38Z — [#224](https://github.com/bijux/bijux-std/pull/224) — test(docs): verify authored reader history policy inheritance
 
