@@ -17,7 +17,9 @@ Reconstruct committed passive reader notices, native targets and discovery in bo
 - Verify retained reader lifetime through actual Document identity after footer navigation and Back; retain timestamp observations and reject real native navigation across all three engines.
 
 
-#### [#247](https://github.com/bijux/bijux-std/pull/247) — feat(docs): guard reader publication and retained recovery
+### Merged pull requests
+
+#### 2026-10-09T14:09:38Z — [#247](https://github.com/bijux/bijux-std/pull/247) — feat(docs): guard reader publication and retained recovery
 
 Verify explicitly owned passive reports before publication and compare retained historical bundle bytes without granting new source or deployment authority.
 
@@ -25,8 +27,6 @@ Verify explicitly owned passive reports before publication and compare retained 
 - Keep strict schema-two reconstruction by default and provide explicit bytes-only recovery for bounded historical monitoring.
 - Preserve catalogue configuration guards, schema-one checks and separate production-profile, manual and live qualification.
 - Give every renderer unit a separate mandatory source-bound CI receipt with owned module resolution and strict physical runtime identity, preserving all cases and the three-minute whole-job limit while removing fixture-production contention.
-
-### Merged pull requests
 
 #### 2026-10-09T13:43:49Z — [#246](https://github.com/bijux/bijux-std/pull/246) — chore(deps): bump pip in catalogue verification
 
