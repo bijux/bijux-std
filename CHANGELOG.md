@@ -14,6 +14,7 @@ Keep the complete site identity and utility controls visible when compact reader
 - Preserve the native fallback focus-ring backdrop with an intrinsic minimum while retaining ordinary no-script navigation and strict contrast assertions.
 - Check complete utility census, glyph clipping, pointer targets and supplemental breakpoints while retaining the 126 navigation cases.
 - Keep physical zoom, assistive/device and consumer qualification separate; this review depends on #227.
+- Keep enlarged native Navigation text beside its checkbox and give the complete long identity natural row space; retain the54px normal minimum and add maintained three-engine200% text/spacing regression journeys.
 
 ### Merged pull requests
 
