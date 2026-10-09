@@ -6,11 +6,15 @@ This file records notable repository-level changes for `bijux-std`.
 
 ### Pending review
 
-#### [#252](https://github.com/bijux/bijux-std/pull/252) — test(docs): require rendered authored content coverage
+#### [#254](https://github.com/bijux/bijux-std/pull/254) — test(docs): qualify independent storage denial journeys
 
-Require the existing rich-content assertions in all nine engine and viewport combinations through the existing semantics jobs.
+Require getter, read and write denial independently through initial load, session theme, instant navigation and cross-site reading across all three engines.
 
 ### Merged pull requests
+
+#### 2026-10-09T16:52:53Z — [#252](https://github.com/bijux/bijux-std/pull/252) — test(docs): require rendered authored content coverage
+
+Require the existing rich-content assertions in all nine engine and viewport combinations through the existing semantics jobs.
 
 #### 2026-10-09T16:25:54Z — [#251](https://github.com/bijux/bijux-std/pull/251) — test(docs): cover authored phone navigation destinations
 
