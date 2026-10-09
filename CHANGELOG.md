@@ -6,14 +6,22 @@ This file records notable repository-level changes for `bijux-std`.
 
 ### Pending review
 
-#### [#244](https://github.com/bijux/bijux-std/pull/244) — feat(docs): admit passive source-owned reader reports
+#### [#245](https://github.com/bijux/bijux-std/pull/245) — feat(docs): integrate source-owned standalone reader discovery
+
+Make passive report notices reachable through native documentation Return/Search links and source-owned search/sitemap entries.
+
+- Bind exact tracked purposes to real delivered native targets; independently rederive search, sitemap and gzip composition.
+- Retain original report body bytes and restrictive CSP; unknown or mutated standalone routes remain rejected.
+- Correct ordinary filenames ending in index.html and qualify six current three-engine reader journeys without claiming full consumer publication.
+
+### Merged pull requests
+
+#### 2026-10-09T11:29:05Z — [#244](https://github.com/bijux/bijux-std/pull/244) — feat(docs): admit passive source-owned reader reports
 
 Admit explicitly reviewed non-executable report notices with source-bound ownership and restrictive independent CSP verification.
 
 - Require an exact passive descriptor and finite HTML/CSS vocabulary; reject scripts, providers and automatic resources.
 - Preserve existing interactive report admission and tracked report bytes; retain meaningful attribute, CSS and policy-widening controls.
-
-### Merged pull requests
 
 #### 2026-10-09T10:53:55Z — [#242](https://github.com/bijux/bijux-std/pull/242) — test(docs): retain delayed rendering frame observations
 
