@@ -1,5 +1,9 @@
 # Changelog
 
+## [#252](https://github.com/bijux/bijux-std/pull/252) — rendered authored content coverage
+
+Status: pending review. Require the existing rich-content assertions in all nine engine and viewport combinations through the existing semantics jobs.
+
 This file records notable repository-level changes for `bijux-std`.
 
 ## Pull request history
