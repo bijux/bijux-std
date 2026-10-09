@@ -166,25 +166,30 @@ ui-test-search-shortcut-modality: ui-test-prepare-runtime ui-test-fixtures ui-te
 
 UI_CATALOGUE_PYTHON_DIR ?= $(BIJUX_DOCS_ARTIFACTS_DIR)/catalogue/python
 UI_CATALOGUE_UV ?= uv
+UI_CATALOGUE_BASE_PYTHON ?= python3
+UI_CATALOGUE_INTERPRETER_DIR ?= $(BIJUX_DOCS_ARTIFACTS_DIR)/catalogue/interpreter
 UI_CATALOGUE_GROUP ?= all
 
-.PHONY: ui-test-install-catalogue ui-test-install-catalogue-default ui-test-catalogue
+.PHONY: ui-test-install-catalogue-interpreter ui-test-install-catalogue ui-test-install-catalogue-default ui-test-catalogue
+ui-test-install-catalogue-interpreter: ## Install the exact standalone catalogue verification interpreter
+	@PYTHONDONTWRITEBYTECODE=1 python3 "$(UI_TESTS_DIR)/catalogue/python_runtime.py" --root "$(UI_CATALOGUE_INTERPRETER_DIR)" --uv "$(UI_CATALOGUE_UV)"
+
 ui-test-install-catalogue: ## Install the exact independent catalogue verification lock
-	@python3 -c 'import sys; assert sys.version_info[:3] == (3, 14, 4), "catalogue controls require CPython 3.14.4"'
+	@"$(UI_CATALOGUE_BASE_PYTHON)" -c 'import sys; assert sys.version_info[:3] == (3, 14, 4), "catalogue controls require CPython 3.14.4"'
 	@$(UI_CATALOGUE_UV) --version | grep -E '^uv 0[.]11[.]17([[:space:]]|$$)' >/dev/null
 	@test -s "$(UI_TESTS_DIR)/catalogue/requirements.lock.txt"
 	@test ! -e "$(UI_CATALOGUE_PYTHON_DIR)" || { echo "select a fresh artifact environment; existing environments are preserved" >&2; exit 1; }
 	@mkdir -p "$(BIJUX_DOCS_ARTIFACTS_DIR)/catalogue/cache" "$(BIJUX_DOCS_ARTIFACTS_DIR)/catalogue/build-scratch"
-	@python3 -m venv --without-pip "$(UI_CATALOGUE_PYTHON_DIR)"
+	@PYTHONDONTWRITEBYTECODE=1 "$(UI_CATALOGUE_BASE_PYTHON)" -m venv --without-pip "$(UI_CATALOGUE_PYTHON_DIR)"
 	@UV_CACHE_DIR="$(abspath $(BIJUX_DOCS_ARTIFACTS_DIR))/catalogue/cache" TMPDIR="$(abspath $(BIJUX_DOCS_ARTIFACTS_DIR))/catalogue/build-scratch" PYTHONDONTWRITEBYTECODE=1 $(UI_CATALOGUE_UV) pip sync --python "$(UI_CATALOGUE_PYTHON_DIR)/bin/python" --require-hashes --link-mode copy "$(UI_TESTS_DIR)/catalogue/requirements.lock.txt"
 
 ui-test-install-catalogue-default: ## Install the unchanged default lock for its isolated entrypoint control
-	@python3 -c 'import sys; assert sys.version_info[:3] == (3, 14, 4), "catalogue controls require CPython 3.14.4"'
+	@"$(UI_CATALOGUE_BASE_PYTHON)" -c 'import sys; assert sys.version_info[:3] == (3, 14, 4), "catalogue controls require CPython 3.14.4"'
 	@$(UI_CATALOGUE_UV) --version | grep -E '^uv 0[.]11[.]17([[:space:]]|$$)' >/dev/null
 	@test -s "$(UI_TESTS_DIR)/generated/requirements.lock.txt"
 	@test ! -e "$(UI_TESTS_PYTHON_DIR)" || { echo "select a fresh artifact environment; existing environments are preserved" >&2; exit 1; }
 	@mkdir -p "$(BIJUX_DOCS_ARTIFACTS_DIR)/catalogue/cache" "$(BIJUX_DOCS_ARTIFACTS_DIR)/catalogue/build-scratch"
-	@python3 -m venv --without-pip "$(UI_TESTS_PYTHON_DIR)"
+	@PYTHONDONTWRITEBYTECODE=1 "$(UI_CATALOGUE_BASE_PYTHON)" -m venv --without-pip "$(UI_TESTS_PYTHON_DIR)"
 	@UV_CACHE_DIR="$(abspath $(BIJUX_DOCS_ARTIFACTS_DIR))/catalogue/cache" TMPDIR="$(abspath $(BIJUX_DOCS_ARTIFACTS_DIR))/catalogue/build-scratch" PYTHONDONTWRITEBYTECODE=1 $(UI_CATALOGUE_UV) pip sync --python "$(UI_TESTS_PYTHON_DIR)/bin/python" --link-mode copy "$(UI_TESTS_DIR)/generated/requirements.lock.txt"
 
 ui-test-catalogue: ## Execute all catalogue controls or one exact bounded group

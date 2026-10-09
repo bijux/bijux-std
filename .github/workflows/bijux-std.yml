@@ -199,22 +199,27 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-      - name: Select the catalogue verification Python
-        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
-        with:
-          python-version: '3.14.4'
       - name: Prepare the pinned dependency installer
         uses: astral-sh/setup-uv@20cfd1bf945f4377ade1205e4dbc17946fc9a30d
         with:
           version: '0.11.17'
           enable-cache: false
+      - name: Install the exact catalogue verification interpreter
+        shell: bash
+        run: make ui-test-install-catalogue-interpreter
       - name: Install exact isolated catalogue dependencies
         shell: bash
-        run: make ui-test-install-catalogue
+        run: |
+          set -euo pipefail
+          interpreter="$(cat artifacts/bijux-docs/catalogue/interpreter/python-path.txt)"
+          make ui-test-install-catalogue UI_CATALOGUE_BASE_PYTHON="$interpreter"
       - name: Install the unchanged default renderer for its entrypoint
         if: ${{ matrix.group == 'tracked-entrypoint' }}
         shell: bash
-        run: make ui-test-install-catalogue-default
+        run: |
+          set -euo pipefail
+          interpreter="$(cat artifacts/bijux-docs/catalogue/interpreter/python-path.txt)"
+          make ui-test-install-catalogue-default UI_CATALOGUE_BASE_PYTHON="$interpreter"
       - name: Require complete source-bound catalogue execution
         shell: bash
         run: |
@@ -226,6 +231,8 @@ jobs:
         with:
           name: docs-catalogue-${{ matrix.group }}-${{ github.sha }}-${{ github.run_attempt }}
           path: |
+            artifacts/bijux-docs/catalogue/interpreter/recipe.json
+            artifacts/bijux-docs/catalogue/interpreter/python-path.txt
             artifacts/bijux-docs/catalogue/reports
             artifacts/catalogue-entrypoint-tests
             artifacts/catalogue-native-sources

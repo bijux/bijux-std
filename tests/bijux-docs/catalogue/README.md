@@ -47,3 +47,20 @@ The entrypoint fixtures bind their observed physical test runtime to a committed
 explicitly verification-only profile inside their isolated synthetic source.
 They assert that publication remains rejected. This exercises the production
 entrypoints; it does not add or approve a production/Linux publication profile.
+
+The hosted catalogue jobs select an artifact-owned standalone CPython 3.14.4
+through pinned uv 0.11.17. This is a distinct verification runtime; its recipe,
+interpreter digest and full physical source/cache checks remain recorded. The
+installer preserves existing destinations and rejects alternate download
+authorities. It does not delete caches or exempt installed bytecode from the
+normal renderer checks. The default32 and historical Canon locks remain unchanged.
+
+```sh
+make ui-test-install-catalogue-interpreter
+interpreter="$(cat artifacts/bijux-docs/catalogue/interpreter/python-path.txt)"
+make ui-test-install-catalogue ui-test-install-catalogue-default UI_CATALOGUE_BASE_PYTHON="$interpreter"
+make ui-test-catalogue
+```
+
+Actual hosted job durations qualify the recipe; local timings do not prove the
+Linux job budget or grant a production publication profile.
