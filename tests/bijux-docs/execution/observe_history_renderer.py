@@ -9,7 +9,7 @@ import subprocess
 
 ROOT = Path(__file__).resolve().parents[3]
 RECIPE = 'tests/bijux-docs/generated/canon-docs-renderer.json'
-LOCK = 'tests/bijux-docs/generated/requirements-canon-docs.lock.txt'
+LOCK = 'tests/bijux-docs/execution/recipes/canon-docs/requirements.lock'
 DEPENDENCIES = (
     'tests/bijux-docs/execution/observe_history_renderer.py', RECIPE, LOCK,
     '.github/workflows/renderer-observation.yml',

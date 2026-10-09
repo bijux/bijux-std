@@ -18,7 +18,7 @@
   ],
   "target_platform": "Linux",
   "target_python": "3.11",
-  "lock_path": "tests/bijux-docs/generated/requirements-canon-docs.lock.txt",
+  "lock_path": "tests/bijux-docs/execution/recipes/canon-docs/requirements.lock",
   "lock_sha256": "d59e4fdbc3f947a0bcd31e390fd3d1fb1c07fb121b0221d451e2097b1ed29bdb",
   "packages": {
     "babel": "2.18.0",

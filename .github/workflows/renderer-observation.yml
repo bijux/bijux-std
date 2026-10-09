@@ -7,7 +7,7 @@ on:
       - .github/workflows/renderer-observation.yml
       - tests/bijux-docs/execution/observe_history_renderer.py
       - tests/bijux-docs/generated/canon-docs-renderer.json
-      - tests/bijux-docs/generated/requirements-canon-docs.lock.txt
+      - tests/bijux-docs/execution/recipes/canon-docs/requirements.lock
       - shared/bijux-docs/tooling/security/**
       - shared/bijux-docs/security/renderer_profiles.py
       - shared/bijux-docs/security/producer_capabilities.py
@@ -49,7 +49,7 @@ jobs:
           python -m venv --without-pip artifacts/bijux-docs/history-renderer/python
           uv pip install --no-deps \
             --python artifacts/bijux-docs/history-renderer/python/bin/python \
-            --requirement tests/bijux-docs/generated/requirements-canon-docs.lock.txt \
+            --requirement tests/bijux-docs/execution/recipes/canon-docs/requirements.lock \
             2>&1 | tee artifacts/bijux-docs/history-renderer/observation/install.log
           uv pip check --python artifacts/bijux-docs/history-renderer/python/bin/python \
             2>&1 | tee artifacts/bijux-docs/history-renderer/observation/dependency-check.log
