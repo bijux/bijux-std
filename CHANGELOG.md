@@ -6,6 +6,10 @@ This file records notable repository-level changes for `bijux-std`.
 
 ### Pending review
 
+#### [#257](https://github.com/bijux/bijux-std/pull/257) — fix(docs): validate public artifact redirect and asset destinations
+
+Reject automatic redirect cycles and private destinations, validate every responsive asset candidate, and normalize Unicode hostname boundaries before public-origin admission.
+
 ### Merged pull requests
 
 #### 2026-10-09T17:51:20Z — [#255](https://github.com/bijux/bijux-std/pull/255) — test(docs): bound authored navigation journeys by ancestry
