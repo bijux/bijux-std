@@ -22,6 +22,28 @@ Bind shell behaviour to executable reader cases and reject uncaught runtime fail
 
 ### Merged pull requests
 
+#### 2026-10-09T00:59:18Z — [#217](https://github.com/bijux/bijux-std/pull/217) — fix(docs): contain focus paint within navigation boundaries
+
+Keep the visible focus ring inside disclosure scroll bounds and masthead repository controls.
+
+- Measure actual clipping and adjacent paint through ordinary keyboard focus and Auto theme transitions.
+- Retain every existing contrast case and detect the historical clipped-ring regression.
+- Admit focus geometry only after passive layout and finite-transition settlement; retain raw samples and strict clipping assertions.
+
+#### 2026-10-09T00:47:06Z — [#218](https://github.com/bijux/bijux-std/pull/218) — test(docs): keep shell acceptance executable and reject runtime errors
+
+Bind shell behaviour to executable reader cases and reject uncaught runtime failures in every shell journey.
+
+- Reference the actual parametrized local-reader acceptance without adding a duplicate gate.
+- Reuse the shared automatic runtime-error guard, preserving all canonical case identities and browser coverage.
+
+#### 2026-10-09T00:33:52Z — [#213](https://github.com/bijux/bijux-std/pull/213) — fix(docs): adopt exact source-bound legacy script defaults
+
+Refresh the complete previous canonical script list from its committed accepted standard source.
+
+- Preserve authored order, attributes, comments, configuration and capabilities outside the exact plain default.
+- Resolve prior ownership from the exact official GitHub authority only when an order conflict needs it.
+
 #### 2026-10-09T00:16:26Z — [#220](https://github.com/bijux/bijux-std/pull/220) — fix(github): bind protected path policy to immutable pr source
 
 Keep policy checks bound to the reviewed PR event when main advances.
