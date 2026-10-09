@@ -1,20 +1,20 @@
 # Changelog
 
-## [#252](https://github.com/bijux/bijux-std/pull/252) — rendered authored content coverage
-
-Status: pending review. Require the existing rich-content assertions in all nine engine and viewport combinations through the existing semantics jobs.
-
 This file records notable repository-level changes for `bijux-std`.
 
 ## Pull request history
 
 ### Pending review
 
-#### [#250](https://github.com/bijux/bijux-std/pull/250) — docs(docs): assign native search template ownership
+#### [#252](https://github.com/bijux/bijux-std/pull/252) — test(docs): require rendered authored content coverage
 
-Name the shared native search presentation owner and Material provider boundary, and link the existing site-scope and escaping checks in the executable contract trace.
+Require the existing rich-content assertions in all nine engine and viewport combinations through the existing semantics jobs.
 
 ### Merged pull requests
+
+#### 2026-10-09T15:59:28Z — [#250](https://github.com/bijux/bijux-std/pull/250) — docs(docs): assign native search template ownership
+
+Name the shared native search presentation owner and Material provider boundary, and link the existing site-scope and escaping checks in the executable contract trace.
 
 #### 2026-10-09T15:21:30Z — [#248](https://github.com/bijux/bijux-std/pull/248) — feat(docs): independently render source-owned passive readers
 
