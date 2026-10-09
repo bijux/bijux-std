@@ -6,15 +6,19 @@ This file records notable repository-level changes for `bijux-std`.
 
 ### Pending review
 
-#### [#255](https://github.com/bijux/bijux-std/pull/255) — test(docs): bound authored navigation journeys by ancestry
+#### [#254](https://github.com/bijux/bijux-std/pull/254) — test(docs): qualify independent storage denial journeys
+
+Require getter, read and write denial independently through initial load, session theme, instant navigation and cross-site reading across all three engines.
+
+### Merged pull requests
+
+#### 2026-10-09T17:51:20Z — [#255](https://github.com/bijux/bijux-std/pull/255) — test(docs): bound authored navigation journeys by ancestry
 
 Give every authored root, section and nested route a bounded disjoint journey in all three phone engines while preserving the original overview case and existing deadlines.
 
-#### [#252](https://github.com/bijux/bijux-std/pull/252) — test(docs): require rendered authored content coverage
+#### 2026-10-09T16:52:53Z — [#252](https://github.com/bijux/bijux-std/pull/252) — test(docs): require rendered authored content coverage
 
 Require the existing rich-content assertions in all nine engine and viewport combinations through the existing semantics jobs.
-
-### Merged pull requests
 
 #### 2026-10-09T16:25:54Z — [#251](https://github.com/bijux/bijux-std/pull/251) — test(docs): cover authored phone navigation destinations
 
