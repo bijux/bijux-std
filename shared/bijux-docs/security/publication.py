@@ -575,8 +575,8 @@ def qualified_manifest(repo_root: Path, site_dir: str, site_url: str, source_sha
             "source identity: receipt selects another public artifact")
     embedded = None
     if records["csp"]["receipt"].get("embedded") is not None:
-        embedded_module()
-        readers = importlib.import_module("bijux_publication_embedded.publication")
+        integration = embedded_module()
+        readers = importlib.import_module(integration.__package__ + ".publication")
         try:
             embedded = readers.verify_readers(selected, records["csp"]["receipt"],
                                               records["build"]["receipt"], repository=root,
