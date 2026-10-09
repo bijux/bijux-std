@@ -2,7 +2,7 @@ const fs = require("node:fs");
 const path = require("node:path");
 const registry = JSON.parse(fs.readFileSync(path.resolve(__dirname, "../../../../shared/bijux-docs/config/hub-links.json"), "utf8"));
 const { test, expect } = require("./helpers/document");
-const { tabTo, settle } = require("./contrast-targets/measurement");
+const { tabTo, settle, focus: measureFocus } = require("./contrast-targets/measurement");
 const control = (page, kind) => page.locator(`[data-bijux-header-control='${kind}-toggle']`);
 const drawer = (page) => page.locator(".md-sidebar--primary");
 const exposedLinks = (page) => drawer(page).locator("a:visible");
@@ -583,6 +583,59 @@ test("empty and expanded-registry fixtures retain useful navigation", async ({ p
     await touchJourney(browser, info, touchPage => lastAndCurrentRegistry(touchPage, info, expected, "/fixtures/long-registry/", "touch"));
   }
 });
+async function nativeHeaderGeometry(page, expectedTitle, info) {
+  const observed = await page.locator("header").evaluate(header => {
+    const bounds = node => { const r = node.getBoundingClientRect(); return { left:r.left, right:r.right, top:r.top, bottom:r.bottom }; };
+    const glyphs = node => {
+      const walk = document.createTreeWalker(node, NodeFilter.SHOW_TEXT), rectangles = [];
+      for (let text = walk.nextNode(); text; text = walk.nextNode()) {
+        if (!text.textContent.trim()) continue;
+        const range = document.createRange(); range.selectNodeContents(text);
+        for (const r of range.getClientRects()) rectangles.push({ left:r.left, right:r.right, top:r.top, bottom:r.bottom });
+      }
+      return rectangles;
+    };
+    const title = header.querySelector("[data-bijux-header-topic='site'] .md-ellipsis");
+    const label = header.querySelector("label[for='__drawer'].bijux-native-drawer-label");
+    const clipping = [];
+    for (let ancestor = title; ancestor; ancestor = ancestor.parentElement) {
+      const style = getComputedStyle(ancestor);
+      if (["hidden","clip","auto","scroll"].includes(style.overflowX) || ["hidden","clip","auto","scroll"].includes(style.overflowY))
+        clipping.push({ rect:bounds(ancestor), x:style.overflowX !== "visible", y:style.overflowY !== "visible" });
+    }
+    return { title:title.textContent.trim(), titleGlyphs:glyphs(title), labelGlyphs:glyphs(label),
+      label:label.textContent.trim(), labelFor:label.htmlFor, header:bounds(header),
+      rootFont:parseFloat(getComputedStyle(document.documentElement).fontSize),
+      checkbox:bounds(document.querySelector("#__drawer")), clipping, width:innerWidth,
+      documentWidth:document.documentElement.scrollWidth };
+  });
+  await info.attach(`native-enlarged-${page.viewportSize().width}-${expectedTitle}.json`,
+    { body:Buffer.from(JSON.stringify(observed, null, 2)), contentType:"application/json" });
+  await info.attach(`native-enlarged-${page.viewportSize().width}-${expectedTitle}.png`,
+    { body:await page.screenshot(), contentType:"image/png" });
+  expect(observed.title).toBe(expectedTitle);
+  expect(observed.label).toBe("Navigation");
+  expect(observed.labelFor).toBe("__drawer");
+  expect(observed.labelGlyphs.length).toBeGreaterThan(0);
+  expect(observed.titleGlyphs.length).toBeGreaterThan(0);
+  for (const glyph of observed.labelGlyphs) {
+    expect(glyph.top, "Navigation text stays beside its native checkbox").toBeGreaterThanOrEqual(observed.checkbox.top);
+    expect(glyph.bottom, "Navigation text stays beside its native checkbox").toBeLessThanOrEqual(observed.checkbox.bottom);
+  }
+  for (const glyph of observed.titleGlyphs) {
+    expect(glyph.left).toBeGreaterThanOrEqual(0);
+    expect(glyph.right).toBeLessThanOrEqual(observed.width);
+    for (const clip of observed.clipping) {
+      if (clip.x) { expect(glyph.left).toBeGreaterThanOrEqual(clip.rect.left); expect(glyph.right).toBeLessThanOrEqual(clip.rect.right); }
+      if (clip.y) { expect(glyph.top).toBeGreaterThanOrEqual(clip.rect.top); expect(glyph.bottom).toBeLessThanOrEqual(clip.rect.bottom); }
+    }
+    const target = observed.checkbox;
+    expect(glyph.right <= target.left || target.right <= glyph.left || glyph.bottom <= target.top || target.bottom <= glyph.top,
+      "Complete identity does not compete with the native navigation target").toBe(true);
+  }
+  expect(observed.documentWidth).toBeLessThanOrEqual(observed.width);
+}
+
 test("no-script generated document retains ordinary destination links", async ({ browser }, info) => {
   const context = await browser.newContext({ javaScriptEnabled: false, viewport: { width: 390, height: 844 } });
   try {
@@ -622,6 +675,44 @@ test("no-script generated document retains ordinary destination links", async ({
       await reading.click();
       await expect(page).toHaveURL(/\/reading\/$/);
       await expect(page.locator("h1")).toBeVisible();
+    }
+    // Qualify enlargement once per engine; the other viewport profiles retain
+    // the unchanged ordinary fallback journey above.
+    if (info.project.name.endsWith("-phone")) for (const width of [320,390]) {
+      for (const [route, title] of [["/", "Bijux"], ["/bijux-pollenomics/", "bijux-pollenomics"]]) {
+        const preferenceContext = await browser.newContext({ javaScriptEnabled:false, viewport:{ width, height:844 } });
+        const preferencePage = await preferenceContext.newPage();
+        try {
+          await preferencePage.goto(new URL(route, info.project.use.baseURL).href);
+          const font = await preferencePage.evaluate(() => parseFloat(getComputedStyle(document.documentElement).fontSize));
+          const preference = `html { font-size:${font * 2}px !important; } * { line-height:1.5 !important; letter-spacing:.12em !important; word-spacing:.16em !important; } p { margin-block-end:2em !important; }`;
+          // Deliver user CSS without relying on no-script DOM insertion events.
+          const style = async request => {
+            const response = await request.fetch();
+            await request.fulfill({ response, body:await response.text() + "\n" + preference });
+          };
+          await preferencePage.route("**/assets/styles/08-responsive.css", style);
+          try {
+            await preferencePage.reload();
+            expect(await preferencePage.evaluate(() => parseFloat(getComputedStyle(document.documentElement).fontSize))).toBe(font * 2);
+            await nativeHeaderGeometry(preferencePage, title, info);
+            const native = preferencePage.getByRole("checkbox", { name:"Navigation", exact:true });
+            await tabTo(preferencePage, native, browser.browserType().name());
+            const focus = await measureFocus(preferencePage, native);
+            expect(focus.focusVisible).toBe(true);
+            expect(focus.ratio).toBeGreaterThanOrEqual(3);
+            expect(focus.rectangle.width).toBeGreaterThanOrEqual(44);
+            expect(focus.rectangle.height).toBeGreaterThanOrEqual(44);
+            expect(focus.centerOwned).toBe(true);
+            await preferencePage.keyboard.press("Space");
+            await expect(native).toBeChecked();
+            await expect(drawer(preferencePage)).toBeVisible();
+            await preferencePage.keyboard.press("Space");
+            await expect(native).not.toBeChecked();
+            await expect(native).toBeFocused();
+          } finally { await preferencePage.unroute("**/assets/styles/08-responsive.css", style); }
+        } finally { await preferenceContext.close(); }
+      }
     }
   } finally {
     await context.close();

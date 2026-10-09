@@ -377,6 +377,14 @@ body:has(> header[data-bijux-drawer-target]):not([data-bijux-drawer-ready="true"
      opaque header surface while allowing enlarged content to grow. */
   body:has(> header[data-bijux-drawer-target]):not([data-bijux-drawer-ready="true"]) > header .md-header__inner {
     min-block-size: 54px;
+    padding-block: 5px;
+    align-items: flex-start;
+  }
+
+  /* Native labels stay beside their fixed-size checkbox; an intrinsically
+     wider identity can take another row instead of a narrow word column. */
+  body:has(> header[data-bijux-drawer-target]):not([data-bijux-drawer-ready="true"]) > header .md-header__title {
+    flex-basis: auto;
   }
 
   body:has(> header[data-bijux-drawer-target]):not([data-bijux-drawer-ready="true"]) #__drawer {
@@ -401,7 +409,7 @@ body:has(> header[data-bijux-drawer-target]):not([data-bijux-drawer-ready="true"
   body:has(> header[data-bijux-drawer-target]):not([data-bijux-drawer-ready="true"]) .bijux-native-drawer-label {
     display: inline-flex;
     align-items: center;
-    min-block-size: 2.2rem;
+    min-block-size: 44px;
     padding-inline-start: 50px;
     padding-inline-end: 0.3rem;
     font-size: 0.64rem;
