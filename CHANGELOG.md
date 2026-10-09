@@ -8,7 +8,7 @@ This file records notable repository-level changes for `bijux-std`.
 
 #### [#257](https://github.com/bijux/bijux-std/pull/257) — fix(docs): validate public artifact redirect and asset destinations
 
-Reject automatic redirect cycles and private destinations, validate every responsive asset candidate, and normalize Unicode hostname boundaries before public-origin admission.
+Reject redirect cycles and private destinations, normalize Unicode hostname boundaries, and validate responsive, stylesheet and SVG resources against actual public assets and symbols. Preserve harmless scientific SVG metadata while refusing internal entity authority.
 
 ### Merged pull requests
 

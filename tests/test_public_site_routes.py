@@ -371,6 +371,138 @@ class PublicSiteRouteTests(unittest.TestCase):
         self.write('assets/site.css','body{background:URL("%2e%2e/%2e%2e/outside.png")}')
         self.assert_rejected('Local reference escapes the selected artifact')
 
+    def svg_markup(self, markup):
+        path=self.site/'index.html'
+        path.write_text(path.read_text().replace('</body>',markup+'</body>'))
+
+    def test_inline_svg_image_and_use_destinations_cannot_hide_from_route_census(self):
+        for tag in ('image','use','feImage','script'):
+            with self.subTest(tag=tag):
+                original=(self.site/'index.html').read_text()
+                self.svg_markup('<svg><'+tag+' href="assets/missing.svg"></'+tag+'></svg>')
+                self.assert_rejected('missing SVG asset destination assets/missing.svg')
+                (self.site/'index.html').write_text(original)
+
+    def test_svg_href_and_xlink_assets_cannot_inherit_development_link_exceptions(self):
+        url='http://127.0.0.1/private.png'
+        for name in ('href','xlink:href'):
+            with self.subTest(name=name):
+                original=(self.site/'index.html').read_text()
+                self.svg_markup('<svg><image '+name+'="'+url+'"/></svg>')
+                report=qualify(self.site,self.url,[self.url],[dict(route='index.html',url=url,purpose='An explicitly described development link.')])
+                self.assertEqual(report['result'],'fail')
+                self.assertTrue(any('SVG resource: development/private host' in message for message in report['errors']))
+                self.assertFalse(report['development_links'][0]['exempted'])
+                (self.site/'index.html').write_text(original)
+
+    def test_svg_symbol_fragment_uses_actual_inline_or_external_owned_ids(self):
+        self.write('assets/symbols.svg','<svg xmlns="http://www.w3.org/2000/svg"><symbol id="glyph"/></svg>')
+        self.svg_markup('<svg><symbol id="inline-glyph"/><use href="#inline-glyph"/><use href="assets/symbols.svg#glyph"/></svg>')
+        self.assertEqual(self.report()['result'],'pass')
+        path=self.site/'index.html'
+        path.write_text(path.read_text().replace('symbols.svg#glyph','symbols.svg#missing'))
+        self.assert_rejected('missing SVG fragment assets/symbols.svg#missing')
+
+    def test_svg_symbol_fragments_cannot_borrow_html_or_binary_asset_identity(self):
+        self.write('assets/present.png','existing bytes')
+        original=(self.site/'index.html').read_text()
+        for markup,expected in (
+                ('<svg><use href="#intro"/></svg>','missing SVG fragment #intro'),
+                ('<svg><foreignObject><div id="label">Text</div></foreignObject><use href="#label"/></svg>','missing SVG fragment #label'),
+                ('<svg><use href="assets/present.png#glyph"/></svg>','SVG fragment requires an owned SVG destination')):
+            with self.subTest(markup=markup):
+                (self.site/'index.html').write_text(original)
+                self.svg_markup(markup)
+                self.assert_rejected(expected)
+
+    def test_external_svg_resource_paths_keep_svg_file_relative_base(self):
+        self.write('assets/present.png','existing bytes')
+        self.write('assets/diagrams/plot.svg','<svg xmlns="http://www.w3.org/2000/svg"><image href="../present.png"/></svg>')
+        self.assertEqual(self.report()['result'],'pass')
+        (self.site/'assets/present.png').unlink()
+        self.assert_rejected('assets/diagrams/plot.svg: missing SVG asset destination ../present.png')
+
+    def test_svg_paint_and_style_refs_validate_finite_local_targets(self):
+        self.svg_markup('<svg><defs><linearGradient id="paint"/></defs><style>.point{fill:URL("#paint")}</style><path fill="url(#paint)" style="filter:url(#paint)"/></svg>')
+        self.assertEqual(self.report()['result'],'pass')
+        path=self.site/'index.html'
+        path.write_text(path.read_text().replace('filter:url(#paint)','filter:url(#missing)'))
+        self.assert_rejected('missing SVG fragment #missing')
+
+    def test_external_svg_style_refs_cannot_hide_missing_or_private_assets(self):
+        self.write('assets/plot.svg','<svg xmlns="http://www.w3.org/2000/svg"><style>.point{fill:URL("http://127.0.0.1/private.svg#paint")}</style></svg>')
+        self.assert_rejected('assets/plot.svg: SVG resource: development/private host')
+        self.write('assets/plot.svg','<svg xmlns="http://www.w3.org/2000/svg"><path filter="URL(missing.svg#paint)"/></svg>')
+        self.assert_rejected('missing SVG asset destination missing.svg#paint')
+
+    def test_svg_matching_legacy_href_aliases_preserve_one_destination(self):
+        self.write('assets/present.png','existing bytes')
+        self.svg_markup('<svg><image href="assets/present.png" xlink:href="assets/present.png"/></svg>')
+        self.assertEqual(self.report()['result'],'pass')
+        path=self.site/'index.html'
+        path.write_text(path.read_text().replace('xlink:href="assets/present.png"','xlink:href="assets/missing.png"'))
+        self.assert_rejected('ambiguous SVG resource href')
+
+    def test_svg_duplicate_href_attributes_cannot_select_last_value_authority(self):
+        self.svg_markup('<svg><image href="http://127.0.0.1/private.png" href="assets/search.js"/></svg>')
+        self.assert_rejected('ambiguous SVG resource href')
+
+    def test_svg_xml_base_cannot_rewrite_owned_resource_authority(self):
+        self.svg_markup('<svg xml:base="http://127.0.0.1/"><image href="private.png"/></svg>')
+        self.assert_rejected('unsupported SVG xml:base')
+        self.write('assets/plot.svg','<svg xmlns="http://www.w3.org/2000/svg" xml:base="http://127.0.0.1/"><image href="private.png"/></svg>')
+        self.assert_rejected('assets/plot.svg: unsupported SVG xml:base')
+
+    def test_svg_xml_entity_authority_and_non_svg_roots_are_refused(self):
+        for content,expected in (
+                ('<!DOCTYPE svg [<!ENTITY remote "http://127.0.0.1/private.png">]><svg><image href="&remote;"/></svg>','SVG document types/entities'),
+                ('<html><image href="missing.png"/></html>','requires an SVG root'),
+                ('<svg><image href="missing.png"></svg>','invalid SVG XML')):
+            with self.subTest(content=content):
+                self.write('assets/plot.svg',content)
+                self.assert_rejected(expected)
+
+    def test_svg_external_doctype_metadata_preserves_graphviz_assets_without_fetching(self):
+        for declaration in (
+                '<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">',
+                '<!DOCTYPE svg SYSTEM "missing-nonfetched-metadata.dtd">'):
+            with self.subTest(declaration=declaration):
+                self.write('assets/tree.svg','<?xml version="1.0"?>'+declaration+
+                           '<svg xmlns="http://www.w3.org/2000/svg"><g id="graph"><text>Scientific tree</text></g></svg>')
+                self.svg_markup('<img src="assets/tree.svg" alt="Scientific tree">')
+                self.assertEqual(self.report()['result'],'pass')
+
+    def test_svg_internal_dtd_and_parameter_entities_cannot_admit_resource_authority(self):
+        for declaration in (
+                '<!DOCTYPE svg [<!ENTITY payload SYSTEM "http://127.0.0.1/private.svg">]>',
+                '<!DOCTYPE svg [<!ENTITY % expansion SYSTEM "http://127.0.0.1/private.dtd">%expansion;]>',
+                '<!DOCTYPE svg [<!ATTLIST image href CDATA "http://127.0.0.1/private.svg">]>'):
+            with self.subTest(declaration=declaration):
+                self.write('assets/tree.svg',declaration+'<svg xmlns="http://www.w3.org/2000/svg"><image/></svg>')
+                self.assert_rejected('SVG document types/entities')
+
+    def test_svg_xml_comments_cdata_and_script_strings_remain_data(self):
+        self.write('assets/plot.svg','''<svg xmlns="http://www.w3.org/2000/svg">
+            <!-- <image href="missing.png"/> <!DOCTYPE svg> -->
+            <text><![CDATA[<image href="missing.png"/> <!DOCTYPE svg>]]></text>
+            <script><![CDATA[const example='url("missing.png")';]]></script>
+            <style>.label{content:'url("missing.png")'}</style>
+            </svg>''')
+        self.assertEqual(self.report()['result'],'pass')
+
+    def test_svg_duplicate_external_ids_are_not_fragment_authority(self):
+        self.write('assets/plot.svg','<svg xmlns="http://www.w3.org/2000/svg"><symbol id="glyph"/><symbol id="glyph"/></svg>')
+        self.assert_rejected('duplicate SVG IDs: glyph')
+
+    def test_svg_image_view_fragments_do_not_acquire_symbol_id_semantics(self):
+        self.write('assets/image.svg','<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1 1"/>')
+        self.svg_markup('<svg><image href="assets/image.svg#svgView(viewBox(0,0,1,1))"/></svg>')
+        self.assertEqual(self.report()['result'],'pass')
+
+    def test_ordinary_html_image_named_href_does_not_create_svg_authority(self):
+        self.svg_markup('<image href="assets/missing.png"></image><script>const example=\'url("missing.png")\';</script>')
+        self.assertEqual(self.report()['result'],'pass')
+
     def test_search_index_404_fails_before_browser_promotion(self):
         (self.site/'search/search_index.json').unlink()
         self.assert_rejected('Search index is absent')

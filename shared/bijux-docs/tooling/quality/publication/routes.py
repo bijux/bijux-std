@@ -8,7 +8,7 @@ import re
 from urllib.parse import quote, unquote, urljoin, urlsplit
 import xml.etree.ElementTree as ET
 from validate_production_url import development_host
-from . import style_references
+from . import style_references, svg_references
 
 
 def responsive_candidates(value: str) -> list[str]:
@@ -74,11 +74,37 @@ class Document(HTMLParser):
         self.refreshes: list[str | None] = []
         self.base_hrefs: list[str | None] = []
         self.responsive_errors: list[str] = []
+        self.svg_errors: list[str] = []
+        self.svg_references: list[svg_references.Reference] = []
+        self.svg_ids: list[str] = []
+        self._svg_depth = 0
+        self._svg_foreign = False
+        self._svg_scopes = []
+        self._svg_style = False
+        self._svg_style_data = ''
         self.config = ''
         self._config = False
 
     def handle_starttag(self, tag, attrs):
         values = dict(attrs)
+        if tag == 'svg':
+            self._svg_scopes.append((tag, self._svg_foreign))
+            self._svg_foreign = False
+            self._svg_depth += 1
+        svg_context = self._svg_depth and not self._svg_foreign
+        if svg_context:
+            if values.get('id'):
+                self.svg_ids.append(values['id'])
+            try:
+                self.svg_references.extend(svg_references.attributes(tag, attrs))
+            except ValueError as exc:
+                self.svg_errors.append(str(exc))
+            if tag == 'style':
+                self._svg_style = True
+                self._svg_style_data = ''
+            if tag == 'foreignobject':
+                self._svg_scopes.append((tag, self._svg_foreign))
+                self._svg_foreign = True
         if tag == 'base':
             self.base_hrefs.extend(value for key,value in attrs if key == 'href')
         if values.get('id'):
@@ -87,7 +113,7 @@ class Document(HTMLParser):
             self.ids.append(values['name'])
         if tag == 'link' and 'canonical' in (values.get('rel') or '').split():
             self.canonicals.append(values.get('href') or '')
-        elif tag in {'a', 'area', 'link'} and values.get('href'):
+        elif tag in {'a', 'area', 'link'} and values.get('href') and not (svg_context and tag == 'a'):
             self.references.append(('link' if tag in {'a','area'} else 'asset', values['href']))
         for key in ('src', 'poster', 'action', 'formaction'):
             if values.get(key):
@@ -112,10 +138,23 @@ class Document(HTMLParser):
             self._config = True
 
     def handle_endtag(self, tag):
+        if tag == 'style' and self._svg_style:
+            try:
+                self.svg_references.extend(svg_references.Reference('asset', item.url, True)
+                    for item in style_references.references(self._svg_style_data))
+            except ValueError as exc:
+                self.svg_errors.append(str(exc))
+            self._svg_style = False
+        if tag == 'svg' and self._svg_depth:
+            self._svg_depth -= 1
+        if tag in {'svg','foreignobject'} and self._svg_scopes and self._svg_scopes[-1][0] == tag:
+            _, self._svg_foreign = self._svg_scopes.pop()
         if tag == 'script':
             self._config = False
 
     def handle_data(self, data):
+        if self._svg_style:
+            self._svg_style_data += data
         if self._config:
             self.config += data
 
@@ -263,9 +302,21 @@ def validate(site: Path, site_url: str, docs: dict[Path, Document], network_urls
     observations = observations if observations is not None else []
     canonical_routes = set()
     redirect_edges = {}
+    svg_ids = {}
+    svg_assets = []
+    for path in sorted(path for path in site.rglob('*') if path.is_file() and path.suffix.lower() == '.svg'):
+        label = path.relative_to(site).as_posix()
+        try:
+            ids, references = svg_references.read(path)
+            svg_ids[path.resolve()] = ids
+            svg_assets.extend((route_url(site_url,label),label,item) for item in references)
+        except ValueError as exc:
+            errors.append(f'{label}: {exc}')
     for path, doc in docs.items():
         label = path.relative_to(site).as_posix()
         errors.extend(f'{label}: {failure}' for failure in doc.responsive_errors)
+        errors.extend(f'{label}: {failure}' for failure in doc.svg_errors)
+        svg_assets.extend((doc.url,label,item) for item in doc.svg_references)
         duplicate = [key for key, count in Counter(doc.ids).items() if count > 1]
         if duplicate:
             errors.append(f'{label}: duplicate document IDs: {", ".join(sorted(duplicate))}')
@@ -305,6 +356,28 @@ def validate(site: Path, site_url: str, docs: dict[Path, Document], network_urls
             elif kind == 'link' and fragment and target in docs and fragment not in docs[target].ids:
                 errors.append(f'{label}: missing anchor {value}')
     errors.extend(redirect_cycles(site,redirect_edges))
+    for current, label, reference in svg_assets:
+        failure = validate_reference(reference.url,current,reference.kind,label,exceptions,observations)
+        if failure:
+            errors.append(f'{label}: SVG resource: {failure}')
+            continue
+        if is_network_boundary(site_url,urljoin(current,reference.url),network_urls):
+            continue
+        try:
+            target, fragment = resolve(site,site_url,current,reference.url)
+        except ValueError as exc:
+            errors.append(f'{label}: SVG resource: {exc}')
+            continue
+        if target is None:
+            continue
+        if not target.is_file():
+            errors.append(f'{label}: missing SVG {reference.kind} destination {reference.url}')
+        elif fragment and reference.fragment_id:
+            ids = svg_ids.get(target, docs[target].svg_ids if target in docs else None)
+            if ids is None:
+                errors.append(f'{label}: SVG fragment requires an owned SVG destination {reference.url}')
+            elif fragment not in ids:
+                errors.append(f'{label}: missing SVG fragment {reference.url}')
     for path in sorted(site.rglob('*.css')):
         css = path.read_text(encoding='utf-8')
         label = path.relative_to(site).as_posix()
@@ -360,5 +433,5 @@ def validate(site: Path, site_url: str, docs: dict[Path, Document], network_urls
 def records(site: Path, docs: dict[Path, Document]) -> list[dict]:
     return [dict(path=path.relative_to(site).as_posix(), url=doc.url,
                  canonical=doc.canonicals, noindex=doc.noindex, redirect=doc.redirect,
-                 anchors=len(set(doc.ids)), references=len(doc.references))
+                 anchors=len(set(doc.ids)), references=len(doc.references)+len(doc.svg_references))
             for path,doc in docs.items()]
