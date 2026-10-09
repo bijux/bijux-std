@@ -27,6 +27,60 @@ async function evidence(info, records) {
     contentType: "application/json",
   });
 }
+async function navigationReaderHistory(page, info, records) {
+  const root = info.project.use.baseURL + "/";
+  await page.goto(root);
+  await expect(page.locator("body")).toHaveAttribute("data-bijux-drawer-ready", "true");
+  const opener = page.locator('[data-bijux-header-control="drawer-toggle"]');
+  const compact = await page.evaluate(() => window.matchMedia("(max-width: 76.2344em)").matches);
+  if (compact) await opener.click();
+  else {
+    await expect(opener).toBeHidden();
+    await expect(page.locator(".md-sidebar--primary")).toBeVisible();
+  }
+  const platform = page.locator("#bijux-navigation summary").filter({ hasText: /^Platform$/ });
+  await platform.click();
+  const details = platform.locator("..").locator("summary").filter({ hasText: /^Details$/ });
+  await details.click();
+  const leaf = details.locator("..").locator("a").filter({ hasText: /^\s*Leaf destination\s*$/ });
+  const destination = await leaf.evaluate(node => node.href);
+  await leaf.click();
+  await stable(page, destination, records, "authored nested leaf navigation");
+  const heading = page.locator(".md-content h1");
+  async function focusedReader(label, name) {
+    await expect(heading).toHaveText(name);
+    const observation = await heading.evaluate(node => ({
+      name: node.textContent, connected: node.isConnected,
+      focused: document.activeElement === node, activeTag: document.activeElement.tagName,
+    }));
+    records.push({ label, ...observation });
+    expect(observation.connected).toBe(true);
+    await expect(heading).toBeFocused();
+  }
+  await focusedReader("nested leaf reader focus", /^Platform leaf destination(?:¶)?$/);
+  await page.goBack();
+  await stable(page, root, records, "nested leaf Back");
+  await focusedReader("Back replaces the disconnected reader focus", /^Bijux reference(?:¶)?$/);
+  await page.goForward();
+  await stable(page, destination, records, "nested leaf Forward");
+  await focusedReader("Forward replaces the disconnected reader focus", /^Platform leaf destination(?:¶)?$/);
+  await page.reload();
+  await expect(page).toHaveURL(destination);
+  const active = page.locator('#bijux-navigation a[aria-current="page"]');
+  await expect(active).toHaveCount(1);
+  expect(await active.evaluate(node => node.href)).toBe(destination);
+  const ancestors = await active.evaluate(node => {
+    const items = [];
+    for (let parent = node.parentElement; parent; parent = parent.parentElement) {
+      if (parent.tagName === "DETAILS") items.push({
+        name: parent.querySelector("summary").textContent.trim(), open: parent.open,
+      });
+    }
+    return items;
+  });
+  records.push({ label: "nested leaf direct reload active ancestors", destination, ancestors });
+  expect(ancestors).toEqual([{ name: "Details", open: true }, { name: "Platform", open: true }]);
+}
 test.beforeEach(async ({ browser, page }, info) => {
   info.annotations.push({ type: "browser-version", description: browser.version() });
   page.on("pageerror", error => { throw error; });
@@ -36,6 +90,7 @@ test("fragment Back stays stable through the next ordinary reader journey", asyn
   const records = [], origin = info.project.use.baseURL;
   const reader = origin + "/reader-code/", destination = origin + "/reader-table/";
   try {
+    await navigationReaderHistory(page, info, records);
     await page.goto(reader);
     await expect(page.locator("body")).toHaveAttribute("data-bijux-drawer-ready", "true");
     const identity = await page.evaluate(() => window.bijuxDocumentIdentity = crypto.randomUUID());
