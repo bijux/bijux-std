@@ -68,6 +68,16 @@ backdrop dismissal, enlarged text/spacing at 320 pixels, and ten ordinary instan
 history journeys while holding explicit drawer intent beyond Material's admitted
 125ms delayed toggle reset.
 
+`make ui-test-navigation-destinations` gives the authored fixture graph its own
+phone qualification in Chromium, Firefox and WebKit. Root documents, section
+destinations and nested destinations have disjoint ownership, with at most ten
+routes per test. Every route retains ordinary activation, accessible names,
+current-page truth, expanded ancestry, Escape/invoker focus, retained-document
+reader focus and native Back assertions. The source graph oracle rejects stale
+destinations, and ownership validation rejects omissions and overlap. The
+original parent-overview case independently keeps its single overview journey.
+This separation keeps the thirty-second test and three-minute job limits intact.
+
 ## Separate scopes and limits
 
 The larger shell command `make ui-test` retains all sixteen generated shell
