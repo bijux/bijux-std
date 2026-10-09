@@ -270,6 +270,34 @@ class WorkflowCollectionTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, 'source-owned frontend workflow'):
             COLLECTION.collect(self.api, {**self.identity, 'workflow_path': '.github/workflows/parallel.yml'}, 'producer', ROOT / 'artifacts')
 
+    def test_failed_refresh_retains_actual_superseding_api_frame_without_admission(self):
+        audits = []
+        original = self.api.archive
+        def changed(artifact_id):
+            data = original(artifact_id)
+            self.responses[self.paths['run']]['run_attempt'] = 3
+            return data
+        with tempfile.TemporaryDirectory(dir=ROOT / 'artifacts') as folder, patch.object(self.api, 'archive', side_effect=changed):
+            output = Path(folder) / 'refused'
+            with self.assertRaisesRegex(ValueError, 'superseded'):
+                COLLECTION.collect(self.api, self.identity, 'producer', output, audit=audits.append)
+            self.assertFalse(output.exists())
+        self.assertEqual(len(audits), 1)
+        self.assertEqual(audits[0]['status'], 'failed')
+        self.assertIsNone(audits[0]['collection'])
+        frames = audits[0]['admission']['refresh_observations']
+        self.assertEqual(frames[-1]['run']['run_attempt'], 3)
+        self.assertNotEqual(frames[-1]['status'], 'passed')
+
+    def test_successful_collection_audit_retains_original_executor_and_physical_plan(self):
+        audits = []
+        with tempfile.TemporaryDirectory(dir=ROOT / 'artifacts') as folder:
+            collected = COLLECTION.collect(self.api, self.identity, 'producer', Path(folder) / 'collected', audit=audits.append)
+        self.assertEqual(len(audits), 1)
+        self.assertEqual(audits[0]['status'], 'admitted')
+        self.assertEqual(audits[0]['collection'], collected.export_record())
+        self.assertIsNotNone(audits[0]['admission']['inputs']['producer'])
+
     def test_unknown_stage_and_serialized_capability_are_refused(self):
         with self.assertRaisesRegex(ValueError, 'stage'): COLLECTION.collect(self.api, self.identity, 'unknown', ROOT / 'artifacts')
         with self.assertRaisesRegex(ValueError, 'live API'): COLLECTION.Collection({}, {}, {})

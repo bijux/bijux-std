@@ -262,32 +262,40 @@ class Collection:
                 'planned_files': {name: hashlib.sha256(data).hexdigest() for name, data in self.plan().items()}}
 
 
-def collect(api, identity: dict, stage: str, output: Path) -> Collection:
-    require(stage in ('producer', 'navigation'), 'Unknown collection stage')
-    require(identity.get('workflow_path') == '.github/workflows/bijux-std.yml',
-            'Collection requires the source-owned frontend workflow')
-    roles = registry()
-    if stage == 'producer':
-        roles = {'producer': roles['producer']}
-    before = checkout_state()
-    require(all(before[key] == identity[key] for key in before), 'Actual checkout differs from input source context')
-    source = LINEAGE.observe_source(api, identity)
-    specs = {role: {key: spec[key] for key in ('job_name', 'artifact_prefix', 'upload_step')} for role, spec in roles.items()}
-    inputs = source.admit(specs, workers=8)
-    collection = Collection(source, inputs, roles, _created=_CREATED)
-    producer_declaration(collection.producer)
-    if stage == 'navigation':
-        for role in roles:
-            if role.startswith('browser-') or role == 'persisted' or (role.startswith('fault-') and role != 'fault-public'):
-                try:
-                    record = decoded_record(inputs[role].read(collection.execution_name(role)))
-                except (json.JSONDecodeError, UnicodeDecodeError) as error:
-                    raise ValueError('Invalid execution record JSON') from error
-                collection.verify_execution(role, record)
-    if hasattr(api, 'remaining'):
-        api.remaining()
-    require(checkout_state() == before, 'Tracked checkout changed during collection')
-    collection.materialize(output)
-    require(checkout_state() == before, 'Tracked checkout changed during materialization')
-    collection.checkout_before, collection.checkout_after = copy.deepcopy(before), checkout_state()
-    return collection
+def collect(api, identity: dict, stage: str, output: Path, *, audit=None) -> Collection:
+    source, collection, status = None, None, "failed"
+    try:
+        require(stage in ('producer', 'navigation'), 'Unknown collection stage')
+        require(identity.get('workflow_path') == '.github/workflows/bijux-std.yml',
+                'Collection requires the source-owned frontend workflow')
+        roles = registry()
+        if stage == 'producer':
+            roles = {'producer': roles['producer']}
+        before = checkout_state()
+        require(all(before[key] == identity[key] for key in before), 'Actual checkout differs from input source context')
+        source = LINEAGE.observe_source(api, identity)
+        specs = {role: {key: spec[key] for key in ('job_name', 'artifact_prefix', 'upload_step')} for role, spec in roles.items()}
+        inputs = source.admit(specs, workers=8)
+        collection = Collection(source, inputs, roles, _created=_CREATED)
+        producer_declaration(collection.producer)
+        if stage == 'navigation':
+            for role in roles:
+                if role.startswith('browser-') or role == 'persisted' or (role.startswith('fault-') and role != 'fault-public'):
+                    try:
+                        record = decoded_record(inputs[role].read(collection.execution_name(role)))
+                    except (json.JSONDecodeError, UnicodeDecodeError) as error:
+                        raise ValueError('Invalid execution record JSON') from error
+                    collection.verify_execution(role, record)
+        if hasattr(api, 'remaining'):
+            api.remaining()
+        require(checkout_state() == before, 'Tracked checkout changed during collection')
+        collection.materialize(output)
+        require(checkout_state() == before, 'Tracked checkout changed during materialization')
+        collection.checkout_before, collection.checkout_after = copy.deepcopy(before), checkout_state()
+        status = "admitted"
+        return collection
+    finally:
+        if audit is not None:
+            audit({"schema": 1, "stage": stage, "status": status, "collector": copy.deepcopy(identity),
+                   "admission": source.export_record() if source is not None else None,
+                   "collection": collection.export_record() if status == "admitted" else None})

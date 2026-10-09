@@ -94,36 +94,39 @@ jobs:
       - name: Require applicable source and rendered checks
         shell: bash
         env:
+          GH_TOKEN: ${{ github.token }}
+          EXPECTED_WORKFLOW_HEAD: ${{ github.event.pull_request.head.sha || github.event.merge_group.head_sha || github.sha }}
           CHECK_RESULT: ${{ needs.checks.result }}
           NAVIGATION_RESULT: ${{ needs.navigation.result }}
           CATALOGUE_RESULT: ${{ needs.catalogue-renderer.result }}
           RENDERER_RESULT: ${{ needs.renderer-controls.result }}
         run: |
           set -euo pipefail
-          test "$CHECK_RESULT" = success
-          if [[ "$GITHUB_REPOSITORY" == "bijux/bijux-std" ]]; then
-            test "$NAVIGATION_RESULT" = success
-            test "$CATALOGUE_RESULT" = success
-            test "$RENDERER_RESULT" = success
+          if [[ "$GITHUB_REPOSITORY" == "bijux/bijux-std" && "${GITHUB_RUN_ATTEMPT:-1}" -gt 1 ]]; then
+            python3 tests/bijux-docs/execution/job_budget.py --observe-latest \
+              --run-id "$GITHUB_RUN_ID" --attempt "$GITHUB_RUN_ATTEMPT" \
+              --workflow-head "$EXPECTED_WORKFLOW_HEAD" \
+              --output artifacts/bijux-docs/job-budget/qualification.json
           else
-            test "$NAVIGATION_RESULT" = skipped
-            test "$CATALOGUE_RESULT" = skipped
-            test "$RENDERER_RESULT" = skipped
+            test "$CHECK_RESULT" = success
+            if [[ "$GITHUB_REPOSITORY" == "bijux/bijux-std" ]]; then
+              test "$NAVIGATION_RESULT" = success
+              test "$CATALOGUE_RESULT" = success
+              test "$RENDERER_RESULT" = success
+            else
+              test "$NAVIGATION_RESULT" = skipped
+              test "$CATALOGUE_RESULT" = skipped
+              test "$RENDERER_RESULT" = skipped
+            fi
           fi
       - name: Verify complete frontend job duration
-        if: ${{ github.repository == 'bijux/bijux-std' }}
+        if: ${{ github.repository == 'bijux/bijux-std' && github.run_attempt == 1 }}
         shell: bash
         env:
           GH_TOKEN: ${{ github.token }}
           EXPECTED_WORKFLOW_HEAD: ${{ github.event.pull_request.head.sha || github.event.merge_group.head_sha || github.sha }}
         run: |
           set -euo pipefail
-          if [[ "$GITHUB_RUN_ATTEMPT" -gt 1 ]]; then
-            python3 tests/bijux-docs/execution/job_budget.py --observe-latest \
-              --run-id "$GITHUB_RUN_ID" --attempt "$GITHUB_RUN_ATTEMPT" \
-              --workflow-head "$EXPECTED_WORKFLOW_HEAD" \
-              --output artifacts/bijux-docs/job-budget/qualification.json
-          else
           python3 - <<'PYTHON'
           import importlib.util, json, math, os, pathlib, time, urllib.request
           output = pathlib.Path("artifacts/bijux-docs/job-budget")
@@ -173,7 +176,6 @@ jobs:
             --run-id "$GITHUB_RUN_ID" --attempt "$GITHUB_RUN_ATTEMPT" \
             --workflow-head "$EXPECTED_WORKFLOW_HEAD" \
             --output artifacts/bijux-docs/job-budget/qualification.json
-          fi
       - name: Run standards report
         shell: bash
         run: |
@@ -365,6 +367,9 @@ jobs:
   navigation-browsers:
     name: std / navigation ${{ matrix.group }} / ${{ matrix.engine }}
     needs: navigation-fixtures
+    permissions:
+      contents: read
+      actions: read
     runs-on: ubuntu-latest
     timeout-minutes: 3
     strategy:
@@ -386,6 +391,7 @@ jobs:
         with:
           node-version: '24.21.0'
       - name: Download this run's immutable fixtures
+        if: ${{ github.run_attempt == 1 }}
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
           name: docs-navigation-fixtures-${{ github.sha }}-${{ github.run_attempt }}
@@ -394,6 +400,8 @@ jobs:
         shell: bash
         env:
           PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+          GH_TOKEN: ${{ github.token }}
+          EXPECTED_WORKFLOW_HEAD: ${{ github.event.pull_request.head.sha || github.event.merge_group.head_sha || github.sha }}
         run: |
           set -euo pipefail
           git config --global --add safe.directory "$GITHUB_WORKSPACE"
@@ -407,13 +415,26 @@ jobs:
           name: docs-navigation-${{ matrix.group }}-${{ matrix.engine }}-${{ github.sha }}-${{ github.run_attempt }}
           path: artifacts/bijux-docs/shards
           if-no-files-found: error
+          include-hidden-files: true
           compression-level: 0
+          retention-days: 14
+
+      - name: Retain independent workflow input admission audit
+        if: ${{ always() && github.run_attempt > 1 }}
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: docs-workflow-input-audit-browser-${{ matrix.group }}-${{ matrix.engine }}-${{ github.sha }}-${{ github.run_attempt }}
+          path: artifacts/bijux-docs/collection
+          if-no-files-found: warn
           retention-days: 14
 
   persisted-native-reader:
     name: std / persisted native reader / chromium
     if: ${{ github.repository == 'bijux/bijux-std' }}
     needs: navigation-fixtures
+    permissions:
+      contents: read
+      actions: read
     runs-on: ubuntu-latest
     timeout-minutes: 3
     container:
@@ -427,6 +448,7 @@ jobs:
         with:
           node-version: '24.21.0'
       - name: Download this run's immutable fixtures
+        if: ${{ github.run_attempt == 1 }}
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
           name: docs-navigation-fixtures-${{ github.sha }}-${{ github.run_attempt }}
@@ -435,6 +457,8 @@ jobs:
         shell: bash
         env:
           PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+          GH_TOKEN: ${{ github.token }}
+          EXPECTED_WORKFLOW_HEAD: ${{ github.event.pull_request.head.sha || github.event.merge_group.head_sha || github.sha }}
         run: |
           set -euo pipefail
           git config --global --add safe.directory "$GITHUB_WORKSPACE"
@@ -451,9 +475,21 @@ jobs:
           compression-level: 0
           retention-days: 14
 
+      - name: Retain independent workflow input admission audit
+        if: ${{ always() && github.run_attempt > 1 }}
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: docs-workflow-input-audit-persisted-${{ github.sha }}-${{ github.run_attempt }}
+          path: artifacts/bijux-docs/collection
+          if-no-files-found: warn
+          retention-days: 14
+
   frontend-browser-faults:
     name: std / frontend fault controls / ${{ matrix.engine }}
     needs: navigation-fixtures
+    permissions:
+      contents: read
+      actions: read
     runs-on: ubuntu-latest
     timeout-minutes: 3
     strategy:
@@ -471,6 +507,7 @@ jobs:
         with:
           node-version: '24.21.0'
       - name: Download this run's immutable fixtures
+        if: ${{ github.run_attempt == 1 }}
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
           name: docs-navigation-fixtures-${{ github.sha }}-${{ github.run_attempt }}
@@ -479,6 +516,8 @@ jobs:
         shell: bash
         env:
           PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+          GH_TOKEN: ${{ github.token }}
+          EXPECTED_WORKFLOW_HEAD: ${{ github.event.pull_request.head.sha || github.event.merge_group.head_sha || github.sha }}
         run: |
           set -euo pipefail
           git config --global --add safe.directory "$GITHUB_WORKSPACE"
@@ -493,6 +532,15 @@ jobs:
           include-hidden-files: true
           if-no-files-found: error
           compression-level: 0
+          retention-days: 14
+
+      - name: Retain independent workflow input admission audit
+        if: ${{ always() && github.run_attempt > 1 }}
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: docs-workflow-input-audit-fault-${{ matrix.engine }}-${{ github.sha }}-${{ github.run_attempt }}
+          path: artifacts/bijux-docs/collection
+          if-no-files-found: warn
           retention-days: 14
 
   frontend-public-faults:
@@ -523,45 +571,55 @@ jobs:
     name: std / navigation
     if: ${{ always() && github.repository == 'bijux/bijux-std' }}
     needs: [navigation-fixtures, navigation-browsers, publication-commands, renderer-controls, frontend-browser-faults, frontend-public-faults, persisted-native-reader]
+    permissions:
+      contents: read
+      actions: read
     runs-on: ubuntu-latest
     timeout-minutes: 3
     steps:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Download canonical inventories
+        if: ${{ github.run_attempt == 1 }}
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
           name: docs-navigation-fixtures-${{ github.sha }}-${{ github.run_attempt }}
           path: artifacts/bijux-docs
       - name: Download every assigned browser receipt
+        if: ${{ github.run_attempt == 1 }}
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
           pattern: docs-navigation-*-*-${{ github.sha }}-${{ github.run_attempt }}
           path: artifacts/bijux-docs/shards
           merge-multiple: true
       - name: Download exact cached native reader evidence
+        if: ${{ github.run_attempt == 1 }}
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
           name: docs-persisted-native-reader-${{ github.sha }}-${{ github.run_attempt }}
           path: artifacts/bijux-docs/persisted-reader
       - name: Download exact renderer command evidence
+        if: ${{ github.run_attempt == 1 }}
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
           name: docs-publication-commands-${{ github.sha }}-${{ github.run_attempt }}
           path: artifacts/bijux-docs/publication-commands
       - name: Download exact renderer unit evidence
+        if: ${{ github.run_attempt == 1 }}
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
           pattern: docs-renderer-controls-*-${{ github.sha }}-${{ github.run_attempt }}
           path: artifacts/bijux-docs/renderer-controls
           merge-multiple: true
       - name: Download exact frontend fault witnesses
+        if: ${{ github.run_attempt == 1 }}
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
           pattern: docs-frontend-faults-browser-*-${{ github.sha }}-${{ github.run_attempt }}
           path: artifacts/bijux-docs/frontend-faults
           merge-multiple: true
       - name: Download exact public artifact fault witnesses
+        if: ${{ github.run_attempt == 1 }}
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
           name: docs-frontend-faults-public-${{ github.sha }}-${{ github.run_attempt }}
@@ -569,6 +627,8 @@ jobs:
       - name: Require successful jobs and complete unique engine coverage
         shell: bash
         env:
+          GH_TOKEN: ${{ github.token }}
+          EXPECTED_WORKFLOW_HEAD: ${{ github.event.pull_request.head.sha || github.event.merge_group.head_sha || github.sha }}
           FIXTURE_RESULT: ${{ needs.navigation-fixtures.result }}
           BROWSER_RESULT: ${{ needs.navigation-browsers.result }}
           COMMAND_RESULT: ${{ needs.publication-commands.result }}
@@ -578,15 +638,19 @@ jobs:
           FAULT_PUBLIC_RESULT: ${{ needs.frontend-public-faults.result }}
         run: |
           set -euo pipefail
-          test "$FAULT_BROWSER_RESULT" = success
-          test "$FAULT_PUBLIC_RESULT" = success
-          test "$PERSISTED_RESULT" = success
-          python3 tests/bijux-docs/execution/frontend_faults.py aggregate
-          python3 tests/bijux-docs/execution/browser_gate.py aggregate
-          test "$FIXTURE_RESULT" = success
-          test "$BROWSER_RESULT" = success
-          test "$COMMAND_RESULT" = success
-          test "$RENDERER_RESULT" = success
+          if [[ "${GITHUB_RUN_ATTEMPT:-1}" -gt 1 ]]; then
+            python3 tests/bijux-docs/execution/workflow_controllers.py aggregate
+          else
+            test "$FAULT_BROWSER_RESULT" = success
+            test "$FAULT_PUBLIC_RESULT" = success
+            test "$PERSISTED_RESULT" = success
+            python3 tests/bijux-docs/execution/frontend_faults.py aggregate
+            python3 tests/bijux-docs/execution/browser_gate.py aggregate
+            test "$FIXTURE_RESULT" = success
+            test "$BROWSER_RESULT" = success
+            test "$COMMAND_RESULT" = success
+            test "$RENDERER_RESULT" = success
+          fi
       - name: Retain complete navigation qualification
         if: always()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
@@ -595,6 +659,9 @@ jobs:
           include-hidden-files: true
           path: |
             artifacts/bijux-docs/navigation-qualification.json
+            artifacts/bijux-docs/collection
+            artifacts/bijux-docs/shards/**/execution.json
+            artifacts/bijux-docs/frontend-faults/*/execution.json
             artifacts/bijux-docs/persisted-reader
             artifacts/bijux-docs/frontend-faults/qualification.json
             artifacts/bijux-docs/frontend-faults/*/receipt.json

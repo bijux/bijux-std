@@ -164,7 +164,7 @@ def qualify_latest(observation, *, groups: dict, engines: tuple | list,
     require(isinstance(head, str) and re.fullmatch(r'[a-f0-9]{40}', head),
             'Full workflow source SHA is required')
     require(type(observation).__name__ == 'SourceObservation', 'API-created source observation is required')
-    require(Path(inspect.getfile(type(observation))).resolve() == Path(__file__).with_name('workflow_lineage.py').resolve(),
+    require(Path(inspect.getfile(type(observation).__init__)).resolve() == Path(__file__).with_name('workflow_lineage.py').resolve(),
             'Source observation must come from the owned lineage factory')
     identity = observation.identity
     require(identity.get('run_id') == run_id and identity.get('attempt') == attempt and identity.get('head') == head,
@@ -207,7 +207,7 @@ def qualify_latest(observation, *, groups: dict, engines: tuple | list,
 
 
 def registry_digests(registry_path: Path) -> dict[str, str]:
-    names = ('browser_gate.py', 'browser_partitions.py', 'browser_partitions.json', 'renderer_controls.py', 'node_events.cjs', 'persisted_reader.py', 'workflow_artifacts.py', 'workflow_lineage.py')
+    names = ('browser_gate.py', 'browser_partitions.py', 'browser_partitions.json', 'renderer_controls.py', 'node_events.cjs', 'persisted_reader.py', 'workflow_artifacts.py', 'workflow_lineage.py', 'workflow_collection.py', 'workflow_controllers.py')
     digests = {name: hashlib.sha256(registry_path.with_name(name).read_bytes()).hexdigest() for name in names}
     for name in ('playwright.persisted-reader-history.config.js', 'ui/generated-specs/persisted-reader-history.spec.js'):
         digests[name] = hashlib.sha256((registry_path.parent.parent / name).read_bytes()).hexdigest()
@@ -231,22 +231,22 @@ def main() -> int:
         registry = {'__name__': 'budget_registry', '__file__': str(registry_path)}
         exec(compile(registry_path.read_text(), str(registry_path), 'exec'), registry)
         if args.observe_latest:
-            import importlib.util
             import os
-            import subprocess
             import sys
+            from types import ModuleType
             path = Path(__file__).with_name('workflow_lineage.py')
-            spec = importlib.util.spec_from_file_location('budget_workflow_lineage', path)
-            lineage = importlib.util.module_from_spec(spec)
-            sys.modules[spec.name] = lineage
-            spec.loader.exec_module(lineage)
+            lineage = ModuleType('budget_workflow_lineage')
+            lineage.__file__ = str(path)
+            sys.modules[lineage.__name__] = lineage
+            exec(compile(path.read_bytes(), str(path), 'exec'), lineage.__dict__)
+            collection_path = path.with_name('workflow_collection.py')
+            collection = ModuleType('budget_workflow_collection')
+            collection.__file__ = str(collection_path)
+            exec(compile(collection_path.read_bytes(), str(collection_path), 'exec'), collection.__dict__)
             api = lineage.ARTIFACTS.GitHubAPI(os.environ['GITHUB_REPOSITORY'], os.environ['GH_TOKEN'])
-            run = api.json('repos/' + api.repository + '/actions/runs/' + str(args.run_id))
-            context = {'run_id': args.run_id, 'attempt': args.attempt, 'head': args.workflow_head,
-                       'checkout_sha': subprocess.check_output(['git', 'rev-parse', 'HEAD'], text=True).strip(),
-                       'source_tree': subprocess.check_output(['git', 'rev-parse', 'HEAD^{tree}'], text=True).strip(),
-                       'workflow_id': run['workflow_id'], 'workflow_path': '.github/workflows/bijux-std.yml',
-                       'head_branch': run['head_branch']}
+            context = collection.context_from_environment(api, args.workflow_head)
+            if context['run_id'] != args.run_id or context['attempt'] != args.attempt:
+                raise ValueError('Requested budget run/attempt differs from actual runner identity')
             observation = lineage.observe_source(api, context)
             args.output.parent.mkdir(parents=True, exist_ok=True)
             raw = args.output.parent / 'source-observation.json'
@@ -254,6 +254,8 @@ def main() -> int:
             try:
                 receipt = qualify_latest(observation, groups=registry['GROUPS'], engines=registry['ENGINES'],
                                          run_id=args.run_id, attempt=args.attempt, head=args.workflow_head)
+                require(collection.checkout_state() == {key: context[key] for key in ('checkout_sha', 'source_tree')},
+                        'Actual source changed during budget observation')
             finally:
                 (args.output.parent / 'owner-observation.json').write_text(json.dumps(observation.export_record(), indent=2) + '\n')
             (args.output.parent / 'jobs-selected.json').write_text(json.dumps(receipt['selected_jobs'], indent=2) + '\n')

@@ -144,7 +144,9 @@ def run() -> None:
     require(not any(name in os.environ for name in ('BIJUX_UI_BROWSER_ENGINE', 'BIJUX_UI_PROJECTS', 'BIJUX_UI_PROFILE')),
             'Dedicated cached reader owner does not admit external project selection')
     gate = load(TESTS / 'execution/browser_gate.py', 'persisted_fixture_gate')
-    gate.verify_producer_envelope()
+    controllers = gate.workflow_controllers()
+    collection = controllers.collect('producer') if controllers.recovery() else None
+    producer = gate.verify_producer_envelope(collection.producer if collection is not None else None)
     gate.unpack()
     gate.install_browser_runtime()
     output = ARTIFACTS / 'persisted-reader'
@@ -160,6 +162,7 @@ def run() -> None:
         receipt = {'schema': 1, 'status': 'failed', 'error': str(error), 'terminal_exit': process.returncode}
     (output / 'receipt.json').write_text(json.dumps(receipt, indent=2) + '\n')
     require(receipt['status'] == 'passed', receipt.get('error', 'Cached reader qualification failed'))
+    controllers.record_execution(output, 'persisted', producer)
 
 
 def main() -> int:

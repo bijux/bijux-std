@@ -4,6 +4,7 @@ import importlib.util
 import os
 import re
 import subprocess
+import tempfile
 import unittest
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -29,7 +30,7 @@ def gate():
 class RequiredNavigationTests(unittest.TestCase):
     def run_gate(self, repository, checks='success', navigation='success', catalogue=None, renderer=None):
         env = {**os.environ, 'GITHUB_REPOSITORY': repository,
-               'CHECK_RESULT': checks, 'NAVIGATION_RESULT': navigation,
+               'GITHUB_RUN_ATTEMPT': '1', 'CHECK_RESULT': checks, 'NAVIGATION_RESULT': navigation,
                'CATALOGUE_RESULT': catalogue if catalogue is not None else ('success' if repository == 'bijux/bijux-std' else 'skipped'),
                'RENDERER_RESULT': renderer if renderer is not None else ('success' if repository == 'bijux/bijux-std' else 'skipped')}
         return subprocess.run(['bash', '--noprofile', '--norc', '-c', gate()],
@@ -171,11 +172,42 @@ class RequiredNavigationTests(unittest.TestCase):
         self.assertIn('artifacts/bijux-docs/persisted-reader', aggregate)
         execution = aggregate.split('      - name: Require successful jobs and complete unique engine coverage\n', 1)[1]
         execution = execution.split('        run: |\n', 1)[1]
-        script = '\n'.join(line[10:] for line in execution.splitlines()).split('python3', 1)[0]
-        for outcome in ('success', 'failure', 'cancelled', 'skipped', '', 'pending'):
-            env = {**os.environ, 'FAULT_BROWSER_RESULT': 'success', 'FAULT_PUBLIC_RESULT': 'success', 'PERSISTED_RESULT': outcome}
-            actual = subprocess.run(['bash', '--noprofile', '--norc', '-c', script], env=env, capture_output=True)
-            self.assertEqual(actual.returncode == 0, outcome == 'success')
+        script = '\n'.join(line[10:] for line in execution.split('      - name:', 1)[0].splitlines())
+        # Execute the entire ordinary shell branch; a controlled function replaces
+        # native Python only, so every prerequisite remains a real shell refusal.
+        script = 'python3() { return 0; }\n' + script
+        variables = ('FAULT_BROWSER_RESULT', 'FAULT_PUBLIC_RESULT', 'PERSISTED_RESULT',
+                     'FIXTURE_RESULT', 'BROWSER_RESULT', 'COMMAND_RESULT', 'RENDERER_RESULT')
+        for variable in variables:
+            for outcome in ('success', 'failure', 'cancelled', 'skipped', '', 'pending'):
+                env = {**os.environ, 'GITHUB_RUN_ATTEMPT': '1',
+                       **{key: 'success' for key in variables}, variable: outcome}
+                actual = subprocess.run(['bash', '--noprofile', '--norc', '-c', script], env=env, capture_output=True)
+                with self.subTest(variable=variable, outcome=outcome):
+                    self.assertEqual(actual.returncode == 0, outcome == 'success')
+
+    def test_recovery_report_invokes_independent_latest_source_observer_and_propagates_failure(self):
+        for result in (0, 1):
+            script = f'python3() {{ printf "%s\\n" "$@"; return {result}; }}\n' + gate()
+            env = {**os.environ, 'GITHUB_REPOSITORY': 'bijux/bijux-std', 'GITHUB_RUN_ATTEMPT': '2',
+                   'GITHUB_RUN_ID': '123', 'EXPECTED_WORKFLOW_HEAD': 'a' * 40,
+                   'CHECK_RESULT': 'failure', 'NAVIGATION_RESULT': 'failure',
+                   'CATALOGUE_RESULT': 'failure', 'RENDERER_RESULT': 'failure'}
+            actual = subprocess.run(['bash', '--noprofile', '--norc', '-c', script], env=env, capture_output=True, text=True)
+            self.assertEqual(actual.returncode, result)
+            self.assertIn('--observe-latest', actual.stdout)
+            self.assertIn('a' * 40, actual.stdout)
+
+    def test_browser_execution_declaration_retains_hidden_native_body_members(self):
+        transport = job('navigation-browsers').split('      - name: Retain exact shard receipts and failure diagnostics\n', 1)[1]
+        self.assertIn('          include-hidden-files: true\n', transport)
+        path = ROOT / 'tests/bijux-docs/execution/workflow_controllers.py'
+        spec = importlib.util.spec_from_file_location('required_hidden_body', path)
+        module = importlib.util.module_from_spec(spec); spec.loader.exec_module(module)
+        with tempfile.TemporaryDirectory(dir=ROOT / 'artifacts') as folder:
+            hidden = Path(folder) / 'test-results/.last-run.json'
+            hidden.parent.mkdir(); hidden.write_bytes(b'{"status":"passed"}')
+            self.assertIn('test-results/.last-run.json', module.file_hashes(Path(folder)))
 
 
 if __name__ == '__main__':
