@@ -1,6 +1,7 @@
 """Select source-owned renderer profiles and reject unmanaged import surfaces."""
 from __future__ import annotations
 
+from collections import Counter
 import hashlib
 import importlib.metadata as metadata
 import importlib.util
@@ -108,7 +109,22 @@ def cache_code_equal(actual, expected, *, search_limit=100000):
             return len(left) == len(right) and all(metadata(a, b) for a, b in zip(left, right))
         return scalar(left) == scalar(right)
 
-    def match(pairs, unordered, forward, reverse):
+    def reflexive_key(value):
+        kind = type(value)
+        if kind is types.CodeType:
+            return (kind, tuple((name, reflexive_key(getattr(value, name)))
+                                for name in dir(value)
+                                if name.startswith('co_') and name != 'co_filename'
+                                and not callable(getattr(value, name))))
+        if kind is tuple:
+            return (kind, tuple(reflexive_key(item) for item in value))
+        if kind is frozenset:
+            return (kind, frozenset(Counter(reflexive_key(item) for item in value).items()))
+        if kind is slice:
+            return (kind, reflexive_key(value.start), reflexive_key(value.stop), reflexive_key(value.step))
+        return scalar(value)
+
+    def match_pairs(pairs, unordered, forward, reverse):
         nonlocal steps
         while pairs:
             steps += 1
@@ -149,28 +165,40 @@ def cache_code_equal(actual, expected, *, search_limit=100000):
             elif kind is frozenset:
                 if len(left) != len(right):
                     return False
-                unordered.append((tuple(left), tuple(right)))
+                if has_nan(left):
+                    unordered.append((tuple(left), tuple(right)))
+                elif reflexive_key(left) != reflexive_key(right):
+                    return False
             elif scalar(left) != scalar(right):
                 return False
-        while unordered:
-            left_items, right_items = unordered.pop()
-            if not left_items:
-                continue
-            left, rest = left_items[0], left_items[1:]
-            left_shape = shape(left)
-            for index, right in enumerate(right_items):
-                if shape(right) != left_shape:
-                    continue
-                pending = unordered + [(rest, right_items[:index] + right_items[index + 1:])]
-                # Later containers can constrain an earlier equal-payload
-                # member choice. Retry that choice with the entire pending
-                # graph, rather than accepting a greedy local set comparison.
-                if match([(left, right)], pending, forward.copy(), reverse.copy()):
-                    return True
-            return False
         return True
 
-    return match([(actual, expected)], [], {}, {})
+    def branches(left_items, right_items, pending, forward, reverse):
+        left, rest = left_items[0], left_items[1:]
+        left_shape = shape(left)
+        for index, right in enumerate(right_items):
+            if shape(right) == left_shape:
+                yield ([(left, right)], pending + [(rest, right_items[:index] + right_items[index + 1:])],
+                       forward.copy(), reverse.copy())
+
+    # Explicit search frames preserve global alias backtracking without adding
+    # a Python call frame for every member of a legitimate large constant set.
+    alternatives = [iter([([(actual, expected)], [], {}, {})])]
+    while alternatives:
+        try:
+            pairs, unordered, forward, reverse = next(alternatives[-1])
+        except StopIteration:
+            alternatives.pop()
+            continue
+        if not match_pairs(pairs, unordered, forward, reverse):
+            continue
+        while unordered and not unordered[-1][0]:
+            unordered.pop()
+        if not unordered:
+            return True
+        left_items, right_items = unordered.pop()
+        alternatives.append(branches(left_items, right_items, unordered, forward, reverse))
+    return False
 
 
 def validate_bytecode(path: Path, *, root: Path | None = None, stdlib=False):

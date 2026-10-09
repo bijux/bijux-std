@@ -191,6 +191,62 @@ class ExecutableCacheConstants(unittest.TestCase):
             _, cache = self.compile_cache(source.read_text(), optimize)
             profiles.validate_bytecode(cache)
 
+    def test_large_actual_compiler_set_cache_is_source_owned(self):
+        text = 'values = {' + ','.join(repr('owned_'+str(index)) for index in range(1600)) + '}\n'
+        _, cache = self.compile_cache(text)
+        code = marshal.loads(cache.read_bytes()[16:])
+        scope = {}
+        exec(code, scope)
+        self.assertEqual(len(scope['values']), 1600)
+        profiles.validate_bytecode(cache)
+
+    def test_large_actual_compiler_set_member_tampering_is_rejected(self):
+        text = 'values = {' + ','.join(repr('owned_'+str(index)) for index in range(1600)) + '}\n'
+        _, cache = self.compile_cache(text)
+        def changed(value):
+            if type(value) is frozenset:
+                members = set(value)
+                members.remove('owned_1234')
+                members.add('changed_1234')
+                return frozenset(members)
+            if value == 'owned_1234':
+                return 'changed_1234'
+            return value
+        self.corrupt(cache, lambda code: self.changed_constants(code, changed))
+        self.reject(cache)
+
+    def test_large_nonreflexive_compiler_set_preserves_aliases_and_multiplicity(self):
+        text = 'values = {' + ','.join('1e309-1e309' for _ in range(1100)) + '}\n'
+        _, cache = self.compile_cache(text)
+        profiles.validate_bytecode(cache)
+        scope = {}
+        exec(marshal.loads(cache.read_bytes()[16:]), scope)
+        self.assertEqual(len(scope['values']), 1100)
+        shared = None
+        def changed(value):
+            nonlocal shared
+            if type(value) is frozenset:
+                self.assertEqual(len(value), 1100)
+                return frozenset(list(value)[:-1])
+            if type(value) is float and math.isnan(value):
+                if shared is None:
+                    shared = value
+                return shared
+            return value
+        self.corrupt(cache, lambda code: self.changed_constants(code, changed))
+        scope = {}
+        exec(marshal.loads(cache.read_bytes()[16:]), scope)
+        self.assertNotEqual(len(scope['values']), 1100)
+        self.reject(cache)
+
+    def test_large_unordered_reference_graph_avoids_python_call_depth(self):
+        members = [float('nan') for _ in range(1100)]
+        expected = self.graph_code((frozenset(members), None))
+        actual = marshal.loads(marshal.dumps(expected))
+        self.assertTrue(profiles.cache_code_equal(actual, expected))
+        changed = self.graph_code((frozenset(members[:-1]), None))
+        self.assertFalse(profiles.cache_code_equal(changed, expected))
+
     def test_changed_nan_payload_is_rejected(self):
         _, cache = self.compile_cache('value = 1e309 - 1e309\n')
         def changed(value):
