@@ -3,11 +3,11 @@ from __future__ import annotations
 from collections import Counter
 from pathlib import Path
 from urllib.parse import urljoin
-import xml.etree.ElementTree as ET
 from .documents import Document
 from .destinations import route_url, resolve, is_network_boundary, validate_reference
 from .redirects import redirect_destination, redirect_cycles
 from .resources import collect_svg_resources, validate_resources
+from .sitemaps import validate_sitemaps
 
 
 def inventory(site: Path, site_url: str) -> dict[Path, Document]:
@@ -79,32 +79,7 @@ def validate(site: Path, site_url: str, docs: dict[Path, Document], network_urls
     errors.extend(redirect_cycles(site,redirect_edges))
     errors.extend(validate_resources(site, site_url, docs, network_urls,
                                      exceptions, observations, svg_ids, svg_assets))
-    sitemap = site/'sitemap.xml'
-    if not sitemap.is_file():
-        errors.append('Selected artifact is missing sitemap.xml')
-    else:
-        try:
-            urls = [node.text or '' for node in ET.parse(sitemap).iter() if node.tag.rsplit('}',1)[-1] == 'loc']
-            if len(urls) != len(set(urls)):
-                errors.append('sitemap.xml: duplicate route entries')
-            unknown = set(urls)-canonical_routes
-            missing = canonical_routes-set(urls)
-            if unknown:
-                errors.append('sitemap.xml: noncanonical/nonproduction/excluded routes: '+', '.join(sorted(unknown)))
-            if missing:
-                errors.append('sitemap.xml: missing eligible canonical routes: '+', '.join(sorted(missing)))
-        except ET.ParseError:
-            errors.append('sitemap.xml: invalid XML')
-    compressed = site/'sitemap.xml.gz'
-    if compressed.exists():
-        import gzip
-        from io import BytesIO
-        try:
-            plain = sitemap.read_bytes()
-            if compressed.is_symlink() or gzip.GzipFile(fileobj=BytesIO(compressed.read_bytes())).read(len(plain)+1) != plain:
-                errors.append('sitemap.xml.gz: content differs from the plain sitemap')
-        except (OSError,EOFError):
-            errors.append('sitemap.xml.gz: invalid compressed sitemap')
+    errors.extend(validate_sitemaps(site, canonical_routes))
     return errors
 
 
