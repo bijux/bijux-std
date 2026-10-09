@@ -43,7 +43,7 @@ def expected_job_names(groups: dict, engines: tuple | list) -> set[str]:
     require(bool(groups) and bool(engines), 'Canonical browser groups and engines are required')
     require(len(set(engines)) == len(engines), 'Duplicate canonical engine')
     require(all(isinstance(x, str) and x and '/' not in x for x in [*groups, *engines]), 'Invalid canonical group or engine')
-    return catalogue_job_names() | {'std / navigation fixtures', 'std / navigation', 'std / publication commands',
+    return catalogue_job_names() | {'std / navigation fixtures', 'std / navigation', 'std / publication commands', 'std / renderer controls',
             'std / frontend public artifact fault controls'} | {
         f'std / frontend fault controls / {engine}' for engine in engines
     } | {
@@ -128,7 +128,7 @@ def qualify(payload: dict, *, groups: dict, engines: tuple | list, run_id: int, 
 
 
 def registry_digests(registry_path: Path) -> dict[str, str]:
-    names = ('browser_gate.py', 'browser_partitions.py', 'browser_partitions.json')
+    names = ('browser_gate.py', 'browser_partitions.py', 'browser_partitions.json', 'renderer_controls.py', 'node_events.cjs')
     digests = {name: hashlib.sha256(registry_path.with_name(name).read_bytes()).hexdigest() for name in names}
     catalogue = registry_path.parent.parent / 'catalogue/execution.py'
     digests['catalogue/execution.py'] = hashlib.sha256(catalogue.read_bytes()).hexdigest()

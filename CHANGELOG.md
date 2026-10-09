@@ -6,7 +6,18 @@ This file records notable repository-level changes for `bijux-std`.
 
 ### Pending review
 
-#### [#245](https://github.com/bijux/bijux-std/pull/245) — feat(docs): integrate source-owned standalone reader discovery
+#### [#247](https://github.com/bijux/bijux-std/pull/247) — feat(docs): guard reader publication and retained recovery
+
+Verify explicitly owned passive reports before publication and compare retained historical bundle bytes without granting new source or deployment authority.
+
+- Enforce exact descriptor versions, committed input identities and independent composition; reject forged qualification fields and changed receipts.
+- Keep strict schema-two reconstruction by default and provide explicit bytes-only recovery for bounded historical monitoring.
+- Preserve catalogue configuration guards, schema-one checks and separate production-profile, manual and live qualification.
+- Give every renderer unit a separate mandatory source-bound CI receipt with owned module resolution and strict physical runtime identity, preserving all cases and the three-minute whole-job limit while removing fixture-production contention.
+
+### Merged pull requests
+
+#### 2026-10-09T12:59:14Z — [#245](https://github.com/bijux/bijux-std/pull/245) — feat(docs): integrate source-owned standalone reader discovery
 
 Make passive report notices reachable through native documentation Return/Search links and source-owned search/sitemap entries.
 
@@ -14,7 +25,6 @@ Make passive report notices reachable through native documentation Return/Search
 - Retain original report body bytes and restrictive CSP; unknown or mutated standalone routes remain rejected.
 - Correct ordinary filenames ending in index.html and qualify six current three-engine reader journeys without claiming full consumer publication.
 
-### Merged pull requests
 
 #### 2026-10-09T12:24:07Z — [#243](https://github.com/bijux/bijux-std/pull/243) — feat(docs): qualify committed catalogue reader sources
 

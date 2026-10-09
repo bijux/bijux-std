@@ -272,3 +272,22 @@ The existing 27 history and 36 diagram cases remain required. The independent
 actual hosted job metadata qualifies that limit separately from local case
 timing. These browser cases do not qualify manual devices, OS keyboard access,
 all authored opt-ins, accepted publication profiles or production URLs.
+
+Renderer unit controls run independently of the immutable browser fixture producer.
+The three-minute `std / renderer controls` job retains all native Node case events,
+installed Python case IDs, exact dependency locks and physical runtime identities.
+The navigation aggregate independently verifies that receipt against its current
+source and workflow; failed, skipped or missing controls cannot green the report.
+For local qualification after the normal locked runtime installers:
+
+```sh
+python3 tests/bijux-docs/execution/renderer_controls.py run \
+  --python artifacts/bijux-docs/python/bin/python --node "$(command -v node)" \
+  --output artifacts/bijux-docs/renderer-controls
+python3 tests/bijux-docs/execution/renderer_controls.py verify \
+  --output artifacts/bijux-docs/renderer-controls
+```
+
+These runtime observations are verification evidence and confer no publication
+profile approval. Browser fixture, catalogue, fault and publication command gates
+remain independently required.

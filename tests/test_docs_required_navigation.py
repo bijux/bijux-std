@@ -26,10 +26,11 @@ def gate():
 
 
 class RequiredNavigationTests(unittest.TestCase):
-    def run_gate(self, repository, checks='success', navigation='success', catalogue=None):
+    def run_gate(self, repository, checks='success', navigation='success', catalogue=None, renderer=None):
         env = {**os.environ, 'GITHUB_REPOSITORY': repository,
                'CHECK_RESULT': checks, 'NAVIGATION_RESULT': navigation,
-               'CATALOGUE_RESULT': catalogue if catalogue is not None else ('success' if repository == 'bijux/bijux-std' else 'skipped')}
+               'CATALOGUE_RESULT': catalogue if catalogue is not None else ('success' if repository == 'bijux/bijux-std' else 'skipped'),
+               'RENDERER_RESULT': renderer if renderer is not None else ('success' if repository == 'bijux/bijux-std' else 'skipped')}
         return subprocess.run(['bash', '--noprofile', '--norc', '-c', gate()],
                               env=env, capture_output=True, text=True)
 
@@ -37,7 +38,7 @@ class RequiredNavigationTests(unittest.TestCase):
         self.assertEqual(self.run_gate('bijux/bijux-std').returncode, 0)
 
     def test_shared_failure_cancellation_skip_or_absent_result_cannot_green_report(self):
-        for prerequisite in ('checks', 'navigation'):
+        for prerequisite in ('checks', 'navigation', 'renderer'):
             for outcome in ('failure', 'cancelled', 'skipped', '', 'pending', 'SUCCESS'):
                 with self.subTest(prerequisite=prerequisite, outcome=outcome):
                     self.assertNotEqual(self.run_gate('bijux/bijux-std', **{prerequisite: outcome}).returncode, 0)
@@ -54,7 +55,7 @@ class RequiredNavigationTests(unittest.TestCase):
     def test_required_report_materializes_after_failed_prerequisites(self):
         report = job('report')
         self.assertIn('name: std / report\n', report)
-        self.assertIn('needs: [checks, navigation, catalogue-renderer]', report)
+        self.assertIn('needs: [checks, navigation, catalogue-renderer, renderer-controls]', report)
         self.assertIn('if: ${{ always() &&', report)
         self.assertIn('CHECK_RESULT: ${{ needs.checks.result }}', report)
         self.assertIn('NAVIGATION_RESULT: ${{ needs.navigation.result }}', report)
@@ -73,6 +74,22 @@ class RequiredNavigationTests(unittest.TestCase):
         self.assertIn('make ui-test-catalogue UI_CATALOGUE_GROUP=', source)
         self.assertIn('if: always()', source)
         self.assertIn('if-no-files-found: error', source)
+
+    def test_renderer_controls_have_a_separate_required_receipt_owner(self):
+        controls = job('renderer-controls')
+        self.assertIn('timeout-minutes: 3', controls)
+        self.assertIn('renderer_controls.py run', controls)
+        self.assertIn('if: always()', controls)
+        self.assertIn('if-no-files-found: error', controls)
+        self.assertNotIn('ui-test-unit', job('navigation-fixtures'))
+        aggregate = job('navigation')
+        self.assertIn('Download exact renderer unit evidence', aggregate)
+        self.assertIn('artifacts/bijux-docs/renderer-controls', aggregate)
+        for outcome in ('failure', 'cancelled', 'skipped', ''):
+            with self.subTest(outcome=outcome):
+                self.assertNotEqual(self.run_gate('bijux/bijux-std', renderer=outcome).returncode, 0)
+        self.assertNotEqual(self.run_gate('bijux/bijux-core', navigation='skipped', renderer='success').returncode, 0)
+
 
     def test_early_standards_and_contracts_do_not_wait_for_browser_jobs(self):
         checks = job('checks')
@@ -114,14 +131,14 @@ class RequiredNavigationTests(unittest.TestCase):
         self.assertIn('          name: docs-frontend-faults-public-${{ github.sha }}-${{ github.run_attempt }}\n', aggregate)
 
     def test_every_shared_pull_request_author_receives_full_rendered_qualification(self):
-        for name in ('navigation-fixtures', 'publication-commands', 'navigation'):
+        for name in ('navigation-fixtures', 'publication-commands', 'renderer-controls', 'navigation'):
             with self.subTest(job=name):
                 source = job(name)
                 self.assertIn("github.repository == 'bijux/bijux-std'", source)
                 self.assertNotIn('dependabot', source)
         aggregate = job('navigation')
-        self.assertIn('needs: [navigation-fixtures, navigation-browsers, publication-commands, frontend-browser-faults, frontend-public-faults]', aggregate)
-        for variable in ('FIXTURE_RESULT', 'BROWSER_RESULT', 'COMMAND_RESULT'):
+        self.assertIn('needs: [navigation-fixtures, navigation-browsers, publication-commands, renderer-controls, frontend-browser-faults, frontend-public-faults]', aggregate)
+        for variable in ('FIXTURE_RESULT', 'BROWSER_RESULT', 'COMMAND_RESULT', 'RENDERER_RESULT'):
             self.assertIn('test "$' + variable + '" = success', aggregate)
 
 
