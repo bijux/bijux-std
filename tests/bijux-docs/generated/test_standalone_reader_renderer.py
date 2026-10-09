@@ -24,6 +24,37 @@ class StandaloneRendererTests(unittest.TestCase):
         from mkdocs.config import load_config
         spec = importlib.util.spec_from_file_location('bijux_static_actual_identity', self.shared/'security/build_identity.py')
         identity = importlib.util.module_from_spec(spec); spec.loader.exec_module(identity)
+        profiles = importlib.util.spec_from_file_location(
+            'bijux_passive_reader_fixture_profiles', self.shared/'security/renderer_profiles.py')
+        profiles = importlib.util.module_from_spec(profiles)
+        profiles.__spec__.loader.exec_module(profiles)
+        actual_runtime = profiles.environment_snapshot()
+        table_path = self.shared/'security/renderer-producer-admission.json'
+        table = json.loads(table_path.read_text())
+        fixture_profile = {'id': 'passive-reader-test-runtime', 'usage': 'verification-only',
+                           'environment': actual_runtime}
+        external = [item for item in actual_runtime['startup_inputs']
+                    if item['path'].startswith('stdlib/')
+                    and not Path(item['resolved_target']).is_relative_to(Path(sys.base_prefix).resolve())]
+        if external:
+            fixture_profile['external_startup_review'] = {
+                item['path']: {'sha256': item['sha256'], 'resolved_target': item['resolved_target'],
+                               'recipe': 'distro-apport-import-unavailable',
+                               'purpose': 'Isolated test runtime retains the guarded inactive distro startup source.'}
+                for item in external}
+        # This isolated source fixture observes its runtime and never admits publication.
+        # The profile selector independently checks every external startup recipe.
+        table['profiles'] = [profile for profile in table['profiles']
+                             if profile.get('environment') != actual_runtime]
+        table['profiles'].append(fixture_profile)
+        table_path.write_text(json.dumps(table, indent=2)+'\n')
+        self.git(self.repo, 'add', '.bijux/shared/bijux-docs/security/renderer-producer-admission.json')
+        self.git(self.repo, '-c', 'commit.gpgsign=false', 'commit', '-qm',
+                 'test(docs): own verification-only passive reader runtime')
+        selected = profiles.select(self.shared, self.repo, publication=False)
+        self.assertEqual(selected['profile_id'], fixture_profile['id'])
+        self.assertEqual(selected['environment'], actual_runtime)
+        self.assertEqual(selected['usage'], 'verification-only')
         self.output = ROOT/'artifacts/qualification/standalone-reader-renderer'
         self.output.mkdir(parents=True, exist_ok=True)
         self.repo.joinpath('docs/index.md').write_text('# Sweden evidence\n\nRead the frozen unavailable-data notice and documentation.\n')
@@ -85,9 +116,22 @@ class StandaloneRendererTests(unittest.TestCase):
         self.assertEqual(gzip.decompress((self.site/'sitemap.xml.gz').read_bytes()),(self.site/'sitemap.xml').read_bytes())
         scope=next(page for page in producer['pages'] if page['path']=='report/notice.html')
         self.assertEqual(scope['class'],'source-owned-static-reader');self.assertEqual(scope['executables'],[])
+        before_public = {p.relative_to(self.site).as_posix(): hashlib.sha256(p.read_bytes()).hexdigest()
+                         for p in self.site.rglob('*') if p.is_file()}
+        with self.assertRaisesRegex(ValueError, 'not approved for publication'):
+            profiles.select(self.shared, self.repo, publication=True)
+        self.assertEqual(before_public, {p.relative_to(self.site).as_posix(): hashlib.sha256(p.read_bytes()).hexdigest()
+                                       for p in self.site.rglob('*') if p.is_file()})
+        self.assertEqual(table_path.read_bytes(), self.git(
+            self.repo, 'show', 'HEAD:.bijux/shared/bijux-docs/security/renderer-producer-admission.json').stdout.encode())
+        profile_source_digest = hashlib.sha256(table_path.read_bytes()).hexdigest()
+        source_tree = subprocess.run(['bash', str(self.repo/'.bijux/shared/bijux-checks/scripts/directory-tree-sha256.sh'),
+                                      str(self.shared)], capture_output=True, text=True, check=True).stdout.strip()
         (self.output/'observed.json').write_text(json.dumps({'actual_python':sys.version,'publication_approval':False,
             'current_exit':result.returncode,'bundle_sha256':build['bundle_sha256'],
-            'dependency_profile':producer['renderer_profile'],'source_sha':self.git(self.repo,'rev-parse','HEAD').stdout.strip()},indent=2)+'\n')
+            'dependency_profile':producer['renderer_profile'],'publication_profile_rejected':True,
+            'fixture_profile_sha256':profile_source_digest,'fixture_shared_tree_sha256':source_tree,
+            'fixture_profile':selected,'source_sha':self.git(self.repo,'rev-parse','HEAD').stdout.strip()},indent=2)+'\n')
 
 
 if __name__=='__main__':unittest.main()
