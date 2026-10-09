@@ -17,7 +17,7 @@ import unittest
 
 ROOT = Path(__file__).resolve().parents[3]
 TESTS = ROOT / 'tests/bijux-docs'
-NODE_TEST_COUNT = 460
+NODE_TEST_COUNT = 477
 NODE_VERSION = 'v24.21.0'
 GROUPS = ('renderer', 'passive-reader')
 PASSIVE_READER_ID = ('test_standalone_reader_renderer.StandaloneRendererTests.'

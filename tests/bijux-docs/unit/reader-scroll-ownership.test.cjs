@@ -30,18 +30,20 @@ function reader({ type = 'back_forward', saved = { version: 2, mode: 'light' } }
     }});
     return option;
   });
+  let article = { owner: 'reader article' };
+  const currentLocation = new URL(href);
   const history = { state: { author: 'retained', bijuxDiagramReaderPosition: {owner:'bijux-docs',version:1,href,x:0,y:savedY}},
     replaceState(value) {this.state = value;} };
   const document = { readyState: 'loading', currentScript: {src:'https://example.test/assets/mermaid-init.js'},
     body: {getAttribute: name => attributes.get(name) ?? null, setAttribute: (name,value) => attributes.set(name,value), removeAttribute: name => attributes.delete(name)},
-    querySelector: selector => selector.includes('bijux-diagram') ? {} : null,
+    querySelector: selector => selector === '.md-content__inner' ? article : selector.includes('bijux-diagram') ? {} : null,
     querySelectorAll: selector => selector.startsWith('input[') ? options : [],
     addEventListener: (name, handler) => listen('document',name,handler) };
   const window = {scrollX:0,scrollY:nativeY,document$:{subscribe:callback=>subscriptions.push(callback)},
     addEventListener:(name,handler)=>listen('window',name,handler),
     dispatchEvent:event=>{for(const handler of events.get('window:'+event.type)||[])handler(event);},
     scrollTo(...args) {const value=args[0];this.scrollX=typeof value==='object'?value.left:args[0];this.scrollY=typeof value==='object'?value.top:args[1];scrolls.push({x:this.scrollX,y:this.scrollY});} };
-  const context=vm.createContext({window,document,history,location:new URL(href),URL,WeakMap,Promise,
+  const context=vm.createContext({window,document,history,location:currentLocation,URL,WeakMap,Promise,
     performance:{getEntriesByType:()=>[{type}]},localStorage:{getItem:name=>stored.get(name)??null,setItem:(name,value)=>stored.set(name,value)},
     CustomEvent:class {constructor(type,details){this.type=type;this.detail=details.detail;}},Event:class {constructor(type){this.type=type;}},
     requestAnimationFrame:callback=>frames.push(callback),setTimeout:callback=>{timers.push(callback);return timers.length;},clearTimeout(){} });
@@ -52,6 +54,8 @@ function reader({ type = 'back_forward', saved = { version: 2, mode: 'light' } }
   // These palette controls observe layout completion after initial pageshow.
   window.dispatchEvent({type:'pageshow',persisted:false});
   return {window,history,scrolls,options,attributes,
+    navigate: url => {currentLocation.href = url;},
+    replaceArticle: () => {article = { owner: 'replacement reader article' };},
     init:()=>subscriptions[1](),completeDiagram:()=>window.completeOwnedDiagramLayout(),
     flushFrames(){while(frames.length)frames.shift()();},flushTimers(){while(timers.length)timers.shift()();},
     fire(name,event){for(const handler of events.get('window:'+name)||[])handler(event);},
@@ -94,5 +98,64 @@ test('cross-tab palette activation preserves the current reader independently of
 
 test('ordinary first-view and native fragment position stay outside startup palette ownership',()=>{
   const page=reader({type:'navigate'});page.init();page.completeDiagram();page.window.scrollY=650;
+  page.flushFrames();page.flushTimers();assert.equal(page.window.scrollY,650);
+});
+
+
+for (const type of ['wheel', 'pointerdown', 'touchstart', 'keydown']) {
+  test(`trusted ${type} supersedes explicit palette scroll preservation`, () => {
+    const page=reader();page.init();page.flushFrames();page.flushTimers();
+    page.window.scrollY=650;page.theme('dark');
+    page.fire(type,{isTrusted:true});page.window.scrollY=750;
+    page.flushFrames();page.flushTimers();
+    assert.equal(page.window.scrollY,750);
+    assert.equal(page.attributes.get('data-md-color-scheme'),'slate');
+  });
+}
+
+for (const type of ['wheel', 'pointerdown', 'touchstart', 'keydown']) {
+  test(`synthetic ${type} cannot revoke explicit palette scroll preservation`, () => {
+    const page=reader();page.init();page.flushFrames();page.flushTimers();
+    page.window.scrollY=650;page.theme('dark');
+    page.fire(type,{isTrusted:false});page.window.scrollY=750;
+    page.flushFrames();page.flushTimers();
+    assert.equal(page.window.scrollY,650);
+  });
+}
+
+for (const [name, invalidate] of [
+  ['pagehide', page=>page.fire('pagehide',{})],
+  ['new document route', page=>page.navigate('https://example.test/other-reader/')],
+  ['new document query', page=>page.navigate(href+'?other=reader')],
+  ['new document fragment', page=>page.navigate(href+'#other-reader')],
+  ['same-URL article replacement', page=>page.replaceArticle()],
+  ['repeated document initialization', page=>page.init()],
+]) {
+  test(`explicit palette callbacks cannot reclaim reading position after ${name}`,()=>{
+    const page=reader();page.init();page.flushFrames();page.flushTimers();
+    page.window.scrollY=650;page.theme('dark');invalidate(page);page.window.scrollY=750;
+    page.flushFrames();page.flushTimers();assert.equal(page.window.scrollY,750);
+  });
+}
+
+test('a newer explicit palette choice supersedes earlier preservation callbacks',()=>{
+  const page=reader();page.init();page.flushFrames();page.flushTimers();
+  page.window.scrollY=650;page.theme('dark');page.window.scrollY=850;page.theme('light');
+  const observed=page.scrolls.length;page.window.scrollY=950;page.flushFrames();page.flushTimers();
+  assert.equal(page.window.scrollY,850);
+  assert(page.scrolls.slice(observed).every(position=>position.y===850));
+  assert.equal(page.attributes.get('data-md-color-scheme'),'default');
+});
+
+test('trusted reader input supersedes cross-tab palette preservation',()=>{
+  const page=reader();page.init();page.flushFrames();page.flushTimers();page.window.scrollY=650;
+  page.fire('storage',{key:'bijux:theme',newValue:JSON.stringify({version:2,mode:'dark'})});
+  page.fire('wheel',{isTrusted:true});page.window.scrollY=850;page.flushFrames();page.flushTimers();
+  assert.equal(page.window.scrollY,850);assert.equal(page.attributes.get('data-md-color-scheme'),'slate');
+});
+
+test('non-scroll storage input preserves the current explicit palette reservation',()=>{
+  const page=reader();page.init();page.flushFrames();page.flushTimers();page.window.scrollY=650;page.theme('dark');
+  page.fire('storage',{key:'unrelated',newValue:'value'});page.window.scrollY=750;
   page.flushFrames();page.flushTimers();assert.equal(page.window.scrollY,650);
 });
