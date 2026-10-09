@@ -11,7 +11,7 @@ const source = fs.readFileSync(
 const href = "https://example.test/reader/";
 const position = { owner: "bijux-docs", version: 1, href, x: 0, y: 13000 };
 
-function setup({ state = null, type = "navigate", figures = true, anchors = [] } = {}) {
+function setup({ state = null, type = "navigate", figures = true, anchors = [], shown = true, readyState = "loading" } = {}) {
   const events = new Map(), frames = [], scrolls = [], writes = [];
   const listen = (owner, name, callback) => {
     const key = owner + name;
@@ -32,7 +32,7 @@ function setup({ state = null, type = "navigate", figures = true, anchors = [] }
   };
   const document = {
     currentScript: { src: "https://example.test/assets/mermaid-init.js" },
-    readyState: "loading",
+    readyState,
     querySelector: () => figures ? {} : null,
     querySelectorAll: selector => selector === ".md-content article a[href]" ? anchors : [],
     addEventListener: (name, callback) => listen("document:", name, callback),
@@ -50,14 +50,19 @@ function setup({ state = null, type = "navigate", figures = true, anchors = [] }
     'window.readerTestRestore = typeof restoreReaderPosition === "function" ? () => restoreReaderPosition(generation) : null;})();',
   );
   vm.runInNewContext(observed, context);
-  return {
+  const app = {
     history, writes, scrolls, frames,
     fire(owner, name, event = {}) {
       for (const callback of events.get(owner + ":" + name) || []) callback(event);
     },
     restore() { window.readerTestRestore?.(0); },
     flush() { while (frames.length) frames.shift()(); },
+    nativeScroll(y) { window.scrollY = y; },
   };
+  // Ordinary layout completion tests start after the browser's initial pageshow.
+  // Lifecycle controls retain the pre-pageshow document explicitly.
+  if (shown) app.fire("window", "pageshow", { persisted: false });
+  return app;
 }
 
 function click(overrides = {}, linkOverrides = {}) {
@@ -428,4 +433,63 @@ test("synthetic input after persisted pageshow cannot cancel the fresh owned ent
   app.fire("window", "wheel", { isTrusted: false });
   app.flush();
   assert.equal(app.scrolls.length, 1);
+});
+
+test("early diagram completion restores the owned anchor after native pageshow coordinates settle", () => {
+  let top = 421.359375;
+  const link = anchor();
+  link.getBoundingClientRect = () => ({ top });
+  const context = { href: link.href, text: link.textContent, top: 421.265625 };
+  const app = setup({ state: { bijuxDiagramReaderPosition: { ...position, y: 3406, context } },
+    type: "back_forward", anchors: [link], shown: false });
+  app.nativeScroll(2855);
+  app.restore();
+  app.flush();
+  assert.equal(app.scrolls.length, 0);
+  app.fire("window", "pageshow", { persisted: false });
+  // Native traversal can finish its coordinate restoration after pageshow.
+  app.nativeScroll(2876);
+  top = 400.359375;
+  app.flush();
+  assert.deepEqual(JSON.parse(JSON.stringify(app.scrolls)), [{ left: 0, top: 2855.09375, behavior: "instant" }]);
+});
+
+test("a complete document initialized after pageshow restores without waiting for another event", () => {
+  const app = setup({ state: { bijuxDiagramReaderPosition: position }, type: "back_forward",
+    shown: false, readyState: "complete" });
+  app.restore();
+  app.flush();
+  assert.equal(app.scrolls.length, 1);
+  assert.equal(app.scrolls[0].top, position.y);
+});
+
+test("pagehide clears an early pending restore before a later ordinary pageshow", () => {
+  const app = setup({ state: { bijuxDiagramReaderPosition: position }, type: "back_forward", shown: false });
+  app.restore();
+  app.fire("window", "pagehide");
+  app.fire("window", "pageshow", { persisted: false });
+  app.flush();
+  assert.equal(app.scrolls.length, 0);
+  assert.equal(app.writes.length, 0);
+});
+
+for (const type of ["pointerdown", "touchstart", "wheel", "keydown"]) {
+  test(`trusted ${type} before initial pageshow cancels pending reader restoration`, () => {
+    const app = setup({ state: { bijuxDiagramReaderPosition: position }, type: "back_forward", shown: false });
+    app.restore();
+    app.fire("window", type, { isTrusted: true });
+    app.fire("window", "pageshow", { persisted: false });
+    app.flush();
+    assert.equal(app.scrolls.length, 0);
+  });
+}
+
+test("synthetic input before initial pageshow cannot cancel pending reader restoration", () => {
+  const app = setup({ state: { bijuxDiagramReaderPosition: position }, type: "back_forward", shown: false });
+  app.restore();
+  app.fire("window", "wheel", { isTrusted: false });
+  app.fire("window", "pageshow", { persisted: false });
+  app.flush();
+  assert.equal(app.scrolls.length, 1);
+  assert.equal(app.scrolls[0].top, position.y);
 });

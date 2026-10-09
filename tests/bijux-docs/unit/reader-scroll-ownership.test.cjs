@@ -49,6 +49,8 @@ function reader({ type = 'back_forward', saved = { version: 2, mode: 'light' } }
   // using the same source seam as the maintained native-history unit contracts.
   const observed=diagramSource.replace(/\}\)\(\);\s*$/,'window.completeOwnedDiagramLayout = () => restoreReaderPosition(generation);})();');
   vm.runInContext(observed,context);vm.runInContext(themeSource,context);
+  // These palette controls observe layout completion after initial pageshow.
+  window.dispatchEvent({type:'pageshow',persisted:false});
   return {window,history,scrolls,options,attributes,
     init:()=>subscriptions[1](),completeDiagram:()=>window.completeOwnedDiagramLayout(),
     flushFrames(){while(frames.length)frames.shift()();},flushTimers(){while(timers.length)timers.shift()();},

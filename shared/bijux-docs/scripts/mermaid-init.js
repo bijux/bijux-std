@@ -22,9 +22,14 @@
     return saved;
   }
   let readerRestoration = navigation?.type === "back_forward" ? ownedReaderPosition() : null;
+  let readerPageShown = document.readyState === "complete";
+  let pendingReaderGeneration = null;
 
   function cancelReaderRestoration(event) {
-    if (event.isTrusted) readerRestoration = null;
+    if (event.isTrusted) {
+      readerRestoration = null;
+      pendingReaderGeneration = null;
+    }
   }
   for (const type of ["pointerdown", "touchstart", "wheel", "keydown"]) {
     window.addEventListener(type, cancelReaderRestoration, { capture: true, passive: true });
@@ -66,7 +71,13 @@
 
   function restoreReaderPosition(current) {
     const position = readerRestoration;
-    if (!position) return;
+    if (!position || current !== generation) return;
+    // Native traversal restores its coordinates after pageshow. A diagram may
+    // finish earlier, so retain only the owning generation until that boundary.
+    if (!readerPageShown) {
+      pendingReaderGeneration = current;
+      return;
+    }
     requestAnimationFrame(() => requestAnimationFrame(() => {
       if (current !== generation || readerRestoration !== position) return;
       readerRestoration = null;
@@ -236,12 +247,23 @@
         destination.search === location.search) return;
     captureReaderPosition(link);
   }, true);
-  window.addEventListener("pagehide", () => { readerRestoration = null; generation += 1; });
+  window.addEventListener("pagehide", () => {
+    readerRestoration = null;
+    readerPageShown = false;
+    pendingReaderGeneration = null;
+    generation += 1;
+  });
   window.addEventListener("pageshow", event => {
-    if (!event.persisted) return;
-    // A persisted document keeps its script realm, but departure updates belong
-    // to the current history entry. Reacquire only that entry after pagehide.
-    readerRestoration = ownedReaderPosition();
-    request();
+    readerPageShown = true;
+    if (event.persisted) {
+      // A persisted document keeps its script realm, but departure updates belong
+      // to the current history entry. Reacquire only that entry after pagehide.
+      readerRestoration = ownedReaderPosition();
+      request();
+    } else if (pendingReaderGeneration !== null) {
+      const current = pendingReaderGeneration;
+      pendingReaderGeneration = null;
+      restoreReaderPosition(current);
+    }
   });
 })();
