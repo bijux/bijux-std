@@ -6,15 +6,22 @@ This file records notable repository-level changes for `bijux-std`.
 
 ### Pending review
 
-#### [#242](https://github.com/bijux/bijux-std/pull/242) — test(docs): retain delayed rendering frame observations
+#### [#244](https://github.com/bijux/bijux-std/pull/244) — feat(docs): admit passive source-owned reader reports
+
+Admit explicitly reviewed non-executable report notices with source-bound ownership and restrictive independent CSP verification.
+
+- Require an exact passive descriptor and finite HTML/CSS vocabulary; reject scripts, providers and automatic resources.
+- Preserve existing interactive report admission and tracked report bytes; retain meaningful attribute, CSS and policy-widening controls.
+
+### Merged pull requests
+
+#### 2026-10-09T10:53:55Z — [#242](https://github.com/bijux/bijux-std/pull/242) — test(docs): retain delayed rendering frame observations
 
 Keep a pending rendering-frame request across timer observations so delayed callbacks can qualify stable focused controls.
 
 - Require three actual stable frames, the correct open-drawer endpoint and the unchanged two-second deadline.
 - Retain passive rendering diagnostics and meaningful delayed, absent, translated and intermediate-change controls.
 - Preserve ordinary input and paint assertions; current unit and complete contrast matrices pass before hosted qualification.
-
-### Merged pull requests
 
 #### 2026-10-09T10:21:52Z — [#241](https://github.com/bijux/bijux-std/pull/241) — fix(docs): retain native diagram reader history position
 
