@@ -284,10 +284,13 @@ timing. These browser cases do not qualify manual devices, OS keyboard access,
 all authored opt-ins, accepted publication profiles or production URLs.
 
 Renderer unit controls run independently of the immutable browser fixture producer.
-The three-minute `std / renderer controls / renderer` and
-`std / renderer controls / passive-reader` jobs retain disjoint source-derived
-controls. The first runs all native Node units and the remaining installed Python
-controls; the second owns the installed passive-reader reconstruction control.
+The three-minute `std / renderer controls / renderer`,
+`std / renderer controls / passive-reader` and
+`std / renderer controls / interactive-make` jobs retain disjoint source-derived
+controls. Renderer owns all native Node units and the remaining installed Python
+controls. Passive-reader owns the installed passive-reader reconstruction control;
+interactive-make owns every generated interactive Make dispatch and ownership
+control, including the docs and docs-check selected/reference renders.
 Each group retains its exact dependency locks, physical runtime before/after
 identities, source and workflow. The navigation aggregate independently rederives
 the complete disjoint union; failed, skipped, missing or substituted controls
@@ -303,7 +306,7 @@ python3 tests/bijux-docs/execution/renderer_controls.py verify \
   --output artifacts/bijux-docs/renderer-controls
 ```
 
-CI uses `--group` and a unique group output subtree. Both jobs remain required;
+CI uses `--group` and a unique group output subtree. All three jobs remain required;
 the strict aggregate rejects full local evidence in place of group receipts,
 missing or duplicated groups, unknown owners and changed artifacts. A successful
 test step inside a cancelled workflow job is never a passing programme gate.

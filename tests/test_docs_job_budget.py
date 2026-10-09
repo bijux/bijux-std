@@ -222,9 +222,10 @@ class FrontendJobBudgetTests(unittest.TestCase):
         owner.mkdir(parents=True, exist_ok=True)
         with tempfile.TemporaryDirectory(dir=owner) as directory:
             path = Path(directory) / 'renderer_controls.py'
-            path.write_text("GROUPS = ('renderer', 'passive-reader')\n")
+            path.write_text("GROUPS = ('renderer', 'passive-reader', 'interactive-make')\n")
             self.assertEqual(BUDGET.renderer_job_names(path),
-                             {'std / renderer controls / renderer', 'std / renderer controls / passive-reader'})
+                             {'std / renderer controls / renderer', 'std / renderer controls / passive-reader',
+                              'std / renderer controls / interactive-make'})
             for source in ["GROUPS = ()", "GROUPS = ['renderer']", "GROUPS = ('renderer', 'renderer')",
                            "GROUPS = ('renderer/unknown',)", "GROUPS = (1,)", "GROUPS = ([],)",
                            "GROUPS = tuple(['renderer'])", "GROUPS = ('renderer',)\nGROUPS = ('passive-reader',)"]:
@@ -234,7 +235,8 @@ class FrontendJobBudgetTests(unittest.TestCase):
 
     def test_every_renderer_partition_is_independently_required_and_budgeted(self):
         wanted = BUDGET.renderer_job_names()
-        self.assertEqual(wanted, {'std / renderer controls / renderer', 'std / renderer controls / passive-reader'})
+        self.assertEqual(wanted, {'std / renderer controls / renderer', 'std / renderer controls / passive-reader',
+                              'std / renderer controls / interactive-make'})
         self.assertEqual({row['name'] for row in self.verify()['jobs']
                           if row['name'].startswith('std / renderer controls / ')}, wanted)
         baseline = copy.deepcopy(self.data)

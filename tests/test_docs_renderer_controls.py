@@ -303,6 +303,56 @@ class RendererControlReceiptTests(unittest.TestCase):
         self.assertEqual(len(result['groups']['passive-reader']['python_cases']), 1)
         self.assertFalse(result['publication_approval'])
 
+    def test_interactive_make_source_partition_is_disjoint_and_required(self):
+        self.assertEqual(set(CONTROLS.GROUPS), {'renderer', 'passive-reader', 'interactive-make'})
+        expected = CONTROLS.expected_python_ids()
+        owned = [name for name in expected if name.startswith('test_interactive_report_make.')]
+        self.assertTrue(owned)
+        self.assertEqual(CONTROLS.group_python_ids('interactive-make'), owned)
+        partitioned = [name for group in CONTROLS.GROUPS for name in CONTROLS.group_python_ids(group)]
+        self.assertEqual(sorted(partitioned), expected)
+        self.assertEqual(len(partitioned), len(set(partitioned)))
+        self.assertEqual(CONTROLS.group_node_count('interactive-make'), 0)
+        with mock.patch.object(CONTROLS, 'expected_python_ids', return_value=[name for name in expected if name not in owned]):
+            with self.assertRaisesRegex(ValueError, 'source-owned interactive Make'):
+                CONTROLS.group_python_ids('renderer')
+
+    def test_make_group_cannot_be_missing_or_exchange_same_count_cases(self):
+        output = self.grouped_receipts()
+        make = output / 'interactive-make'
+        make.rename(output / 'unowned-make')
+        with self.assertRaisesRegex(ValueError, 'group evidence'):
+            CONTROLS.verify(output, self.source, self.workflow)
+        (output / 'unowned-make').rename(make)
+        paths = [output / group / 'renderer-controls.json' for group in ('renderer', 'interactive-make')]
+        receipts = [json.loads(path.read_text()) for path in paths]
+        first, second = [receipt['python_cases'][0] for receipt in receipts]
+        receipts[0]['python_cases'][0], receipts[1]['python_cases'][0] = second, first
+        for path, receipt in zip(paths, receipts):
+            receipt['expected_python_ids'] = sorted(row['id'] for row in receipt['python_cases'])
+            CONTROLS.HELPERS.write_json(path, receipt)
+        with self.assertRaisesRegex(ValueError, 'Python execution'):
+            CONTROLS.verify(output, self.source, self.workflow)
+
+    def test_make_group_cannot_substitute_native_node_artifacts(self):
+        output = self.grouped_receipts()
+        path = output / 'interactive-make/renderer-controls.json'
+        receipt = json.loads(path.read_text())
+        shutil.copyfile(self.events, path.parent / 'node-events.jsonl')
+        receipt['artifact_digests'] = CONTROLS.HELPERS.inventory(path.parent)
+        receipt['artifact_digests'].pop(path.name)
+        CONTROLS.HELPERS.write_json(path, receipt)
+        with self.assertRaisesRegex(ValueError, 'substitute unrelated Node'):
+            CONTROLS.verify(output, self.source, self.workflow)
+
+    def test_workflow_renderer_matrix_matches_source_owned_groups(self):
+        import yaml
+        workflow = yaml.safe_load((ROOT / '.github/workflows/bijux-std.yml').read_text())
+        job = workflow['jobs']['renderer-controls']
+        self.assertEqual(job['strategy']['matrix']['group'], list(CONTROLS.GROUPS))
+        self.assertEqual(job['timeout-minutes'], 3)
+        self.assertEqual(job['strategy']['matrix']['group'], ['renderer', 'passive-reader', 'interactive-make'])
+
     def test_group_inventory_rejects_unknown_group_or_missing_passive_source(self):
         with self.assertRaisesRegex(ValueError, 'Unknown renderer group'):
             CONTROLS.group_python_ids('unknown')

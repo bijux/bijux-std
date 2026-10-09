@@ -19,7 +19,7 @@ ROOT = Path(__file__).resolve().parents[3]
 TESTS = ROOT / 'tests/bijux-docs'
 NODE_TEST_COUNT = 413
 NODE_VERSION = 'v24.21.0'
-GROUPS = ('renderer', 'passive-reader')
+GROUPS = ('renderer', 'passive-reader', 'interactive-make')
 PASSIVE_READER_ID = ('test_standalone_reader_renderer.StandaloneRendererTests.'
                      'test_committed_passive_reader_and_native_search_reconstruct_together')
 
@@ -53,12 +53,20 @@ def group_python_ids(group: str | None = None) -> list[str]:
         return expected
     if group not in GROUPS or expected.count(PASSIVE_READER_ID) != 1:
         raise ValueError('Unknown renderer group or missing source-owned passive reader')
-    return [name for name in expected if (name == PASSIVE_READER_ID) == (group == 'passive-reader')]
+    make_ids = [name for name in expected if name.startswith('test_interactive_report_make.')]
+    if not make_ids:
+        raise ValueError('Missing source-owned interactive Make controls')
+    if group == 'interactive-make':
+        return make_ids
+    if group == 'passive-reader':
+        return [PASSIVE_READER_ID]
+    excluded = {*make_ids, PASSIVE_READER_ID}
+    return [name for name in expected if name not in excluded]
 
 
 def group_node_count(group: str | None = None) -> int:
     group_python_ids(group)
-    return 0 if group == 'passive-reader' else NODE_TEST_COUNT
+    return NODE_TEST_COUNT if group in (None, 'renderer') else 0
 
 
 def node_files() -> list[Path]:
@@ -301,7 +309,7 @@ def verify_receipt(output: Path, current_source: dict | None = None, workflow: d
         raise ValueError('Renderer Python execution accounting is incomplete or nonpassing')
     count = group_node_count(group)
     if not count and any((output / name).exists() for name in ('node-events.jsonl', 'node-stderr.log')):
-        raise ValueError('Passive reader group cannot substitute unrelated Node execution')
+        raise ValueError('Python-only renderer group cannot substitute unrelated Node execution')
     node = node_cases(output / 'node-events.jsonl', node_files()) if count else []
     if receipt.get('node_cases') != node or receipt.get('node_executed') != count:
         raise ValueError('Renderer Node case accounting differs from its native events')
