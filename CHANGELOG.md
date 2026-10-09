@@ -15,6 +15,14 @@ Make native Material palette actions reachable by keyboard and retain focus on t
 
 ### Merged pull requests
 
+#### 2026-10-09T05:04:52Z — [#231](https://github.com/bijux/bijux-std/pull/231) — fix(docs): bind reviewed historical asset migration to source evidence
+
+Allow the explicitly reviewed historical script-list migrations when their standard predates the canonical baseline file.
+
+- Bind both full predecessor refs (44e9153 and 10f073d) and each twelve-file source digest set to the reviewed registry.
+- Select the committed Core predecessor without widening fallback to unknown or customized asset lists.
+- Distinguish nine shared destinations from the authored external-link predecessor; preserve rejection of custom order, comments, attributes and unknown missing baselines.
+
 #### 2026-10-09T04:43:58Z — [#229](https://github.com/bijux/bijux-std/pull/229) — fix(docs): preserve enlarged compact masthead identity
 
 Keep the complete site identity and utility controls visible when compact readers enlarge text or apply spacing.
@@ -24,7 +32,6 @@ Keep the complete site identity and utility controls visible when compact reader
 - Check complete utility census, glyph clipping, pointer targets and supplemental breakpoints while retaining the 126 navigation cases.
 - Keep physical zoom, assistive/device and consumer qualification separate; the prerequisite #227 is accepted.
 - Keep enlarged native Navigation text beside its checkbox and give the complete long identity natural row space; retain the 54 px normal minimum and add maintained three-engine 200% text/spacing regression journeys.
-
 
 #### 2026-10-09T04:14:27Z — [#230](https://github.com/bijux/bijux-std/pull/230) — ci(docs): compress complete public fault evidence for transport
 
