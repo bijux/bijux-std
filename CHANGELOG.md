@@ -4,6 +4,16 @@ This file records notable repository-level changes for `bijux-std`.
 
 ## Pull request history
 
+### Pending review
+
+#### [#239](https://github.com/bijux/bijux-std/pull/239) — ci(docs): bound concurrent browser container provisioning
+
+Limit concurrent cold browser-container pulls while preserving complete qualification and the three-minute whole-job limit.
+
+- Bound the unchanged browser matrix to 12 concurrent jobs per run.
+- Retain all engines, profiles, 645 cases, runtime pins and failure-rejecting receipts.
+- Record provider startup failures separately from frontend assertion failures; qualify the current source before acceptance.
+
 ### Merged pull requests
 
 #### 2026-10-09T07:25:36Z — [#237](https://github.com/bijux/bijux-std/pull/237) — fix(docs): retain authored labels for reused navigation pages
