@@ -13,6 +13,7 @@ Keep each reused page occurrence’s authored navigation name while preserving i
 - Match the authored parent and source before recovering aliases such as Overview instead of a reused Home title.
 - Preserve provider Link labels and single-Page titles, using one occurrence census in the existing shared macros.
 - Verify alias, mismatch and provider controls without closing separate active-ancestor semantics.
+
 ### Merged pull requests
 
 #### 2026-10-09T07:06:31Z — [#238](https://github.com/bijux/bijux-std/pull/238) — ci(docs): bound contrast jobs by viewport ownership
