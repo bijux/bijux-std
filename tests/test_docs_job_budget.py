@@ -30,7 +30,7 @@ class FrontendJobBudgetTests(unittest.TestCase):
         receipt = self.verify()
         self.assertEqual(receipt['maximum_seconds'], 179.999)
         self.assertEqual(receipt['maximum_queue_seconds'], 300)
-        self.assertEqual(receipt['executed_jobs'], 18)
+        self.assertEqual(receipt['executed_jobs'], len(BUDGET.expected_job_names(self.groups, self.engines)))
 
     def test_report_can_be_running_while_completed_dependencies_are_checked(self):
         report = next(j for j in self.data['jobs'] if j['name'] == 'std / report')
@@ -121,7 +121,7 @@ class FrontendJobBudgetTests(unittest.TestCase):
         self.assertEqual(self.data, original)
         receipt = BUDGET.qualify(refreshed, groups=self.groups, engines=self.engines,
             run_id=123, attempt=2, head=self.head)
-        self.assertEqual(receipt['executed_jobs'], 18)
+        self.assertEqual(receipt['executed_jobs'], len(BUDGET.expected_job_names(self.groups, self.engines)))
         self.assertEqual(receipt['maximum_seconds'], 179.999)
 
     def test_incomplete_fresh_row_and_completed_steps_cannot_infer_success(self):
@@ -205,7 +205,7 @@ class FrontendJobBudgetTests(unittest.TestCase):
 
 
     def test_renderer_controls_are_required_terminal_success_and_under_budget(self):
-        target = next(job for job in self.data['jobs'] if job['name'] == 'std / renderer controls')
+        target = next(job for job in self.data['jobs'] if job['name'] == 'std / renderer controls / renderer')
         baseline = copy.deepcopy(target)
         for field, value in [('status', 'queued'), ('conclusion', 'failure'),
                              ('conclusion', 'cancelled'), ('conclusion', 'skipped'),
@@ -216,6 +216,41 @@ class FrontendJobBudgetTests(unittest.TestCase):
                 with self.assertRaises(ValueError):
                     self.verify()
 
+
+    def test_renderer_group_registry_is_literal_bounded_and_unique(self):
+        owner = ROOT / 'artifacts/qualification/renderer-partition-registry-controls'
+        owner.mkdir(parents=True, exist_ok=True)
+        with tempfile.TemporaryDirectory(dir=owner) as directory:
+            path = Path(directory) / 'renderer_controls.py'
+            path.write_text("GROUPS = ('renderer', 'passive-reader')\n")
+            self.assertEqual(BUDGET.renderer_job_names(path),
+                             {'std / renderer controls / renderer', 'std / renderer controls / passive-reader'})
+            for source in ["GROUPS = ()", "GROUPS = ['renderer']", "GROUPS = ('renderer', 'renderer')",
+                           "GROUPS = ('renderer/unknown',)", "GROUPS = (1,)", "GROUPS = ([],)",
+                           "GROUPS = tuple(['renderer'])", "GROUPS = ('renderer',)\nGROUPS = ('passive-reader',)"]:
+                with self.subTest(source=source):
+                    path.write_text(source)
+                    with self.assertRaises(ValueError): BUDGET.renderer_job_names(path)
+
+    def test_every_renderer_partition_is_independently_required_and_budgeted(self):
+        wanted = BUDGET.renderer_job_names()
+        self.assertEqual(wanted, {'std / renderer controls / renderer', 'std / renderer controls / passive-reader'})
+        self.assertEqual({row['name'] for row in self.verify()['jobs']
+                          if row['name'].startswith('std / renderer controls / ')}, wanted)
+        baseline = copy.deepcopy(self.data)
+        for name in wanted:
+            for defect in ('missing', 'duplicate', 'unknown', 'cancelled', 'over-budget'):
+                with self.subTest(name=name, defect=defect):
+                    self.data = copy.deepcopy(baseline)
+                    target = next(row for row in self.data['jobs'] if row['name'] == name)
+                    if defect == 'missing': self.data['jobs'].remove(target)
+                    elif defect == 'duplicate': self.data['jobs'].append(copy.deepcopy(target))
+                    elif defect == 'unknown': target['name'] = 'std / renderer controls / unknown'
+                    elif defect == 'cancelled': target['conclusion'] = 'cancelled'
+                    else: target['completed_at'] = '2026-01-01T00:08:00Z'
+                    self.data['total_count'] = len(self.data['jobs'])
+                    with self.assertRaises(ValueError): self.verify()
+        self.data = baseline
 
     def test_every_catalogue_job_is_owned_and_budgeted(self):
         receipt = self.verify()
@@ -266,7 +301,8 @@ class FrontendJobBudgetTests(unittest.TestCase):
         refreshed = self.refresh(lambda identifier: completed)
         self.assertEqual(self.data['jobs'][0]['head_sha'], self.head)
         self.assertEqual(BUDGET.qualify(refreshed, groups=self.groups, engines=self.engines,
-                         run_id=123, attempt=2, head=self.head)['executed_jobs'], 18)
+                         run_id=123, attempt=2, head=self.head)['executed_jobs'],
+                         len(BUDGET.expected_job_names(self.groups, self.engines)))
         with self.assertRaisesRegex(ValueError, 'Refreshed job identity'):
             self.refresh(lambda identifier: {**completed, 'head_sha': 'b' * 40})
 

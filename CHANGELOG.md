@@ -6,16 +6,27 @@ This file records notable repository-level changes for `bijux-std`.
 
 ### Pending review
 
-#### [#249](https://github.com/bijux/bijux-std/pull/249) — fix(docs): preserve reader position during startup palette restore
+#### [#248](https://github.com/bijux/bijux-std/pull/248) — feat(docs): independently render source-owned passive readers
+
+Reconstruct committed passive reader notices, native targets and discovery in both selected and reference renderers while preserving original report bytes and restrictive CSP.
+
+- Require a typed revalidated in-process reader owner before document-script admission.
+- Preserve production-profile admission and refuse passive ownership of catalogue virtual configuration.
+- Qualify the actual independent passive render and source-derived 123 installed controls; full interactive-report and consumer publication duties remain separate.
+- Commit an isolated verification-only test profile for the actual renderer environment and independently refuse production admission without widening canonical profiles.
+- Verify retained reader lifetime through actual Document identity after footer navigation and Back; retain timestamp observations and reject real native navigation across all three engines.
+- Partition installed passive-reader reconstruction from the remaining renderer units, with separately required three-minute jobs and a strict source-derived disjoint evidence union.
+
+
+### Merged pull requests
+
+#### 2026-10-09T14:40:31Z — [#249](https://github.com/bijux/bijux-std/pull/249) — fix(docs): preserve reader position during startup palette restore
 
 Leave native and diagram history restoration in control when startup applies the persisted palette.
 
 - Prevent startup frame/timer callbacks from reclaiming provisional scroll coordinates or overriding trusted reader input.
 - Preserve explicit palette and cross-tab position retention; prove the competing callback order with actual script closures.
 - Retain eight added unit controls and unchanged native/history browser journeys; qualify the original consumer failure separately.
-
-
-### Merged pull requests
 
 #### 2026-10-09T14:09:38Z — [#247](https://github.com/bijux/bijux-std/pull/247) — feat(docs): guard reader publication and retained recovery
 

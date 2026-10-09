@@ -274,11 +274,16 @@ timing. These browser cases do not qualify manual devices, OS keyboard access,
 all authored opt-ins, accepted publication profiles or production URLs.
 
 Renderer unit controls run independently of the immutable browser fixture producer.
-The three-minute `std / renderer controls` job retains all native Node case events,
-installed Python case IDs, exact dependency locks and physical runtime identities.
-The navigation aggregate independently verifies that receipt against its current
-source and workflow; failed, skipped or missing controls cannot green the report.
-For local qualification after the normal locked runtime installers:
+The three-minute `std / renderer controls / renderer` and
+`std / renderer controls / passive-reader` jobs retain disjoint source-derived
+controls. The first runs all native Node units and the remaining installed Python
+controls; the second owns the installed passive-reader reconstruction control.
+Each group retains its exact dependency locks, physical runtime before/after
+identities, source and workflow. The navigation aggregate independently rederives
+the complete disjoint union; failed, skipped, missing or substituted controls
+cannot green the report.
+
+For local full qualification after the normal locked runtime installers:
 
 ```sh
 python3 tests/bijux-docs/execution/renderer_controls.py run \
@@ -288,6 +293,12 @@ python3 tests/bijux-docs/execution/renderer_controls.py verify \
   --output artifacts/bijux-docs/renderer-controls
 ```
 
-These runtime observations are verification evidence and confer no publication
-profile approval. Browser fixture, catalogue, fault and publication command gates
-remain independently required.
+CI uses `--group` and a unique group output subtree. Both jobs remain required;
+the strict aggregate rejects full local evidence in place of group receipts,
+missing or duplicated groups, unknown owners and changed artifacts. A successful
+test step inside a cancelled workflow job is never a passing programme gate.
+Actual whole-job timing includes setup, execution, upload and cleanup.
+
+These runtime observations confer no publication-profile approval. Browser
+fixture, catalogue, fault and publication command gates remain independently
+required.

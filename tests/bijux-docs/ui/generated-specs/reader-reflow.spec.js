@@ -240,6 +240,7 @@ for (const profile of [
       const page = await context.newPage(),
         errors = [],
         missing = [];
+      let documentIdentity;
       const evidence = {
         profile,
         kind,
@@ -329,6 +330,7 @@ for (const profile of [
         evidence.source_after = await sourceOracle(page, kind);
         expect(evidence.source_after).toEqual(before);
         if (profile === "lifetime") {
+          documentIdentity = await page.evaluateHandle(() => document);
           const target = region(page, kind),
             old = await target.elementHandle(),
             timeOrigin = await page.evaluate(() => performance.timeOrigin);
@@ -350,9 +352,7 @@ for (const profile of [
               ? /^Code boundary reference/
               : /^Table boundary reference/,
           );
-          expect(await page.evaluate(() => performance.timeOrigin)).toBe(
-            timeOrigin,
-          );
+          expect(await page.evaluate(original => original === document, documentIdentity)).toBe(true);
           const disposed = await old.evaluate((node) => ({
             connected: node.isConnected,
             tabindex: node.getAttribute("tabindex"),
@@ -378,15 +378,14 @@ for (const profile of [
               ? /^Code boundary reference/
               : /^Table boundary reference/,
           );
-          expect(await page.evaluate(() => performance.timeOrigin)).toBe(
-            timeOrigin,
-          );
+          expect(await page.evaluate(original => original === document, documentIdentity)).toBe(true);
           expect(await sourceOracle(page, kind)).toEqual(before);
           evidence.remounted_keyboard = await ordinaryKeyboard(page, kind);
           evidence.geometry_after_back = await geometry(page);
           evidence.lifetime = {
             timeOrigin,
             disposed,
+            retained_document: true,
             kind: "ordinary footer destination and browser Back, genuine retained document",
           };
         }
@@ -416,6 +415,7 @@ for (const profile of [
               role: node.getAttribute("role"),
             })),
           );
+        if (documentIdentity) await documentIdentity.dispose();
         await context.close();
         evidence.closed_at = new Date().toISOString();
         await info.attach("reader-source-and-lifetime", {

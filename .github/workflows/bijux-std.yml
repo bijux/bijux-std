@@ -272,10 +272,14 @@ jobs:
           retention-days: 14
 
   renderer-controls:
-    name: std / renderer controls
+    name: std / renderer controls / ${{ matrix.group }}
     if: ${{ github.repository == 'bijux/bijux-std' }}
     runs-on: ubuntu-latest
     timeout-minutes: 3
+    strategy:
+      fail-fast: false
+      matrix:
+        group: [renderer, passive-reader]
     steps:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -292,12 +296,13 @@ jobs:
           set -euo pipefail
           PYTHONDONTWRITEBYTECODE=1 python3 tests/bijux-docs/execution/renderer_controls.py run \
             --python artifacts/bijux-docs/python/bin/python --node "$(command -v node)" \
-            --output artifacts/bijux-docs/renderer-controls
+            --group "${{ matrix.group }}" \
+            --output "artifacts/bijux-docs/renderer-controls/${{ matrix.group }}"
       - name: Retain native unit events and physical runtime receipts
         if: always()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
-          name: docs-renderer-controls-${{ github.sha }}-${{ github.run_attempt }}
+          name: docs-renderer-controls-${{ matrix.group }}-${{ github.sha }}-${{ github.run_attempt }}
           path: artifacts/bijux-docs/renderer-controls
           if-no-files-found: error
           compression-level: 0
@@ -489,8 +494,9 @@ jobs:
       - name: Download exact renderer unit evidence
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
-          name: docs-renderer-controls-${{ github.sha }}-${{ github.run_attempt }}
+          pattern: docs-renderer-controls-*-${{ github.sha }}-${{ github.run_attempt }}
           path: artifacts/bijux-docs/renderer-controls
+          merge-multiple: true
       - name: Download exact frontend fault witnesses
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:

@@ -22,7 +22,7 @@ def load(name,path):
     return module
 
 
-def build_artifact(root: Path, config_name: str, site_name: str, *, site_url='', source_identity=None, strict=True, source_recipe=None):
+def build_artifact(root: Path, config_name: str, site_name: str, *, site_url='', source_identity=None, strict=True, source_recipe=None, reader_owner=None):
     shared=Path(__file__).resolve().parents[1]
     identity=load('bijux_renderer_identity',shared/'security/build_identity.py')
     publication=load('bijux_renderer_publication',shared/'security/publication.py')
@@ -52,6 +52,8 @@ def build_artifact(root: Path, config_name: str, site_name: str, *, site_url='',
     catalogue=None
     if source_recipe:
         producer.dependencies(shared,root,publication=checkpoint is not None)
+        if reader_owner is not None:
+            raise ValueError("Publication build: passive readers require a tracked MkDocs config; catalogue recipe composition remains separate")
         catalogue=identity.catalogue_derivation(root,source_recipe,checkpoint.get('derivation') if checkpoint else None)
         if config_name!=catalogue.record['configuration']['path']:
             raise ValueError('Publication build: exact reconstructed configuration required')
@@ -71,7 +73,7 @@ def build_artifact(root: Path, config_name: str, site_name: str, *, site_url='',
     templates=Path(material.__file__).parent/'templates'
     with tempfile.TemporaryDirectory(prefix='renderer-reference-',dir=evidence) as scratch:
         prepared=producer.prepare(root,config_name,shared,templates,Path(scratch)/'site',site,
-                                  publication_scope=checkpoint is not None,source_recipe=source_recipe)
+                                  publication_scope=checkpoint is not None,source_recipe=source_recipe,reader_owner=reader_owner)
         receipt=identity.begin(root,config_name,site_name,actual_url,source_identity,source_recipe)
         previous_strict=configuration.strict
         configuration.strict=strict
@@ -82,12 +84,13 @@ def build_artifact(root: Path, config_name: str, site_name: str, *, site_url='',
         configuration=(catalogue.configuration(site) if catalogue else
                        load_config(config_file=str(identity.regular(root,config_name)),site_dir=str(site)))
         plan=redirects.normalize_redirects(configuration,site,actual_url,write=False,source_root=root if catalogue else None)
-        report=policy.apply(site,shared,templates,plan)
-        inputs=policy.policy_inputs(shared,templates);inputs['redirects']=plan['policy_inputs']
+        report=(policy.apply(site,shared,templates,plan) if prepared.reader_source is None else
+                prepared.reader_source.compose(site,receipt,policy,shared,templates,plan))
+        inputs=report['policy_inputs'];inputs['redirects']=plan['policy_inputs']
         report.update(site_url=actual_url,site_dir=site_name,bundle_sha256=publication.public_bundle_identity(site)[1],
                       policy_inputs=inputs,processor_sha256=hashlib.sha256((shared/'security/csp.py').read_bytes()).hexdigest())
         receipt=identity.finish(root,receipt)
-        reconstruction=producer.verify(site,prepared,receipt['renderer'],report,actual_url)
+        reconstruction=producer.verify(site,prepared,receipt['renderer'],report,actual_url,completed_build=receipt,checkpoint=checkpoint)
         if checkpoint:
             identity.verify_source(root,checkpoint)
     for name,value in [('build-identity',receipt),('csp',report),('producer-reconstruction',reconstruction)]:
@@ -100,6 +103,11 @@ def build_artifact(root: Path, config_name: str, site_name: str, *, site_url='',
     arguments=[sys.executable,str(shared/'tooling/quality/validate_site_routes.py'),
                '--repo-root',str(root),'--site-dir',site_name,'--site-url',actual_url,
                '--output','artifacts/website-security/site-verification.json']
+    if reader_owner is not None:
+        arguments.extend(['--embedded-csp-report', 'artifacts/website-security/csp.json',
+                          '--completed-build-receipt', 'artifacts/website-security/build-identity.json',
+                          '--source-sha', prepared.reader_source.source_sha, '--reader-owner', reader_owner])
+        if source_identity: arguments.extend(['--source-identity', source_identity])
     exception=os.environ.get('BIJUX_DOCS_DEVELOPMENT_LINK_POLICY')
     if exception:arguments.extend(['--development-link-policy',exception])
     subprocess.run(arguments,cwd=root,env=environment,check=True)
@@ -116,11 +124,12 @@ def main():
     parser.add_argument('--site-url',default='')
     parser.add_argument('--source-recipe',choices=['masterclass-catalogue'])
     parser.add_argument('--source-identity',default=os.environ.get('DOCS_SOURCE_IDENTITY'))
+    parser.add_argument('--reader-owner', default=os.environ.get('BIJUX_DOCS_READER_OWNER'), help='Explicit committed finite static-reader ownership descriptor')
     parser.add_argument('--no-strict',action='store_true')
     args=parser.parse_args()
     try:
         result=build_artifact(Path.cwd().resolve(),args.config,args.site_dir,site_url=args.site_url,
-                              source_identity=args.source_identity,strict=not args.no_strict,source_recipe=args.source_recipe)
+                              source_identity=args.source_identity,strict=not args.no_strict,source_recipe=args.source_recipe,reader_owner=args.reader_owner)
         print(json.dumps({key:value for key,value in result.items() if key!='producer'}))
         return 0
     except (OSError,ValueError,KeyError,subprocess.CalledProcessError) as error:

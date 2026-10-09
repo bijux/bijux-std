@@ -79,11 +79,19 @@ class RequiredNavigationTests(unittest.TestCase):
         controls = job('renderer-controls')
         self.assertIn('timeout-minutes: 3', controls)
         self.assertIn('renderer_controls.py run', controls)
+        self.assertIn('group: [renderer, passive-reader]', controls)
+        self.assertIn('fail-fast: false', controls)
+        self.assertIn('--group "${{ matrix.group }}"', controls)
+        self.assertIn('name: docs-renderer-controls-${{ matrix.group }}-', controls)
+        self.assertIn('path: artifacts/bijux-docs/renderer-controls', controls)
         self.assertIn('if: always()', controls)
         self.assertIn('if-no-files-found: error', controls)
         self.assertNotIn('ui-test-unit', job('navigation-fixtures'))
         aggregate = job('navigation')
         self.assertIn('Download exact renderer unit evidence', aggregate)
+        self.assertIn('pattern: docs-renderer-controls-*-${{ github.sha }}-${{ github.run_attempt }}', aggregate)
+        self.assertIn("controls.verify_groups(ARTIFACTS / 'renderer-controls')",
+                      (ROOT / 'tests/bijux-docs/execution/browser_gate.py').read_text())
         self.assertIn('artifacts/bijux-docs/renderer-controls', aggregate)
         for outcome in ('failure', 'cancelled', 'skipped', ''):
             with self.subTest(outcome=outcome):

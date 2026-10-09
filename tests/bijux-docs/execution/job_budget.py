@@ -39,11 +39,30 @@ def catalogue_job_names(source: Path | None = None) -> set[str]:
     return {'std / catalogue ' + name for name in groups}
 
 
+def renderer_job_names(path: Path | None = None) -> set[str]:
+    """Read the finite renderer partition owner without executing test code."""
+    path = path or Path(__file__).with_name('renderer_controls.py')
+    require(path.stat().st_size <= 256 * 1024, 'Renderer execution registry is unbounded')
+    try:
+        tree = ast.parse(path.read_text())
+        declarations = [node.value for node in tree.body if isinstance(node, ast.Assign)
+                        and any(isinstance(target, ast.Name) and target.id == 'GROUPS' for target in node.targets)]
+        require(len(declarations) == 1, 'Exactly one renderer GROUPS declaration is required')
+        groups = ast.literal_eval(declarations[0])
+    except (SyntaxError, ValueError, TypeError, RecursionError) as error:
+        raise ValueError('Renderer execution registry must be a literal GROUPS declaration') from error
+    require(isinstance(groups, tuple) and 0 < len(groups) <= 16
+            and all(isinstance(name, str) and re.fullmatch(r'[a-z][a-z0-9-]*', name) for name in groups)
+            and len(set(groups)) == len(groups),
+            'Renderer execution groups are invalid')
+    return {'std / renderer controls / ' + name for name in groups}
+
+
 def expected_job_names(groups: dict, engines: tuple | list) -> set[str]:
     require(bool(groups) and bool(engines), 'Canonical browser groups and engines are required')
     require(len(set(engines)) == len(engines), 'Duplicate canonical engine')
     require(all(isinstance(x, str) and x and '/' not in x for x in [*groups, *engines]), 'Invalid canonical group or engine')
-    return catalogue_job_names() | {'std / navigation fixtures', 'std / navigation', 'std / publication commands', 'std / renderer controls',
+    return catalogue_job_names() | renderer_job_names() | {'std / navigation fixtures', 'std / navigation', 'std / publication commands',
             'std / frontend public artifact fault controls'} | {
         f'std / frontend fault controls / {engine}' for engine in engines
     } | {
