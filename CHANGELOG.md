@@ -13,8 +13,15 @@ Keep each reused page occurrence’s authored navigation name while preserving i
 - Match the authored parent and source before recovering aliases such as Overview instead of a reused Home title.
 - Preserve provider Link labels and single-Page titles, using one occurrence census in the existing shared macros.
 - Verify alias, mismatch and provider controls without closing separate active-ancestor semantics.
-
 ### Merged pull requests
+
+#### 2026-10-09T07:06:31Z — [#238](https://github.com/bijux/bijux-std/pull/238) — ci(docs): bound contrast jobs by viewport ownership
+
+Keep contrast qualification within the three-minute whole-job budget by assigning each engine's phone, compact and desktop profiles independently.
+
+- Preserve all 39 contrast cases and all 645 canonical cases, with five phone and four compact/desktop cases per engine.
+- Require complete disjoint profile ownership and all 81 exact suite receipts; retain missing, overlapping and cancelled-result rejection.
+- Keep the existing time limit, runtime pins, case assertions and full source/artifact qualification.
 
 #### 2026-10-09T06:31:01Z — [#236](https://github.com/bijux/bijux-std/pull/236) — fix(ci): separate frozen renderer provenance from dependency candidates
 

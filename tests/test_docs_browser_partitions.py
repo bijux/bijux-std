@@ -27,15 +27,15 @@ def inventory(profiles: bool, count: int = 1) -> dict:
 
 
 def inventories() -> dict:
-    return {suite: inventory(suite in ('navigation', 'search-scope')) for suite in PARTITIONS.SUITES}
+    return {suite: inventory(suite in ('navigation', 'search-scope', 'contrast')) for suite in PARTITIONS.SUITES}
 
 
 class BrowserPartitionTests(unittest.TestCase):
     def test_all_canonical_projects_have_exactly_one_owner(self) -> None:
         assignments = PARTITIONS.plan(inventories())
-        self.assertEqual(len(PARTITIONS.GROUPS), 22)
+        self.assertEqual(len(PARTITIONS.GROUPS), 24)
         self.assertEqual(len(PARTITIONS.SUITES), 21)
-        self.assertEqual(len(assignments), 75)
+        self.assertEqual(len(assignments), 81)
         claimed = [(suite, name) for (_, suite), names in assignments.items() for name in names]
         expected = [(suite, project['name']) for suite, data in inventories().items() for project in data['canonical_projects']]
         self.assertCountEqual(claimed, expected)
@@ -53,7 +53,36 @@ class BrowserPartitionTests(unittest.TestCase):
         self.assertEqual(engines, list(PARTITIONS.ENGINES))
         self.assertIn('timeout-minutes: 3', job)
         self.assertIn('fail-fast: false', job)
-        self.assertEqual(len(groups) * len(engines), 66)
+        self.assertEqual(len(groups) * len(engines), 72)
+
+    def test_contrast_profiles_preserve_all_thirty_nine_canonical_cases(self) -> None:
+        data = inventories()
+        data['contrast'] = inventory(True)
+        for project in data['contrast']['canonical_projects']:
+            project['count'] = 5 if project['name'].endswith('-phone') else 4
+        data['contrast']['cases'] = [
+            {'id': f"{project['name']}-contrast-{index}", 'project': project['name']}
+            for project in data['contrast']['canonical_projects']
+            for index in range(project['count'])
+        ]
+        assigned = PARTITIONS.plan(data)
+        self.assertEqual(len(data['contrast']['cases']), 39)
+        for engine in PARTITIONS.ENGINES:
+            for profile in PARTITIONS.REGISTRY['profiles']:
+                self.assertEqual(assigned[(f'contrast-{profile}-{engine}', 'contrast')],
+                                 [f'{engine}-{profile}'])
+                self.assertEqual(PARTITIONS.selection(f'contrast-{profile}', 'contrast', engine),
+                                 {'BIJUX_UI_BROWSER_ENGINE': engine, 'BIJUX_UI_PROFILE': profile})
+
+    def test_missing_or_overlapping_contrast_profile_cannot_reduce_coverage(self) -> None:
+        missing = copy.deepcopy(PARTITIONS.REGISTRY)
+        del missing['groups']['contrast-compact']
+        with self.assertRaisesRegex(ValueError, 'incomplete'):
+            PARTITIONS.plan(inventories(), missing)
+        overlap = copy.deepcopy(PARTITIONS.REGISTRY)
+        overlap['groups']['contrast'] = [{'suite': 'contrast'}]
+        with self.assertRaisesRegex(ValueError, 'Duplicate browser project ownership'):
+            PARTITIONS.plan(inventories(), overlap)
 
     def test_missing_viewport_partition_is_rejected(self) -> None:
         registry = copy.deepcopy(PARTITIONS.REGISTRY)

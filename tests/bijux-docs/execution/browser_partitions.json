@@ -63,9 +63,22 @@
         "suite": "diagrams"
       }
     ],
-    "contrast": [
+    "contrast-phone": [
       {
-        "suite": "contrast"
+        "suite": "contrast",
+        "profile": "phone"
+      }
+    ],
+    "contrast-compact": [
+      {
+        "suite": "contrast",
+        "profile": "compact"
+      }
+    ],
+    "contrast-desktop": [
+      {
+        "suite": "contrast",
+        "profile": "desktop"
       }
     ],
     "links": [
