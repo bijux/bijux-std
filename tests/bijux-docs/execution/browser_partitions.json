@@ -94,6 +94,9 @@
     "semantics": [
       {
         "suite": "popup-relationships"
+      },
+      {
+        "suite": "content"
       }
     ],
     "search-scope-phone": [
