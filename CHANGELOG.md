@@ -6,7 +6,18 @@ This file records notable repository-level changes for `bijux-std`.
 
 ### Pending review
 
-#### [#247](https://github.com/bijux/bijux-std/pull/247) — feat(docs): guard reader publication and retained recovery
+#### [#249](https://github.com/bijux/bijux-std/pull/249) — fix(docs): preserve reader position during startup palette restore
+
+Leave native and diagram history restoration in control when startup applies the persisted palette.
+
+- Prevent startup frame/timer callbacks from reclaiming provisional scroll coordinates or overriding trusted reader input.
+- Preserve explicit palette and cross-tab position retention; prove the competing callback order with actual script closures.
+- Retain eight added unit controls and unchanged native/history browser journeys; qualify the original consumer failure separately.
+
+
+### Merged pull requests
+
+#### 2026-10-09T14:09:38Z — [#247](https://github.com/bijux/bijux-std/pull/247) — feat(docs): guard reader publication and retained recovery
 
 Verify explicitly owned passive reports before publication and compare retained historical bundle bytes without granting new source or deployment authority.
 
@@ -14,8 +25,6 @@ Verify explicitly owned passive reports before publication and compare retained 
 - Keep strict schema-two reconstruction by default and provide explicit bytes-only recovery for bounded historical monitoring.
 - Preserve catalogue configuration guards, schema-one checks and separate production-profile, manual and live qualification.
 - Give every renderer unit a separate mandatory source-bound CI receipt with owned module resolution and strict physical runtime identity, preserving all cases and the three-minute whole-job limit while removing fixture-production contention.
-
-### Merged pull requests
 
 #### 2026-10-09T13:43:49Z — [#246](https://github.com/bijux/bijux-std/pull/246) — chore(deps): bump pip in catalogue verification
 
