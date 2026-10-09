@@ -6,11 +6,15 @@ This file records notable repository-level changes for `bijux-std`.
 
 ### Pending review
 
-#### [#250](https://github.com/bijux/bijux-std/pull/250) — docs(docs): assign native search template ownership
+#### [#251](https://github.com/bijux/bijux-std/pull/251) — test(docs): cover authored phone navigation destinations
 
-Name the shared native search presentation owner and Material provider boundary, and link the existing site-scope and escaping checks in the executable contract trace.
+Reach every authored fixture destination from the phone root drawer and bind expected routes and headings to the source graph, while retaining all existing navigation case identities.
 
 ### Merged pull requests
+
+#### 2026-10-09T15:59:28Z — [#250](https://github.com/bijux/bijux-std/pull/250) — docs(docs): assign native search template ownership
+
+Name the shared native search presentation owner and Material provider boundary, and link the existing site-scope and escaping checks in the executable contract trace.
 
 #### 2026-10-09T15:21:30Z — [#248](https://github.com/bijux/bijux-std/pull/248) — feat(docs): independently render source-owned passive readers
 
