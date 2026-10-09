@@ -20,6 +20,14 @@ Reconstruct committed passive reader notices, native targets and discovery in bo
 
 ### Merged pull requests
 
+#### 2026-10-09T14:40:31Z — [#249](https://github.com/bijux/bijux-std/pull/249) — fix(docs): preserve reader position during startup palette restore
+
+Leave native and diagram history restoration in control when startup applies the persisted palette.
+
+- Prevent startup frame/timer callbacks from reclaiming provisional scroll coordinates or overriding trusted reader input.
+- Preserve explicit palette and cross-tab position retention; prove the competing callback order with actual script closures.
+- Retain eight added unit controls and unchanged native/history browser journeys; qualify the original consumer failure separately.
+
 #### 2026-10-09T14:09:38Z — [#247](https://github.com/bijux/bijux-std/pull/247) — feat(docs): guard reader publication and retained recovery
 
 Verify explicitly owned passive reports before publication and compare retained historical bundle bytes without granting new source or deployment authority.
