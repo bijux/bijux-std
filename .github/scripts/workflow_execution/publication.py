@@ -4,6 +4,7 @@ from __future__ import annotations
 import copy
 from .events import normalize_workflow_events
 from .schema import WorkflowExecutionPolicy
+from .refs import project_publication_refs
 
 
 def manual_publication_entrypoints(policy: WorkflowExecutionPolicy | None) -> set[str]:
@@ -27,7 +28,7 @@ def project_publication_entrypoints(workflow_id: str, document: dict, policy: Wo
     # Dispatch input/help/default identity and every job remain source-owned.
     events.pop("workflow_call", None)
     projected["on"] = events
-    return projected
+    return project_publication_refs(workflow_id, projected, policy)
 
 
 def validate_publication_calls(documents: dict[str, dict], policy: WorkflowExecutionPolicy | None) -> None:

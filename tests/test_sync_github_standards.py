@@ -31,6 +31,63 @@ SPEC.loader.exec_module(MODULE)
 
 
 class SyncGithubStandardsTests(unittest.TestCase):
+    def test_actual_docs_runtime_restricts_refs_before_preparation(self) -> None:
+        manifest = copy.deepcopy(MODULE.load_manifest())
+        repo = MODULE.find_repo_config(manifest, "bijux-atlas")
+        repo["workflow_execution_policy"] = {"schema": 1, "publication_entrypoints": {
+            "deploy-docs": {"mode": "manual-only", "refs": "main-only"},
+        }}
+        with tempfile.TemporaryDirectory() as workspace:
+            destination = Path(workspace)
+            with mock.patch.object(MODULE, "resolve_repository_checkout", return_value=destination):
+                MODULE.copy_repo_files("bijux-atlas", repo, manifest)
+            source = MODULE.WORKFLOW_EXECUTION.parse_workflow(
+                (MODULE.STD_REPO / "shared/bijux-gh/workflows/deploy-docs.yml").read_bytes(), "canonical docs"
+            )
+            actual = MODULE.WORKFLOW_EXECUTION.parse_workflow(
+                (destination / ".github/workflows/deploy-docs.yml").read_bytes(), "projected docs"
+            )
+            self.assertEqual(actual, MODULE.WORKFLOW_EXECUTION.project_publication_entrypoints(
+                "deploy-docs", source, repo["workflow_execution_policy"]
+            ))
+            self.assertEqual(actual["jobs"]["build"]["steps"][0]["name"], "Validate publication event and ref")
+            self.assertIn("github.ref == 'refs/heads/main'", actual["jobs"]["deploy"]["if"])
+            self.assertEqual((destination / ".bijux/shared/bijux-gh/workflows/deploy-docs.yml").read_bytes(),
+                             (MODULE.STD_REPO / "shared/bijux-gh/workflows/deploy-docs.yml").read_bytes())
+
+    def test_unreviewed_docs_guard_refuses_before_any_destination_write(self) -> None:
+        manifest = copy.deepcopy(MODULE.load_manifest())
+        repo = MODULE.find_repo_config(manifest, "bijux-atlas")
+        repo["workflow_execution_policy"] = {"schema": 1, "publication_entrypoints": {
+            "deploy-docs": {"mode": "manual-only", "refs": "main-only"},
+        }}
+        for variant in ["boolean-predicate", "missing-guard"]:
+            with self.subTest(variant=variant), tempfile.TemporaryDirectory() as workspace:
+                standard = Path(workspace) / "owning-standard"
+                shutil.copytree(MODULE.STD_REPO / ".github", standard / ".github")
+                shutil.copytree(MODULE.STD_REPO / "shared/bijux-gh", standard / "shared/bijux-gh")
+                source = standard / "shared/bijux-gh/workflows/deploy-docs.yml"
+                original = source.read_text()
+                if variant == "boolean-predicate":
+                    predicate = next(line for line in original.splitlines() if line.startswith("    if: "))
+                    changed = original.replace(predicate, "    if: false", 1)
+                else:
+                    changed = original.replace("name: Validate publication event and ref", "name: Unreviewed guard", 1)
+                self.assertNotEqual(original, changed)
+                source.write_text(changed)
+                destination = Path(workspace) / "publication-fixture"
+                destination.mkdir()
+                sentinel = destination / "owned.txt"
+                sentinel.write_text("owned preimage\n")
+                with (mock.patch.object(MODULE, "STD_REPO", standard),
+                      mock.patch.object(MODULE, "resolve_repository_checkout", return_value=destination),
+                      mock.patch.object(MODULE, "copy_file_mapping") as copy_file):
+                    with self.assertRaises(ValueError):
+                        MODULE.copy_repo_files("bijux-atlas", repo, manifest)
+                    copy_file.assert_not_called()
+                self.assertEqual(sentinel.read_text(), "owned preimage\n")
+                self.assertEqual([p.name for p in destination.iterdir()], ["owned.txt"])
+
     def test_old_flat_generated_helper_retires_only_with_owned_unchanged_preimage(self) -> None:
         manifest = MODULE.load_manifest()
         repo = MODULE.find_repo_config(manifest, "bijux-atlas")
@@ -160,7 +217,7 @@ class SyncGithubStandardsTests(unittest.TestCase):
             checksum.assert_not_called()
 
     def test_policy_package_is_canonical_managed_source(self) -> None:
-        for name in ["__init__", "source_loading", "schema", "yaml_io", "events", "publication"]:
+        for name in ["__init__", "source_loading", "schema", "yaml_io", "events", "refs", "publication"]:
             path = f".github/scripts/workflow_execution/{name}.py"
             self.assertIn((path, path), MODULE.BASE_FILE_MAPPINGS)
         self.assertNotIn((".github/scripts/workflow_execution.py", ".github/scripts/workflow_execution.py"), MODULE.BASE_FILE_MAPPINGS)

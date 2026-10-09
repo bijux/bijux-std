@@ -58,3 +58,21 @@ production evidence. Ref admission and existing source/artifact/verifier guards
 remain separate requirements. Release tag resolution still honors an explicit
 input before its existing defaults; changing workflow entrypoint selection does
 not change that resolver.
+
+Documentation owners can explicitly select
+`publication_entrypoints.deploy-docs: {mode: manual-only, refs: main-only}`
+in the canonical repository policy. This restricts both publication jobs to
+`workflow_dispatch` on the literal `refs/heads/main`, independently of the
+repository default branch. The existing deploy dependency and `site_available`
+check remain intact. The named publication event/ref shell guard runs first,
+before checkout, configuration, installation or artifact writes, and repeats
+the same exact event/ref restriction. Tags, other branches and reusable calls
+cannot qualify this selected publication path.
+
+Projection admits the reviewed build/deploy conditions and shell guard before
+writing managed output. Missing, ambiguous or changed guard bodies and job
+predicates require review of the canonical source; they are not silently
+rewritten. All other dispatch, build, artifact, profile and deployment content
+stays source-owned. Absent policy or `refs: canonical` preserves the canonical
+ref guard. This selection does not authorize publication or establish deployed,
+manual or profile evidence.

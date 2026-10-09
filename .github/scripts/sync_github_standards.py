@@ -80,6 +80,7 @@ BASE_FILE_MAPPINGS: list[tuple[str, str]] = [
     (".github/scripts/workflow_execution/schema.py", ".github/scripts/workflow_execution/schema.py"),
     (".github/scripts/workflow_execution/yaml_io.py", ".github/scripts/workflow_execution/yaml_io.py"),
     (".github/scripts/workflow_execution/events.py", ".github/scripts/workflow_execution/events.py"),
+    (".github/scripts/workflow_execution/refs.py", ".github/scripts/workflow_execution/refs.py"),
     (".github/scripts/workflow_execution/publication.py", ".github/scripts/workflow_execution/publication.py"),
     (".github/scripts/build_repo_manifest.py", ".github/scripts/build_repo_manifest.py"),
     (".github/scripts/check_pinned_actions.py", ".github/scripts/check_pinned_actions.py"),

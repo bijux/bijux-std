@@ -68,6 +68,9 @@ class ExecutionSchemaTests(unittest.TestCase):
             ("deploy-docs", {"mode": "manual-only", "refs": "refs/heads/feature"}),
             ("release-github", {"mode": "manual-only", "refs": "main-only"}),
             ("deploy-docs", {"refs": "main-only"}),
+            ("deploy-docs", {"mode": "manual-only", "refs": True}),
+            ("deploy-docs", {"mode": "manual-only", "refs": None}),
+            ("deploy-docs", {"mode": "manual-only", "refs": "${{ github.ref }}"}),
         ]:
             with self.subTest(entry=entry), self.assertRaises(ValueError):
                 MODULE.validate_manifest(manifest({"schema": 1, "publication_entrypoints": {entrypoint: entry}}), ["bijux-atlas"])
