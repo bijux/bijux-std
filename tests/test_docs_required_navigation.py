@@ -1,5 +1,6 @@
 """Prove the required report cannot succeed on incomplete rendered execution."""
 from pathlib import Path
+import importlib.util
 import os
 import re
 import subprocess
@@ -79,7 +80,14 @@ class RequiredNavigationTests(unittest.TestCase):
         controls = job('renderer-controls')
         self.assertIn('timeout-minutes: 3', controls)
         self.assertIn('renderer_controls.py run', controls)
-        self.assertIn('group: [renderer, passive-reader]', controls)
+        path = ROOT / 'tests/bijux-docs/execution/renderer_controls.py'
+        spec = importlib.util.spec_from_file_location('required_renderer_controls', path)
+        registry = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(registry)
+        matrix = re.search(r'^        group: \[([^\]]+)\]', controls, re.M)
+        self.assertIsNotNone(matrix)
+        self.assertEqual(tuple(name.strip() for name in matrix.group(1).split(',')),
+                         registry.GROUPS)
         self.assertIn('fail-fast: false', controls)
         self.assertIn('--group "${{ matrix.group }}"', controls)
         self.assertIn('name: docs-renderer-controls-${{ matrix.group }}-', controls)
