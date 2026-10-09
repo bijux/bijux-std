@@ -2,6 +2,8 @@
 import copy
 import importlib.util
 import json
+import hashlib
+import os
 from pathlib import Path
 import shutil
 import subprocess
@@ -37,12 +39,7 @@ class RendererControlReceiptTests(unittest.TestCase):
         self.source = {'head': 'a' * 40, 'tree_sha256': 'b' * 64, 'files': {'source.py': 'c' * 64}}
         self.workflow = {'workflow_run_id': '123', 'workflow_attempt': '1'}
         expected = CONTROLS.expected_python_ids()
-        runtime = {'python': {'distributions': CONTROLS.HELPERS.pins(),
-                              'lock_sha256': CONTROLS.HELPERS.digest(CONTROLS.HELPERS.LOCK),
-                              'verification_only': True, 'publication_approval': False},
-                   'physical_python': {'source': 'controlled-validator-fixture'},
-                   'node': {'version': CONTROLS.NODE_VERSION, 'modules': {'owned': 'fixture'},
-                            'package_lock_sha256': CONTROLS.HELPERS.digest(CONTROLS.TESTS / 'package-lock.json')}}
+        runtime = self.runtime_fixture()
         self.receipt = {'schema': 1, 'status': 'passed', 'verification_only': True, 'publication_approval': False,
                         'workflow': self.workflow, 'source_before': self.source, 'source_after': self.source,
                         'child_exit': 0, 'node_exit': 0, 'expected_python_ids': expected,
@@ -53,6 +50,33 @@ class RendererControlReceiptTests(unittest.TestCase):
         # The actual unit source is an input, not a transported result artifact.
         self.unit.unlink()
         self.write()
+
+    def runtime_fixture(self):
+        # A complete controlled schema fixture grants no physical execution approval.
+        packages = [{'name': name, 'version': version, 'files_count': 1, 'files_sha256': 'a' * 64}
+                    for name, version in CONTROLS.HELPERS.pins().items()]
+        manifests, modules = {}, {'.package-lock.json': {'sha256': 'b' * 64}}
+        for name, record in CONTROLS.source_node_packages().items():
+            text = json.dumps({'name': name.removeprefix('node_modules/'), 'version': record['version']})
+            manifests[name] = text
+            modules[name.removeprefix('node_modules/') + '/package.json'] = {
+                'sha256': hashlib.sha256(text.encode()).hexdigest()}
+        return {'python': {'scope': 'installed-exact-lock-fixture-interpreter',
+                           'executable': '/owned/python', 'executable_sha256': 'c' * 64,
+                           'version': '3.14.4', 'implementation': 'CPython', 'system': 'Darwin', 'machine': 'arm64',
+                           'distributions': CONTROLS.HELPERS.pins(),
+                           'lock_sha256': CONTROLS.HELPERS.digest(CONTROLS.HELPERS.LOCK),
+                           'verification_only': True, 'publication_approval': False},
+                'physical_python': {'platform': {'python': '3.14.4', 'implementation': 'cpython',
+                                                  'system': 'Darwin', 'machine': 'arm64', 'cache_tag': 'cpython-314'},
+                                    'executable_sha256': 'c' * 64,
+                                    'stdlib': {'files_count': 1, 'files_sha256': 'd' * 64},
+                                    'physical_roots': [{'root': 'site-packages', 'files_count': len(packages), 'files_sha256': 'e' * 64}],
+                                    'packages': packages, 'startup_inputs': []},
+                'node': {'version': CONTROLS.NODE_VERSION, 'executable': '/owned/node', 'executable_sha256': 'f' * 64,
+                         'package_lock_sha256': CONTROLS.HELPERS.digest(CONTROLS.TESTS / 'package-lock.json'),
+                         'modules': modules, 'package_manifests': manifests}}
+
 
     def write(self):
         self.receipt['artifact_digests'] = CONTROLS.HELPERS.inventory(self.root)
@@ -111,7 +135,7 @@ class RendererControlReceiptTests(unittest.TestCase):
             self.verify()
         self.receipt['runtime_before'] = self.receipt['runtime_after'] = {}
         self.write()
-        with self.assertRaisesRegex(ValueError, 'installed lock'):
+        with self.assertRaises(ValueError):
             self.verify()
 
     def test_missing_extra_and_corrupt_transported_artifacts_fail(self):
@@ -162,6 +186,86 @@ class RendererControlReceiptTests(unittest.TestCase):
         self.write()
         with self.assertRaises(ValueError):
             self.verify()
+
+    def test_malformed_and_cross_identity_python_runtime_snapshots_fail(self):
+        for runtime in (None, [], {'python': [], 'physical_python': {}, 'node': {}}):
+            with self.subTest(runtime=runtime), self.assertRaises(ValueError):
+                CONTROLS.validate_runtime(runtime)
+        baseline = self.runtime_fixture()
+        changes = [('python', 'executable', ''), ('python', 'executable_sha256', 'invalid'),
+                   ('python', 'version', 'unknown'), ('python', 'machine', ''), ('python', 'system', ''),
+                   ('physical_python', 'platform', {}), ('physical_python', 'executable_sha256', 'd' * 64),
+                   ('physical_python', 'stdlib', {'files_count': True, 'files_sha256': 'a' * 64}),
+                   ('physical_python', 'physical_roots', []), ('physical_python', 'packages', []),
+                   ('physical_python', 'startup_inputs', [{'path': '../escape', 'source': '', 'sha256': 'a' * 64}])]
+        for owner, key, value in changes:
+            with self.subTest(owner=owner, key=key):
+                runtime = copy.deepcopy(baseline)
+                runtime[owner][key] = value
+                with self.assertRaises(ValueError):
+                    CONTROLS.validate_runtime(runtime)
+
+    def test_physical_python_packages_must_match_source_lock_without_duplicate_ownership(self):
+        for change in ('missing', 'version', 'duplicate', 'unreviewed-extra', 'digest'):
+            with self.subTest(change=change):
+                runtime = self.runtime_fixture()
+                packages = runtime['physical_python']['packages']
+                if change == 'missing':
+                    packages.pop()
+                elif change == 'version':
+                    packages[0]['version'] = '0.0.0'
+                elif change == 'duplicate':
+                    packages.append(copy.deepcopy(packages[0]))
+                elif change == 'unreviewed-extra':
+                    packages.append({'name': 'unknown', 'version': '1', 'files_count': 1, 'files_sha256': 'a' * 64})
+                else:
+                    packages[0]['files_sha256'] = 'invalid'
+                with self.assertRaises(ValueError):
+                    CONTROLS.validate_runtime(runtime)
+
+    def test_node_physical_manifests_and_links_remain_source_owned(self):
+        for change in ('executable', 'digest', 'manifest-version', 'manifest-bytes', 'missing-package',
+                       'unknown-payload', 'unsafe-path', 'link-escape', 'missing-lock'):
+            with self.subTest(change=change):
+                runtime = self.runtime_fixture()
+                node = runtime['node']
+                first = next(iter(node['package_manifests']))
+                if change == 'executable':
+                    node['executable'] = ''
+                elif change == 'digest':
+                    node['executable_sha256'] = 'invalid'
+                elif change == 'manifest-version':
+                    node['package_manifests'][first] = '{}'
+                elif change == 'manifest-bytes':
+                    node['modules'][first.removeprefix('node_modules/') + '/package.json']['sha256'] = 'c' * 64
+                elif change == 'missing-package':
+                    del node['package_manifests'][first]
+                elif change == 'unknown-payload':
+                    node['modules']['unknown/extra.js'] = {'sha256': 'a' * 64}
+                elif change == 'unsafe-path':
+                    node['modules']['../escape'] = {'sha256': 'a' * 64}
+                elif change == 'link-escape':
+                    node['modules']['.bin/escape'] = {'target': '../../escape', 'sha256': 'a' * 64}
+                else:
+                    del node['modules']['.package-lock.json']
+                with self.assertRaises((ValueError, TypeError)):
+                    CONTROLS.validate_runtime(runtime)
+
+    def test_selected_node_environment_replaces_inherited_foreign_module_path(self):
+        owner = self.root / 'runtime-owner'
+        owned = owner / 'artifacts/bijux-docs/node-runtime/node_modules/renderer-owned-probe'
+        owned.mkdir(parents=True)
+        (owned / 'index.js').write_text("module.exports = 'owned-runtime';\n")
+        foreign = self.root / 'foreign-modules/renderer-owned-probe'
+        foreign.mkdir(parents=True)
+        (foreign / 'index.js').write_text("module.exports = 'foreign-runtime';\n")
+        with mock.patch.object(CONTROLS, 'ROOT', owner), mock.patch.dict(os.environ, {'NODE_PATH': str(foreign.parent)}):
+            env = CONTROLS.node_environment(Path(shutil.which('node')))
+            result = subprocess.run([shutil.which('node'), '-e', "process.stdout.write(require('renderer-owned-probe'))"],
+                                    env=env, capture_output=True, text=True, check=True)
+        self.assertEqual(result.stdout, 'owned-runtime')
+        self.assertEqual(env['NODE_PATH'], str(owned.parent))
+
 
     def test_node_dependency_link_escape_is_rejected(self):
         modules = self.root / 'modules'
