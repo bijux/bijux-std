@@ -6,6 +6,13 @@ This file records notable repository-level changes for `bijux-std`.
 
 ### Pending review
 
+#### [#230](https://github.com/bijux/bijux-std/pull/230) — ci(docs): compress complete public fault evidence for transport
+
+Reduce artifact download cost without changing retained source or fault evidence.
+
+- Compress the complete public-fault upload at level 1, retaining every member and exact payload hash.
+- Guard the full upload/download paths, failure evidence and unchanged three-minute job limit.
+
 #### [#226](https://github.com/bijux/bijux-std/pull/226) — fix(docs): admit reviewed revision history capability
 
 Preserve the existing Canon revision-date plugin while validating its real Git history and callback ownership.
