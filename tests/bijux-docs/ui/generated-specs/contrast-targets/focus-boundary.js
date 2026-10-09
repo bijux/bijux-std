@@ -65,58 +65,117 @@ async function settleGeometry(control, { now = () => Date.now(),
   pause = milliseconds => new Promise(resolve => setTimeout(resolve, milliseconds)) } = {}) {
   const started = now(), observations = [];
   let previous = null, unchanged = 0;
-  for (let attempt = 0; attempt < 100; attempt++) {
-    const sample = await control.evaluate(async node => {
-      // A compositor can repeat cached boxes before exposing a finite transition.
-      // Observe a rendering frame without completing or modifying that transition.
-      const frame = await new Promise(resolve => {
-        const timer = setTimeout(() => { cancelAnimationFrame(request); resolve(null); }, 100);
-        const request = requestAnimationFrame(time => { clearTimeout(timer); resolve(time); });
-      });
-      const rectangle = element => {
-        const box = element.getBoundingClientRect();
-        return { x: box.x, y: box.y, width: box.width, height: box.height };
-      };
-      // Layout reads precede animation enumeration: opening styles can create a transition.
-      const target = rectangle(node), ancestors = [];
-      const elements = [node];
-      for (let parent = node.parentElement; parent; parent = parent.parentElement) {
-        const style = getComputedStyle(parent);
-        ancestors.push({ name: `${parent.tagName}.${parent.className}`, rectangle: rectangle(parent),
-          transform: style.transform, opacity: style.opacity,
-          clientLeft: parent.clientLeft, clientTop: parent.clientTop,
-          clientWidth: parent.clientWidth, clientHeight: parent.clientHeight });
-        elements.push(parent);
+  // Retain an outstanding request across timer samples. Cancelling it every
+  // 100ms cannot distinguish a delayed rendering frame from an absent one.
+  const observer = await control.evaluateHandle(() => ({ request: null, frame: null, waiter: null }));
+  try {
+    for (let attempt = 0; attempt < 100; attempt++) {
+      const sample = await control.evaluate(async (node, { observer, waitMs }) => {
+        // A compositor can repeat cached boxes before exposing a finite transition.
+        // Observe a rendering frame without completing or modifying that transition.
+        const renderingState = () => ({
+          visibility: document.visibilityState,
+          hidden: document.hidden,
+          focused: document.hasFocus(),
+          performanceTime: performance.now(),
+          timelineTime: document.timeline.currentTime,
+        });
+        const beforeFrame = renderingState();
+        const frame = await new Promise(resolve => {
+          let timer;
+          const finish = value => {
+            clearTimeout(timer);
+            if (observer.waiter === finish) observer.waiter = null;
+            resolve(value);
+          };
+          observer.waiter = finish;
+          if (observer.frame !== null) return finish(observer.frame);
+          timer = setTimeout(() => finish(null), waitMs);
+          if (observer.request === null) {
+            observer.request = requestAnimationFrame(time => {
+              observer.request = null;
+              observer.frame = time;
+              observer.waiter?.(time);
+            });
+          }
+        });
+        if (frame !== null) observer.frame = null;
+        const rectangle = element => {
+          const box = element.getBoundingClientRect();
+          return { x: box.x, y: box.y, width: box.width, height: box.height };
+        };
+        // Layout reads precede animation enumeration: opening styles can create a transition.
+        const target = rectangle(node), ancestors = [];
+        const elements = [node];
+        for (let parent = node.parentElement; parent; parent = parent.parentElement) {
+          const style = getComputedStyle(parent);
+          ancestors.push({ name: `${parent.tagName}.${parent.className}`, rectangle: rectangle(parent),
+            transform: style.transform, opacity: style.opacity,
+            clientLeft: parent.clientLeft, clientTop: parent.clientTop,
+            clientWidth: parent.clientWidth, clientHeight: parent.clientHeight });
+          elements.push(parent);
+        }
+        const animations = new Set(node.getAnimations({ subtree: true }));
+        for (const element of elements.slice(1)) {
+          for (const animation of element.getAnimations()) animations.add(animation);
+        }
+        const running = [...animations].filter(animation => animation.playState === "running" &&
+          Number.isFinite(animation.effect?.getComputedTiming().endTime)).length;
+        const sidebar = node.closest(".md-sidebar--primary");
+        const drawer = document.getElementById("__drawer");
+        const ownedOpenDrawer = Boolean(sidebar && drawer?.checked &&
+          document.body.dataset.bijuxDrawerReady === "true");
+        const openDrawer = ownedOpenDrawer ? {
+          transform: getComputedStyle(sidebar).transform,
+          identity: new DOMMatrixReadOnly(getComputedStyle(sidebar).transform).isIdentity,
+        } : null;
+        // The shared open-drawer rule is translateX(0). Stable offscreen boxes are
+        // not its endpoint, even when the engine reports no running animations.
+        return { target, ancestors, running, frame, openDrawer,
+          rendering: { beforeFrame, afterFrame: renderingState(),
+            activeElement: { tag: document.activeElement?.tagName,
+              id: document.activeElement?.id, className: document.activeElement?.className },
+            drawer: { checked: drawer?.checked ?? null,
+              ready: document.body.dataset.bijuxDrawerReady ?? null,
+              open: document.body.dataset.bijuxDrawerOpen ?? null },
+            animations: [...animations].map(animation => ({
+              playState: animation.playState, pending: animation.pending,
+              currentTime: animation.currentTime, startTime: animation.startTime,
+              timing: animation.effect?.getComputedTiming(),
+              target: { tag: animation.effect?.target?.tagName,
+                id: animation.effect?.target?.id, className: animation.effect?.target?.className },
+            })),
+          },
+        };
+      }, { observer, waitMs: Math.min(100, Math.max(0, 2000 - (now() - started))) });
+      const signature = JSON.stringify({ target: sample.target, ancestors: sample.ancestors });
+      const admitted = sample.running === 0 && sample.frame !== null &&
+        (sample.openDrawer === null || sample.openDrawer.identity === true);
+      if (admitted) {
+        unchanged = signature === previous ? unchanged + 1 : 0;
+        previous = signature;
+      } else if (sample.frame !== null || sample.running !== 0 ||
+        (sample.openDrawer !== null && !sample.openDrawer.identity) || signature !== previous) {
+        unchanged = 0;
+        previous = null;
       }
-      const animations = new Set(node.getAnimations({ subtree: true }));
-      for (const element of elements.slice(1)) {
-        for (const animation of element.getAnimations()) animations.add(animation);
+      // Timer samples are retained but cannot count as rendered stable samples.
+      // Any geometry, endpoint or animation change still resets the frame sequence.
+      observations.push({ elapsedMs: now() - started, ...sample });
+      if (admitted && unchanged >= 2 && now() - started < 2000) {
+        return { elapsedMs: now() - started, observations };
       }
-      const running = [...animations].filter(animation => animation.playState === "running" &&
-        Number.isFinite(animation.effect?.getComputedTiming().endTime)).length;
-      const sidebar = node.closest(".md-sidebar--primary");
-      const drawer = document.getElementById("__drawer");
-      const ownedOpenDrawer = Boolean(sidebar && drawer?.checked &&
-        document.body.dataset.bijuxDrawerReady === "true");
-      const openDrawer = ownedOpenDrawer ? {
-        transform: getComputedStyle(sidebar).transform,
-        identity: new DOMMatrixReadOnly(getComputedStyle(sidebar).transform).isIdentity,
-      } : null;
-      // The shared open-drawer rule is translateX(0). Stable offscreen boxes are
-      // not its endpoint, even when the engine reports no running animations.
-      return { target, ancestors, running, frame, openDrawer };
+      if (now() - started >= 2000) break;
+      await pause(20);
+    }
+    throw new Error(`Focused control geometry did not settle within two seconds: ${JSON.stringify(observations)}`);
+  } finally {
+    await observer.evaluate(state => {
+      if (state.request !== null) cancelAnimationFrame(state.request);
+      state.waiter?.(null);
     });
-    const signature = JSON.stringify({ target: sample.target, ancestors: sample.ancestors });
-    const admitted = sample.running === 0 && sample.frame !== null &&
-      (sample.openDrawer === null || sample.openDrawer.identity === true);
-    unchanged = admitted && signature === previous ? unchanged + 1 : 0;
-    observations.push({ elapsedMs: now() - started, ...sample });
-    if (unchanged >= 2) return { elapsedMs: now() - started, observations };
-    previous = admitted ? signature : null;
-    if (now() - started >= 2000) break;
-    await pause(20);
+    await observer.dispose();
   }
-  throw new Error(`Focused control geometry did not settle within two seconds: ${JSON.stringify(observations)}`);
 }
 
 async function observe(page, control) {
