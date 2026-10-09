@@ -6,6 +6,14 @@ This file records notable repository-level changes for `bijux-std`.
 
 ### Pending review
 
+#### [#243](https://github.com/bijux/bijux-std/pull/243) — feat(docs): qualify committed catalogue reader sources
+
+Bind generated catalogue pages to reviewed generators and committed originals while retaining their public routes and native source/history identity.
+
+- Distinguish tracked configuration ownership from derived render configuration and reject alternate Git stores, grafts and stale generated inputs.
+- Carry source attribution through capture, rendering, reconstruction, redirects, CSP and publication checks.
+- Require all 58 catalogue controls in four bounded CI groups while preserving default and historical dependency recipes.
+
 #### [#242](https://github.com/bijux/bijux-std/pull/242) — test(docs): retain delayed rendering frame observations
 
 Keep a pending rendering-frame request across timer observations so delayed callbacks can qualify stable focused controls.
