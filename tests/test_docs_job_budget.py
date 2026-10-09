@@ -106,6 +106,78 @@ class FrontendJobBudgetTests(unittest.TestCase):
                 BUDGET.expected_job_names(groups, engines)
 
 
+    def refresh(self, fetch):
+        return BUDGET.refresh_nonterminal(self.data, fetch=fetch, groups=self.groups,
+            engines=self.engines, run_id=123, attempt=2, head=self.head)
+
+    def test_incomplete_list_row_requires_fresh_exact_job_before_qualification(self):
+        completed = copy.deepcopy(self.target)
+        self.target.update(status='in_progress', conclusion=None, completed_at=None)
+        original = copy.deepcopy(self.data)
+        with self.assertRaisesRegex(ValueError, 'terminal-success'): self.verify()
+        requested = []
+        refreshed = self.refresh(lambda identifier: requested.append(identifier) or completed)
+        self.assertEqual(requested, [self.target['id']])
+        self.assertEqual(self.data, original)
+        receipt = BUDGET.qualify(refreshed, groups=self.groups, engines=self.engines,
+            run_id=123, attempt=2, head=self.head)
+        self.assertEqual(receipt['executed_jobs'], 13)
+        self.assertEqual(receipt['maximum_seconds'], 179.999)
+
+    def test_incomplete_fresh_row_and_completed_steps_cannot_infer_success(self):
+        self.target.update(status='in_progress', conclusion=None, completed_at=None)
+        refreshed = self.refresh(lambda identifier: copy.deepcopy(self.target))
+        with self.assertRaisesRegex(ValueError, 'terminal-success'):
+            BUDGET.qualify(refreshed, groups=self.groups, engines=self.engines,
+                run_id=123, attempt=2, head=self.head)
+
+    def test_refresh_cannot_change_job_source_attempt_run_name_or_id(self):
+        completed = copy.deepcopy(self.target)
+        self.target.update(status='in_progress', conclusion=None, completed_at=None)
+        for key, value in [('id', 999), ('name', 'std / navigation'), ('run_id', 124),
+                           ('run_attempt', 1), ('head_sha', 'b' * 40)]:
+            with self.subTest(key=key):
+                observed = {**completed, key: value}
+                with self.assertRaisesRegex(ValueError, 'Refreshed job identity'):
+                    self.refresh(lambda identifier: observed)
+
+    def test_terminal_failure_is_not_replaced_with_another_observation(self):
+        self.target['conclusion'] = 'cancelled'
+        refreshed = self.refresh(lambda identifier: self.fail('Terminal results must not be refreshed'))
+        with self.assertRaisesRegex(ValueError, 'terminal-success'):
+            BUDGET.qualify(refreshed, groups=self.groups, engines=self.engines,
+                run_id=123, attempt=2, head=self.head)
+
+    def test_running_report_is_not_refreshed_and_complete_inventory_is_reused(self):
+        report = next(j for j in self.data['jobs'] if j['name'] == 'std / report')
+        report.update(status='in_progress', conclusion=None, completed_at=None)
+        refreshed = self.refresh(lambda identifier: self.fail('No frontend row needs refresh'))
+        self.assertEqual(refreshed, self.data)
+
+    def test_refresh_cannot_repair_invalid_inventory_or_source(self):
+        baseline = copy.deepcopy(self.data)
+        for defect in ['missing', 'duplicate', 'source']:
+            with self.subTest(defect=defect):
+                self.data = copy.deepcopy(baseline)
+                if defect == 'missing': self.data['jobs'].pop()
+                elif defect == 'duplicate': self.data['jobs'].append(self.data['jobs'][0])
+                else: self.data['jobs'][0]['head_sha'] = 'b' * 40
+                with self.assertRaises(ValueError):
+                    self.refresh(lambda identifier: self.fail('Invalid input must fail before network refresh'))
+
+    def test_fresh_terminal_row_still_obeys_strict_duration_and_step_checks(self):
+        completed = copy.deepcopy(self.target)
+        self.target.update(status='in_progress', conclusion=None, completed_at=None)
+        for defect in ['duration', 'step']:
+            with self.subTest(defect=defect):
+                observed = copy.deepcopy(completed)
+                if defect == 'duration': observed['completed_at'] = '2026-01-01T00:08:00Z'
+                else: observed['steps'][0]['conclusion'] = 'failure'
+                refreshed = self.refresh(lambda identifier: observed)
+                with self.assertRaises(ValueError):
+                    BUDGET.qualify(refreshed, groups=self.groups, engines=self.engines,
+                        run_id=123, attempt=2, head=self.head)
+
     def test_registry_identity_covers_each_execution_dependency(self):
         artifacts = ROOT / 'artifacts/qualification/browser-partitions-integration'
         artifacts.mkdir(parents=True, exist_ok=True)
