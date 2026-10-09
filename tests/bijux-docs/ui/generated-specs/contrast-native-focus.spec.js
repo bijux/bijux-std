@@ -14,16 +14,20 @@ test("native no-script Navigation retains white focus and 44px hit target", asyn
     await expect(checkbox).toBeVisible();
     await measure.tabTo(page, checkbox, browserName);
     const observations = [];
-    for (const scheme of ["light", "dark"]) {
-      await page.emulateMedia({ colorScheme: scheme, forcedColors: "none" });
+    for (const [scheme, forcedColors] of [["light", "none"], ["dark", "none"], ["dark", "active"]]) {
+      await page.emulateMedia({ colorScheme: scheme, forcedColors });
       const focused = await measure.focus(page, checkbox);
       expect(focused.focusVisible).toBe(true);
-      expect(focused.ratio).toBeGreaterThanOrEqual(3);
+      if (forcedColors !== "active" || browserName !== "webkit") expect(focused.ratio).toBeGreaterThanOrEqual(3);
       expect(focused.rectangle.width).toBeGreaterThanOrEqual(44);
       expect(focused.rectangle.height).toBeGreaterThanOrEqual(44);
       expect(focused.centerOwned).toBe(true);
-      await info.attach(`native-${scheme}-focus.png`, { body: await page.screenshot(), contentType: "image/png" });
-      observations.push({ scheme, ...focused });
+      await info.attach(`native-${scheme}-${forcedColors}-focus.png`, { body: await page.screenshot(), contentType: "image/png" });
+      expect(await page.evaluate(() => matchMedia("(forced-colors: active)").matches)).toBe(forcedColors === "active");
+      observations.push({ scheme, forcedColors, ...focused, classification: forcedColors === "none"
+        ? "flat opaque header computed paint and screenshot"
+        : browserName === "webkit" ? "media/source response; native OS forced paint unqualified"
+          : "browser simulated forced palette; physical OS/assistive validation remains open" });
     }
     await page.keyboard.press("Space");
     await expect(checkbox).toBeChecked();

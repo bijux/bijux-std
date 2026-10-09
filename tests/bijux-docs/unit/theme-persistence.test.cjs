@@ -40,7 +40,7 @@ function shell(mode = 'auto', order = ['auto', 'light', 'dark'], material = true
   if (material) window.__md_set = (key, value) => { writes.push({ key, value }); saved.set(key, value); };
   const document = { body,
     querySelector: () => ({ getAttribute: () => 'bijux:theme' }),
-    querySelectorAll: selector => selector.startsWith('input[') ? options : [button] };
+    querySelectorAll: selector => selector.startsWith('input[') ? options : selector === '[data-bijux-theme-toggle]' ? [button] : [] };
   const context = { window, document, localStorage: { getItem: key => saved.get(key) ?? null, setItem: (key, value) => saved.set(key, value) },
     Event: class { constructor(type) { this.type = type; } },
     CustomEvent: class { constructor(type, details) { this.type = type; this.detail = details.detail; } },

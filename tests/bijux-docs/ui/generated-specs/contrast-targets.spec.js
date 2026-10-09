@@ -27,59 +27,137 @@ async function openDrawer(page) {
   }
 }
 
-async function boundaryControls(page, browserName, info, { scheme, forced = false }) {
+async function focusStates(page, control, name, browserName, info, { scheme, forced = false }) {
+  await expect(control).toHaveCount(1);
+  await expect(control).toBeVisible();
+  await focusBoundary.tabTo(page, control, browserName);
+  const observations = [];
+  const qualify = async state => {
+    const observed = await focusBoundary.observe(page, control);
+    const attachment = `boundary-${name.replaceAll(" ", "-")}-${state}`;
+    // Retain actual paint and clipping surfaces before any assertion rejects them.
+    await info.attach(`${attachment}.json`, {
+      body: Buffer.from(JSON.stringify({ name, state, browserName, forced,
+        url: page.url(), viewport: page.viewportSize(), ...observed }, null, 2)),
+      contentType: "application/json" });
+    await info.attach(`${attachment}.png`, { body: await page.screenshot(), contentType: "image/png" });
+    expect(observed.focused).toBe(true);
+    expect(observed.focusVisible).toBe(true);
+    expect(observed.outlineStyle).toBe("solid");
+    expect(observed.width).toBeGreaterThanOrEqual(2);
+    expect(observed.boundary.contained, `${name}: entire ring inside actual clipping surfaces`).toBe(true);
+    // WebKit media simulation does not establish native OS palette paint.
+    if (!forced || browserName !== "webkit") expect(observed.paint.minimum).toBeGreaterThanOrEqual(3);
+    observations.push({ name, state, ...observed });
+  };
+  await qualify(forced ? "forced" : scheme);
+  if (!forced) {
+    const opposite = scheme === "light" ? "dark" : "light";
+    const toggle = page.locator("[data-bijux-theme-toggle]");
+    if (await toggle.count()) await expect(toggle).toHaveAttribute("data-bijux-theme-mode", "auto");
+    else await expect(page.locator("input[name='__palette'][data-md-color-media='(prefers-color-scheme)']")).toBeChecked();
+    await page.emulateMedia({ colorScheme: opposite });
+    await expect(page.locator("body")).toHaveAttribute("data-md-color-scheme", opposite === "dark" ? "slate" : "default");
+    await qualify(`auto-${opposite}`);
+    await page.emulateMedia({ colorScheme: scheme });
+    await expect(page.locator("body")).toHaveAttribute("data-md-color-scheme", scheme === "dark" ? "slate" : "default");
+    await qualify(`auto-return-${scheme}`);
+    if (await control.getAttribute("data-bijux-theme-toggle") !== null) {
+      for (const mode of ["light", "dark", "auto"]) {
+        await page.keyboard.press("Space");
+        await expect(control).toHaveAttribute("data-bijux-theme-mode", mode);
+        await expect(control).toBeFocused();
+        await expect(page.locator("body")).toHaveAttribute("data-md-color-scheme",
+          (mode === "auto" ? scheme : mode) === "dark" ? "slate" : "default");
+        await qualify(`selected-${mode}`);
+      }
+    }
+  }
+  return observations;
+}
+
+async function boundaryControls(page, browserName, info, options) {
   const observations = [];
   const menu = page.locator('[data-bijux-header-control="drawer-toggle"]');
   const compact = await menu.isVisible();
+  const search = page.locator('[data-bijux-header-control="search-toggle"]');
+  const theme = page.locator("[data-bijux-theme-toggle]");
+  // Source-owned enhanced headers expose exactly one Search and Theme utility.
+  await expect(search).toHaveCount(1);
+  await expect(theme).toHaveCount(1);
+  for (const [name, control] of [["search utility", search], ["theme utility", theme]]) {
+    await expect(control).toHaveAccessibleName(/\S/);
+    observations.push(...await focusStates(page, control, name, browserName, info, options));
+  }
   const repository = page.locator("header .md-source");
-  const controls = [];
-  if (await repository.isVisible()) controls.push(["repository", repository]);
+  if (await repository.isVisible()) observations.push(...await focusStates(page, repository, "repository", browserName, info, options));
   if (compact) {
     await focusBoundary.tabTo(page, menu, browserName);
     await page.keyboard.press("Space");
     await expect(page.locator("#__drawer")).toBeChecked();
+    const close = page.getByRole("button", { name: "Close navigation", exact: true });
+    observations.push(...await focusStates(page, close, "navigation close", browserName, info, options));
   }
-  controls.push(["navigation disclosure", page.locator(".bijux-tree summary").first()]);
-  for (const [name, control] of controls) {
-    await expect(control).toBeVisible();
-    await focusBoundary.tabTo(page, control, browserName);
-    const qualify = async state => {
-      const observed = await focusBoundary.observe(page, control);
-      const attachment = `boundary-${name.replaceAll(" ", "-")}-${state}`;
-      // Failed geometry must retain the clipping surfaces that caused rejection.
-      await info.attach(`${attachment}.json`, {
-        body: Buffer.from(JSON.stringify({ name, state, browserName, forced,
-          url: page.url(), viewport: page.viewportSize(), ...observed }, null, 2)),
-        contentType: "application/json" });
-      await info.attach(`${attachment}.png`, {
-        body: await page.screenshot(), contentType: "image/png" });
-      expect(observed.focused).toBe(true);
-      expect(observed.focusVisible).toBe(true);
-      expect(observed.outlineStyle).toBe("solid");
-      expect(observed.width).toBeGreaterThanOrEqual(2);
-      expect(observed.boundary.contained, `${name}: entire ring inside actual clipping surfaces`).toBe(true);
-      // WebKit's media simulation does not establish native OS palette paint.
-      if (!forced || browserName !== "webkit") expect(observed.paint.minimum).toBeGreaterThanOrEqual(3);
-      observations.push({ name, state, ...observed });
-    };
-    await qualify(forced ? "forced" : scheme);
-    if (!forced) {
-      const opposite = scheme === "light" ? "dark" : "light";
-      await expect(page.locator("[data-bijux-theme-toggle]")).toHaveAttribute("data-bijux-theme-mode", "auto");
-      await page.emulateMedia({ colorScheme: opposite });
-      await expect(page.locator("body")).toHaveAttribute("data-md-color-scheme", opposite === "dark" ? "slate" : "default");
-      await qualify(`auto-${opposite}`);
-      await page.emulateMedia({ colorScheme: scheme });
-      await expect(page.locator("body")).toHaveAttribute("data-md-color-scheme", scheme === "dark" ? "slate" : "default");
-      await qualify(`auto-return-${scheme}`);
-    }
-  }
+  observations.push(...await focusStates(page, page.locator(".bijux-tree summary").first(), "navigation disclosure", browserName, info, options));
   if (compact) {
     await page.keyboard.press("Escape");
     await expect(page.locator("#__drawer")).not.toBeChecked();
     await expect(menu).toBeFocused();
   }
   return observations;
+}
+
+async function compatibilityControls(page, browserName, info, options) {
+  await page.goto("/fixtures/native-header/");
+  // Native Material owns its sidebar; readiness belongs to the upgraded native control.
+  const nativeMenu = page.locator("header button[data-bijux-control-target='__drawer']");
+  await expect(nativeMenu).toHaveCount(1);
+  await expect(nativeMenu).toHaveAttribute("aria-expanded", "false");
+  await expect(page.locator("#__drawer")).not.toBeChecked();
+  const census = await page.locator("header").evaluate(header => [...header.querySelectorAll("button,input,label[for^='__palette_'],select")].map(node => {
+    const rect = node.getBoundingClientRect(), style = getComputedStyle(node);
+    return { tag:node.tagName, type:node.getAttribute("type"), role:node.getAttribute("role"),
+      name:node.getAttribute("aria-label") || node.getAttribute("title"), target:node.getAttribute("for"),
+      tabIndex:node.tabIndex, hidden:node.hidden, visible:rect.width > 0 && rect.height > 0 && style.visibility !== "hidden",
+      rectangle:{ x:rect.x,y:rect.y,width:rect.width,height:rect.height } };
+  }));
+  await info.attach("native-material-control-census.json", { body:Buffer.from(JSON.stringify(census,null,2)),contentType:"application/json" });
+  const observations = [];
+  for (const kind of ["drawer", "search"]) {
+    const utility = page.locator(`[data-bijux-header-control='${kind}-toggle']`);
+    await expect(utility).toHaveCount(1);
+    await expect(utility).toHaveAccessibleName(/\S/);
+    observations.push(...await focusStates(page, utility, `compatible ${kind} utility`, browserName, info, options));
+  }
+  // Configured native Material palette must retain an ordinary reachable selector.
+  const selector = page.locator("header [for^='__palette_']:visible");
+  await expect(selector).toHaveCount(1);
+  observations.push(...await focusStates(page, selector, "compatible theme selector", browserName, info, options));
+  const activations = [];
+  for (const input of ["Space", "Enter", "click"]) {
+    const current = page.locator("header [for^='__palette_']:visible");
+    const target = await current.getAttribute("for");
+    await expect(current).toHaveAttribute("type", "button");
+    await expect(current).toHaveAttribute("aria-controls", target);
+    if (input === "click") await current.click();
+    else await page.keyboard.press(input);
+    await expect(page.locator(`input[id="${target}"]`)).toBeChecked();
+    const successor = page.locator("header [for^='__palette_']:visible");
+    await expect(successor).toHaveCount(1);
+    await expect(successor).toBeFocused();
+    const observed = await focusBoundary.observe(page, successor);
+    await info.attach(`compatible-theme-${input}.json`, { body:Buffer.from(JSON.stringify({
+      input, target, browserName, ...observed },null,2)),contentType:"application/json" });
+    if (input !== "click") {
+      expect(observed.focusVisible).toBe(true);
+      expect(observed.outlineStyle).toBe("solid");
+      expect(observed.width).toBeGreaterThanOrEqual(2);
+      expect(observed.boundary.contained).toBe(true);
+      if (!options.forced || browserName !== "webkit") expect(observed.paint.minimum).toBeGreaterThanOrEqual(3);
+    }
+    activations.push({ input, target, ...observed });
+  }
+  return { census, observations, activations };
 }
 
 for (const [scheme, expectedScheme] of [["light", "default"], ["dark", "slate"]]) {
@@ -206,7 +284,9 @@ for (const [scheme, expectedScheme] of [["light", "default"], ["dark", "slate"]]
     await page.unroute(workerURL);
     await page.getByRole("button", { name: "Retry search", exact: true }).click();
     await expect(page.locator(".md-search-result__link:visible").first()).toBeVisible({ timeout: 12_000 });
-    await receipt(info, { scheme: expectedScheme, observations, errors, browserName });
+    const compatibility = info.project.name.endsWith("-phone")
+      ? await compatibilityControls(page, browserName, info, { scheme }) : null;
+    await receipt(info, { scheme: expectedScheme, observations, compatibility, errors, browserName });
     expect(errors).toEqual([]);
   });
 }
@@ -238,7 +318,9 @@ test("forced color focus preserves meaningful control and native target", async 
   if (browserName !== "webkit") expect(focused.ratio).toBeGreaterThanOrEqual(3);
   await info.attach("forced-color-keyboard-focus.png", { body: await page.screenshot(), contentType: "image/png" });
   const boundaries = await boundaryControls(page, browserName, info, { forced: true });
-  await receipt(info, { browserName, forced, focused, boundaries,
+  const compatibility = info.project.name.endsWith("-phone")
+    ? await compatibilityControls(page, browserName, info, { forced: true }) : null;
+  await receipt(info, { browserName, forced, focused, boundaries, compatibility,
     classification: browserName === "webkit" ? "source response only; native OS forced paint unqualified" : "browser emulated forced paint; physical OS/assistive validation remains open" });
 });
 

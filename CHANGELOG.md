@@ -6,7 +6,9 @@ This file records notable repository-level changes for `bijux-std`.
 
 ### Pending review
 
-#### [#229](https://github.com/bijux/bijux-std/pull/229) — fix(docs): preserve enlarged compact masthead identity
+### Merged pull requests
+
+#### 2026-10-09T04:43:58Z — [#229](https://github.com/bijux/bijux-std/pull/229) — fix(docs): preserve enlarged compact masthead identity
 
 Keep the complete site identity and utility controls visible when compact readers enlarge text or apply spacing.
 
@@ -16,7 +18,6 @@ Keep the complete site identity and utility controls visible when compact reader
 - Keep physical zoom, assistive/device and consumer qualification separate; the prerequisite #227 is accepted.
 - Keep enlarged native Navigation text beside its checkbox and give the complete long identity natural row space; retain the 54 px normal minimum and add maintained three-engine 200% text/spacing regression journeys.
 
-### Merged pull requests
 
 #### 2026-10-09T04:14:27Z — [#230](https://github.com/bijux/bijux-std/pull/230) — ci(docs): compress complete public fault evidence for transport
 
