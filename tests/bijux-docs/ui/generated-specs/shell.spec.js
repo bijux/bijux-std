@@ -1,11 +1,8 @@
 const fs = require("node:fs");
 const path = require("node:path");
 const registry = JSON.parse(fs.readFileSync(path.resolve(__dirname, "../../../../shared/bijux-docs/config/hub-links.json"), "utf8"));
-const { test, expect } = require("@playwright/test");
+const { test, expect } = require("./helpers/document");
 const { tabTo } = require("./contrast-targets/measurement");
-test.beforeEach(async ({ browser }, testInfo) => {
-  testInfo.annotations.push({ type: "browser-version", description: browser.version() });
-});
 const control = (page, kind) => page.locator(`[data-bijux-header-control='${kind}-toggle']`);
 const drawer = (page) => page.locator(".md-sidebar--primary");
 const exposedLinks = (page) => drawer(page).locator("a:visible");
