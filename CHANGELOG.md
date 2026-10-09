@@ -15,6 +15,13 @@ Bind shell behaviour to executable reader cases and reject uncaught runtime fail
 
 ### Merged pull requests
 
+#### 2026-10-09T00:33:52Z — [#213](https://github.com/bijux/bijux-std/pull/213) — fix(docs): adopt exact source-bound legacy script defaults
+
+Refresh the complete previous canonical script list from its committed accepted standard source.
+
+- Preserve authored order, attributes, comments, configuration and capabilities outside the exact plain default.
+- Resolve prior ownership from the exact official GitHub authority only when an order conflict needs it.
+
 #### 2026-10-09T00:16:26Z — [#220](https://github.com/bijux/bijux-std/pull/220) — fix(github): bind protected path policy to immutable pr source
 
 Keep policy checks bound to the reviewed PR event when main advances.
