@@ -6,14 +6,29 @@ This file records notable repository-level changes for `bijux-std`.
 
 ### Pending review
 
-#### [#222](https://github.com/bijux/bijux-std/pull/222) — fix(docs): resolve redirect canonicals before route qualification
+#### [#221](https://github.com/bijux/bijux-std/pull/221) — test(docs): verify compact reading space and control geometry
+
+Require useful first-screen reading space and unobstructed compact controls in existing browser journeys.
+
+- Check actual heading/text visibility, utility names/targets/hits, hidden helper spans, and drawer logo/name/Close geometry.
+- Preserve canonical cases and the runtime-error guard; retain exact counterexamples and wider viewport/manual qualification limits.
+
+#### [#218](https://github.com/bijux/bijux-std/pull/218) — test(docs): keep shell acceptance executable and reject runtime errors
+
+Bind shell behaviour to executable reader cases and reject uncaught runtime failures in every shell journey.
+
+- Reference the actual parametrized local-reader acceptance without adding a duplicate gate.
+- Reuse the shared automatic runtime-error guard, preserving all canonical case identities and browser coverage.
+
+
+### Merged pull requests
+
+#### 2026-10-09T01:13:15Z — [#222](https://github.com/bijux/bijux-std/pull/222) — fix(docs): resolve redirect canonicals before route qualification
 
 Resolve relative redirect canonicals against their source route before checking the built destination and sitemap.
 
 - Preserve exact absolute canonicals for content pages and reject foreign, missing, escaped or query/fragment redirect targets.
 - Validate nested redirect controls and the unchanged real Canon corpus of 371 routes and 2,292 search entries.
-
-### Merged pull requests
 
 #### 2026-10-09T00:59:18Z — [#217](https://github.com/bijux/bijux-std/pull/217) — fix(docs): contain focus paint within navigation boundaries
 
