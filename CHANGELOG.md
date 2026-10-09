@@ -6,6 +6,15 @@ This file records notable repository-level changes for `bijux-std`.
 
 ### Pending review
 
+#### [#248](https://github.com/bijux/bijux-std/pull/248) — feat(docs): independently render source-owned passive readers
+
+Reconstruct committed passive reader notices, native targets and discovery in both selected and reference renderers while preserving original report bytes and restrictive CSP.
+
+- Require a typed revalidated in-process reader owner before document-script admission.
+- Preserve production-profile admission and refuse passive ownership of catalogue virtual configuration.
+- Qualify the actual independent passive render and source-derived 123 installed controls; full interactive-report and consumer publication duties remain separate.
+
+
 #### [#247](https://github.com/bijux/bijux-std/pull/247) — feat(docs): guard reader publication and retained recovery
 
 Verify explicitly owned passive reports before publication and compare retained historical bundle bytes without granting new source or deployment authority.
