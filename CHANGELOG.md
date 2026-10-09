@@ -16,6 +16,13 @@ Keep keyboard reading continuity through Back/Forward and make the visible compl
 
 ### Merged pull requests
 
+#### 2026-10-09T05:46:46Z — [#232](https://github.com/bijux/bijux-std/pull/232) — fix(docs): preserve native palette keyboard and focus continuity
+
+Make native Material palette actions reachable by keyboard and retain focus on the next visible action after theme changes.
+
+- Preserve palette radio ownership, persistence and native Enter/Space activation; prevent hidden-radio focus and recover prior pointer focus without taking reader focus.
+- Exercise native and enhanced utility focus through existing contrast journeys across three browser engines, including forced-colour and no-script fallback coverage.
+
 #### 2026-10-09T05:24:47Z — [#228](https://github.com/bijux/bijux-std/pull/228) — ci(docs): observe exact history renderer dependencies on linux
 
 Capture the actual hosted Linux runtime for Canon's exact documentation dependency recipe before independent publication-profile review.
