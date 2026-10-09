@@ -105,6 +105,35 @@ until separately observed. An observed zero is distinct from an unknown value.
 This static qualification does not certify cache/compression behavior, physical
 sharpness, rendered custom branding, remote acceptance or live delivery.
 
+`tooling/quality/performance/navigation.py` measures exact UTF-8 byte spans for
+serialized header, complete primary navigation, local TOC, footer and standalone
+tab regions. Tabs enclosed by the canonical header are attributed to that header
+once. Duplicate or conflicting owned landmarks refuse accounting. Its input
+inventory binds every shared template, the selected configuration and every
+served HTML route to exact fingerprints; missing/stale inputs and navigation
+links to missing or 404 routes fail. Normal routes and the root 404 representation
+are reported separately, including normal routes outside the authored tree.
+
+```sh
+python shared/bijux-docs/tooling/quality/performance/navigation.py \
+  --repo-root "$REPOSITORY_ROOT" --site-dir artifacts/site \
+  --config artifacts/mkdocs.yml --manifest artifacts/navigation-inputs.json \
+  --standard-root "$BIJUX_STD_ROOT" --standard-sha "$BIJUX_STD_SHA" \
+  --output artifacts/qualification/navigation-payloads.json
+```
+
+The version-one input object contains `source` (the selected origin/full commit,
+tree and authority returned by the source reader), `configuration` (owned path,
+bytes and SHA-256), `producer_inputs` (every committed `partials/*.html`, including
+nested partials, mapped to an owned projected path/bytes/SHA-256), `html_files`
+(the complete served relative HTML path to bytes/SHA-256 inventory), and explicit
+`retained_generation` scope/provenance. Historical generator/runtime evidence
+remains historical even when selected template bytes match. Material function-name
+YAML tags are read as inert metadata; executable object tags are refused. This
+measurement does not replace canonical generation or the full public-route
+validator. Raw repetition does not establish compressed delivery, cache, CPU or
+optimization savings, and the report prescribes no unmeasured reduction target.
+
 ## Shared ownership and verification
 
 Every row has one behavior producer. Product configuration/content and Material
