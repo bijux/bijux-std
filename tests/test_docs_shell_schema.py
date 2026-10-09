@@ -61,6 +61,19 @@ class ShellSchemaTests(unittest.TestCase):
             with self.subTest(value=value), self.assertRaisesRegex(RuntimeError, "repository_facts must be a Boolean"):
                 schema.validate_settings(self.root(repository_facts=value), "root.yml", "root")
 
+    def test_interactive_owner_requires_bounded_authored_json_path(self):
+        for owner in (True, None, "", "/ops/report.json", "../report.json", "ops//report.json", "ops/./report.json", "ops/report%2ejson", "ops/report.txt", "ops/report json", "ops/" + "x" * 1024 + ".json"):
+            with self.subTest(owner=owner), self.assertRaisesRegex(RuntimeError, "interactive_report_owner"):
+                schema.validate_settings(self.root(interactive_report_owner=owner), "root.yml", "root")
+        config = self.root(interactive_report_owner="ops/website/report-owner.json")
+        before = copy.deepcopy(config)
+        schema.validate_settings(config, "root.yml", "root")
+        self.assertEqual(config, before)
+
+    def test_interactive_owner_cannot_be_shared_product_authority(self):
+        with self.assertRaisesRegex(RuntimeError, "authored product configuration"):
+            schema.validate_settings(self.shared(interactive_report_owner="ops/website/report-owner.json"), "shared.yml", "shared")
+
     def test_root_registry_duplication_remains_prohibited(self):
         with self.assertRaisesRegex(RuntimeError, "must be inherited"):
             schema.validate_settings(self.root(hub_links=LINKS), "root.yml", "root")
