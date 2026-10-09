@@ -239,3 +239,19 @@ invoker inventories. Native browser character defaults are observed rather than
 replaced with scripted focus or state changes. Material runtime emission parses
 the entire final generated script before writing assets; malformed output cannot
 replace the previous valid bundle.
+
+## Desktop registry overflow
+
+`make ui-test-registry-overflow` runs three bounded desktop cases in each admitted
+engine, nine cases total: every expanded registry destination at 1220px using
+named pointer controls; current and last destinations at 1440px using native
+Tab/Enter; and current and last destinations using trusted touch. The latter
+two cases retain focused native scrolling controls, disabled/enabled Space
+behavior, endpoint ownership and phone focus handoff.
+
+The original 126 shell case identities and predicates are restored unchanged.
+These desktop journeys have their own group rather than extending the expensive
+expanded-registry shell case. Original 30-second case and three-minute whole-job
+limits remain required, with no retries or omitted coverage. Hosted cold-job
+duration, physical touch and production consumer qualification require separate
+evidence.

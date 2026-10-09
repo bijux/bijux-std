@@ -148,6 +148,11 @@
       {
         "suite": "search-reflow-desktop"
       }
+    ],
+    "registry-overflow": [
+      {
+        "suite": "registry-overflow"
+      }
     ]
   }
 }
