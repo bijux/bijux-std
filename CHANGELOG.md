@@ -6,14 +6,21 @@ This file records notable repository-level changes for `bijux-std`.
 
 ### Pending review
 
-#### [#218](https://github.com/bijux/bijux-std/pull/218) — test(docs): keep shell acceptance executable and reject runtime errors
+#### [#222](https://github.com/bijux/bijux-std/pull/222) — fix(docs): resolve redirect canonicals before route qualification
+
+Resolve relative redirect canonicals against their source route before checking the built destination and sitemap.
+
+- Preserve exact absolute canonicals for content pages and reject foreign, missing, escaped or query/fragment redirect targets.
+- Validate nested redirect controls and the unchanged real Canon corpus of 371 routes and 2,292 search entries.
+
+### Merged pull requests
+
+#### 2026-10-09T00:47:06Z — [#218](https://github.com/bijux/bijux-std/pull/218) — test(docs): keep shell acceptance executable and reject runtime errors
 
 Bind shell behaviour to executable reader cases and reject uncaught runtime failures in every shell journey.
 
 - Reference the actual parametrized local-reader acceptance without adding a duplicate gate.
 - Reuse the shared automatic runtime-error guard, preserving all canonical case identities and browser coverage.
-
-### Merged pull requests
 
 #### 2026-10-09T00:33:52Z — [#213](https://github.com/bijux/bijux-std/pull/213) — fix(docs): adopt exact source-bound legacy script defaults
 
