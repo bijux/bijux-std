@@ -13,16 +13,17 @@ Capture the actual hosted Linux runtime for Canon's exact documentation dependen
 - Keep the canonical fixture environment unchanged and bind all 36 dependency pins to reviewed source/lock provenance.
 - Reuse physical package, runtime, startup and callback observers in a read-only 3-minute job; retain actual source/run/attempt evidence.
 - Compare cached numeric constants by exact IEEE representation, retaining NaN set multiplicity and rejecting altered executable fields.
-- Keep profile approval, consumer acceptance, authored build and publication separate; this review depends on #226.
+- Keep profile approval, consumer acceptance, authored build and publication separate; the prerequisite #226 is accepted.
 
-#### [#226](https://github.com/bijux/bijux-std/pull/226) — fix(docs): admit reviewed revision history capability
+### Merged pull requests
+
+#### 2026-10-09T03:07:07Z — [#226](https://github.com/bijux/bijux-std/pull/226) — fix(docs): admit reviewed revision history capability
 
 Preserve the existing Canon revision-date plugin while validating its real Git history and callback ownership.
 
 - Admit revision-date-localized 1.5.1 after payload comparison with the reviewed 1.5.3 implementation.
 - Test version boundaries, registered callback inputs and tracked-history ownership; keep renderer-profile approval separate.
 
-### Merged pull requests
 
 #### 2026-10-09T02:38:35Z — [#225](https://github.com/bijux/bijux-std/pull/225) — test(docs): require frontend fault rejection in navigation ci
 
