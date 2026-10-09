@@ -119,11 +119,21 @@ and canonical override hashes must match accepted source; its installed-template
 hashes must match the actual renderer. Missing checks, stale receipts, changed
 exception policies and broadened or late CSP fail admission.
 
-Keep receipts outside the uploaded bundle. `verify --require-qualified` repeats
-source and receipt admission immediately before upload. Ordinary `verify` checks
-retained bytes/policy for offline previous-good recovery; it does not claim a new
-source qualification. Neither mode proves live deployment, repository environment
-protections, browser/manual acceptance or a provider's deployment identity.
+Keep receipts outside the uploaded bundle. Schema2 `verify` independently
+requalifies actual source, receipt files and trusted producer reconstruction once;
+`verify --require-qualified` additionally requires schema2 before upload. Serialized
+profile/qualification declarations never create authority. Schema1 verification
+checks its mechanical bundle policy and does not qualify a publication producer.
+
+For explicit offline previous-good recovery, `verify --bytes-only` compares the
+selected regular-file inventory, digests, size and policy identity to a retained
+manifest without opening qualification receipts or rebuilding. It returns only
+`retained-public-bytes-only`, with `verification_only: true`,
+`publication_approval: false` and `qualified_source_verified: false`. The operator
+must independently trust that historical manifest; this mode does not re-admit
+HTML/CSP, verify source/runtime authority or authorize deployment. It cannot be
+combined with `--require-qualified`. Actual source-qualified publication still
+requires a reviewed production renderer profile and the complete producer adapter.
 
 From a consumer with synchronized shared source:
 
