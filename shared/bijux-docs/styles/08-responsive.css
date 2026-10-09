@@ -146,6 +146,25 @@
   .md-header__title { margin-inline: 0.2rem; flex: 1; }
   .md-header__ellipsis { overflow: hidden; }
   .md-header__topic { position: static; }
+  /* Own spacing above Material's direction-specific title margins. Intrinsic
+     text and tool sizes may wrap instead of losing the site identity. */
+  .md-header[data-bijux-header-contract] .md-header__inner { flex-wrap: wrap; }
+  .md-header[data-bijux-header-contract] .md-header__title {
+    margin-inline: 0.1rem;
+    flex: 1 1 min-content;
+    min-inline-size: min-content;
+    height: auto;
+    line-height: 1.5;
+  }
+  .md-header[data-bijux-header-contract] .md-header__ellipsis {
+    height: auto;
+    overflow: visible;
+  }
+  .md-header[data-bijux-header-contract] [data-bijux-header-topic="site"] .md-ellipsis {
+    white-space: normal;
+    overflow-wrap: anywhere;
+    overflow: visible;
+  }
   .bijux-header-tools { margin-inline-start: 0; }
   .bijux-header-tools .md-search__inner { width: 100%; }
   html { scroll-padding-top: 4rem; }
