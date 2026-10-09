@@ -6,15 +6,23 @@ This file records notable repository-level changes for `bijux-std`.
 
 ### Pending review
 
-#### [#223](https://github.com/bijux/bijux-std/pull/223) — fix(docs): capture committed publication source and callback inputs
+#### [#225](https://github.com/bijux/bijux-std/pull/225) — test(docs): require frontend fault rejection in navigation ci
+
+Make real frontend regressions fail required CI before promotion.
+
+- Add bounded engine controls for hidden ribbons, blocked native activation and uncaught runtime errors, plus real missing-search and loopback-metadata artifact controls.
+- Bind each expected failure to its exact executed case and keep the unmodified ordinary-input control passing.
+- Retain all 645 canonical rendered cases and require source/run-bound fault receipts within the existing strict job budgets.
+
+### Merged pull requests
+
+#### 2026-10-09T02:01:13Z — [#223](https://github.com/bijux/bijux-std/pull/223) — fix(docs): bind publication source and callback inputs to committed git
 
 Bind publication inputs to their exact committed Git bytes without treating ignored run caches as source.
 
 - Verify tracked paths, HEAD blobs and executable modes independently of index flags, and reject source changes during capture.
 - Require reviewed callback source and every declared asset input to match committed captured bytes before rendering and revalidation.
 - Retain verification fixtures and all renderer, shared authority, public output and approved-profile checks.
-
-### Merged pull requests
 
 #### 2026-10-09T01:46:38Z — [#224](https://github.com/bijux/bijux-std/pull/224) — test(docs): verify authored reader history policy inheritance
 
