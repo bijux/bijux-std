@@ -174,6 +174,103 @@ class PublicSiteRouteTests(unittest.TestCase):
                    for path in ('','guide/','another/'))+'</urlset>')
         self.assertEqual(self.report()['errors'], [])
 
+    def responsive(self, kind, value):
+        from html import escape
+        self.write('assets/image.svg','<svg xmlns="http://www.w3.org/2000/svg" width="1" height="1"/>')
+        self.write('assets/retina.svg','<svg xmlns="http://www.w3.org/2000/svg" width="2" height="2"/>')
+        encoded = escape(value,quote=True)
+        if kind == 'img':
+            markup = '<img src="assets/image.svg" srcset="'+encoded+'" sizes="100vw" alt="Illustration">'
+        elif kind == 'source':
+            markup = '<picture><source srcset="'+encoded+'" sizes="100vw"><img src="assets/image.svg" alt="Illustration"></picture>'
+        else:
+            markup = '<link rel="preload" as="image" href="assets/image.svg" imagesrcset="'+encoded+'" imagesizes="100vw">'
+        self.write('index.html',self.html(self.url,'intro',markup,'assets/search.js'))
+
+    def test_each_responsive_candidate_requires_its_delivered_asset(self):
+        for kind in ('img','source','link'):
+            with self.subTest(kind=kind):
+                self.responsive(kind,'assets/image.svg 1x, assets/missing.svg 2x')
+                self.assert_rejected('missing asset destination assets/missing.svg')
+
+    def test_responsive_private_assets_cannot_inherit_development_link_exceptions(self):
+        for kind in ('img','source','link'):
+            with self.subTest(kind=kind):
+                self.responsive(kind,'assets/image.svg 1x, http://127.0.0.1/private.svg 2x')
+                report = qualify(self.site,self.url,[self.url],[dict(route='index.html',
+                                 url='http://127.0.0.1/private.svg',purpose='An explicitly described development link.')])
+                self.assertEqual(report['result'],'fail')
+                self.assertTrue(any('development/private host' in e for e in report['errors']),report['errors'])
+                self.assertTrue(all(not item['exempted'] for item in report['development_links']))
+
+    def test_responsive_insecure_public_asset_is_rejected(self):
+        for kind in ('img','source','link'):
+            with self.subTest(kind=kind):
+                self.responsive(kind,'assets/image.svg 1x, http://public.example/retina.svg 2x')
+                self.assert_rejected('insecure active resource URL')
+
+    def test_valid_responsive_density_and_width_sets_preserve_all_candidates(self):
+        for kind in ('img','source','link'):
+            for value in ('assets/image.svg 1x,assets/retina.svg 2x',
+                          'assets/image.svg .5x, assets/retina.svg 1.5x',
+                          'assets/image.svg 1e0x, assets/retina.svg 2E+0x',
+                          'assets/image.svg 320w, assets/retina.svg 640w',
+                          'assets/image.svg, assets/retina.svg 2x'):
+                with self.subTest(kind=kind,value=value):
+                    self.responsive(kind,value)
+                    report = self.report()
+                    self.assertEqual(report['errors'],[])
+                    self.assertEqual(next(r for r in report['routes'] if r['path']=='index.html')['references'],3)
+
+    def test_responsive_local_commas_and_encoded_paths_are_single_urls(self):
+        self.write('assets/image,original.svg','<svg xmlns="http://www.w3.org/2000/svg"/>')
+        self.write('assets/εικόνα.svg','<svg xmlns="http://www.w3.org/2000/svg"/>')
+        for kind in ('img','source','link'):
+            with self.subTest(kind=kind):
+                self.responsive(kind,'assets/image,original.svg 1x, assets/%CE%B5%CE%B9%CE%BA%CF%8C%CE%BD%CE%B1.svg 2x')
+                self.assertEqual(self.report()['errors'],[])
+
+    def test_responsive_data_uri_commas_preserve_the_following_network_boundary(self):
+        data = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+j5L8AAAAASUVORK5CYII='
+        for kind in ('img','source','link'):
+            with self.subTest(kind=kind):
+                self.responsive(kind,data+' 1x, assets/retina.svg 2x')
+                self.assertEqual(self.report()['errors'],[])
+                self.responsive(kind,data+' 1x, https://private.internal/retina.svg 2x')
+                self.assert_rejected('development/private host')
+
+    def test_malformed_responsive_sets_cannot_hide_candidate_authority(self):
+        values = (', assets/image.svg 1x', 'assets/image.svg 1x,, assets/retina.svg 2x',
+                  'assets/image.svg,, assets/retina.svg 2x', 'assets/image.svg 0w',
+                  'assets/image.svg 0x', 'assets/image.svg -1x', 'assets/image.svg NaNx',
+                  'assets/image.svg 1e999x', 'assets/image.svg 1x 2x',
+                  'assets/image.svg 1x, assets/retina.svg 1x',
+                  'assets/image.svg 320w, assets/retina.svg 2x',
+                  'assets/image.svg 1x, http://127.0.0.1/private.svg invalid',
+                  'assets/image.svg (private, http://127.0.0.1/private.svg)')
+        for kind in ('img','source','link'):
+            for value in values:
+                with self.subTest(kind=kind,value=value):
+                    self.responsive(kind,value)
+                    self.assert_rejected('invalid responsive asset candidates')
+
+    def test_duplicate_responsive_attributes_cannot_replace_browser_authority(self):
+        for markup in ('<img srcset="http://127.0.0.1/private.svg 1x" srcset="assets/search.js 1x">',
+                       '<picture><source srcset="http://127.0.0.1/private.svg 1x" srcset="assets/search.js 1x"></picture>',
+                       '<link rel="preload" as="image" imagesrcset="http://127.0.0.1/private.svg 1x" imagesrcset="assets/search.js 1x">'):
+            with self.subTest(markup=markup):
+                self.write('index.html',self.html(self.url,'intro',markup,'assets/search.js'))
+                self.assert_rejected('invalid responsive asset candidates')
+
+    def test_empty_responsive_attribute_retains_ordinary_fallback_validation(self):
+        for kind in ('img','source','link'):
+            with self.subTest(kind=kind):
+                self.responsive(kind,'')
+                self.assertEqual(self.report()['errors'],[])
+                path = self.site/'index.html'
+                path.write_text(path.read_text().replace('assets/image.svg','assets/missing.svg'))
+                self.assert_rejected('missing asset destination assets/missing.svg')
+
     def test_encoded_hostname_and_browser_backslash_cannot_bypass_public_url_check(self):
         original=(self.site/'index.html').read_text()
         for url in ('https://%31%32%37.0.0.1/', 'https://example.com:wrong/', 'https:\\\\127.0.0.1\\example'):

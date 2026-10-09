@@ -3,10 +3,62 @@ from __future__ import annotations
 from collections import Counter
 from html.parser import HTMLParser
 from pathlib import Path
+import math
 import re
 from urllib.parse import quote, unquote, urljoin, urlsplit
 import xml.etree.ElementTree as ET
 from validate_production_url import development_host
+
+
+def responsive_candidates(value: str) -> list[str]:
+    """Collect conforming candidates without splitting commas inside URLs."""
+    whitespace = ' \t\n\f\r'
+    result = []
+    descriptors = set()
+    mode = None
+    position = 0
+    while position < len(value):
+        while position < len(value) and value[position] in whitespace:
+            position += 1
+        if position == len(value):
+            break
+        if value[position] == ',':
+            raise ValueError('empty candidate')
+        start = position
+        # URL tokens end at ASCII whitespace. Internal commas belong to the URL.
+        while position < len(value) and value[position] not in whitespace:
+            position += 1
+        url = value[start:position]
+        descriptor = ''
+        if url.endswith(','):
+            url = url[:-1]
+            if url.endswith(','):
+                raise ValueError('repeated candidate separator')
+        else:
+            start = position
+            while position < len(value) and value[position] != ',':
+                position += 1
+            descriptor = value[start:position].strip(whitespace)
+            if position < len(value):
+                position += 1
+        if not url:
+            raise ValueError('missing candidate URL')
+        if not descriptor:
+            kind, number = 'x', 1.0
+        elif re.fullmatch(r'[0-9]+w',descriptor):
+            kind, number = 'w', int(descriptor[:-1])
+        elif re.fullmatch(r'(?:[0-9]+(?:\.[0-9]+)?|\.[0-9]+)(?:[eE][+-]?[0-9]+)?x',descriptor):
+            kind, number = 'x', float(descriptor[:-1])
+        else:
+            raise ValueError('unsupported or ambiguous descriptor')
+        if number <= 0 or (kind == 'x' and not math.isfinite(number)):
+            raise ValueError('nonpositive or nonfinite descriptor')
+        if (mode is not None and kind != mode) or number in descriptors:
+            raise ValueError('mixed or duplicate descriptors')
+        mode = kind
+        descriptors.add(number)
+        result.append(url)
+    return result
 
 
 class Document(HTMLParser):
@@ -20,6 +72,7 @@ class Document(HTMLParser):
         self.redirect = False
         self.refreshes: list[str | None] = []
         self.base_hrefs: list[str | None] = []
+        self.responsive_errors: list[str] = []
         self.config = ''
         self._config = False
 
@@ -38,6 +91,15 @@ class Document(HTMLParser):
         for key in ('src', 'poster', 'action', 'formaction'):
             if values.get(key):
                 self.references.append(('asset', values[key]))
+        attribute = 'srcset' if tag in {'img','source'} else 'imagesrcset' if tag == 'link' else None
+        alternatives = [value or '' for key,value in attrs if key == attribute]
+        if alternatives:
+            try:
+                if len(alternatives) != 1:
+                    raise ValueError('duplicate attribute')
+                self.references.extend(('asset',url) for url in responsive_candidates(alternatives[0]))
+            except ValueError as exc:
+                self.responsive_errors.append(f'invalid responsive asset candidates ({attribute}): {exc}')
         if tag == 'meta':
             self.noindex |= values.get('name','').lower() == 'robots' and 'noindex' in values.get('content','').lower()
             if any(key == 'http-equiv' and (value or '').strip().lower() == 'refresh' for key,value in attrs):
@@ -202,6 +264,7 @@ def validate(site: Path, site_url: str, docs: dict[Path, Document], network_urls
     redirect_edges = {}
     for path, doc in docs.items():
         label = path.relative_to(site).as_posix()
+        errors.extend(f'{label}: {failure}' for failure in doc.responsive_errors)
         duplicate = [key for key, count in Counter(doc.ids).items() if count > 1]
         if duplicate:
             errors.append(f'{label}: duplicate document IDs: {", ".join(sorted(duplicate))}')
