@@ -27,6 +27,10 @@ class CascadeContractTests(unittest.TestCase):
         self.policy_path = self.case / "cascade-contract.json"
         shutil.copyfile(DOCS / "config/cascade-contract.json", self.policy_path)
         self.policy = json.loads(self.policy_path.read_text())
+        self.tokens_path = self.case / "style-tokens.json"
+        if (DOCS / "config/style-tokens.json").is_file():
+            shutil.copyfile(DOCS / "config/style-tokens.json", self.tokens_path)
+            self.tokens = json.loads(self.tokens_path.read_text())
 
     def run_guard(self, *, dependencies=None):
         return subprocess.run(["node", str(COMMAND), "--styles-dir", str(self.styles), "--policy", str(self.policy_path),
@@ -40,6 +44,9 @@ class CascadeContractTests(unittest.TestCase):
 
     def save_policy(self):
         self.policy_path.write_text(json.dumps(self.policy) + "\n")
+
+    def save_tokens(self):
+        self.tokens_path.write_text(json.dumps(self.tokens) + "\n")
 
     def assert_guard_error(self, kind):
         result = self.run_guard()
@@ -65,6 +72,9 @@ class CascadeContractTests(unittest.TestCase):
         self.assertEqual(report["import_graph"]["entry"], "extra.css")
         self.assertEqual([row["target"] for row in report["import_graph"]["edges"]], self.policy["styles"])
         self.assertEqual(set(report["source_files"]), {"extra.css", *self.policy["styles"]})
+        self.assertEqual(report["token_vocabulary"]["names"], len(self.tokens["tokens"]))
+        self.assertEqual(report["token_vocabulary"]["definition_bindings"], sum(len(token["bindings"]) for token in self.tokens["tokens"]))
+        self.assertTrue(any(reference["name"] == "--bijux-muted" for reference in report["token_references"]))
         self.assertFalse(any(row["file"] == "06-components.css" for row in self.policy["important_exceptions"]))
         self.assertTrue(any(row["kind"] == "viewport_fallback" for row in report["diagnostics"]))
 
@@ -354,6 +364,176 @@ class CascadeContractTests(unittest.TestCase):
         result = self.run_guard()
         self.assertEqual(result.returncode, 1)
         self.assertIn("unknown or missing fields", result.stderr)
+
+    def test_unresolved_footer_muted_token_is_not_qualified_as_inherited_color(self):
+        declaration = ".md-footer__inner.bijux-footer-nav .md-footer__direction {\n  opacity: 1;\n  color: var(--bijux-muted);"
+        self.mutate("06-components.css", declaration, declaration.replace("--bijux-muted", "--bijux-mutde"))
+        error = self.assert_guard_error("unresolved_token_reference")[0]
+        self.assertEqual((error["file"], error["property"], error["name"]), ("06-components.css", "color", "--bijux-mutde"))
+        self.assertEqual(error["selectors"], [".md-footer__inner.bijux-footer-nav .md-footer__direction"])
+        self.assertGreater(error["line"], 0)
+
+    def test_unreviewed_owned_definition_cannot_enter_the_shared_vocabulary(self):
+        self.append(":root { --bijux-undocumented:teal; }")
+        self.assert_guard_error("unreviewed_token_definition")
+
+    def test_component_cannot_override_an_owned_token_outside_its_declared_scope(self):
+        self.append(".bijux-unreviewed { --bijux-muted:red; }")
+        error = self.assert_guard_error("unreviewed_token_binding")[0]
+        self.assertEqual(error["selectors"], [".bijux-unreviewed"])
+
+    def test_owned_reference_identifiers_and_nested_fallbacks_are_parsed(self):
+        original = (DOCS / "styles/07-utilities.css").read_text()
+        for value in ("var(--bijux-mutde)", r"var(--bijux-\6d utde)", r"v\61 r(--bijux-mutde)",
+                      "linear-gradient(red,var(--bijux-mutde))", "var(--consumer-extra,var(--bijux-mutde))",
+                      "var(--bijux-option,var(--bijux-other))"):
+            with self.subTest(value=value):
+                (self.styles / "07-utilities.css").write_text(original)
+                self.append(f".bijux-token-example {{ color:{value}; }}")
+                self.assert_guard_error("unresolved_token_reference")
+
+    def test_explicit_optional_fallback_preserves_the_owned_token_value(self):
+        self.append(".bijux-token-example { color:var(--bijux-optional,var(--bijux-muted)); }")
+        result = self.run_guard()
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+
+    def test_empty_fallback_does_not_rescue_an_unresolved_owned_color(self):
+        self.append(".bijux-token-example { color:var(--bijux-optional,); }")
+        self.assert_guard_error("unresolved_token_reference")
+
+    def test_material_runtime_and_consumer_variables_are_not_claimed_as_css_definitions(self):
+        self.append(".bijux-token-example { transform:translateX(var(--md-tooltip-x,0px)); color:var(--consumer-accent,teal); }")
+        result = self.run_guard()
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+
+    def test_quoted_commented_and_url_token_text_is_not_a_reference(self):
+        self.append('/* var(--bijux-mutde) */ .bijux-token-example { content:"var(--bijux-mutde)"; '
+                    'background:url("https://styles.example.invalid/var(--bijux-mutde)"); }')
+        result = self.run_guard()
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+
+    def test_missing_owned_definition_cannot_be_certified_by_registry_name_alone(self):
+        self.mutate("00-tokens.css", "  --bijux-muted: #5d6c7e;\n", "")
+        self.assert_guard_error("stale_token_binding")
+
+    def test_changed_literal_token_value_requires_its_owned_binding_review(self):
+        self.mutate("00-tokens.css", "--bijux-muted: #5d6c7e;", "--bijux-muted: #000;")
+        self.assert_guard_error("unreviewed_token_binding")
+
+    def test_token_registry_owner_namespace_and_admission_fields_require_review(self):
+        original = json.loads(json.dumps(self.tokens))
+        for field, value in (("owner", "consumer"), ("namespace", "--consumer-"), ("allow_unknown", True)):
+            with self.subTest(field=field):
+                self.tokens = {**original, field: value}
+                self.save_tokens()
+                result = self.run_guard()
+                self.assertEqual(result.returncode, 1)
+                self.assertIn("unknown fields/schema/namespace/owner", result.stderr)
+
+    def test_unknown_token_purpose_or_consumer_scope_cannot_expand_override_rights(self):
+        original = json.loads(json.dumps(self.tokens))
+        for field, value in (("purpose", "unreviewed-purpose"), ("consumer_scope", "private-shell-replacement"), ("description", " ")):
+            with self.subTest(field=field):
+                self.tokens = json.loads(json.dumps(original))
+                self.tokens["tokens"][0][field] = value
+                self.save_tokens()
+                result = self.run_guard()
+                self.assertEqual(result.returncode, 1)
+                self.assertIn("malformed token name/purpose/consumer scope/bindings", result.stderr)
+
+    def test_stale_binding_owner_scope_cannot_certify_current_source(self):
+        self.tokens["tokens"][0]["bindings"][0]["file"] = "06-components.css"
+        self.save_tokens()
+        self.assert_guard_error("stale_token_binding")
+        self.assert_guard_error("unreviewed_token_binding")
+
+    def test_external_owner_does_not_become_shared_css_vocabulary(self):
+        self.tokens["external"]["owner"] = "bijux-std"
+        self.save_tokens()
+        result = self.run_guard()
+        self.assertEqual(result.returncode, 1)
+        self.assertIn("malformed external runtime ownership", result.stderr)
+
+    def test_stale_external_runtime_source_or_invented_writer_is_rejected(self):
+        original = json.loads(json.dumps(self.tokens))
+        for field, value, message in (("runtime_sha256", "0" * 64, "stale external runtime source"),
+                                      ("runtime_examples", ["--md-invented-owner"], "no admitted literal writer")):
+            with self.subTest(field=field):
+                self.tokens = json.loads(json.dumps(original))
+                self.tokens["external"][field] = value
+                self.save_tokens()
+                result = self.run_guard()
+                self.assertEqual(result.returncode, 1)
+                self.assertIn(message, result.stderr)
+
+    def test_owned_binding_cannot_be_repeated_in_another_rule(self):
+        source = self.styles / "00-tokens.css"
+        source.write_text(source.read_text() + "\n:root { --bijux-muted:#5d6c7e; }\n")
+        self.assert_guard_error("repeated_token_binding")
+
+    def test_known_escaped_identifiers_and_commented_fallback_are_preserved(self):
+        self.append(r'.bijux-token-example { color:v\61 r(\2d \2d bijux-\6d uted); '
+                    'background:var(--bijux-optional,/**/var(--bijux-panel)); border-color:var(--bijux-border,); }')
+        result = self.run_guard()
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+
+    def test_malformed_var_arguments_are_not_silent_reference_inventory_gaps(self):
+        original = (DOCS / "styles/07-utilities.css").read_text()
+        for value in ('var("--bijux-muted")', 'var(--bijux-muted extra)', 'var()'):
+            with self.subTest(value=value):
+                (self.styles / "07-utilities.css").write_text(original)
+                self.append(f".bijux-token-example {{ color:{value}; }}")
+                self.assert_guard_error("malformed_token_reference")
+
+    def test_reviewed_same_scope_definition_cycles_cannot_be_rescued_by_fallbacks(self):
+        original_tokens = json.loads(json.dumps(self.tokens))
+        original_css = (DOCS / "styles/00-tokens.css").read_text()
+        for changes in ({"--bijux-muted": "var(--bijux-muted,#5d6c7e)"},
+                        {"--bijux-muted": "var(--bijux-ink)", "--bijux-ink": "var(--bijux-muted)"}):
+            with self.subTest(changes=changes):
+                self.tokens = json.loads(json.dumps(original_tokens))
+                css = original_css
+                for token in self.tokens["tokens"]:
+                    if token["name"] not in changes:
+                        continue
+                    binding = next(binding for binding in token["bindings"] if binding["file"] == "00-tokens.css")
+                    css = css.replace(f'{token["name"]}: {binding["value"]};', f'{token["name"]}: {changes[token["name"]]};')
+                    binding["value"] = changes[token["name"]]
+                (self.styles / "00-tokens.css").write_text(css)
+                self.save_tokens()
+                self.assert_guard_error("token_cycle")
+
+    def test_token_function_inventory_has_a_bounded_nesting_limit(self):
+        value = "teal"
+        for _ in range(66):
+            value = f"var(--bijux-optional,{value})"
+        self.append(f".bijux-token-example {{ color:{value}; }}")
+        self.assert_guard_error("token_value_limit")
+
+    def test_vocabulary_selection_cannot_traverse_to_a_different_owner(self):
+        for value in (None, "../style-tokens.json", "consumer-tokens.json"):
+            with self.subTest(value=value):
+                self.policy["token_vocabulary"] = value
+                self.save_policy()
+                result = self.run_guard()
+                self.assertEqual(result.returncode, 1)
+                self.assertIn("unknown token vocabulary ownership", result.stderr)
+
+    def test_definition_role_path_and_scope_metadata_cannot_grant_an_unbounded_override(self):
+        original = json.loads(json.dumps(self.tokens))
+        for field, value in (("role", "runtime"), ("file", "../00-tokens.css"), ("reason", " "), ("allow_override", True)):
+            with self.subTest(field=field):
+                self.tokens = json.loads(json.dumps(original))
+                self.tokens["tokens"][0]["bindings"][0][field] = value
+                self.save_tokens()
+                result = self.run_guard()
+                self.assertEqual(result.returncode, 1)
+                self.assertIn("malformed owned definition binding", result.stderr)
+
+    def test_case_sensitive_owned_reference_cannot_alias_the_canonical_name(self):
+        self.append(".bijux-token-example { color:var(--BIJUX-muted); }")
+        error = self.assert_guard_error("unresolved_token_reference")[0]
+        self.assertEqual(error["name"], "--BIJUX-muted")
 
     def test_missing_imported_file_fails(self):
         (self.styles / "01-theme.css").unlink()

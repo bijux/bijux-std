@@ -302,6 +302,43 @@ Layer diagnostics retain file, conditional ancestry, parsed rule value and
 source-end location. Case and escaped layer keywords are recognized on parsed
 at-rules; layer text inside comments or quoted declarations remains inert.
 
+[`config/style-tokens.json`](config/style-tokens.json) records the existing
+`--bijux-*` vocabulary. Each name has a concrete purpose, description, consumer
+override boundary and exact CSS definition bindings: file, conditional ancestry,
+selectors, value, role and reason. The guard derives declarations and reference
+uses from the admitted parser; it does not invent missing type, spacing or motion
+tokens. Current bindings cover root defaults, Material palette selectors,
+responsive shell measure and the light focus indicator on saturated shell
+surfaces. Unknown definitions, unreviewed value/scope changes, repeated or stale
+bindings, unsupported purposes and expanded owner/override permissions fail.
+
+Consumer content may consume the inventory. A theme extension must preserve
+content/surface/shadow meanings and qualify its relevant contrast and interaction
+states. Shell measures permit qualified content growth, rather than private
+drawer/header replacement. Shared shell focus paint retains its scoped owner;
+an exception requires explicit keyboard evidence. The guard qualifies shared
+definition scopes, not arbitrary consumer overrides or their human approval.
+
+Parsed value functions identify case-sensitive references, including escaped
+identifiers and nested fallbacks. An unknown name in the reserved Bijux family
+requires a nonempty explicit fallback; every nested fallback reference is also
+checked. Such a fallback permits an optional consumer extension without adding
+an unreviewed shared definition. Empty fallback text cannot rescue an unknown
+name. Quoted/commented reference text and quoted URL payloads remain inert.
+Malformed arguments and more than 64 nested component groups or 1,024 references
+per value fail. Definition cycles, including self-reference with fallback, are
+refused within an exact conditional/selector scope; this does not model all
+native inheritance or overlapping selector combinations.
+
+Material's `--md-*` variables remain external CSS/runtime ownership. The registry
+binds its runtime examples to the admitted runtime provenance and actual literal
+tooltip/indicator setters. Shared palette declarations adapt selected colors;
+merely consumed properties such as `--md-header-height` with its `3rem` fallback
+are not claimed as shared CSS definitions. Other consumer variable namespaces
+retain their authored ownership. These are unregistered CSS strings: reference
+integrity and meaningful source purposes do not prove consuming value grammar,
+native inheritance, theme/forced-color contrast or arbitrary override safety.
+
 This is a bounded ordered import graph, unlayered strategy and declaration
 policy, not a general CSS validity or selector specificity checker. It does
 not certify computed Material/shared/consumer precedence, authored consumer
