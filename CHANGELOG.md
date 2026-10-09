@@ -16,6 +16,14 @@ Preserve the exact Canon renderer observation snapshot while keeping dependency 
 
 ### Merged pull requests
 
+#### 2026-10-09T06:10:24Z — [#235](https://github.com/bijux/bijux-std/pull/235) — fix(docs): retain reader focus and desktop disclosure hit surfaces
+
+Keep keyboard reading continuity through Back/Forward and make the visible complete desktop tree respond to ordinary pointer input.
+
+- Recover focus only when a replaced reading subtree loses its active node; respect surviving controls and intentional blur.
+- Give the complete desktop sidebar intrinsic height while retaining its bounded scrolling area.
+- Exercise real branch disclosures, history focus and deep reload across all maintained history profiles.
+
 #### 2026-10-09T05:46:46Z — [#232](https://github.com/bijux/bijux-std/pull/232) — fix(docs): preserve native palette keyboard and focus continuity
 
 Make native Material palette actions reachable by keyboard and retain focus on the next visible action after theme changes.
