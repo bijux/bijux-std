@@ -77,6 +77,14 @@ class RequiredNavigationTests(unittest.TestCase):
         self.assertIn('range(2, math.ceil(jobs["total_count"] / 100) + 1)', report)
         self.assertLess(report.index('Verify complete frontend job duration'), report.index('Run standards report'))
 
+    def test_fault_transport_retains_every_owned_receipt_file(self):
+        browser = job('frontend-browser-faults')
+        transport = browser.split('      - name: Retain intentional failure reports and clean controls\n', 1)[1]
+        self.assertIn('          path: artifacts/bijux-docs/frontend-faults\n', transport)
+        self.assertIn('          include-hidden-files: true\n', transport)
+        self.assertIn('          if-no-files-found: error\n', transport)
+        self.assertIn('        if: always()\n', transport)
+
     def test_every_shared_pull_request_author_receives_full_rendered_qualification(self):
         for name in ('navigation-fixtures', 'publication-commands', 'navigation'):
             with self.subTest(job=name):
