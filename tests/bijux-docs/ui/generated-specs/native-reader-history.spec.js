@@ -82,6 +82,26 @@ test("native same-window diagram Back and Forward retain the authored reader pos
     await page.goForward();
     await expect(article(page).locator("h1")).toHaveText(/^Table boundary reference(?:¶)?$/);
     records.push({ label: "native Forward exact URL", ...await observeRoute(page, checkpoint(origin)) });
+
+    // Opening authored diagram source changes layout independently of reader identity.
+    await page.goBack();
+    await rendered(page);
+    await page.setViewportSize({ width: 320, height: 780 });
+    await figures(page).locator(".bijux-diagram-source > summary").first().click();
+    await expect(figures(page).locator("details[open]")).toHaveCount(1);
+    const disclosedDiagrams = await figures(page).evaluateAll(nodes => nodes.map(node => node.getBoundingClientRect().height));
+    await link.click();
+    await expect(page).toHaveURL(checkpoint(origin));
+    const compactDeparture = clicks.at(-1);
+    expect(compactDeparture?.trusted).toBe(true);
+    await page.goBack();
+    await rendered(page);
+    const restoredDiagrams = await figures(page).evaluateAll(nodes => nodes.map(node => node.getBoundingClientRect().height));
+    expect(restoredDiagrams).not.toEqual(disclosedDiagrams);
+    await expect(link).toBeInViewport();
+    await expect.poll(() => link.evaluate((node, top) => Math.abs(node.getBoundingClientRect().top - top), compactDeparture.rect.top),
+      { message: "Native Back retains the clicked reader offset after actual diagram source layout changes" }).toBeLessThan(1);
+    records.push({ label: "diagram source native Back context", compactDeparture, disclosedDiagrams, restoredDiagrams, ...await position(link) });
   } finally {
     await attach(info, records);
   }

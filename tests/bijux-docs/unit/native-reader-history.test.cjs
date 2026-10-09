@@ -11,7 +11,7 @@ const source = fs.readFileSync(
 const href = "https://example.test/reader/";
 const position = { owner: "bijux-docs", version: 1, href, x: 0, y: 13000 };
 
-function setup({ state = null, type = "navigate", figures = true } = {}) {
+function setup({ state = null, type = "navigate", figures = true, anchors = [] } = {}) {
   const events = new Map(), frames = [], scrolls = [], writes = [];
   const listen = (owner, name, callback) => {
     const key = owner + name;
@@ -34,6 +34,7 @@ function setup({ state = null, type = "navigate", figures = true } = {}) {
     currentScript: { src: "https://example.test/assets/mermaid-init.js" },
     readyState: "loading",
     querySelector: () => figures ? {} : null,
+    querySelectorAll: () => anchors,
     addEventListener: (name, callback) => listen("document:", name, callback),
   };
   const context = {
@@ -143,6 +144,89 @@ test("fresh native Back restores after the owned layout frames settle", () => {
   app.flush();
   assert.equal(app.scrolls.length, 1);
   assert.deepEqual(JSON.parse(JSON.stringify(app.scrolls[0])), { left: 0, top: 13000, behavior: "instant" });
+});
+
+function anchor({ text = "Reading checkpoint", href: destination = "https://example.test/other/", top = 3400, connected = true } = {}) {
+  return { href: destination, textContent: text, target: "", hasAttribute: () => false, isConnected: connected, getBoundingClientRect: () => ({ top }) };
+}
+
+test("trusted authored departure retains a unique article anchor and its viewport offset", () => {
+  const link = anchor({ top: 350 });
+  const app = setup({ anchors: [link] });
+  const event = click();
+  event.target.closest = () => link;
+  app.fire("document", "click", event);
+  assert.deepEqual(JSON.parse(JSON.stringify(app.history.state.bijuxDiagramReaderPosition.context)), {
+    href: link.href, text: link.textContent, top: 350,
+  });
+});
+
+test("duplicate article destinations retain the coordinate-only departure", () => {
+  const link = anchor({ top: 350 });
+  const app = setup({ anchors: [link, anchor()] });
+  const event = click();
+  event.target.closest = () => link;
+  app.fire("document", "click", event);
+  assert.equal(app.history.state.bijuxDiagramReaderPosition.context, undefined);
+  assert.equal(app.history.state.bijuxDiagramReaderPosition.y, position.y);
+});
+
+test("native Back follows the same reader anchor after diagram layout changes", () => {
+  const link = anchor({ top: 3400 });
+  const context = { href: link.href, text: link.textContent, top: 350 };
+  const app = setup({ state: { bijuxDiagramReaderPosition: { ...position, context } }, type: "back_forward", anchors: [link] });
+  app.restore();
+  app.flush();
+  assert.equal(app.scrolls[0].top, 16050);
+});
+
+for (const anchors of [[], [anchor(), anchor()], [anchor({ connected: false })]]) {
+  test(`removed ambiguous or disconnected reader anchors preserve coordinates: ${anchors.length}`, () => {
+    const context = { href: "https://example.test/other/", text: "Reading checkpoint", top: 350 };
+    const app = setup({ state: { bijuxDiagramReaderPosition: { ...position, context } }, type: "back_forward", anchors });
+    app.restore();
+    app.flush();
+    assert.equal(app.scrolls[0].top, position.y);
+  });
+}
+
+for (const link of [anchor({ text: "Different reader destination" }), anchor({ href: "https://example.test/different/" })]) {
+  test(`changed reader identity preserves coordinates: ${link.href} ${link.textContent}`, () => {
+    const context = { href: "https://example.test/other/", text: "Reading checkpoint", top: 350 };
+    const app = setup({ state: { bijuxDiagramReaderPosition: { ...position, context } }, type: "back_forward", anchors: [link] });
+    app.restore();
+    app.flush();
+    assert.equal(app.scrolls[0].top, position.y);
+  });
+}
+
+test("inherited optional reader context cannot override owned coordinates", () => {
+  const context = { href: "https://example.test/other/", text: "Reading checkpoint", top: 350 };
+  const saved = Object.assign(Object.create({ context }), position);
+  const app = setup({ state: { bijuxDiagramReaderPosition: saved }, type: "back_forward", anchors: [anchor()] });
+  app.restore();
+  app.flush();
+  assert.equal(app.scrolls[0].top, position.y);
+});
+
+for (const context of [null, {}, { href: "https://example.test/other/", text: "Reading checkpoint", top: Infinity },
+  Object.create({ href: "https://example.test/other/", text: "Reading checkpoint", top: 350 })]) {
+  test(`unqualified reader context preserves coordinate fallback: ${JSON.stringify(context)}`, () => {
+    const app = setup({ state: { bijuxDiagramReaderPosition: { ...position, context } }, type: "back_forward", anchors: [anchor()] });
+    app.restore();
+    app.flush();
+    assert.equal(app.scrolls[0].top, position.y);
+  });
+}
+
+test("trusted input cancels anchor restoration after layout changes", () => {
+  const link = anchor();
+  const context = { href: link.href, text: link.textContent, top: 350 };
+  const app = setup({ state: { bijuxDiagramReaderPosition: { ...position, context } }, type: "back_forward", anchors: [link] });
+  app.restore();
+  app.fire("window", "wheel", { isTrusted: true });
+  app.flush();
+  assert.equal(app.scrolls.length, 0);
 });
 
 for (const event of ["wheel", "pointerdown", "touchstart", "keydown"]) {

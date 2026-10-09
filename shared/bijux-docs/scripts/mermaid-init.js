@@ -27,7 +27,25 @@
     window.addEventListener(type, cancelReaderRestoration, { capture: true, passive: true });
   }
 
-  function captureReaderPosition() {
+  function readerLinks(context) {
+    if (Object.prototype.toString.call(context) !== "[object Object]" ||
+        !["href", "text", "top"].every(key => Object.prototype.hasOwnProperty.call(context, key)) ||
+        typeof context.href !== "string" || typeof context.text !== "string" ||
+        !context.text || !Number.isFinite(context.top)) return [];
+    return [...document.querySelectorAll(".md-content article a[href]")].filter(link =>
+      link.href === context.href && link.textContent.trim().replace(/\s+/g, " ") === context.text);
+  }
+
+  function captureReaderContext(link) {
+    const context = {
+      href: link.href, text: link.textContent?.trim().replace(/\s+/g, " ") || "",
+      top: link.getBoundingClientRect?.().top,
+    };
+    const links = readerLinks(context);
+    return links.length === 1 && links[0] === link ? context : undefined;
+  }
+
+  function captureReaderPosition(link) {
     if (!document.querySelector(".md-typeset .bijux-diagram")) return;
     const state = history.state;
     if (state !== null && (Object.prototype.toString.call(state) !== "[object Object]")) return;
@@ -36,6 +54,7 @@
     try {
       history.replaceState({ ...state, [readerHistoryKey]: {
         owner: "bijux-docs", version: 1, href: location.href, x: window.scrollX, y: window.scrollY,
+        context: captureReaderContext(link),
       } }, "");
     } catch (_) {
       // A history entry may become unavailable while its document is leaving.
@@ -48,7 +67,15 @@
     requestAnimationFrame(() => requestAnimationFrame(() => {
       if (current !== generation || readerRestoration !== position) return;
       readerRestoration = null;
-      window.scrollTo({ left: position.x, top: position.y, behavior: "instant" });
+      let top = position.y;
+      const links = Object.prototype.hasOwnProperty.call(position, "context") ? readerLinks(position.context) : [];
+      if (links.length === 1 && links[0].isConnected) {
+        // The reader's anchor survives responsive and asynchronous diagram layout.
+        // An ambiguous or removed anchor retains the native coordinate fallback.
+        const anchored = window.scrollY + links[0].getBoundingClientRect().top - position.context.top;
+        if (Number.isFinite(anchored)) top = Math.max(0, anchored);
+      }
+      window.scrollTo({ left: position.x, top, behavior: "instant" });
     }));
   }
 
@@ -204,7 +231,7 @@
     if (!["http:", "https:"].includes(destination.protocol) ||
         destination.origin === location.origin && destination.pathname === location.pathname &&
         destination.search === location.search) return;
-    captureReaderPosition();
+    captureReaderPosition(link);
   }, true);
   window.addEventListener("pagehide", () => { readerRestoration = null; generation += 1; });
   window.addEventListener("pageshow", event => { if (event.persisted) request(); });
