@@ -148,10 +148,16 @@ with Path(os.environ["BIJUX_ORIGIN_EVENTS"]).open("a") as log:
         self.assertEqual(events[-1]["args"][-2:], ["--site-url", "https://bijux.io/"])
 
     def test_framework_non_strict_render_remains_rejected(self):
-        result, events = self.make("docs-check", DOCS_SITE_URL="https://bijux.io/", DOCS_PUBLICATION_FRAMEWORK="1", BIJUX_DOCS_SHARED_DIR=str(self.validator.parents[2]), DOCS_BUILD_FLAGS="")
-        self.assertNotEqual(result.returncode, 0)
-        self.assertIn("requires exact --strict", result.stderr)
-        self.assertNotIn("renderer", [event["event"] for event in events])
+        before = self.seed.read_bytes()
+        for goal in ("docs", "docs-check"):
+            with self.subTest(goal=goal):
+                self.events.unlink(missing_ok=True)
+                result, events = self.make(goal, DOCS_SITE_URL="https://bijux.io/", DOCS_PUBLICATION_FRAMEWORK="1",
+                                          BIJUX_DOCS_SHARED_DIR=str(self.validator.parents[2]), DOCS_BUILD_FLAGS="")
+                self.assertNotEqual(result.returncode, 0)
+                self.assertIn("requires exact --strict", result.stderr)
+                self.assertEqual(events, [])
+                self.assertEqual(self.seed.read_bytes(), before)
 
     def test_framework_missing_source_still_fails_before_any_mutation(self):
         result, events = self.make("docs-check", DOCS_PUBLICATION_FRAMEWORK="1", DOCS_SITE_URL="https://bijux.io/")

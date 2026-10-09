@@ -102,6 +102,7 @@ include $(abspath $(dir $(lastword $(MAKEFILE_LIST))))/util.mk
 
 docs:
 	$(call assert_docs_interactive_report_dispatch,build)
+	@if [ "$(DOCS_PUBLICATION_FRAMEWORK)" = "1" ]; then test "$(strip $(DOCS_BUILD_FLAGS))" = "--strict" || { echo "ERROR: publication producer requires exact --strict render flags" >&2; exit 1; }; fi
 	@$(MAKE) docs-assert-public-url
 	$(call run_make_targets,$(DOCS_BUILD_BOOTSTRAP_TARGETS),$(MAKE))
 	$(call run_make_targets,$(DOCS_BUILD_GUARD_TARGETS),$(MAKE))
@@ -112,7 +113,6 @@ docs:
 	$(call run_make_targets,$(DOCS_BUILD_PREPARE_TARGETS),$(MAKE))
 	@echo "→ Building documentation"
 	@mkdir -p "$(DOCS_CACHE_DIR)"
-	@if [ "$(DOCS_PUBLICATION_FRAMEWORK)" = "1" ]; then test "$(strip $(DOCS_BUILD_FLAGS))" = "--strict" || { echo "ERROR: publication producer requires exact --strict render flags" >&2; exit 1; }; fi
 	@if [ "$(DOCS_PUBLICATION_FRAMEWORK)" = "1" ]; then \
 	    set --; \
 	    if [ -n "$$DOCS_INTERACTIVE_REPORT_OWNER" ]; then set -- --interactive-report-owner "$$DOCS_INTERACTIVE_REPORT_OWNER"; fi; \
@@ -165,6 +165,7 @@ docs-deploy:
 
 docs-check:
 	$(call assert_docs_interactive_report_dispatch,check)
+	@if [ "$(DOCS_PUBLICATION_FRAMEWORK)" = "1" ]; then test "$(strip $(DOCS_BUILD_FLAGS))" = "--strict" || { echo "ERROR: publication producer requires exact --strict render flags" >&2; exit 1; }; fi
 	@$(MAKE) docs-assert-public-url
 	$(call run_make_targets,$(DOCS_CHECK_BOOTSTRAP_TARGETS),$(MAKE))
 	$(call run_make_targets,$(DOCS_CHECK_GUARD_TARGETS),$(MAKE))
@@ -175,7 +176,6 @@ docs-check:
 	$(call run_make_targets,$(DOCS_CHECK_PREPARE_TARGETS),$(MAKE))
 	@echo "→ Checking documentation build integrity"
 	@mkdir -p "$(DOCS_CACHE_DIR)"
-	@if [ "$(DOCS_PUBLICATION_FRAMEWORK)" = "1" ]; then test "$(strip $(DOCS_BUILD_FLAGS))" = "--strict" || { echo "ERROR: publication producer requires exact --strict render flags" >&2; exit 1; }; fi
 	@if [ "$(DOCS_PUBLICATION_FRAMEWORK)" = "1" ]; then \
 	    set --; \
 	    if [ -n "$$DOCS_INTERACTIVE_REPORT_OWNER" ]; then set -- --interactive-report-owner "$$DOCS_INTERACTIVE_REPORT_OWNER"; fi; \

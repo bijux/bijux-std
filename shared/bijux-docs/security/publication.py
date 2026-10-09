@@ -578,6 +578,16 @@ def qualified_manifest(repo_root: Path, site_dir: str, site_url: str, source_sha
         integration = embedded_module()
         interactive = importlib.import_module(integration.__package__ + ".interactive_rendering")
         try:
+            # Missing structural source evidence must fail before optional
+            # renderer imports. A pointer grants no capability: the configured
+            # adapter and independent producer still rederive all authority.
+            retained = records["csp"]["receipt"]["embedded"]
+            require(isinstance(retained, dict) and isinstance(retained.get("descriptor_path"), str),
+                    "source-owned embedded descriptor evidence is required")
+            descriptor = Path(retained["descriptor_path"])
+            require(descriptor.is_absolute() and descriptor.is_relative_to(root),
+                    "embedded descriptor must belong to its exact repository")
+            identity.regular(root, descriptor.relative_to(root).as_posix())
             # Source authority chooses the capability; transported CSP cannot.
             from mkdocs.config import load_config
             configuration = load_config(config_file=str(identity.regular(root, source["config"]["path"])),
