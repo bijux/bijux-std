@@ -6,15 +6,23 @@ This file records notable repository-level changes for `bijux-std`.
 
 ### Pending review
 
-#### [#240](https://github.com/bijux/bijux-std/pull/240) — feat(docs): expose accessible desktop registry overflow controls
+#### [#241](https://github.com/bijux/bijux-std/pull/241) — fix(docs): retain native diagram reader history position
+
+Return native browser history to the diagram reader's departure point after asynchronous layout settles, while trusted reader input owns any subsequent position.
+
+- Bind position to the owned history entry, full URL and validated record without replacing unrelated state, fragments or instant navigation.
+- Preserve native targets and keyboard links; cancel deferred restoration on trusted input and document lifecycle changes.
+- Add nine bounded production Material journeys and retain the complete diagram, history, registry and contrast coverage.
+
+### Merged pull requests
+
+#### 2026-10-09T09:44:33Z — [#240](https://github.com/bijux/bijux-std/pull/240) — feat(docs): expose accessible desktop registry overflow controls
 
 Make overflowed desktop site destinations discoverable through named native controls and preserve reader focus as the header changes.
 
 - Reveal complete destinations through pointer, keyboard and touch while retaining native link and compact drawer ownership.
 - Detect intrinsic label-size changes, keep truthful endpoint state and dispose scrolling observers with the document lifetime.
 - Exercise all eleven destinations, Space boundaries, RTL direction and focus recovery without reducing qualification coverage or limits.
-
-### Merged pull requests
 
 #### 2026-10-09T08:01:50Z — [#239](https://github.com/bijux/bijux-std/pull/239) — ci(docs): bound concurrent browser container provisioning
 
