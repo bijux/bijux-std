@@ -188,7 +188,7 @@ def aggregate() -> None:
         controls_spec = importlib.util.spec_from_file_location('renderer_controls', TESTS / 'execution/renderer_controls.py')
         controls = importlib.util.module_from_spec(controls_spec)
         controls_spec.loader.exec_module(controls)
-        result['renderer_controls'] = controls.verify(ARTIFACTS / 'renderer-controls')
+        result['renderer_controls'] = controls.verify_groups(ARTIFACTS / 'renderer-controls')
         result['producer_envelope'] = producer
         result['browser_partitions'] = {f'{group}/{suite}': names for (group, suite), names in assignments.items()}
         result['inputs'] = [{'path': str(path.relative_to(ARTIFACTS)), 'sha256': hashlib.sha256(path.read_bytes()).hexdigest()} for path in inventories + reports]

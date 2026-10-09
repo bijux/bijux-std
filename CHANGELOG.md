@@ -15,6 +15,7 @@ Reconstruct committed passive reader notices, native targets and discovery in bo
 - Qualify the actual independent passive render and source-derived 123 installed controls; full interactive-report and consumer publication duties remain separate.
 - Commit an isolated verification-only test profile for the actual renderer environment and independently refuse production admission without widening canonical profiles.
 - Verify retained reader lifetime through actual Document identity after footer navigation and Back; retain timestamp observations and reject real native navigation across all three engines.
+- Partition installed passive-reader reconstruction from the remaining renderer units, with separately required three-minute jobs and a strict source-derived disjoint evidence union.
 
 
 ### Merged pull requests

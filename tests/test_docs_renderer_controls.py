@@ -275,5 +275,125 @@ class RendererControlReceiptTests(unittest.TestCase):
             CONTROLS.node_modules_identity(modules)
 
 
+    def grouped_receipts(self):
+        output = self.root / 'group-evidence'
+        output.mkdir()
+        for group in CONTROLS.GROUPS:
+            folder = output / group
+            folder.mkdir()
+            receipt = copy.deepcopy(self.receipt)
+            receipt['group'] = group
+            expected = CONTROLS.group_python_ids(group)
+            receipt['expected_python_ids'] = expected
+            receipt['python_cases'] = [row for row in receipt['python_cases'] if row['id'] in expected]
+            receipt['python_executed'] = len(expected)
+            if group == 'renderer':
+                shutil.copyfile(self.events, folder / self.events.name)
+            else:
+                receipt.update(node_cases=[], node_executed=0)
+            receipt['artifact_digests'] = CONTROLS.HELPERS.inventory(folder)
+            CONTROLS.HELPERS.write_json(folder / 'renderer-controls.json', receipt)
+        return output
+
+    def test_grouped_native_results_cover_all_python_and_node_controls(self):
+        result = CONTROLS.verify(self.grouped_receipts(), self.source, self.workflow)
+        self.assertEqual(result['schema'], 2)
+        self.assertEqual(result['python_executed'], len(CONTROLS.expected_python_ids()))
+        self.assertEqual(result['node_executed'], 2)
+        self.assertEqual(len(result['groups']['passive-reader']['python_cases']), 1)
+        self.assertFalse(result['publication_approval'])
+
+    def test_group_inventory_rejects_unknown_group_or_missing_passive_source(self):
+        with self.assertRaisesRegex(ValueError, 'Unknown renderer group'):
+            CONTROLS.group_python_ids('unknown')
+        with mock.patch.object(CONTROLS, 'PASSIVE_READER_ID', 'unowned.test'), self.assertRaises(ValueError):
+            CONTROLS.group_python_ids('renderer')
+
+    def test_group_union_rejects_missing_extra_or_renamed_group(self):
+        output = self.grouped_receipts()
+        passive = output / 'passive-reader'
+        passive.rename(output / 'unknown')
+        with self.assertRaisesRegex(ValueError, 'group evidence'):
+            CONTROLS.verify(output, self.source, self.workflow)
+        (output / 'unknown').rename(passive)
+        (output / 'extra').mkdir()
+        with self.assertRaisesRegex(ValueError, 'group evidence'):
+            CONTROLS.verify(output, self.source, self.workflow)
+        (output / 'extra').rmdir()
+        shutil.rmtree(passive)
+        with self.assertRaisesRegex(ValueError, 'group evidence'):
+            CONTROLS.verify(output, self.source, self.workflow)
+
+    def test_group_cannot_relabel_source_workflow_runtime_or_approval(self):
+        output = self.grouped_receipts()
+        path = output / 'passive-reader/renderer-controls.json'
+        original = json.loads(path.read_text())
+        for key, value in [('group', 'renderer'), ('source_before', {}), ('source_after', {}),
+                           ('workflow', {'workflow_run_id': 'other'}), ('runtime_after', {}),
+                           ('publication_approval', True), ('child_exit', 1)]:
+            with self.subTest(key=key):
+                receipt = copy.deepcopy(original)
+                receipt[key] = value
+                CONTROLS.HELPERS.write_json(path, receipt)
+                with self.assertRaises(ValueError):
+                    CONTROLS.verify(output, self.source, self.workflow)
+        CONTROLS.HELPERS.write_json(path, original)
+        self.assertEqual(CONTROLS.verify(output, self.source, self.workflow)['status'], 'passed')
+
+    def test_group_cannot_duplicate_or_move_passive_case_into_baseline(self):
+        output = self.grouped_receipts()
+        path = output / 'renderer/renderer-controls.json'
+        receipt = json.loads(path.read_text())
+        case = {'id': CONTROLS.PASSIVE_READER_ID, 'status': 'passed', 'errors': []}
+        receipt['python_cases'].append(case)
+        receipt['expected_python_ids'].append(case['id'])
+        receipt['python_executed'] += 1
+        CONTROLS.HELPERS.write_json(path, receipt)
+        with self.assertRaisesRegex(ValueError, 'Python execution'):
+            CONTROLS.verify(output, self.source, self.workflow)
+
+    def test_passive_group_cannot_supply_unowned_or_duplicate_node_results(self):
+        output = self.grouped_receipts()
+        path = output / 'passive-reader/renderer-controls.json'
+        receipt = json.loads(path.read_text())
+        receipt['node_executed'] = 2
+        receipt['node_cases'] = self.receipt['node_cases']
+        CONTROLS.HELPERS.write_json(path, receipt)
+        with self.assertRaisesRegex(ValueError, 'Node case accounting'):
+            CONTROLS.verify(output, self.source, self.workflow)
+        receipt.update(node_executed=0, node_cases=[])
+        shutil.copyfile(self.events, path.parent / 'node-events.jsonl')
+        receipt['artifact_digests'] = CONTROLS.HELPERS.inventory(path.parent)
+        receipt['artifact_digests'].pop(path.name)
+        CONTROLS.HELPERS.write_json(path, receipt)
+        with self.assertRaisesRegex(ValueError, 'substitute unrelated Node'):
+            CONTROLS.verify(output, self.source, self.workflow)
+
+    def test_group_physical_artifact_changes_remain_fail_closed(self):
+        output = self.grouped_receipts()
+        events = output / 'renderer/node-events.jsonl'
+        events.write_text(events.read_text() + '\n')
+        with self.assertRaises(ValueError):
+            CONTROLS.verify(output, self.source, self.workflow)
+
+    def test_partition_owner_rejects_full_local_receipt_instead_of_groups(self):
+        self.assertEqual(CONTROLS.verify(self.root, self.source, self.workflow)['status'], 'passed')
+        with self.assertRaisesRegex(ValueError, 'group evidence'):
+            CONTROLS.verify_groups(self.root, self.source, self.workflow)
+
+    def test_partition_owner_rejects_group_symlink_and_non_directory(self):
+        output = self.grouped_receipts()
+        passive = output / 'passive-reader'
+        destination = self.root / 'relocated-passive'
+        passive.rename(destination)
+        passive.symlink_to(destination, target_is_directory=True)
+        with self.assertRaisesRegex(ValueError, 'group evidence'):
+            CONTROLS.verify_groups(output, self.source, self.workflow)
+        passive.unlink()
+        passive.write_text('not group evidence')
+        with self.assertRaisesRegex(ValueError, 'group evidence'):
+            CONTROLS.verify_groups(output, self.source, self.workflow)
+
+
 if __name__ == '__main__':
     unittest.main()

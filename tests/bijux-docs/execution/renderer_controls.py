@@ -19,6 +19,9 @@ ROOT = Path(__file__).resolve().parents[3]
 TESTS = ROOT / 'tests/bijux-docs'
 NODE_TEST_COUNT = 405
 NODE_VERSION = 'v24.21.0'
+GROUPS = ('renderer', 'passive-reader')
+PASSIVE_READER_ID = ('test_standalone_reader_renderer.StandaloneRendererTests.'
+                     'test_committed_passive_reader_and_native_search_reconstruct_together')
 
 
 def load(name: str, path: Path):
@@ -41,6 +44,21 @@ def expected_python_ids() -> list[str]:
     if not ids or len(ids) != len(set(ids)):
         raise ValueError('Renderer Python source inventory is empty or duplicated')
     return sorted(ids)
+
+
+
+def group_python_ids(group: str | None = None) -> list[str]:
+    expected = expected_python_ids()
+    if group is None:
+        return expected
+    if group not in GROUPS or expected.count(PASSIVE_READER_ID) != 1:
+        raise ValueError('Unknown renderer group or missing source-owned passive reader')
+    return [name for name in expected if (name == PASSIVE_READER_ID) == (group == 'passive-reader')]
+
+
+def group_node_count(group: str | None = None) -> int:
+    group_python_ids(group)
+    return 0 if group == 'passive-reader' else NODE_TEST_COUNT
 
 
 def node_files() -> list[Path]:
@@ -229,43 +247,52 @@ def node_cases(path: Path, files: list[Path], expected_count: int | None = None)
     return records
 
 
-def execute(output: Path, node: Path) -> dict:
+def execute(output: Path, node: Path, group: str | None = None) -> dict:
     before = runtime_identity(node)
     suite = unittest.defaultTestLoader.discover(str(TESTS / 'generated'), pattern='test_*.py')
-    expected = expected_python_ids()
-    if sorted(test.id() for test in HELPERS.flatten(suite)) != expected:
+    all_expected = expected_python_ids()
+    if sorted(test.id() for test in HELPERS.flatten(suite)) != all_expected:
         raise ValueError('Discovered renderer cases differ from their source-owned inventory')
-    files = node_files()
-    with (output / 'node-events.jsonl').open('w') as stdout, (output / 'node-stderr.log').open('w') as stderr:
-        child = subprocess.run([str(node), '--test', '--test-reporter=' + str(Path(__file__).with_name('node_events.cjs')),
-                                *map(str, files)], cwd=ROOT, stdout=stdout, stderr=stderr, env=node_environment(node))
+    expected = group_python_ids(group)
+    suite = unittest.TestSuite(test for test in HELPERS.flatten(suite) if test.id() in expected)
+    files = node_files() if group_node_count(group) else []
+    node_exit = 0
+    if files:
+        with (output / 'node-events.jsonl').open('w') as stdout, (output / 'node-stderr.log').open('w') as stderr:
+            child = subprocess.run([str(node), '--test', '--test-reporter=' + str(Path(__file__).with_name('node_events.cjs')),
+                                    *map(str, files)], cwd=ROOT, stdout=stdout, stderr=stderr, env=node_environment(node))
+        node_exit = child.returncode
     with (output / 'python-unittest.log').open('w') as stream:
         result = unittest.TextTestRunner(stream=stream, verbosity=2, resultclass=HELPERS.CommandResult).run(suite)
-    cases = node_cases(output / 'node-events.jsonl', files)
-    if child.returncode or not result.wasSuccessful():
+    cases = node_cases(output / 'node-events.jsonl', files) if files else []
+    if node_exit or not result.wasSuccessful():
         raise ValueError('Renderer unit execution failed')
     return {'expected_python_ids': expected, 'python_cases': result.records,
             'python_executed': result.testsRun, 'node_cases': cases, 'node_executed': len(cases),
-            'node_exit': child.returncode, 'runtime_before': before, 'runtime_after': runtime_identity(node)}
+            'node_exit': node_exit, 'group': group, 'runtime_before': before, 'runtime_after': runtime_identity(node)}
 
 
-def verify(output: Path, current_source: dict | None = None, workflow: dict | None = None) -> dict:
+def verify_receipt(output: Path, current_source: dict | None = None, workflow: dict | None = None,
+                   group: str | None = None) -> dict:
     receipt = json.loads((output / 'renderer-controls.json').read_text())
     source = current_source if current_source is not None else HELPERS.source_identity()
     identity = workflow if workflow is not None else HELPERS.workflow_identity()
-    if (receipt.get('schema') != 1 or receipt.get('status') != 'passed'
+    if (receipt.get('schema') != 1 or receipt.get('group') != group or receipt.get('status') != 'passed'
             or receipt.get('verification_only') is not True or receipt.get('publication_approval') is not False
             or receipt.get('workflow') != identity or receipt.get('source_before') != source
             or receipt.get('source_after') != source or receipt.get('child_exit') != 0 or receipt.get('node_exit') != 0):
         raise ValueError('Renderer controls lack passing current source/workflow execution')
-    expected = expected_python_ids()
+    expected = group_python_ids(group)
     cases = receipt.get('python_cases', [])
     if (receipt.get('expected_python_ids') != expected or receipt.get('python_executed') != len(expected)
             or sorted(case['id'] for case in cases) != expected
             or any(case.get('status') != 'passed' or case.get('errors') for case in cases)):
         raise ValueError('Renderer Python execution accounting is incomplete or nonpassing')
-    node = node_cases(output / 'node-events.jsonl', node_files())
-    if receipt.get('node_cases') != node or receipt.get('node_executed') != NODE_TEST_COUNT:
+    count = group_node_count(group)
+    if not count and any((output / name).exists() for name in ('node-events.jsonl', 'node-stderr.log')):
+        raise ValueError('Passive reader group cannot substitute unrelated Node execution')
+    node = node_cases(output / 'node-events.jsonl', node_files()) if count else []
+    if receipt.get('node_cases') != node or receipt.get('node_executed') != count:
         raise ValueError('Renderer Node case accounting differs from its native events')
     before = receipt.get('runtime_before', {})
     if before != receipt.get('runtime_after'):
@@ -278,19 +305,46 @@ def verify(output: Path, current_source: dict | None = None, workflow: dict | No
     return receipt
 
 
-def run(python: Path, node: Path, output: Path) -> None:
+
+def verify(output: Path, current_source: dict | None = None, workflow: dict | None = None) -> dict:
+    if (output / 'renderer-controls.json').exists():
+        return verify_receipt(output, current_source, workflow)
+    return verify_groups(output, current_source, workflow)
+
+
+def verify_groups(output: Path, current_source: dict | None = None, workflow: dict | None = None) -> dict:
+    if (not output.is_dir() or output.is_symlink()
+            or {path.name for path in output.iterdir()} != set(GROUPS)
+            or any(not (output / group).is_dir() or (output / group).is_symlink() for group in GROUPS)):
+        raise ValueError('Renderer group evidence is missing, duplicated or unexpected')
+    source = current_source if current_source is not None else HELPERS.source_identity()
+    identity = workflow if workflow is not None else HELPERS.workflow_identity()
+    receipts = {group: verify_receipt(output / group, source, identity, group) for group in GROUPS}
+    python_ids = [case['id'] for receipt in receipts.values() for case in receipt['python_cases']]
+    if sorted(python_ids) != expected_python_ids() or len(python_ids) != len(set(python_ids)):
+        raise ValueError('Renderer group union does not execute every Python source case exactly once')
+    if sum(receipt['node_executed'] for receipt in receipts.values()) != NODE_TEST_COUNT:
+        raise ValueError('Renderer group union omitted native Node execution')
+    return {'schema': 2, 'status': 'passed', 'verification_only': True, 'publication_approval': False,
+            'source_before': source, 'source_after': source, 'workflow': identity, 'groups': receipts,
+            'python_executed': len(python_ids), 'node_executed': NODE_TEST_COUNT}
+
+
+def run(python: Path, node: Path, output: Path, group: str | None = None) -> None:
     if output.exists() and any(output.iterdir()):
         raise ValueError('Preserve existing renderer control evidence')
     output.mkdir(parents=True, exist_ok=True)
+    group_python_ids(group)
     source, workflow = HELPERS.source_identity(), HELPERS.workflow_identity()
     started = time.monotonic()
     child = subprocess.run([str(python.absolute()), str(Path(__file__).resolve()), '_execute',
-                            '--node', str(node.absolute()), '--output', str(output)], cwd=ROOT,
+                            '--node', str(node.absolute()), '--output', str(output),
+                            *(['--group', group] if group is not None else [])], cwd=ROOT,
                            env=node_environment(node),
                            capture_output=True, text=True)
     (output / 'runner.log').write_text(child.stdout + child.stderr)
     receipt = {'schema': 1, 'status': 'passed' if child.returncode == 0 else 'failed',
-               'verification_only': True, 'publication_approval': False,
+               'verification_only': True, 'publication_approval': False, 'group': group,
                'workflow': workflow, 'source_before': source, 'source_after': HELPERS.source_identity(),
                'child_exit': child.returncode, 'seconds': time.monotonic() - started}
     if (output / 'execution.json').is_file():
@@ -298,7 +352,7 @@ def run(python: Path, node: Path, output: Path) -> None:
     receipt['artifact_digests'] = HELPERS.inventory(output)
     HELPERS.write_json(output / 'renderer-controls.json', receipt)
     try:
-        verify(output)
+        verify_receipt(output, group=group)
     except (ValueError, KeyError, OSError, TypeError) as error:
         receipt.update(status='failed', error=str(error))
         HELPERS.write_json(output / 'renderer-controls.json', receipt)
@@ -308,6 +362,7 @@ def run(python: Path, node: Path, output: Path) -> None:
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('operation', choices=('run', 'verify', '_execute'))
+    parser.add_argument('--group', choices=GROUPS)
     parser.add_argument('--python', type=Path)
     parser.add_argument('--node', type=Path)
     parser.add_argument('--output', type=Path, required=True)
@@ -319,11 +374,14 @@ def main() -> int:
         parser.error('Renderer control evidence belongs under repository artifacts/')
     try:
         if args.operation == '_execute':
-            HELPERS.write_json(output / 'execution.json', execute(output, args.node))
+            HELPERS.write_json(output / 'execution.json', execute(output, args.node, args.group))
         elif args.operation == 'run':
-            run(args.python, args.node, output)
+            run(args.python, args.node, output, args.group)
         else:
-            verify(output)
+            if args.group is None:
+                verify(output)
+            else:
+                verify_receipt(output, group=args.group)
     except (ValueError, KeyError, OSError, TypeError, subprocess.SubprocessError) as error:
         print('Renderer controls failed:', error)
         return 1
