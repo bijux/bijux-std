@@ -23,6 +23,38 @@ class HistoryRendererRecipe(unittest.TestCase):
         self.assertEqual(pins['mkdocs-git-revision-date-localized-plugin'], '1.5.1')
         self.assertFalse(self.recipe['publication_admission'])
 
+    def test_history_lock_has_recipe_ownership_outside_mutable_fixture_dependencies(self):
+        self.assertEqual(gate.LOCK, 'tests/bijux-docs/execution/recipes/canon-docs/requirements.lock')
+        self.assertFalse((ROOT / 'tests/bijux-docs/generated/requirements-canon-docs.lock.txt').exists())
+        self.assertNotIn(Path(gate.LOCK).suffix, {'.txt', '.in'})
+        self.assertEqual(gate.observer.sha(self.lock), 'd59e4fdbc3f947a0bcd31e390fd3d1fb1c07fb121b0221d451e2097b1ed29bdb')
+
+    def test_normal_renderer_keeps_current_urllib3_security_revision(self):
+        pins = dict(gate.observer.locked_packages((ROOT / 'tests/bijux-docs/generated/requirements.lock.txt').read_bytes()))
+        self.assertEqual(pins['urllib3'], '2.8.0')
+        self.assertNotIn('gitpython', pins)
+        self.assertEqual(self.recipe['packages']['urllib3'], '2.7.0')
+        self.assertEqual(self.recipe['packages']['gitpython'], '3.1.59')
+
+    def test_dependency_revisions_cannot_relabel_frozen_canon_source(self):
+        for old, new in [(b'urllib3==2.7.0', b'urllib3==2.8.0'), (b'gitpython==3.1.59', b'gitpython==3.1.62')]:
+            with self.subTest(package=old):
+                changed = self.lock.replace(old, new)
+                self.assertNotEqual(changed, self.lock)
+                self.assertRaisesRegex(gate.observer.ObservationError, 'lock identity', gate.validate_recipe, self.recipe, changed)
+                recipe = {**self.recipe, 'lock_sha256': gate.observer.sha(changed)}
+                self.assertRaisesRegex(gate.observer.ObservationError, 'complete Canon', gate.validate_recipe, recipe, changed)
+
+    def test_old_dependency_manifest_path_cannot_claim_relocated_recipe(self):
+        recipe = {**self.recipe, 'lock_path': 'tests/bijux-docs/generated/requirements-canon-docs.lock.txt'}
+        self.assertRaisesRegex(gate.observer.ObservationError, 'lock identity', gate.validate_recipe, recipe, self.lock)
+
+    def test_observation_workflow_installs_only_the_explicit_frozen_recipe(self):
+        workflow = (ROOT / '.github/workflows/renderer-observation.yml').read_text()
+        self.assertIn('--requirement ' + gate.LOCK, workflow)
+        self.assertIn('      - ' + gate.LOCK, workflow)
+        self.assertNotIn('requirements-canon-docs.lock.txt', workflow)
+
     def test_changed_locked_bytes_rejected(self):
         self.assertRaisesRegex(gate.observer.ObservationError, 'lock identity', gate.validate_recipe, self.recipe, self.lock.replace(b'backrefs==6.2', b'backrefs==8.0'))
 

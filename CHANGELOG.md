@@ -16,6 +16,14 @@ Keep each reused page occurrence’s authored navigation name while preserving i
 
 ### Merged pull requests
 
+#### 2026-10-09T06:31:01Z — [#236](https://github.com/bijux/bijux-std/pull/236) — fix(ci): separate frozen renderer provenance from dependency candidates
+
+Preserve the exact Canon renderer observation snapshot while keeping dependency automation on active package candidates.
+
+- Move the unchanged 36-package snapshot into its owned recipe boundary and update explicit observer/workflow references.
+- Retain source, lock digest and package provenance; reject changed snapshots even when a caller changes the expected digest.
+- Keep actual consumer security upgrades and production profile qualification separate.
+
 #### 2026-10-09T06:10:24Z — [#235](https://github.com/bijux/bijux-std/pull/235) — fix(docs): retain reader focus and desktop disclosure hit surfaces
 
 Keep keyboard reading continuity through Back/Forward and make the visible complete desktop tree respond to ordinary pointer input.
