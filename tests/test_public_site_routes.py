@@ -100,6 +100,80 @@ class PublicSiteRouteTests(unittest.TestCase):
         path.write_text(path.read_text().replace(self.url+'guide/', './'))
         self.assert_rejected('canonical must identify this production route')
 
+    def test_actual_refresh_destination_requires_a_built_product_route(self):
+        for destination in ('http://127.0.0.1:8123/missing/', 'https://outside.example/guide/',
+                            'https://bijux.io/bijux-canon/', '../missing/'):
+            with self.subTest(destination=destination):
+                self.write('retired/index.html', '<html><head><link rel="canonical" href="'+self.url+
+                           'guide/"><meta http-equiv="refresh" content="0; url='+destination+'"></head></html>')
+                self.assert_rejected('redirect refresh')
+
+    def test_actual_refresh_destination_must_agree_with_canonical(self):
+        self.write('retired/index.html', '<html><head><link rel="canonical" href="'+self.url+
+                   'guide/"><meta http-equiv="refresh" content="0; url=../"></head></html>')
+        self.assert_rejected('redirect refresh destination differs from canonical')
+
+    def test_actual_refresh_fragment_requires_the_destination_anchor(self):
+        self.write('retired/index.html', '<html><head><link rel="canonical" href="'+self.url+
+                   'guide/"><meta http-equiv="refresh" content="0; url=../guide/#missing"></head></html>')
+        self.assert_rejected('redirect refresh anchor is missing')
+
+    def test_refresh_declaration_requires_one_unambiguous_destination(self):
+        for declaration in ('<meta http-equiv="refresh" content="0">',
+                            '<meta http-equiv="refresh" content="0; url=">',
+                            '<meta http-equiv="refresh" content="invalid; url=../guide/">',
+                            '<meta http-equiv="refresh" content="٠; url=../guide/">',
+                            '<meta http-equiv="refresh" content="0; url=\'../guide/">',
+                            '<meta http-equiv="refresh" content="0; url=../guide/"><meta http-equiv="refresh" content="0; url=../">',
+                            '<meta http-equiv="refresh" content="0; url=http://127.0.0.1/" content="0; url=../guide/">'):
+            with self.subTest(declaration=declaration):
+                self.write('retired/index.html', '<html><head><link rel="canonical" href="'+self.url+
+                           'guide/">'+declaration+'</head></html>')
+                self.assert_rejected('redirect refresh requires one unambiguous destination')
+
+    def test_refresh_quotes_case_and_existing_fragment_preserve_valid_redirects(self):
+        from html import escape
+        for content in ('0; url=../guide/', "0; URL = '../guide/#use'", '0.5; url="../guide/#use"'):
+            with self.subTest(content=content):
+                self.write('retired/index.html', '<html><head><link rel="canonical" href="'+self.url+
+                           'guide/"><meta http-equiv="REFRESH" content="'+escape(content,quote=True)+'"></head></html>')
+                self.assertEqual(self.report()['errors'], [])
+
+    def test_redirect_base_cannot_change_the_actual_refresh_destination(self):
+        for base in ('http://127.0.0.1/', 'https://outside.example/',
+                     'https://bijux.io/bijux-canon/', self.url+'guide/'):
+            with self.subTest(base=base):
+                self.write('retired/index.html', '<html><head><base href="'+base+'"><link rel="canonical" href="'+self.url+
+                           'guide/"><meta http-equiv="refresh" content="0; url=../guide/"></head></html>')
+                self.assert_rejected('unsupported redirect base href')
+        self.write('retired/index.html', '<html><head><base href=""><link rel="canonical" href="'+self.url+
+                   'guide/"><meta http-equiv="refresh" content="0; url=../guide/"></head></html>')
+        self.assertEqual(self.report()['errors'], [])
+        self.write('retired/index.html', '<html><head><base href="http://127.0.0.1/" href=""><link rel="canonical" href="'+self.url+
+                   'guide/"><meta http-equiv="refresh" content="0; url=../guide/"></head></html>')
+        self.assert_rejected('unsupported redirect base href')
+
+    def test_self_refresh_and_multi_route_cycle_are_rejected(self):
+        self.write('retired/index.html', '<html><head><link rel="canonical" href="'+self.url+
+                   'retired/"><meta http-equiv="refresh" content="0; url=./"></head></html>')
+        self.write('sitemap.xml', '<urlset>'+''.join('<url><loc>'+self.url+path+'</loc></url>'
+                   for path in ('','guide/','retired/'))+'</urlset>')
+        self.assert_rejected('redirect refresh cycle')
+        for source,destination in (('retired/','another/'),('another/','retired/')):
+            self.write(source+'index.html', '<html><head><link rel="canonical" href="'+self.url+
+                       destination+'"><meta http-equiv="refresh" content="0; url=../'+destination+'"></head></html>')
+        self.write('sitemap.xml', '<urlset>'+''.join('<url><loc>'+self.url+path+'</loc></url>'
+                   for path in ('','guide/','retired/','another/'))+'</urlset>')
+        self.assert_rejected('redirect refresh cycle')
+
+    def test_finite_refresh_chain_reaches_existing_content(self):
+        for source,destination in (('retired/','another/'),('another/','guide/')):
+            self.write(source+'index.html', '<html><head><link rel="canonical" href="'+self.url+
+                       destination+'"><meta http-equiv="refresh" content="0; url=../'+destination+'"></head></html>')
+        self.write('sitemap.xml', '<urlset>'+''.join('<url><loc>'+self.url+path+'</loc></url>'
+                   for path in ('','guide/','another/'))+'</urlset>')
+        self.assertEqual(self.report()['errors'], [])
+
     def test_encoded_hostname_and_browser_backslash_cannot_bypass_public_url_check(self):
         original=(self.site/'index.html').read_text()
         for url in ('https://%31%32%37.0.0.1/', 'https://example.com:wrong/', 'https:\\\\127.0.0.1\\example'):
