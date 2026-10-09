@@ -6,14 +6,21 @@ This file records notable repository-level changes for `bijux-std`.
 
 ### Pending review
 
-#### [#227](https://github.com/bijux/bijux-std/pull/227) — test(docs): verify native drawer activation and registry input
+#### [#230](https://github.com/bijux/bijux-std/pull/230) — ci(docs): compress complete public fault evidence for transport
+
+Reduce artifact download cost without changing retained source or fault evidence.
+
+- Compress the complete public-fault upload at level 1, retaining every member and exact payload hash.
+- Guard the full upload/download paths, failure evidence and unchanged three-minute job limit.
+
+### Merged pull requests
+
+#### 2026-10-09T03:45:10Z — [#227](https://github.com/bijux/bijux-std/pull/227) — test(docs): verify native drawer activation and registry input
 
 Require ordinary pointer, trusted touch, Space and Enter to open the drawer once and Escape to restore its trigger.
 
 - Observe native events and expanded-state transitions; qualify current and last registry targets through keyboard and touch input.
 - Retain 126 canonical navigation identities, real destination/heading checks and existing assertions; keep physical touch-pan and manual qualification explicit.
-
-### Merged pull requests
 
 #### 2026-10-09T03:07:07Z — [#226](https://github.com/bijux/bijux-std/pull/226) — fix(docs): admit reviewed revision history capability
 
