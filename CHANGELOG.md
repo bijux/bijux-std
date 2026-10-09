@@ -6,7 +6,16 @@ This file records notable repository-level changes for `bijux-std`.
 
 ### Pending review
 
-#### [#228](https://github.com/bijux/bijux-std/pull/228) — ci(docs): observe exact history renderer dependencies on linux
+#### [#232](https://github.com/bijux/bijux-std/pull/232) — fix(docs): preserve native palette keyboard and focus continuity
+
+Make native Material palette actions reachable by keyboard and retain focus on the next visible action after theme changes.
+
+- Preserve palette radio ownership, persistence and native Enter/Space activation; prevent hidden-radio focus and recover prior pointer focus without taking reader focus.
+- Exercise native and enhanced utility focus through existing contrast journeys across three browser engines, including forced-colour and no-script fallback coverage.
+
+### Merged pull requests
+
+#### 2026-10-09T05:24:47Z — [#228](https://github.com/bijux/bijux-std/pull/228) — ci(docs): observe exact history renderer dependencies on linux
 
 Capture the actual hosted Linux runtime for Canon's exact documentation dependency recipe before independent publication-profile review.
 
@@ -16,8 +25,6 @@ Capture the actual hosted Linux runtime for Canon's exact documentation dependen
 - Keep profile approval, consumer acceptance, authored build and publication separate; the prerequisite #226 is accepted.
 - Compare legitimate large unordered constant sets with explicit search frames while preserving NaN reference bijections, typed payloads, multiplicity and the fail-closed search budget.
 - Preserve initial API job rows and fetch only incomplete exact job identities once within a bounded observation window; terminal failures and strict duration checks remain unchanged.
-
-### Merged pull requests
 
 #### 2026-10-09T05:04:52Z — [#231](https://github.com/bijux/bijux-std/pull/231) — fix(docs): bind reviewed historical asset migration to source evidence
 
