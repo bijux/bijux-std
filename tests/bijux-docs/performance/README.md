@@ -150,3 +150,51 @@ opportunity observations; `interaction-evidence.cjs` owns exact named
 transition qualification and partial distributions. `interaction.cjs` owns
 ordinary browser input, emulation and terminal lifetime. No positive request
 routing, source rewriting, fake renderer or production publication participates.
+
+## Compatible measured-population comparison
+
+```sh
+node tests/bijux-docs/performance/comparison.cjs \
+  --source-root "$PWD" --source-sha "$(git rev-parse HEAD)" \
+  --family lab --mode paired-cache \
+  --baseline artifacts/qualification/payload-mobile-lab/current-chromium.json \
+  --baseline-sha256 '<externally reviewed raw report digest>' \
+  --baseline-runtime-proof artifacts/qualification/payload-mobile-lab/physical-runtime-continuity.json \
+  --baseline-runtime-proof-sha256 '<externally reviewed runtime proof digest>' \
+  --output artifacts/qualification/payload-measurement-comparison/cache-contrast.json
+node --test tests/bijux-docs/performance/comparison.test.cjs
+```
+
+The offline comparator uses explicit `paired-cache` and `repeated-run` modes.
+Select a fresh output destination; existing retained evidence cannot be overwritten.
+A paired contrast retains three actual cold/warm new-document pairs per lab
+route; cache state is the intentional observational axis. It reports actual
+values, distributions, signed pair differences, absolute differences and median
+arithmetic. This is not an implementation speedup, optimization certification,
+statistical-significance claim or budget. A zero median baseline has no defined
+relative percentage, even when both measured values are zero.
+
+A repeated comparison additionally selects `--candidate` and its externally
+reviewed `--candidate-sha256`. Both independently qualified inputs must match
+measurement family, exact source, fixture/asset/recipe/config ownership,
+profile/horizon/cache state, metric semantics/unit/population, runtime/host and
+observer fingerprints. A different artifact digest with reused execution IDs
+still cannot certify independent runs. The two supported families are `lab`
+and `interaction`; transport, static quantity and field measurements are not
+interchangeable populations. For interaction inputs, select each original
+`--baseline-owner` / `--candidate-owner` fixture manifest and its matching
+`--baseline-owner-sha256` / `--candidate-owner-sha256` digest. Runtime proofs use
+the corresponding candidate options when required.
+
+The CLI pins raw input bytes and independently requalifies their snapshots,
+source Git objects, finite producer recipe and source-owned metric semantics.
+Saved result labels or precomputed distributions cannot repair raw failures.
+Selected executable/package and host identities are mandatory; a retained,
+pinned physical proof can supply an older report's missing selected-executable
+fingerprint. This does not certify a broader browser-installation census.
+Unknown, unsupported, incomplete, historical-incompatible or failed values
+remain unavailable and return a nonzero exit. Finite compatible historical
+measurements retain their original source and explicit historical scope relative
+to the current comparator; they do not qualify the current production frontend.
+The current tool identity remains separate from the compared evidence identities.
+No browser, build, installation, timing threshold or field INP is introduced.
