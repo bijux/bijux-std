@@ -6,6 +6,13 @@ This file records notable repository-level changes for `bijux-std`.
 
 ### Pending review
 
+#### [#227](https://github.com/bijux/bijux-std/pull/227) — test(docs): verify native drawer activation and registry input
+
+Require ordinary pointer, trusted touch, Space and Enter to open the drawer once and Escape to restore its trigger.
+
+- Observe native events and expanded-state transitions; qualify current and last registry targets through keyboard and touch input.
+- Retain126 canonical navigation identities, real destination/heading checks and existing assertions; keep physical touch-pan and manual qualification explicit.
+
 #### [#223](https://github.com/bijux/bijux-std/pull/223) — fix(docs): capture committed publication source and callback inputs
 
 Bind publication inputs to their exact committed Git bytes without treating ignored run caches as source.
