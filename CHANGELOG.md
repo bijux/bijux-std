@@ -12,6 +12,10 @@ Retain the unique authored reading destination and trusted viewport offset throu
 
 ### Merged pull requests
 
+#### 2026-10-09T16:52:53Z — [#252](https://github.com/bijux/bijux-std/pull/252) — test(docs): require rendered authored content coverage
+
+Require the existing rich-content assertions in all nine engine and viewport combinations through the existing semantics jobs.
+
 #### 2026-10-09T16:25:54Z — [#251](https://github.com/bijux/bijux-std/pull/251) — test(docs): cover authored phone navigation destinations
 
 Reach every authored fixture destination from the phone root drawer and bind expected routes and headings to the source graph, while retaining all existing navigation case identities.
