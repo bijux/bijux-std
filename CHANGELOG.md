@@ -6,6 +6,14 @@ This file records notable repository-level changes for `bijux-std`.
 
 ### Pending review
 
+#### [#229](https://github.com/bijux/bijux-std/pull/229) — fix(docs): preserve enlarged compact masthead identity
+
+Keep the complete site identity and utility controls visible when compact readers enlarge text or apply spacing.
+
+- Own logical title spacing above Material and allow intrinsic wrapping with natural height.
+- Check complete utility census, glyph clipping, pointer targets and supplemental breakpoints while retaining the 126 navigation cases.
+- Keep physical zoom, assistive/device and consumer qualification separate; this review depends on #227.
+
 #### [#227](https://github.com/bijux/bijux-std/pull/227) — test(docs): verify native drawer activation and registry input
 
 Require ordinary pointer, trusted touch, Space and Enter to open the drawer once and Escape to restore its trigger.
