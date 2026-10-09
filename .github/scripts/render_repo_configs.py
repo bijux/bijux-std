@@ -2,12 +2,21 @@
 from __future__ import annotations
 
 import argparse
+import importlib.util
 import json
 import os
 import re
 import shlex
 from pathlib import Path
 from typing import Any
+
+# Bind the policy helper to this canonical script tree, never the process import cache.
+_POLICY_SPEC = importlib.util.spec_from_file_location(
+    __name__ + ".workflow_execution", Path(__file__).resolve().with_name("workflow_execution.py")
+)
+assert _POLICY_SPEC is not None and _POLICY_SPEC.loader is not None
+WORKFLOW_EXECUTION = importlib.util.module_from_spec(_POLICY_SPEC)
+_POLICY_SPEC.loader.exec_module(WORKFLOW_EXECUTION)
 
 ROOT = Path(__file__).resolve().parents[3]
 SCRIPT_REPO_ROOT = Path(__file__).resolve().parents[2]
@@ -369,6 +378,7 @@ def inject_dependabot_pull_request_skip(
 
 
 def render_repo(repo_name: str, manifest: dict) -> None:
+    WORKFLOW_EXECUTION.validate_manifest(manifest, [repo_name])
     repo = find_repo_config(manifest, repo_name)
     repo_root = resolve_repository_checkout(repo_name)
 
@@ -435,6 +445,7 @@ def main() -> None:
     manifest = json.loads(Path(args.manifest).read_text(encoding="utf-8"))
     repos = args.repo or [repo["name"] for repo in manifest["repositories"]]
 
+    WORKFLOW_EXECUTION.validate_manifest(manifest, repos)
     for repo_name in repos:
         render_repo(repo_name, manifest)
 

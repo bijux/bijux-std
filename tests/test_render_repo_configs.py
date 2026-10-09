@@ -51,6 +51,30 @@ class RenderRepoConfigsTests(unittest.TestCase):
                 consumer_source,
             )
 
+    def test_batch_refuses_invalid_later_policy_before_any_render(self) -> None:
+        manifest = {"repositories": [{"name": "bijux-atlas"}, {"name": "bijux-canon", "workflow_execution_policy": {"schema": True}}]}
+        with tempfile.TemporaryDirectory() as workspace:
+            path = Path(workspace) / "manifest.json"
+            path.write_text(json.dumps(manifest))
+            with (mock.patch.object(sys, "argv", ["render_repo_configs.py", "--manifest", str(path)]),
+                  mock.patch.object(MODULE, "render_repo") as render):
+                with self.assertRaises(ValueError):
+                    MODULE.main()
+                render.assert_not_called()
+
+    def test_invalid_execution_policy_refuses_before_render_writes(self) -> None:
+        with tempfile.TemporaryDirectory() as checkout:
+            root = Path(checkout)
+            sentinel = root / ".github/release.env"
+            sentinel.parent.mkdir()
+            sentinel.write_text("owned preimage\n", encoding="utf-8")
+            manifest = {"repositories": [{"name": "bijux-atlas", "workflow_execution_policy": {"schema": True}}]}
+            with mock.patch.object(MODULE, "resolve_repository_checkout", return_value=root):
+                with self.assertRaises(ValueError):
+                    MODULE.render_repo("bijux-atlas", manifest)
+            self.assertEqual(sentinel.read_text(), "owned preimage\n")
+            self.assertEqual([p.relative_to(root).as_posix() for p in root.rglob("*") if p.is_file()], [".github/release.env"])
+
     def test_canon_ci_covers_supported_package_and_platform_matrix(self) -> None:
         manifest = json.loads(MANIFEST_PATH.read_text(encoding="utf-8"))
         repository = next(

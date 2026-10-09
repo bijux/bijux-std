@@ -3,12 +3,21 @@ from __future__ import annotations
 
 import argparse
 import hashlib
+import importlib.util
 import json
 import os
 import shutil
 import subprocess
 from pathlib import Path
 from typing import Any
+
+# Bind the policy helper to this canonical script tree, never the process import cache.
+_POLICY_SPEC = importlib.util.spec_from_file_location(
+    __name__ + ".workflow_execution", Path(__file__).resolve().with_name("workflow_execution.py")
+)
+assert _POLICY_SPEC is not None and _POLICY_SPEC.loader is not None
+WORKFLOW_EXECUTION = importlib.util.module_from_spec(_POLICY_SPEC)
+_POLICY_SPEC.loader.exec_module(WORKFLOW_EXECUTION)
 
 ROOT = Path(__file__).resolve().parents[3]
 SCRIPT_REPO_ROOT = Path(__file__).resolve().parents[2]
@@ -64,6 +73,7 @@ BASE_FILE_MAPPINGS: list[tuple[str, str]] = [
     (".github/automation-identity.md", ".github/automation-identity.md"),
     (".github/required-status-checks.md", ".github/required-status-checks.md"),
     (".github/rulesets/main-branch-protection.json", ".github/rulesets/main-branch-protection.json"),
+    (".github/scripts/workflow_execution.py", ".github/scripts/workflow_execution.py"),
     (".github/scripts/build_repo_manifest.py", ".github/scripts/build_repo_manifest.py"),
     (".github/scripts/check_pinned_actions.py", ".github/scripts/check_pinned_actions.py"),
     (".github/scripts/check_protected_github_changes.py", ".github/scripts/check_protected_github_changes.py"),
@@ -188,6 +198,9 @@ def copy_file_mapping(source_relative: str, destination_relative: str, repo_dir:
 
 
 def copy_repo_files(target_repo: str, repo_config: dict[str, Any], manifest: dict[str, Any]) -> None:
+    WORKFLOW_EXECUTION.validate_manifest(manifest, [target_repo])
+    if repo_config != find_repo_config(manifest, target_repo):
+        raise ValueError("repository configuration must match canonical manifest")
     repo_dir = resolve_repository_checkout(target_repo)
     for source_relative, destination_relative in BASE_FILE_MAPPINGS:
         copy_file_mapping(source_relative, destination_relative, repo_dir)
@@ -341,6 +354,8 @@ def main() -> None:
     args = parser.parse_args()
 
     repos = args.repo or DEFAULT_REPOS
+    manifest = load_manifest()
+    WORKFLOW_EXECUTION.validate_manifest(manifest, ["bijux-std", *repos])
     std_sha = run(["git", "rev-parse", "HEAD"], cwd=STD_REPO)
 
     render_script = STD_REPO / ".github/scripts/render_repo_configs.py"
@@ -353,7 +368,7 @@ def main() -> None:
 
     for repo in repos:
         repo_dir = resolve_repository_checkout(repo)
-        copy_shared_files(repo)
+        sync_repo_files(repo, manifest)
         subprocess.run(["python3", str(render_script), "--repo", repo], check=True)
         refresh_shared_checksums(repo_dir)
 

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import hashlib
 import importlib.util
+import json
 import os
 import sys
 import tempfile
@@ -27,6 +28,32 @@ SPEC.loader.exec_module(MODULE)
 
 
 class SyncGithubStandardsTests(unittest.TestCase):
+    def test_direct_copy_refuses_invalid_policy_and_inventory_before_write(self) -> None:
+        for manifest in [
+            {"repositories": [{"name": "bijux-atlas", "workflow_execution_policy": {"schema": True}}]},
+            {"repositories": [{"name": "bijux-atlas"}], "workflow_inventory": {"version": True, "managed_workflows": []}},
+        ]:
+            with self.subTest(manifest=manifest), mock.patch.object(MODULE, "copy_file_mapping") as copy_file:
+                with self.assertRaises(ValueError):
+                    MODULE.copy_repo_files("bijux-atlas", manifest["repositories"][0], manifest)
+                copy_file.assert_not_called()
+
+    def test_batch_preflight_precedes_standard_render_checksum_and_git(self) -> None:
+        manifest = {"repositories": [{"name": "bijux-std"}, {"name": "bijux-atlas"}, {"name": "bijux-canon", "workflow_execution_policy": {"schema": True}}]}
+        with (mock.patch.object(MODULE, "load_manifest", return_value=manifest),
+              mock.patch.object(MODULE, "run") as git_run,
+              mock.patch.object(MODULE.subprocess, "run") as process,
+              mock.patch.object(MODULE, "refresh_shared_checksums") as checksum,
+              mock.patch.object(sys, "argv", ["sync_github_standards.py", "--repo", "bijux-atlas", "--repo", "bijux-canon"])):
+            with self.assertRaises(ValueError):
+                MODULE.main()
+            git_run.assert_not_called()
+            process.assert_not_called()
+            checksum.assert_not_called()
+
+    def test_policy_helper_is_canonical_managed_script(self) -> None:
+        self.assertIn((".github/scripts/workflow_execution.py", ".github/scripts/workflow_execution.py"), MODULE.BASE_FILE_MAPPINGS)
+
     def test_observe_merge_reads_status_once(self) -> None:
         payload = '{"number":7,"state":"OPEN","mergeStateStatus":"BLOCKED"}'
         with mock.patch.object(MODULE, "run", return_value=payload) as run:
