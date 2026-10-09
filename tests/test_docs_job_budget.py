@@ -30,7 +30,7 @@ class FrontendJobBudgetTests(unittest.TestCase):
         receipt = self.verify()
         self.assertEqual(receipt['maximum_seconds'], 179.999)
         self.assertEqual(receipt['maximum_queue_seconds'], 300)
-        self.assertEqual(receipt['executed_jobs'], 13)
+        self.assertEqual(receipt['executed_jobs'], 17)
 
     def test_report_can_be_running_while_completed_dependencies_are_checked(self):
         report = next(j for j in self.data['jobs'] if j['name'] == 'std / report')
@@ -121,7 +121,7 @@ class FrontendJobBudgetTests(unittest.TestCase):
         self.assertEqual(self.data, original)
         receipt = BUDGET.qualify(refreshed, groups=self.groups, engines=self.engines,
             run_id=123, attempt=2, head=self.head)
-        self.assertEqual(receipt['executed_jobs'], 13)
+        self.assertEqual(receipt['executed_jobs'], 17)
         self.assertEqual(receipt['maximum_seconds'], 179.999)
 
     def test_incomplete_fresh_row_and_completed_steps_cannot_infer_success(self):
@@ -182,18 +182,106 @@ class FrontendJobBudgetTests(unittest.TestCase):
         artifacts = ROOT / 'artifacts/qualification/browser-partitions-integration'
         artifacts.mkdir(parents=True, exist_ok=True)
         with tempfile.TemporaryDirectory(dir=artifacts) as directory:
-            root = Path(directory)
+            owner = Path(directory)
+            root = owner / 'execution'
+            root.mkdir()
+            catalogue = owner / 'catalogue'
+            catalogue.mkdir()
+            (catalogue / 'execution.py').write_text("GROUPS = {'source': ('test_source',)}\n")
             for name in ('browser_gate.py', 'browser_partitions.py', 'browser_partitions.json'):
                 (root / name).write_text(name)
             before = BUDGET.registry_digests(root / 'browser_gate.py')
-            self.assertEqual(set(before), {'browser_gate.py', 'browser_partitions.py', 'browser_partitions.json'})
+            self.assertEqual(set(before), {'browser_gate.py', 'browser_partitions.py', 'browser_partitions.json', 'catalogue/execution.py'})
             (root / 'browser_partitions.json').write_text('changed declaration')
             after = BUDGET.registry_digests(root / 'browser_gate.py')
             self.assertNotEqual(before['browser_partitions.json'], after['browser_partitions.json'])
             self.assertEqual(before['browser_gate.py'], after['browser_gate.py'])
+            (catalogue / 'execution.py').write_text("GROUPS = {'renderer': ('test_renderer',)}\n")
+            changed = BUDGET.registry_digests(root / 'browser_gate.py')
+            self.assertNotEqual(before['catalogue/execution.py'], changed['catalogue/execution.py'])
             (root / 'browser_partitions.py').unlink()
             with self.assertRaises(FileNotFoundError):
                 BUDGET.registry_digests(root / 'browser_gate.py')
+
+
+    def test_every_catalogue_job_is_owned_and_budgeted(self):
+        receipt = self.verify()
+        wanted = BUDGET.catalogue_job_names()
+        self.assertEqual(wanted, {'std / catalogue source', 'std / catalogue renderer',
+                                 'std / catalogue typed-entrypoint', 'std / catalogue tracked-entrypoint'})
+        self.assertEqual({row['name'] for row in receipt['jobs'] if row['name'].startswith('std / catalogue ')}, wanted)
+
+    def test_missing_duplicate_and_unknown_catalogue_jobs_fail_closed(self):
+        baseline = copy.deepcopy(self.data)
+        for defect in ('missing', 'duplicate', 'unknown'):
+            with self.subTest(defect=defect):
+                self.data = copy.deepcopy(baseline)
+                target = next(row for row in self.data['jobs'] if row['name'] == 'std / catalogue source')
+                if defect == 'missing':
+                    self.data['jobs'].remove(target)
+                elif defect == 'duplicate':
+                    self.data['jobs'].append(copy.deepcopy(target))
+                else:
+                    target['name'] = 'std / catalogue unknown'
+                self.data['total_count'] = len(self.data['jobs'])
+                with self.assertRaises(ValueError):
+                    self.verify()
+
+    def test_catalogue_setup_upload_and_cleanup_count_toward_strict_budget(self):
+        target = next(row for row in self.data['jobs'] if row['name'] == 'std / catalogue source')
+        target['steps'] = [{'name': 'Catalogue cases', 'status': 'completed', 'conclusion': 'success',
+                           'started_at': '2026-01-01T00:05:30Z', 'completed_at': '2026-01-01T00:05:40Z'}]
+        for end in ('2026-01-01T00:08:00Z', '2026-01-01T00:08:20Z'):
+            with self.subTest(end=end):
+                target['completed_at'] = end
+                with self.assertRaisesRegex(ValueError, '180-second'):
+                    self.verify()
+
+    def test_nonterminal_and_failed_catalogue_results_are_not_qualified(self):
+        target = next(row for row in self.data['jobs'] if row['name'] == 'std / catalogue source')
+        for status, conclusion in [('queued', None), ('in_progress', None),
+                                   ('completed', 'cancelled'), ('completed', 'failure'), ('completed', 'skipped')]:
+            with self.subTest(status=status, conclusion=conclusion):
+                target.update(status=status, conclusion=conclusion)
+                with self.assertRaisesRegex(ValueError, 'terminal-success'):
+                    self.verify()
+
+    def test_catalogue_refresh_retains_actual_source_identity(self):
+        target = next(row for row in self.data['jobs'] if row['name'] == 'std / catalogue source')
+        completed = copy.deepcopy(target)
+        target.update(status='in_progress', conclusion=None, completed_at=None)
+        refreshed = self.refresh(lambda identifier: completed)
+        self.assertEqual(self.data['jobs'][0]['head_sha'], self.head)
+        self.assertEqual(BUDGET.qualify(refreshed, groups=self.groups, engines=self.engines,
+                         run_id=123, attempt=2, head=self.head)['executed_jobs'], 17)
+        with self.assertRaisesRegex(ValueError, 'Refreshed job identity'):
+            self.refresh(lambda identifier: {**completed, 'head_sha': 'b' * 40})
+
+    def test_catalogue_registry_cannot_execute_or_admit_malformed_selections(self):
+        artifacts = ROOT / 'artifacts/catalogue-budget-registry-controls'
+        artifacts.mkdir(parents=True, exist_ok=True)
+        with tempfile.TemporaryDirectory(dir=artifacts) as directory:
+            path = Path(directory) / 'execution.py'
+            for text in ("GROUPS = dangerous()", "GROUPS = {}", "GROUPS = {'source': ()}",
+                         "GROUPS = {'source': ('bad/id',)}", "GROUPS = {'bad/name': ('test_source',)}",
+                         "GROUPS = {'source': ['test_source']}", "GROUPS = 3", "broken source!",
+                         "GROUPS = {'source': ('test_source',)}\nGROUPS = {'other': ('test_other',)}"):
+                with self.subTest(text=text):
+                    path.write_text(text)
+                    with self.assertRaises(ValueError):
+                        BUDGET.catalogue_job_names(path)
+            path.write_text("GROUPS = {'source': ('test_source',), 'renderer': ('test_renderer',)}")
+            self.assertEqual(BUDGET.catalogue_job_names(path), {'std / catalogue source', 'std / catalogue renderer'})
+            other = Path(directory) / 'linked.py'
+            other.symlink_to(path)
+            with self.assertRaisesRegex(ValueError, 'ordinary source'):
+                BUDGET.catalogue_job_names(other)
+
+    def test_workflow_catalogue_matrix_matches_source_owned_selection(self):
+        text = (ROOT / '.github/workflows/bijux-std.yml').read_text()
+        catalogue = text.split('  catalogue-renderer:', 1)[1].split('  publication-commands:', 1)[0]
+        matrix = catalogue.split('group: [', 1)[1].split(']', 1)[0]
+        self.assertEqual({'std / catalogue ' + item.strip() for item in matrix.split(',')}, BUDGET.catalogue_job_names())
 
 
 if __name__ == '__main__':

@@ -14,6 +14,7 @@ Bind generated catalogue pages to reviewed generators and committed originals wh
 - Carry source attribution through capture, rendering, reconstruction, redirects, CSP and publication checks.
 - Require all 58 catalogue controls in four bounded CI groups while preserving default and historical dependency recipes.
 - Reuse distribution membership within each fresh capture and own the pinned verification interpreter; retain per-module checks and independent receipt verification.
+- Derive the complete job inventory from the catalogue registry and enforce whole-job budgets for every required group.
 
 ### Merged pull requests
 
