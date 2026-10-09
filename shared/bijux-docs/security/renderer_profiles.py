@@ -1,7 +1,6 @@
 """Select source-owned renderer profiles and reject unmanaged import surfaces."""
 from __future__ import annotations
 
-from collections import Counter
 import hashlib
 import importlib.metadata as metadata
 import importlib.util
@@ -47,6 +46,133 @@ def source_link_identity(path: Path, root: Path, *, stdlib=False):
     return {'external_startup_target': str(target)}
 
 
+def cache_code_equal(actual, expected, *, search_limit=100000):
+    """Bind executable values and non-reflexive constant reference graphs."""
+    # Compilation produces the graph that the cache writer serializes. Re-read
+    # that graph through the same interpreter to account for marshal interning.
+    expected = marshal.loads(marshal.dumps(expected))
+    steps = 0
+    nonreflexive = {}
+    visiting = set()
+
+    def has_nan(value):
+        # Equal reflexive constants can be interned differently by independent
+        # compilation and marshal reads. NaNs and their containing objects need
+        # reference bijections: collapsing them changes equality/set semantics.
+        identity = id(value)
+        if identity in nonreflexive:
+            return nonreflexive[identity]
+        if identity in visiting:
+            raise ProfileError('Renderer profile: cyclic executable constant graph')
+        visiting.add(identity)
+        kind = type(value)
+        if kind in {float, complex}:
+            result = value != value
+        elif kind is types.CodeType:
+            result = has_nan(value.co_consts)
+        elif kind in {tuple, frozenset}:
+            result = any(has_nan(item) for item in value)
+        elif kind is slice:
+            result = any(has_nan(item) for item in (value.start, value.stop, value.step))
+        else:
+            scalar(value)
+            result = False
+        visiting.remove(identity)
+        nonreflexive[identity] = result
+        return result
+
+    def scalar(value):
+        kind = type(value)
+        if kind is float:
+            return (kind, struct.pack('>d', value))
+        if kind is complex:
+            return (kind, struct.pack('>dd', value.real, value.imag))
+        if kind in {type(None), type(Ellipsis), bool, int, str, bytes}:
+            return (kind, value)
+        raise ProfileError('Renderer profile: unsupported executable constant type')
+
+    def shape(value):
+        kind = type(value)
+        if kind is types.CodeType:
+            return (kind, value.co_code, value.co_name, len(value.co_consts))
+        if kind in {tuple, frozenset}:
+            return (kind, len(value))
+        if kind is slice:
+            return (kind,)
+        return scalar(value)
+
+    def metadata(left, right):
+        if type(left) is not type(right):
+            return False
+        if type(left) is tuple:
+            return len(left) == len(right) and all(metadata(a, b) for a, b in zip(left, right))
+        return scalar(left) == scalar(right)
+
+    def match(pairs, unordered, forward, reverse):
+        nonlocal steps
+        while pairs:
+            steps += 1
+            if steps > search_limit:
+                raise ProfileError('Renderer profile: executable constant graph comparison budget exceeded')
+            left, right = pairs.pop()
+            if type(left) is not type(right):
+                return False
+            left_id, right_id = id(left), id(right)
+            if has_nan(left) != has_nan(right):
+                return False
+            if has_nan(left):
+                if left_id in forward:
+                    if forward[left_id] != right_id:
+                        return False
+                    continue
+                if right_id in reverse:
+                    return False
+                forward[left_id], reverse[right_id] = right_id, left_id
+            kind = type(left)
+            if kind is types.CodeType:
+                fields = tuple(name for name in dir(left) if name.startswith('co_') and not callable(getattr(left, name)))
+                if fields != tuple(name for name in dir(right) if name.startswith('co_') and not callable(getattr(right, name))):
+                    return False
+                for name in fields:
+                    if name == 'co_filename':
+                        continue
+                    if name == 'co_consts':
+                        pairs.append((left.co_consts, right.co_consts))
+                    elif not metadata(getattr(left, name), getattr(right, name)):
+                        return False
+            elif kind is tuple:
+                if len(left) != len(right):
+                    return False
+                pairs.extend(zip(left, right))
+            elif kind is slice:
+                pairs.extend(((left.start, right.start), (left.stop, right.stop), (left.step, right.step)))
+            elif kind is frozenset:
+                if len(left) != len(right):
+                    return False
+                unordered.append((tuple(left), tuple(right)))
+            elif scalar(left) != scalar(right):
+                return False
+        while unordered:
+            left_items, right_items = unordered.pop()
+            if not left_items:
+                continue
+            left, rest = left_items[0], left_items[1:]
+            left_shape = shape(left)
+            for index, right in enumerate(right_items):
+                if shape(right) != left_shape:
+                    continue
+                pending = unordered + [(rest, right_items[:index] + right_items[index + 1:])]
+                # Later containers can constrain an earlier equal-payload
+                # member choice. Retry that choice with the entire pending
+                # graph, rather than accepting a greedy local set comparison.
+                if match([(left, right)], pending, forward.copy(), reverse.copy()):
+                    return True
+            return False
+        return True
+
+    return match([(actual, expected)], [], {}, {})
+
+
 def validate_bytecode(path: Path, *, root: Path | None = None, stdlib=False):
     require('__pycache__' in path.parts and not path.is_symlink(), "Renderer profile: sourceless/unowned bytecode forbidden")
     try:
@@ -70,29 +196,7 @@ def validate_bytecode(path: Path, *, root: Path | None = None, stdlib=False):
     require(isinstance(actual,types.CodeType) and stream.read()==b'', 'Renderer profile: bytecode payload is not one code object')
     match=re.search(r'\.opt-([12])\.pyc$',path.name)
     expected=compile(source.read_bytes(),str(source),'exec',dont_inherit=True,optimize=int(match[1]) if match else 0)
-    def constant_identity(value):
-        if isinstance(value, types.CodeType):
-            return ('code', normalized(value))
-        if type(value) is float:
-            return ('float', struct.pack('>d', value))
-        if type(value) is complex:
-            return ('complex', struct.pack('>dd', value.real, value.imag))
-        if type(value) is tuple:
-            return ('tuple', tuple(constant_identity(item) for item in value))
-        if type(value) is frozenset:
-            # Distinct NaNs can share IEEE bits without comparing equal. Retain
-            # their multiplicity while comparing unordered compiler constants.
-            return ('frozenset', frozenset(Counter(constant_identity(item) for item in value).items()))
-        require(type(value) in {type(None), type(Ellipsis), bool, int, str, bytes},
-                'Renderer profile: unsupported executable constant type')
-        return (type(value).__name__, value)
-
-    def normalized(code):
-        # Every immutable public code field remains bound to the compiled source.
-        # Only filenames are normalized; NaNs retain their exact IEEE bits.
-        return tuple((name, constant_identity('{source}' if name == 'co_filename' else getattr(code, name)))
-                     for name in dir(code) if name.startswith('co_') and not callable(getattr(code, name)))
-    require(normalized(actual)==normalized(expected),
+    require(cache_code_equal(actual, expected),
             'Renderer profile: cached executable bytecode differs from owned source: '+str(path))
 
 
