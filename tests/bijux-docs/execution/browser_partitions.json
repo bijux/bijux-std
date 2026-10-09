@@ -153,6 +153,11 @@
       {
         "suite": "registry-overflow"
       }
+    ],
+    "native-reader-history": [
+      {
+        "suite": "native-reader-history"
+      }
     ]
   }
 }

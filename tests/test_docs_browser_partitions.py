@@ -18,24 +18,27 @@ GATE = importlib.util.module_from_spec(GATE_SPEC)
 GATE_SPEC.loader.exec_module(GATE)
 
 
-def inventory(profiles: bool, count: int = 1) -> dict:
+def inventory(profiles: bool, count: int = 1, *, profile_names=None) -> dict:
+    selected = profile_names if profile_names is not None else PARTITIONS.REGISTRY['profiles'] if profiles else ['phone']
     projects = [{'name': f'{engine}-{profile}', 'engine': engine, 'count': count}
-                for engine in PARTITIONS.ENGINES for profile in (PARTITIONS.REGISTRY['profiles'] if profiles else ['phone'])]
+                for engine in PARTITIONS.ENGINES for profile in selected]
     return {'canonical_projects': projects,
             'cases': [{'id': f"{project['name']}-case-{index}", 'project': project['name']}
                       for project in projects for index in range(count)]}
 
 
 def inventories() -> dict:
-    return {suite: inventory(suite in ('navigation', 'search-scope', 'contrast')) for suite in PARTITIONS.SUITES}
+    return {suite: inventory(suite in ('navigation', 'search-scope', 'contrast'),
+                             profile_names=['desktop'] if suite == 'registry-overflow' else None)
+            for suite in PARTITIONS.SUITES}
 
 
 class BrowserPartitionTests(unittest.TestCase):
     def test_all_canonical_projects_have_exactly_one_owner(self) -> None:
         assignments = PARTITIONS.plan(inventories())
-        self.assertEqual(len(PARTITIONS.GROUPS), 25)
-        self.assertEqual(len(PARTITIONS.SUITES), 22)
-        self.assertEqual(len(assignments), 84)
+        self.assertEqual(len(PARTITIONS.GROUPS), 26)
+        self.assertEqual(len(PARTITIONS.SUITES), 23)
+        self.assertEqual(len(assignments), 87)
         claimed = [(suite, name) for (_, suite), names in assignments.items() for name in names]
         expected = [(suite, project['name']) for suite, data in inventories().items() for project in data['canonical_projects']]
         self.assertCountEqual(claimed, expected)
@@ -43,6 +46,11 @@ class BrowserPartitionTests(unittest.TestCase):
         self.assertEqual(assignments[('navigation-compact-webkit', 'navigation')], ['webkit-compact'])
         self.assertEqual(assignments[('search-scope-desktop-firefox', 'search-scope')], ['firefox-desktop'])
         self.assertEqual(assignments[('navigation-controls-chromium', 'drawer')], ['chromium-phone'])
+        for engine in PARTITIONS.ENGINES:
+            self.assertEqual(assignments[(f'registry-overflow-{engine}', 'registry-overflow')],
+                             [f'{engine}-desktop'])
+            self.assertEqual(assignments[(f'native-reader-history-{engine}', 'native-reader-history')],
+                             [f'{engine}-phone'])
 
     def test_workflow_jobs_match_registry_and_keep_budget(self) -> None:
         workflow = (ROOT / '.github/workflows/bijux-std.yml').read_text()
@@ -53,7 +61,7 @@ class BrowserPartitionTests(unittest.TestCase):
         self.assertEqual(engines, list(PARTITIONS.ENGINES))
         self.assertIn('timeout-minutes: 3', job)
         self.assertIn('fail-fast: false', job)
-        self.assertEqual(len(groups) * len(engines), 75)
+        self.assertEqual(len(groups) * len(engines), 78)
 
     def test_contrast_profiles_preserve_all_thirty_nine_canonical_cases(self) -> None:
         data = inventories()
