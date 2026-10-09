@@ -18,6 +18,7 @@ from .html import (
     executable_scripts,
     parent_iframe,
     reviewed_recipe,
+    report_recipe,
     validate_report,
 )
 from .planning import plan_embedded_reports, final_receipt, _report_capability
@@ -221,12 +222,8 @@ def verify_composition(
                 s["body"] for s in executable_scripts(Document(source))
             ]
             validated = validate_report(source, owner, retained["site_url"])
-            expected_recipe = reviewed_recipe(
-                repo,
-                executable_scripts(validated)[0]["body"],
-                owner["recipe"],
-                retained["site_url"],
-                record["path"],
+            expected_recipe = report_recipe(
+                repo, validated, owner, retained["site_url"], record["path"]
             )
             expected_resources = []
             for name, resource in sorted(owner["resources"].items()):

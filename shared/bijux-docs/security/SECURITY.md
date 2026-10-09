@@ -112,6 +112,17 @@ those boundaries. The guard's system Python is not substituted for the renderer.
 Generated inputs under `artifacts/` remain the reviewed builder's responsibility;
 authored renderer inputs outside artifacts must belong to the selected Git tree.
 
+Reviewed embedded reports may explicitly select `report_class: static-reader`
+for a passive notice with no scripts, bootstrap, resources or providers. This
+class requires the exact non-executable descriptor, tracked source bytes and
+source checkpoint. Its HTML attributes and CSS use a finite passive vocabulary;
+unknown elements, resource attributes, imports and fetch expressions fail. Its
+independently rederived CSP denies scripts, fonts, media, frames, workers and
+automatic connections; only the reviewed inline notice styles remain allowed.
+Ordinary user-followed anchors remain navigation. This capability preserves the
+existing interactive report contract and does not qualify reader discovery,
+provider behaviour, a hosted renderer or publication by itself.
+
 The publication manifest identifies every public file, the exact standard/source,
 policy and four retained receipts: clean source, completed actual renderer, passed
 route/search/public URL checks and applied early CSP. All artifact receipts must
