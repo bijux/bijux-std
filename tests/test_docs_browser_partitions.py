@@ -28,7 +28,7 @@ def inventory(profiles: bool, count: int = 1, *, profile_names=None) -> dict:
 
 
 def inventories() -> dict:
-    return {suite: inventory(suite in ('navigation', 'search-scope', 'contrast'),
+    return {suite: inventory(suite in ('navigation', 'search-scope', 'contrast', 'content'),
                              profile_names=['desktop'] if suite == 'registry-overflow' else None)
             for suite in PARTITIONS.SUITES}
 
@@ -37,8 +37,8 @@ class BrowserPartitionTests(unittest.TestCase):
     def test_all_canonical_projects_have_exactly_one_owner(self) -> None:
         assignments = PARTITIONS.plan(inventories())
         self.assertEqual(len(PARTITIONS.GROUPS), 26)
-        self.assertEqual(len(PARTITIONS.SUITES), 23)
-        self.assertEqual(len(assignments), 87)
+        self.assertEqual(len(PARTITIONS.SUITES), 24)
+        self.assertEqual(len(assignments), 90)
         claimed = [(suite, name) for (_, suite), names in assignments.items() for name in names]
         expected = [(suite, project['name']) for suite, data in inventories().items() for project in data['canonical_projects']]
         self.assertCountEqual(claimed, expected)
@@ -47,6 +47,8 @@ class BrowserPartitionTests(unittest.TestCase):
         self.assertEqual(assignments[('search-scope-desktop-firefox', 'search-scope')], ['firefox-desktop'])
         self.assertEqual(assignments[('navigation-controls-chromium', 'drawer')], ['chromium-phone'])
         for engine in PARTITIONS.ENGINES:
+            self.assertEqual(assignments[(f'semantics-{engine}', 'content')],
+                             [f'{engine}-{profile}' for profile in PARTITIONS.REGISTRY['profiles']])
             self.assertEqual(assignments[(f'registry-overflow-{engine}', 'registry-overflow')],
                              [f'{engine}-desktop'])
             self.assertEqual(assignments[(f'native-reader-history-{engine}', 'native-reader-history')],
