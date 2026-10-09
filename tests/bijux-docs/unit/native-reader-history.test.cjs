@@ -209,9 +209,13 @@ test("inherited optional reader context cannot override owned coordinates", () =
   assert.equal(app.scrolls[0].top, position.y);
 });
 
-for (const context of [null, {}, { href: "https://example.test/other/", text: "Reading checkpoint", top: Infinity },
-  Object.create({ href: "https://example.test/other/", text: "Reading checkpoint", top: 350 })]) {
-  test(`unqualified reader context preserves coordinate fallback: ${JSON.stringify(context)}`, () => {
+for (const [name, context] of [
+  ["null context", null],
+  ["empty context", {}],
+  ["nonfinite anchor offset", { href: "https://example.test/other/", text: "Reading checkpoint", top: Infinity }],
+  ["inherited context fields", Object.create({ href: "https://example.test/other/", text: "Reading checkpoint", top: 350 })],
+]) {
+  test(`unqualified reader context preserves coordinate fallback: ${name}`, () => {
     const app = setup({ state: { bijuxDiagramReaderPosition: { ...position, context } }, type: "back_forward", anchors: [anchor()] });
     app.restore();
     app.flush();
