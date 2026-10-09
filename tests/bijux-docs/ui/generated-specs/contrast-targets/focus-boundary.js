@@ -66,7 +66,13 @@ async function settleGeometry(control, { now = () => Date.now(),
   const started = now(), observations = [];
   let previous = null, unchanged = 0;
   for (let attempt = 0; attempt < 100; attempt++) {
-    const sample = await control.evaluate(node => {
+    const sample = await control.evaluate(async node => {
+      // A compositor can repeat cached boxes before exposing a finite transition.
+      // Observe a rendering frame without completing or modifying that transition.
+      const frame = await new Promise(resolve => {
+        const timer = setTimeout(() => { cancelAnimationFrame(request); resolve(null); }, 100);
+        const request = requestAnimationFrame(time => { clearTimeout(timer); resolve(time); });
+      });
       const rectangle = element => {
         const box = element.getBoundingClientRect();
         return { x: box.x, y: box.y, width: box.width, height: box.height };
@@ -88,13 +94,25 @@ async function settleGeometry(control, { now = () => Date.now(),
       }
       const running = [...animations].filter(animation => animation.playState === "running" &&
         Number.isFinite(animation.effect?.getComputedTiming().endTime)).length;
-      return { target, ancestors, running };
+      const sidebar = node.closest(".md-sidebar--primary");
+      const drawer = document.getElementById("__drawer");
+      const ownedOpenDrawer = Boolean(sidebar && drawer?.checked &&
+        document.body.dataset.bijuxDrawerReady === "true");
+      const openDrawer = ownedOpenDrawer ? {
+        transform: getComputedStyle(sidebar).transform,
+        identity: new DOMMatrixReadOnly(getComputedStyle(sidebar).transform).isIdentity,
+      } : null;
+      // The shared open-drawer rule is translateX(0). Stable offscreen boxes are
+      // not its endpoint, even when the engine reports no running animations.
+      return { target, ancestors, running, frame, openDrawer };
     });
     const signature = JSON.stringify({ target: sample.target, ancestors: sample.ancestors });
-    unchanged = sample.running === 0 && signature === previous ? unchanged + 1 : 0;
+    const admitted = sample.running === 0 && sample.frame !== null &&
+      (sample.openDrawer === null || sample.openDrawer.identity === true);
+    unchanged = admitted && signature === previous ? unchanged + 1 : 0;
     observations.push({ elapsedMs: now() - started, ...sample });
     if (unchanged >= 2) return { elapsedMs: now() - started, observations };
-    previous = sample.running === 0 ? signature : null;
+    previous = admitted ? signature : null;
     if (now() - started >= 2000) break;
     await pause(20);
   }

@@ -59,7 +59,7 @@ function probe(sequence, delay = 20) {
     get reads() { return index; } };
 }
 const sample = (x, running = 0, transform = `matrix(1, 0, 0, 1, ${x}, 0)`) => ({
-  target: { x, y: 247, width: 230, height: 44 }, running,
+  target: { x, y: 247, width: 230, height: 44 }, running, frame: 10, openDrawer: null,
   ancestors: [{ name: "DIV.md-sidebar", rectangle: { x, y: 60, width: 359, height: 784 },
     transform, opacity: "1", clientLeft: 0, clientTop: 0, clientWidth: 359, clientHeight: 784 }] });
 test("missing reported animations cannot admit a translating focused drawer", async () => {
@@ -84,4 +84,32 @@ test("never-settling focus geometry fails with its actual observation history", 
   const p = probe([sample(0, 1)], 500);
   await assert.rejects(settleGeometry(p.control, p.options), /did not settle.*running.*1/);
   assert.equal(p.reads, 5);
+});
+
+const openDrawerSample = x => ({ ...sample(x),
+  openDrawer: { transform: `matrix(1, 0, 0, 1, ${x}, 0)`, identity: x === 0 } });
+test("three identical cached offscreen drawer boxes cannot admit the open endpoint", async () => {
+  const p = probe([...Array(4).fill(openDrawerSample(-357.41632080078125)),
+    openDrawerSample(0), openDrawerSample(0), openDrawerSample(0)]);
+  const receipt = await settleGeometry(p.control, p.options);
+  assert.equal(p.reads, 7);
+  assert.deepEqual(receipt.observations.map(o => o.openDrawer.identity),
+    [false, false, false, false, true, true, true]);
+  assert.equal(receipt.observations[0].running, 0);
+});
+test("a permanently translated owned open drawer fails closed with endpoint history", async () => {
+  const p = probe([openDrawerSample(-218.50131225585938)], 500);
+  await assert.rejects(settleGeometry(p.control, p.options), /did not settle.*openDrawer.*identity.*false/);
+  assert.equal(p.reads, 5);
+});
+test("missing rendering frames cannot admit stable focus geometry", async () => {
+  const p = probe([{ ...sample(0), frame: null }], 500);
+  await assert.rejects(settleGeometry(p.control, p.options), /did not settle.*frame.*null/);
+  assert.equal(p.reads, 5);
+});
+test("controls outside the owned open drawer retain ordinary stable geometry admission", async () => {
+  const p = probe([sample(20), sample(20), sample(20)]);
+  const receipt = await settleGeometry(p.control, p.options);
+  assert.equal(p.reads, 3);
+  assert.equal(receipt.observations[0].openDrawer, null);
 });
