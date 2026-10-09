@@ -1,0 +1,74 @@
+name: renderer-observation
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - .github/workflows/renderer-observation.yml
+      - tests/bijux-docs/execution/observe_history_renderer.py
+      - tests/bijux-docs/generated/canon-docs-renderer.json
+      - tests/bijux-docs/generated/requirements-canon-docs.lock.txt
+      - shared/bijux-docs/tooling/security/**
+      - shared/bijux-docs/security/renderer_profiles.py
+      - shared/bijux-docs/security/producer_capabilities.py
+
+permissions:
+  contents: read
+
+jobs:
+  history-renderer:
+    name: std / history renderer observation
+    if: ${{ github.repository == 'bijux/bijux-std' }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 3
+    steps:
+      - name: Checkout exact observation source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Select the existing Canon documentation Python line
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
+        with:
+          python-version: '3.11'
+      - name: Prepare pinned dependency installer
+        uses: astral-sh/setup-uv@20cfd1bf945f4377ade1205e4dbc17946fc9a30d
+        with:
+          version: '0.11.17'
+          enable-cache: false
+      - name: Install exact standalone documentation dependencies
+        shell: bash
+        env:
+          PYTHONDONTWRITEBYTECODE: '1'
+          UV_CACHE_DIR: ${{ github.workspace }}/artifacts/bijux-docs/history-renderer/cache
+          UV_PYTHON_DOWNLOADS: never
+          TMPDIR: ${{ github.workspace }}/artifacts/bijux-docs/history-renderer/process
+        run: |
+          set -euo pipefail
+          mkdir -p artifacts/bijux-docs/history-renderer/{observation,process}
+          python -m venv --without-pip artifacts/bijux-docs/history-renderer/python
+          uv pip install --no-deps \
+            --python artifacts/bijux-docs/history-renderer/python/bin/python \
+            --requirement tests/bijux-docs/generated/requirements-canon-docs.lock.txt \
+            2>&1 | tee artifacts/bijux-docs/history-renderer/observation/install.log
+          uv pip check --python artifacts/bijux-docs/history-renderer/python/bin/python \
+            2>&1 | tee artifacts/bijux-docs/history-renderer/observation/dependency-check.log
+      - name: Observe physical source and callbacks without profile selection
+        shell: bash
+        env:
+          PYTHONDONTWRITEBYTECODE: '1'
+        run: |
+          set -euo pipefail
+          artifacts/bijux-docs/history-renderer/python/bin/python \
+            tests/bijux-docs/execution/observe_history_renderer.py \
+            --output artifacts/bijux-docs/history-renderer/observation/renderer.json \
+            2>&1 | tee artifacts/bijux-docs/history-renderer/observation/capture.log
+      - name: Retain exact candidate observation and failed diagnostics
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: docs-history-renderer-${{ github.sha }}-${{ github.run_attempt }}
+          path: artifacts/bijux-docs/history-renderer/observation
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 14

@@ -109,15 +109,15 @@ jobs:
         run: |
           set -euo pipefail
           python3 - <<'PYTHON'
-          import json, math, os, pathlib, urllib.request
+          import importlib.util, json, math, os, pathlib, time, urllib.request
           output = pathlib.Path("artifacts/bijux-docs/job-budget")
           output.mkdir(parents=True, exist_ok=True)
           base = f"{os.environ['GITHUB_API_URL']}/repos/{os.environ['GITHUB_REPOSITORY']}/actions/runs/{os.environ['GITHUB_RUN_ID']}/attempts/{os.environ['GITHUB_RUN_ATTEMPT']}"
-          def read(suffix=""):
-              request = urllib.request.Request(base + suffix, headers={
+          def read(suffix="", *, api_base=base, timeout=20):
+              request = urllib.request.Request(api_base + suffix, headers={
                   "Accept": "application/vnd.github+json", "Authorization": "Bearer " + os.environ["GH_TOKEN"],
-                  "X-GitHub-Api-Version": "2022-11-28"})
-              with urllib.request.urlopen(request, timeout=20) as response:
+                  "X-GitHub-Api-Version": "2022-11-28", "Cache-Control": "no-cache"})
+              with urllib.request.urlopen(request, timeout=timeout) as response:
                   return json.load(response)
           run = read()
           (output / "workflow-run.json").write_text(json.dumps(run, indent=2) + "\n")
@@ -130,6 +130,26 @@ jobs:
               if part["total_count"] != jobs["total_count"]:
                   raise SystemExit("Workflow job inventory changed during observation")
               jobs["jobs"].extend(part["jobs"])
+          (output / "jobs-initial.json").write_text(json.dumps(jobs, indent=2) + "\n")
+          def load(path, name):
+              spec = importlib.util.spec_from_file_location(name, path)
+              module = importlib.util.module_from_spec(spec)
+              spec.loader.exec_module(module)
+              return module
+          budget = load("tests/bijux-docs/execution/job_budget.py", "frontend_budget")
+          registry = load("tests/bijux-docs/execution/browser_gate.py", "frontend_registry")
+          deadline = time.monotonic() + 60
+          def fresh_job(identifier):
+              remaining = deadline - time.monotonic()
+              if remaining <= 0:
+                  raise SystemExit("Job metadata refresh exceeded its bounded observation window")
+              api_base = f"{os.environ['GITHUB_API_URL']}/repos/{os.environ['GITHUB_REPOSITORY']}/actions/jobs/{identifier}"
+              observed = read(api_base=api_base, timeout=min(10, remaining))
+              (output / f"job-refresh-{identifier}.json").write_text(json.dumps(observed, indent=2) + "\n")
+              return observed
+          jobs = budget.refresh_nonterminal(jobs, fetch=fresh_job, groups=registry.GROUPS,
+              engines=registry.ENGINES, run_id=int(os.environ["GITHUB_RUN_ID"]),
+              attempt=int(os.environ["GITHUB_RUN_ATTEMPT"]), head=os.environ["EXPECTED_WORKFLOW_HEAD"])
           (output / "jobs.json").write_text(json.dumps(jobs, indent=2) + "\n")
           PYTHON
           python3 tests/bijux-docs/execution/job_budget.py \

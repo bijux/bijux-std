@@ -35,7 +35,7 @@ def timestamp(value: object) -> datetime:
     return parsed
 
 
-def qualify(payload: dict, *, groups: dict, engines: tuple | list, run_id: int, attempt: int, head: str) -> dict:
+def current_inventory(payload: dict, *, groups: dict, engines: tuple | list, run_id: int, attempt: int, head: str) -> tuple[list[dict], set[str]]:
     require(type(run_id) is int and run_id > 0 and type(attempt) is int and attempt > 0, 'Invalid requested run or attempt')
     require(isinstance(head, str) and re.fullmatch(r'[a-f0-9]{40}', head), 'Full workflow source SHA is required')
     jobs = payload.get('jobs')
@@ -47,6 +47,31 @@ def qualify(payload: dict, *, groups: dict, engines: tuple | list, run_id: int, 
     require(all(type(j.get('id')) is int and j['id'] > 0 for j in jobs), 'Actual unique job IDs are required')
     require(len({j['id'] for j in jobs}) == len(jobs), 'Duplicate job ID')
     require(all(j.get('run_id') == run_id and j.get('run_attempt') == attempt and j.get('head_sha') == head for j in jobs), 'Job run, attempt or source mismatch')
+    return jobs, names
+
+
+def refresh_nonterminal(payload: dict, *, fetch, groups: dict, engines: tuple | list,
+                        run_id: int, attempt: int, head: str) -> dict:
+    """Reobserve only incomplete API rows without inferring success from completed steps."""
+    jobs, names = current_inventory(payload, groups=groups, engines=engines,
+                                    run_id=run_id, attempt=attempt, head=head)
+    updated = []
+    identity = ('id', 'name', 'run_id', 'run_attempt', 'head_sha')
+    for job in jobs:
+        if job['name'] in names and job.get('status') != 'completed':
+            observed = fetch(job['id'])
+            require(isinstance(observed, dict) and
+                    all(observed.get(key) == job.get(key) for key in identity),
+                    'Refreshed job identity differs from exact source, attempt or inventory')
+            updated.append(observed)
+        else:
+            updated.append(job)
+    return {**payload, 'jobs': updated}
+
+
+def qualify(payload: dict, *, groups: dict, engines: tuple | list, run_id: int, attempt: int, head: str) -> dict:
+    jobs, names = current_inventory(payload, groups=groups, engines=engines,
+                                    run_id=run_id, attempt=attempt, head=head)
     records = []
     for job in jobs:
         if job['name'] not in names:
