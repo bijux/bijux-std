@@ -14,15 +14,15 @@ Bind generated catalogue pages to reviewed generators and committed originals wh
 - Carry source attribution through capture, rendering, reconstruction, redirects, CSP and publication checks.
 - Require all 58 catalogue controls in four bounded CI groups while preserving default and historical dependency recipes.
 
-#### [#242](https://github.com/bijux/bijux-std/pull/242) — test(docs): retain delayed rendering frame observations
+### Merged pull requests
+
+#### 2026-10-09T10:53:55Z — [#242](https://github.com/bijux/bijux-std/pull/242) — test(docs): retain delayed rendering frame observations
 
 Keep a pending rendering-frame request across timer observations so delayed callbacks can qualify stable focused controls.
 
 - Require three actual stable frames, the correct open-drawer endpoint and the unchanged two-second deadline.
 - Retain passive rendering diagnostics and meaningful delayed, absent, translated and intermediate-change controls.
 - Preserve ordinary input and paint assertions; current unit and complete contrast matrices pass before hosted qualification.
-
-### Merged pull requests
 
 #### 2026-10-09T10:21:52Z — [#241](https://github.com/bijux/bijux-std/pull/241) — fix(docs): retain native diagram reader history position
 
