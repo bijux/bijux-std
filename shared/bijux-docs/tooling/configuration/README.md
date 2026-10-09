@@ -13,8 +13,23 @@ When no required peer exists, the common entries precede authored additions.
 This provides the normal shared-CSS-before-author-CSS cascade. Existing authored
 entries retain their bytes and relative order; the tool never sorts them.
 
-Conflicting required order or attribute-bearing required script mappings need
-an explicit reviewed migration. The tool does not silently strip `async`,
+A conflicting shared script order can be adopted only when the entire plain
+`extra_javascript` block matches the baseline at the consumer’s committed
+`.github/standards/bijux-std.sha`. The current source must be a clean checkout
+of the exact official GitHub reference, and the copied current baseline must
+match its Git blob. The projector retrieves the previous baseline from that
+official origin only when an execution-order conflict actually needs it. It
+accepts no predecessor override or untracked ownership receipt.
+
+This narrow recognition changes only the exact old default block. Custom
+entries, reordered entries, comments, quoted entries, script mappings, and
+attribute-bearing mappings continue requiring explicit author review. Root
+configuration overrides do not use this recognition. Local verification cannot
+claim accepted-source ownership. Both configuration plans still complete before
+any destination write.
+
+Other conflicting required order or attribute-bearing required script mappings
+need an explicit reviewed migration. The tool does not silently strip `async`,
 `defer`, `type`, or other authored script attributes. Authored module scripts
 and plugin options retain their original representations.
 
