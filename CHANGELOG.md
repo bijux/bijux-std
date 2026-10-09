@@ -13,14 +13,22 @@ Reduce artifact download cost without changing retained source or fault evidence
 - Compress the complete public-fault upload at level 1, retaining every member and exact payload hash.
 - Guard the full upload/download paths, failure evidence and unchanged three-minute job limit.
 
-#### [#226](https://github.com/bijux/bijux-std/pull/226) — fix(docs): admit reviewed revision history capability
+### Merged pull requests
+
+#### 2026-10-09T03:45:10Z — [#227](https://github.com/bijux/bijux-std/pull/227) — test(docs): verify native drawer activation and registry input
+
+Require ordinary pointer, trusted touch, Space and Enter to open the drawer once and Escape to restore its trigger.
+
+- Observe native events and expanded-state transitions; qualify current and last registry targets through keyboard and touch input.
+- Retain 126 canonical navigation identities, real destination/heading checks and existing assertions; keep physical touch-pan and manual qualification explicit.
+
+#### 2026-10-09T03:07:07Z — [#226](https://github.com/bijux/bijux-std/pull/226) — fix(docs): admit reviewed revision history capability
 
 Preserve the existing Canon revision-date plugin while validating its real Git history and callback ownership.
 
 - Admit revision-date-localized 1.5.1 after payload comparison with the reviewed 1.5.3 implementation.
 - Test version boundaries, registered callback inputs and tracked-history ownership; keep renderer-profile approval separate.
 
-### Merged pull requests
 
 #### 2026-10-09T02:38:35Z — [#225](https://github.com/bijux/bijux-std/pull/225) — test(docs): require frontend fault rejection in navigation ci
 
