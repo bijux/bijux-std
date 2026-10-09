@@ -493,3 +493,232 @@ test("synthetic input before initial pageshow cannot cancel pending reader resto
   assert.equal(app.scrolls.length, 1);
   assert.equal(app.scrolls[0].top, position.y);
 });
+
+
+// Cached documents retain their script realm while Material may reconstruct the
+// authored content. Drive the real renderer through its ordinary document stream.
+function cachedReader({ entryKey = "reader-entry", available = true } = {}) {
+  const events = new Map(), frames = [], scrolls = [], runs = [];
+  let subscription, nodes = [], entry = { key: entryKey }, currentURL = new URL(href), scheme = "default";
+  class Element {
+    constructor(tag) { this.localName = tag; this.namespaceURI = tag === "svg" ? "http://www.w3.org/2000/svg" : null; this.children = []; this.attributes = []; this.isConnected = true; this.text = ""; }
+    get textContent() { return this.text + this.children.map(node => node.textContent).join(""); }
+    set textContent(text) { this.text = text; this.children = []; }
+    setAttribute() {}
+    append(...children) { this.children.push(...children); }
+    appendChild(child) { this.append(child); return child; }
+    querySelector(tag) { return this.children.flatMap(node => [node, ...node.descendants()]).find(node => node.localName === tag) || null; }
+    descendants() { return this.children.flatMap(node => [node, ...node.descendants()]); }
+    querySelectorAll() { return this.descendants(); }
+    addEventListener() {}
+    replaceWith(next) { nodes = nodes.map(node => node === this ? next : node); this.isConnected = false; }
+    replaceChildren(...children) { this.children = children; this.text = ""; }
+  }
+  const replace = (texts = ["graph TD; A-->B", "graph TD; C-->D"]) => {
+    nodes.forEach(node => { node.isConnected = false; });
+    nodes = texts.map(text => { const node = new Element("pre"), code = new Element("code"); code.textContent = text; node.append(code); return node; });
+  };
+  replace();
+  const history = { state: null, replaceState(value) { this.state = value; } };
+  const listen = (owner, name, callback) => {
+    const key = owner + ":" + name;
+    events.set(key, [...(events.get(key) || []), callback]);
+  };
+  const api = { initialize() {}, render() {
+    let resolve, reject;
+    const promise = new Promise((yes, no) => { resolve = yes; reject = no; });
+    runs.push({ resolve: () => resolve({ svg: "<svg/>" }), reject: () => reject(new Error("renderer refused")) });
+    return promise;
+  } };
+  const window = { scrollX: 0, scrollY: 13000,
+    navigation: available ? { get currentEntry() { return entry; } } : undefined,
+    document$: { subscribe(callback) { subscription = callback; } },
+    addEventListener: (name, callback) => listen("window", name, callback),
+    scrollTo: value => scrolls.push(value),
+  };
+  const document = { readyState: "complete", currentScript: { src: "https://example.test/assets/mermaid-init.js" },
+    body: { getAttribute: () => scheme }, createElement: tag => new Element(tag),
+    querySelector: () => nodes.length ? nodes[0] : null,
+    querySelectorAll: selector => selector === ".md-content article a[href]" ? [] : nodes.filter(node => node.isConnected),
+    addEventListener: (name, callback) => listen("document", name, callback), importNode: node => node,
+    head: { appendChild(script) { window.mermaid = api; queueMicrotask(() => script.onload()); } },
+  };
+  const context = { window, document, history, location: currentURL, URL,
+    performance: { getEntriesByType: () => [{ type: "navigate" }] },
+    requestAnimationFrame: callback => frames.push(callback), setTimeout: () => 1, clearTimeout() {},
+    DOMParser: class { parseFromString() { const svg = new Element("svg"); return { body: { firstElementChild: svg, children: [svg] } }; } },
+  };
+  vm.runInNewContext(source, context);
+  const turn = () => new Promise(resolve => setImmediate(resolve));
+  const app = { history, runs, scrolls, replace,
+    publish() { subscription(); },
+    fire(owner, name, event = {}) { for (const callback of events.get(owner + ":" + name) || []) callback(event); },
+    flush() { while (frames.length) frames.shift()(); },
+    entry(key) { entry = { key }; }, url(value) { currentURL.href = value; },
+    theme(value) { scheme = value; app.fire("window", "bijux:theme-change"); },
+    get disclosures() { return nodes.map(node => node.querySelector("details")); },
+    get statuses() { return nodes.map(node => node.children[1].textContent); },
+    async render({ flush = true, reject = false } = {}) {
+      // Resolve each actual serial Mermaid operation, including superseded requests.
+      for (let index = 0; index < 20; index++) { await turn(); for (const run of runs) reject ? run.reject() : run.resolve(); }
+      if (flush) app.flush();
+    },
+    depart() { app.fire("document", "click", click()); app.fire("window", "pagehide", { isTrusted: true, persisted: true }); },
+    back(event = { isTrusted: true, persisted: true }) { app.fire("window", "pageshow", event); },
+  };
+  app.publish();
+  return app;
+}
+
+async function inspectedCachedReader(options) {
+  const app = cachedReader(options); await app.render();
+  app.disclosures[0].open = true; app.disclosures[1].open = false;
+  app.depart();
+  // Material's native viewport owner stores only its offset in this entry.
+  app.history.state = { x: 0, y: 13000 };
+  return app;
+}
+
+test("trusted cached same-entry reconstruction preserves exact-source inspection after the shared marker is removed", async () => {
+  const app = await inspectedCachedReader();
+  app.back(); app.replace(); app.publish(); await app.render();
+  assert.deepEqual(app.disclosures.map(details => details.open), [true, false]);
+  assert.equal(app.scrolls.at(-1).top, 13000);
+  assert.deepEqual(app.history.state, { x: 0, y: 13000 });
+});
+
+for (const [name, modify] of [
+  ["different same-URL entry", app => app.entry("different-entry")],
+  ["query change", app => app.url(href + "?different")],
+  ["fragment change", app => app.url(href + "#different")],
+  ["source replacement", app => app.replace(["graph TD; X-->Y", "graph TD; C-->D"])],
+  ["source order", app => app.replace(["graph TD; C-->D", "graph TD; A-->B"])],
+  ["source count", app => app.replace(["graph TD; A-->B"])],
+]) {
+  test(`cached inspection refuses ${name}`, async () => {
+    const app = await inspectedCachedReader(); app.back(); app.replace(); modify(app); app.publish(); await app.render();
+    assert.ok(app.disclosures.every(details => details.open === false));
+    assert.equal(app.scrolls.length, 0);
+  });
+}
+
+for (const options of [{ available: false }, { entryKey: "" }, { entryKey: null }, { entryKey: 42 }]) {
+  test(`cached inspection requires an actual entry identity: ${JSON.stringify(options)}`, async () => {
+    const app = await inspectedCachedReader(options); app.back(); app.replace(); app.publish(); await app.render();
+    assert.ok(app.disclosures.every(details => details.open === false));
+    assert.equal(app.scrolls.length, 0);
+  });
+}
+
+for (const event of [{ isTrusted: false, persisted: true }, { isTrusted: true, persisted: false }]) {
+  test(`cached inspection requires a trusted persisted return: ${JSON.stringify(event)}`, async () => {
+    const app = await inspectedCachedReader(); app.back(event); app.replace(); app.publish(); await app.render();
+    assert.ok(app.disclosures.every(details => details.open === false)); assert.equal(app.scrolls.length, 0);
+  });
+}
+
+for (const input of ["pointerdown", "touchstart", "wheel", "keydown"]) {
+  test(`trusted ${input} cancels cached inspection and scroll before reconstructed completion`, async () => {
+    const app = await inspectedCachedReader(); app.back(); app.replace(); app.publish();
+    app.fire("window", input, { isTrusted: true }); await app.render();
+    assert.ok(app.disclosures.every(details => details.open === false)); assert.equal(app.scrolls.length, 0);
+  });
+}
+
+test("synthetic input cannot impersonate cached-reader inspection cancellation", async () => {
+  const app = await inspectedCachedReader(); app.back(); app.replace(); app.publish();
+  app.fire("window", "wheel", { isTrusted: false }); await app.render();
+  assert.deepEqual(app.disclosures.map(details => details.open), [true, false]);
+});
+
+test("a later pagehide invalidates cached inspection before reconstructed completion", async () => {
+  const app = await inspectedCachedReader(); app.back(); app.replace(); app.publish();
+  app.fire("window", "pagehide", { isTrusted: true, persisted: true }); await app.render();
+  assert.ok(app.disclosures.every(details => details.open === true)); assert.equal(app.scrolls.length, 0);
+});
+
+
+for (const event of [{ isTrusted: false, persisted: true }, { isTrusted: true, persisted: false }]) {
+  test(`cached inspection requires a trusted cached departure: ${JSON.stringify(event)}`, async () => {
+    const app = cachedReader(); await app.render(); app.disclosures[0].open = true;
+    app.fire("document", "click", click()); app.fire("window", "pagehide", event);
+    app.history.state = { x: 0, y: 13000 }; app.back(); app.replace(); app.publish(); await app.render();
+    assert.ok(app.disclosures.every(details => details.open === false)); assert.equal(app.scrolls.length, 0);
+  });
+}
+
+for (const [name, change] of [
+  ["entry", app => app.entry("another-entry")],
+  ["URL", app => app.url(href + "?another")],
+  ["source", app => { app.replace(["graph TD; X-->Y"]); }],
+]) {
+  test(`cached deferred frames cannot restore after a late ${name} change`, async () => {
+    const app = await inspectedCachedReader(); app.back(); app.replace(); app.publish();
+    await app.render({ flush: false }); change(app); app.flush();
+    assert.equal(app.scrolls.length, 0);
+  });
+}
+
+test("cached failed rendering keeps the accessible source fallback open", async () => {
+  const app = await inspectedCachedReader(); app.back(); app.replace(); app.publish(); await app.render({ reject: true });
+  assert.ok(app.disclosures.every(details => details.open === true));
+  assert.ok(app.statuses.every(text => /preview unavailable/.test(text)));
+});
+
+test("a newer trusted departure replaces cached inspection without resurrecting older disclosure", async () => {
+  const app = await inspectedCachedReader(); app.back(); await app.render();
+  app.disclosures[0].open = false; app.disclosures[1].open = true; app.depart();
+  app.history.state = { x: 0, y: 13000 }; app.back(); app.replace(); app.publish(); await app.render();
+  assert.deepEqual(app.disclosures.map(details => details.open), [false, true]);
+});
+
+test("duplicate document emissions share one current inspection generation and one renderer lane", async () => {
+  const app = await inspectedCachedReader(); app.back(); app.replace(); app.publish(); app.publish(); await app.render();
+  assert.deepEqual(app.disclosures.map(details => details.open), [true, false]);
+  assert.equal(app.scrolls.length, 1);
+  assert.equal(app.runs.length, 4);
+});
+
+
+test("a failed rerender of a cached preview cannot close its readable fallback", async () => {
+  const app = await inspectedCachedReader(); app.back(); await app.render();
+  app.theme("slate"); await app.render({ reject: true });
+  assert.ok(app.disclosures.every(details => details.open === true));
+  assert.ok(app.statuses.every(text => /preview unavailable/.test(text)));
+});
+
+
+test("cached private authority cannot be mutated through the departing public history record", async () => {
+  const app = cachedReader(); await app.render(); app.disclosures[0].open = true; app.depart();
+  const publicPosition = app.history.state.bijuxDiagramReaderPosition;
+  publicPosition.y = Infinity; publicPosition.href = href + "?forged";
+  app.history.state = { x: 0, y: 13000 }; app.back(); app.replace(); app.publish(); await app.render();
+  assert.deepEqual(app.disclosures.map(details => details.open), [true, false]);
+  assert.equal(app.scrolls.at(-1).top, 13000);
+});
+
+test("a rejected newer native capture cannot retain an older cached departure", async () => {
+  const app = await inspectedCachedReader(); app.back(); await app.render();
+  app.history.state = "opaque owner"; app.depart(); app.history.state = { x: 0, y: 13000 };
+  app.back(); app.replace(); app.publish(); await app.render();
+  assert.ok(app.disclosures.every(details => details.open === false));
+  assert.equal(app.scrolls.length, 1);
+});
+
+
+test("a second trusted cached departure preserves the same proven reader entry through reconstruction", async () => {
+  const app = await inspectedCachedReader(); app.back(); app.replace(); app.publish(); await app.render();
+  app.fire("window", "pagehide", { isTrusted: true, persisted: true });
+  app.history.state = { x: 0, y: 13000 }; app.back(); app.replace(); app.publish(); await app.render();
+  assert.deepEqual(app.disclosures.map(details => details.open), [true, false]);
+  assert.equal(app.scrolls.length, 2);
+});
+
+test("trusted reader input prevents a cached departure from rearming its previous authority", async () => {
+  const app = await inspectedCachedReader(); app.back(); app.replace(); app.publish(); await app.render();
+  app.fire("window", "wheel", { isTrusted: true });
+  app.fire("window", "pagehide", { isTrusted: true, persisted: true });
+  app.history.state = { x: 0, y: 13000 }; app.back(); app.replace(); app.publish(); await app.render();
+  assert.ok(app.disclosures.every(details => details.open === false));
+  assert.equal(app.scrolls.length, 1);
+});

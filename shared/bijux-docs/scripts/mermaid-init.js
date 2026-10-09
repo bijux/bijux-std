@@ -24,11 +24,59 @@
   let readerRestoration = navigation?.type === "back_forward" ? ownedReaderPosition() : null;
   let readerPageShown = document.readyState === "complete";
   let pendingReaderGeneration = null;
+  let cachedDeparture = null;
+  let cachedReader = null;
+
+  function nativeEntryKey() {
+    try {
+      const key = window.navigation?.currentEntry?.key;
+      return typeof key === "string" && key.length > 0 ? key : null;
+    } catch (_) { return null; }
+  }
+
+  function currentCachedEntry(snapshot) {
+    return snapshot && snapshot.href === location.href && snapshot.entryKey === nativeEntryKey();
+  }
+
+  function clearCachedReader() {
+    cachedDeparture = null;
+    cachedReader = null;
+  }
+
+  function diagramInventory(nodes) {
+    const inventory = nodes.map(node => {
+      const state = sources.get(node);
+      return state && node.isConnected ? { source: state.source, open: state.details.open } : null;
+    });
+    return inventory.length && inventory.every(Boolean) ? inventory : null;
+  }
+
+  function matchingCachedSources(nodes) {
+    const inventory = diagramInventory(nodes);
+    return currentCachedEntry(cachedReader) && inventory && inventory.length === cachedReader.diagrams.length &&
+      inventory.every((item, index) => item.source === cachedReader.diagrams[index].source);
+  }
+
+  function restoreCachedInspection(current, nodes) {
+    if (!cachedReader || current !== generation) return;
+    if (!matchingCachedSources(nodes)) {
+      clearCachedReader();
+      readerRestoration = null;
+      return;
+    }
+    for (const [index, node] of nodes.entries()) {
+      const state = sources.get(node);
+      // Renderer failure keeps its readable fallback open regardless of an older
+      // successful inspection. Only this generation's rendered preview may close it.
+      if (state.theme !== null && state.preview.children.length) state.details.open = cachedReader.diagrams[index].open;
+    }
+  }
 
   function cancelReaderRestoration(event) {
     if (event.isTrusted) {
       readerRestoration = null;
       pendingReaderGeneration = null;
+      clearCachedReader();
     }
   }
   for (const type of ["pointerdown", "touchstart", "wheel", "keydown"]) {
@@ -54,6 +102,9 @@
   }
 
   function captureReaderPosition(link) {
+    clearCachedReader();
+    readerRestoration = null;
+    pendingReaderGeneration = null;
     if (!document.querySelector(".md-typeset .bijux-diagram")) return;
     const state = history.state;
     if (state !== null && (Object.prototype.toString.call(state) !== "[object Object]")) return;
@@ -64,6 +115,15 @@
         owner: "bijux-docs", version: 1, href: location.href, x: window.scrollX, y: window.scrollY,
         context: captureReaderContext(link),
       } }, "");
+      const entryKey = nativeEntryKey();
+      const diagrams = diagramInventory([...document.querySelectorAll(".md-typeset .bijux-diagram")]);
+      // A realm-private snapshot supplements this exact native entry only. It is
+      // never recovered from storage, a retained receipt or a matching URL alone.
+      const position = ownedReaderPosition();
+      if (entryKey && diagrams && position) cachedDeparture = {
+        entryKey, href: location.href, diagrams,
+        position: { ...position, ...(position.context ? { context: { ...position.context } } : {}) }, departed: false,
+      };
     } catch (_) {
       // A history entry may become unavailable while its document is leaving.
     }
@@ -78,8 +138,10 @@
       pendingReaderGeneration = current;
       return;
     }
+    const cached = cachedReader;
     requestAnimationFrame(() => requestAnimationFrame(() => {
-      if (current !== generation || readerRestoration !== position) return;
+      if (current !== generation || readerRestoration !== position ||
+          cached && (cached !== cachedReader || !matchingCachedSources([...document.querySelectorAll(".md-typeset .bijux-diagram")]))) return;
       readerRestoration = null;
       let top = position.y;
       const links = Object.prototype.hasOwnProperty.call(position, "context") ? readerLinks(position.context) : [];
@@ -225,10 +287,17 @@
   function request() {
     const current = ++generation;
     const nodes = [...document.querySelectorAll(".md-typeset .bijux-diagram")].map(prepare);
+    if (cachedReader && !matchingCachedSources(nodes)) {
+      clearCachedReader();
+      readerRestoration = null;
+    }
     if (!nodes.length) return;
     const theme = document.body.getAttribute("data-md-color-scheme") === "slate" ? "dark" : "default";
     // Mermaid owns shared parser/config state; serialize renders and reject stale completions.
-    rendering = rendering.catch(() => {}).then(() => render(current, nodes, theme)).catch(() => {}).then(() => restoreReaderPosition(current));
+    rendering = rendering.catch(() => {}).then(() => render(current, nodes, theme)).catch(() => {}).then(() => {
+      restoreCachedInspection(current, nodes);
+      restoreReaderPosition(current);
+    });
   }
 
   if (window.document$ && typeof window.document$.subscribe === "function") window.document$.subscribe(request);
@@ -247,7 +316,20 @@
         destination.search === location.search) return;
     captureReaderPosition(link);
   }, true);
-  window.addEventListener("pagehide", () => {
+  window.addEventListener("pagehide", event => {
+    // A subsequent cached traversal may leave without another authored link.
+    // Re-arm only this already proven entry, with no intervening reader input.
+    const nodes = [...document.querySelectorAll(".md-typeset .bijux-diagram")];
+    if (event?.isTrusted && event.persisted && matchingCachedSources(nodes)) {
+      const links = cachedReader.position.context ? readerLinks(cachedReader.position.context) : [];
+      cachedDeparture = { ...cachedReader, diagrams: diagramInventory(nodes), departed: false,
+        position: { owner: "bijux-docs", version: 1, href: location.href,
+          x: window.scrollX, y: window.scrollY,
+          context: links.length === 1 ? captureReaderContext(links[0]) : undefined } };
+    }
+    cachedReader = null;
+    if (event?.isTrusted && event.persisted && currentCachedEntry(cachedDeparture)) cachedDeparture.departed = true;
+    else cachedDeparture = null;
     readerRestoration = null;
     readerPageShown = false;
     pendingReaderGeneration = null;
@@ -256,11 +338,16 @@
   window.addEventListener("pageshow", event => {
     readerPageShown = true;
     if (event.persisted) {
-      // A persisted document keeps its script realm, but departure updates belong
-      // to the current history entry. Reacquire only that entry after pagehide.
-      readerRestoration = ownedReaderPosition();
+      // Browser-owned entry keys distinguish separate same-URL visits. Only an
+      // actual cached lifecycle can admit this realm's last native departure.
+      cachedReader = event.isTrusted && cachedDeparture?.departed && currentCachedEntry(cachedDeparture)
+        ? cachedDeparture : null;
+      cachedDeparture = null;
+      readerRestoration = ownedReaderPosition() || cachedReader?.position || null;
       request();
-    } else if (pendingReaderGeneration !== null) {
+    } else {
+      clearCachedReader();
+      if (pendingReaderGeneration === null) return;
       const current = pendingReaderGeneration;
       pendingReaderGeneration = null;
       restoreReaderPosition(current);

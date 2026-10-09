@@ -8,7 +8,7 @@ This file records notable repository-level changes for `bijux-std`.
 
 #### [#253](https://github.com/bijux/bijux-std/pull/253) — fix(docs): retain native reader context after diagram layout changes
 
-Retain the unique authored reading destination and trusted viewport offset through native Back when diagram-source disclosure changes layout, preserving coordinate fallback and trusted-input cancellation. Reacquire the current owned history entry on persisted document return and defer early layout restoration until pageshow, preserving trusted reader input.
+Preserve authored reading context through diagram layout changes and native history, defer restoration until pageshow, and yield palette callbacks to trusted reader input. Retain source inspection across proven cached entries using a private entry-bound snapshot, with a required full-Chromium native cache qualification alongside the unchanged three-engine history cases.
 
 ### Merged pull requests
 

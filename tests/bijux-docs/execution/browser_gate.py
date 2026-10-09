@@ -19,6 +19,7 @@ PARTITIONS_SPEC = importlib.util.spec_from_file_location('browser_partitions', P
 PARTITIONS = importlib.util.module_from_spec(PARTITIONS_SPEC)
 PARTITIONS_SPEC.loader.exec_module(PARTITIONS)
 GROUPS, ENGINES, SUITES = PARTITIONS.GROUPS, PARTITIONS.ENGINES, PARTITIONS.SUITES
+PERSISTED_SUITE = "persisted-reader-history"
 
 
 def partition_plan() -> dict:
@@ -60,7 +61,7 @@ def prepare() -> None:
     if any(name in os.environ for name in ('BIJUX_UI_BROWSER_ENGINE', 'BIJUX_UI_PROJECTS', 'BIJUX_UI_PROFILE')):
         raise ValueError('Canonical inventory must not select projects')
     inventory = ARTIFACTS / 'inventories'
-    for suite in SUITES:
+    for suite in (*SUITES, PERSISTED_SUITE):
         env = environment(suite, inventory / suite)
         config = TESTS / f'playwright.{suite}.config.js'
         subprocess.run(['node', str(TESTS / 'reporting/inventory.js'), '--config', str(config), '--output', str(inventory / f'{suite}.json')], cwd=ROOT, env=env, check=True)
@@ -69,7 +70,7 @@ def prepare() -> None:
     receipt = fixture_transport().pack(ARTIFACTS, fixture_roots(), archive)
     print('Fixture transport: ' + json.dumps(receipt, sort_keys=True))
     (ARTIFACTS / 'browser-fixtures.sha256').write_text(hashlib.sha256(archive.read_bytes()).hexdigest() + '\n')
-    paths = [archive, ARTIFACTS / 'renderer-source-observation.json'] + [inventory / f'{suite}.json' for suite in SUITES]
+    paths = [archive, ARTIFACTS / 'renderer-source-observation.json'] + [inventory / f'{suite}.json' for suite in (*SUITES, PERSISTED_SUITE)]
     write_json(ARTIFACTS / 'producer-envelope.json', {
         'source_head': subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=ROOT, text=True).strip(),
         'workflow_run_id': os.environ.get('GITHUB_RUN_ID'),
@@ -87,7 +88,7 @@ def verify_producer_envelope() -> dict:
         raise ValueError('Producer workflow/candidate identity mismatch')
     if receipt.get('partition_registry_sha256') != hashlib.sha256(PARTITIONS.REGISTRY_PATH.read_bytes()).hexdigest():
         raise ValueError('Producer browser partition registry mismatch')
-    paths = ['browser-fixtures.tar.gz', 'renderer-source-observation.json'] + [f'inventories/{suite}.json' for suite in SUITES]
+    paths = ['browser-fixtures.tar.gz', 'renderer-source-observation.json'] + [f'inventories/{suite}.json' for suite in (*SUITES, PERSISTED_SUITE)]
     if set(receipt.get('artifact_digests', {})) != set(paths):
         raise ValueError('Producer evidence inventory mismatch')
     for name in paths:
@@ -160,7 +161,7 @@ def aggregate() -> None:
     actual = [(path.parent.parent.name, path.parent.name) for path in reports]
     output = ARTIFACTS / 'navigation-qualification.json'
     try:
-        if any(os.environ.get(name, 'success') != 'success' for name in ('FIXTURE_RESULT', 'BROWSER_RESULT', 'COMMAND_RESULT', 'RENDERER_RESULT')):
+        if any(os.environ.get(name, 'success') != 'success' for name in ('FIXTURE_RESULT', 'BROWSER_RESULT', 'COMMAND_RESULT', 'RENDERER_RESULT', 'PERSISTED_RESULT')):
             raise ValueError('A required fixture/browser job or publication command job failed or was cancelled')
         if len(actual) != len(expected) or set(actual) != expected:
             raise ValueError('Missing, duplicate or unexpected browser shard receipt')
@@ -189,6 +190,11 @@ def aggregate() -> None:
         controls = importlib.util.module_from_spec(controls_spec)
         controls_spec.loader.exec_module(controls)
         result['renderer_controls'] = controls.verify_groups(ARTIFACTS / 'renderer-controls')
+        persisted = persisted_reader()
+        cached = persisted.verify(ARTIFACTS / 'persisted-reader')
+        if cached['source_identity'] != result['source_identity']:
+            raise ValueError('Cached reader receipt does not qualify this Git candidate')
+        result['persisted_native_reader'] = cached
         result['producer_envelope'] = producer
         result['browser_partitions'] = {f'{group}/{suite}': names for (group, suite), names in assignments.items()}
         result['inputs'] = [{'path': str(path.relative_to(ARTIFACTS)), 'sha256': hashlib.sha256(path.read_bytes()).hexdigest()} for path in inventories + reports]
@@ -198,6 +204,17 @@ def aggregate() -> None:
     print(f"Navigation qualification: {result['status']}: {result.get('executed_cases', result.get('error'))}")
     if result['status'] != 'passed':
         raise ValueError(result['error'])
+
+
+def persisted_reader():
+    return load_module(TESTS / 'execution/persisted_reader.py', 'persisted_reader_gate')
+
+
+def load_module(path: Path, name: str):
+    spec = importlib.util.spec_from_file_location(name, path)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
 
 
 def main() -> int:
