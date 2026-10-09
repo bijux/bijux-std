@@ -10,8 +10,9 @@ This file records notable repository-level changes for `bijux-std`.
 
 Capture the actual hosted Linux runtime for Canon's exact documentation dependency recipe before independent publication-profile review.
 
-- Keep the canonical fixture environment unchanged and bind all36 dependency pins to reviewed source/lock provenance.
-- Reuse physical package, runtime, startup and callback observers in a read-only3-minute job; retain actual source/run/attempt evidence.
+- Keep the canonical fixture environment unchanged and bind all 36 dependency pins to reviewed source/lock provenance.
+- Reuse physical package, runtime, startup and callback observers in a read-only 3-minute job; retain actual source/run/attempt evidence.
+- Compare cached numeric constants by exact IEEE representation, retaining NaN set multiplicity and rejecting altered executable fields.
 - Keep profile approval, consumer acceptance, authored build and publication separate; this review depends on #226.
 
 #### [#226](https://github.com/bijux/bijux-std/pull/226) — fix(docs): admit reviewed revision history capability
@@ -23,7 +24,15 @@ Preserve the existing Canon revision-date plugin while validating its real Git h
 
 ### Merged pull requests
 
-#### 2026-10-09T02:01:13Z — [#223](https://github.com/bijux/bijux-std/pull/223) — fix(docs): capture committed publication source and callback inputs
+#### 2026-10-09T02:38:35Z — [#225](https://github.com/bijux/bijux-std/pull/225) — test(docs): require frontend fault rejection in navigation ci
+
+Make real frontend regressions fail required CI before promotion.
+
+- Add bounded engine controls for hidden ribbons, blocked native activation and uncaught runtime errors, plus real missing-search and loopback-metadata artifact controls.
+- Bind each expected failure to its exact executed case and keep the unmodified ordinary-input control passing.
+- Retain all 645 canonical rendered cases and require source/run-bound fault receipts within the existing strict job budgets.
+
+#### 2026-10-09T02:01:13Z — [#223](https://github.com/bijux/bijux-std/pull/223) — fix(docs): bind publication source and callback inputs to committed git
 
 Bind publication inputs to their exact committed Git bytes without treating ignored run caches as source.
 

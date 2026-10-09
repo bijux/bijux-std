@@ -20,7 +20,10 @@ def expected_job_names(groups: dict, engines: tuple | list) -> set[str]:
     require(bool(groups) and bool(engines), 'Canonical browser groups and engines are required')
     require(len(set(engines)) == len(engines), 'Duplicate canonical engine')
     require(all(isinstance(x, str) and x and '/' not in x for x in [*groups, *engines]), 'Invalid canonical group or engine')
-    return {'std / navigation fixtures', 'std / navigation', 'std / publication commands'} | {
+    return {'std / navigation fixtures', 'std / navigation', 'std / publication commands',
+            'std / frontend public artifact fault controls'} | {
+        f'std / frontend fault controls / {engine}' for engine in engines
+    } | {
         f'std / navigation {group} / {engine}' for group in groups for engine in engines
     }
 

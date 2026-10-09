@@ -1,6 +1,7 @@
 """Select source-owned renderer profiles and reject unmanaged import surfaces."""
 from __future__ import annotations
 
+from collections import Counter
 import hashlib
 import importlib.metadata as metadata
 import importlib.util
@@ -79,7 +80,9 @@ def validate_bytecode(path: Path, *, root: Path | None = None, stdlib=False):
         if type(value) is tuple:
             return ('tuple', tuple(constant_identity(item) for item in value))
         if type(value) is frozenset:
-            return ('frozenset', frozenset(constant_identity(item) for item in value))
+            # Distinct NaNs can share IEEE bits without comparing equal. Retain
+            # their multiplicity while comparing unordered compiler constants.
+            return ('frozenset', frozenset(Counter(constant_identity(item) for item in value).items()))
         require(type(value) in {type(None), type(Ellipsis), bool, int, str, bytes},
                 'Renderer profile: unsupported executable constant type')
         return (type(value).__name__, value)

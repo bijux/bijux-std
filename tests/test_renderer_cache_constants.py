@@ -56,10 +56,26 @@ class ExecutableCacheConstants(unittest.TestCase):
                 'value = (1e309 - 1e309, (1e309j / 1e309j, b"owned"))\n',
                 'def nested():\n    return 1e309 - 1e309\n',
                 'if 0 in {1e309 - 1e309, "owned"}:\n    pass\n',
+                'if 0 in {1e309 - 1e309, 1e309 - 1e309}:\n    pass\n',
             ):
                 with self.subTest(optimize=optimize, source=source):
                     _, cache = self.compile_cache(source, optimize)
                     profiles.validate_bytecode(cache)
+
+    def test_removed_identical_nan_set_member_is_rejected(self):
+        _, cache = self.compile_cache('if 0 in {1e309 - 1e309, 1e309 - 1e309}:\n    pass\n')
+        def changed(value):
+            if type(value) is frozenset:
+                self.assertEqual(len(value), 2)
+                return frozenset([next(iter(value))])
+            return value
+        self.corrupt(cache, lambda code: self.changed_constants(code, changed))
+        self.reject(cache)
+
+    def test_removed_nested_nan_set_member_is_rejected(self):
+        _, cache = self.compile_cache('def nested():\n    if 0 in {1e309 - 1e309, 1e309 - 1e309}:\n        pass\n')
+        self.corrupt(cache, lambda code: self.changed_constants(code, lambda value: frozenset([next(iter(value))]) if type(value) is frozenset else value))
+        self.reject(cache)
 
     def test_changed_nan_payload_is_rejected(self):
         _, cache = self.compile_cache('value = 1e309 - 1e309\n')
