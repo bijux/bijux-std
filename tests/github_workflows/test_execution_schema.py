@@ -75,6 +75,13 @@ class ExecutionSchemaTests(unittest.TestCase):
             with self.subTest(entry=entry), self.assertRaises(ValueError):
                 MODULE.validate_manifest(manifest({"schema": 1, "publication_entrypoints": {entrypoint: entry}}), ["bijux-atlas"])
 
+    def test_dependency_policy_rejects_boolean_and_unknown_actor_selectors(self):
+        for value in [True, False, None, "dependabot", "${{ github.actor }}"]:
+            with self.subTest(value=value), self.assertRaises(ValueError):
+                MODULE.validate_manifest(manifest({"schema": 1, "dependency_pull_requests": value}), ["bijux-atlas"])
+        with self.assertRaises(ValueError):
+            MODULE.validate_manifest(manifest({"schema": 1, "dependency_pull_requests": "skip-managed-jobs", "actor": "dependabot[bot]"}), ["bijux-atlas"])
+
     def test_standard_cannot_disable_qualification(self):
         for key, value in [("automatic_runs", "repository-policy-only"),
                            ("dependency_pull_requests", "skip-managed-jobs")]:

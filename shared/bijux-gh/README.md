@@ -248,3 +248,28 @@ The workflow validates and uploads the first detected directory containing
 Record notable repository changes directly in `CHANGELOG.md`, with actual PR links
 and concise behavior summaries. Keep the newest PR first. Pending reviews do not
 claim a merge date; use verified GitHub dates when reconciling merged history.
+
+## Dependency pull request job admission
+
+The canonical repository manifest can explicitly select
+`workflow_execution_policy.dependency_pull_requests: skip-managed-jobs`.
+This adds an early job condition to every managed workflow or canonical wrapper
+that handles `pull_request`, `pull_request_target` or `pull_request_review`.
+The condition matches `github.event.pull_request.user.login`, so a
+Dependabot-authored PR stays excluded when a human reruns or reviews it.
+A bot acting on a human-authored PR does not gain a new exclusion. Non-PR events
+retain their original admission, and existing job expressions, including
+`always()` and dependency/result conditions, remain conjoined with the exclusion.
+The guard belongs to the job, before runner and matrix allocation; a step-level
+skip does not satisfy this policy.
+
+Absent selection or `canonical` preserves existing generation, including default
+CI/verify wrapper behavior. `bijux-std` cannot select this suppression for its own
+mandatory qualification. Managed shared source bytes remain canonical; projected
+runtime jobs keep their names, dependencies, bodies and permissions. Ambiguous
+or untyped conditions require source review before files are written. Consumer
+authored workflows stay under their owner's admission policy.
+
+Skipped jobs are an intentional declared policy outcome; they provide no executed
+implementation evidence. This policy changes neither publication authorization
+nor source, deployment, profile or manual qualification requirements.

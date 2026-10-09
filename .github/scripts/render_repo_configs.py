@@ -411,6 +411,7 @@ def prepare_workflow_wrappers(repo: dict, policy: dict | None) -> dict:
         definition = wrappers.get(name)
         if definition is not None:
             prepared[name] = WORKFLOW_EXECUTION.project_automatic_events(name, definition, policy)
+            prepared[name] = WORKFLOW_EXECUTION.project_dependency_pull_requests(name, prepared[name], policy)
     WORKFLOW_EXECUTION.validate_publication_calls(
         {f".github/workflows/{name}.yml": definition for name, definition in prepared.items()}, policy
     )
@@ -465,17 +466,18 @@ def render_repo(repo_name: str, manifest: dict) -> None:
         if wrapper_definition is None:
             remove_if_generated(wrapper_path)
             continue
-        wrapper_definition = inject_dependabot_pull_request_skip(
-            wrapper_name,
-            wrapper_definition,
-        )
+        if not WORKFLOW_EXECUTION.requires_dependency_projection(policy):
+            wrapper_definition = inject_dependabot_pull_request_skip(
+                wrapper_name,
+                wrapper_definition,
+            )
         wrapper_definition = normalize_workflow_wrapper(
             wrapper_name,
             wrapper_definition,
         )
         write_if_needed(wrapper_path, render_yaml_document(
             wrapper_definition,
-            preserve_scalar_types=policy is not None and policy.get("automatic_runs") == "repository-policy-only",
+            preserve_scalar_types=WORKFLOW_EXECUTION.requires_event_projection(policy) or WORKFLOW_EXECUTION.requires_dependency_projection(policy),
         ))
 
 

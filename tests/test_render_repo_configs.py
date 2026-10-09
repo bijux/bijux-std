@@ -40,6 +40,42 @@ SPEC.loader.exec_module(MODULE)
 
 
 class RenderRepoConfigsTests(unittest.TestCase):
+    def test_selected_dependency_wrapper_preserves_types_and_existing_conditions(self) -> None:
+        manifest = json.loads(MANIFEST_PATH.read_text())
+        repo = MODULE.find_repo_config(manifest, "bijux-atlas")
+        repo["workflow_execution_policy"] = {"schema": 1, "dependency_pull_requests": "skip-managed-jobs"}
+        original_job = {"name": "owned wrapper", "if": "${{ always() && needs.build.result == 'success' }}",
+                        "needs": "build", "runs-on": "ubuntu-latest",
+                        "env": {"PYTHON_VERSION": "3.11", "OWNED_FLAG": "false"}, "steps": [{"run": "owned command"}]}
+        repo["workflow_wrappers"] = {"verify": {"on": {"pull_request_target": None, "pull_request_review": None},
+                                                   "jobs": {"owned": original_job}}}
+        before = copy.deepcopy(repo)
+        with tempfile.TemporaryDirectory() as workspace:
+            destination = Path(workspace)
+            with mock.patch.object(MODULE, "resolve_repository_checkout", return_value=destination):
+                MODULE.render_repo("bijux-atlas", manifest)
+            actual = MODULE.WORKFLOW_EXECUTION.parse_workflow(
+                (destination / ".github/workflows/verify.yml").read_bytes(), "owned wrapper"
+            )
+        job = actual["jobs"]["owned"]
+        self.assertEqual({k: v for k, v in job.items() if k != "if"},
+                         {k: v for k, v in original_job.items() if k != "if"})
+        self.assertIn("always() && needs.build.result == 'success'", job["if"])
+        self.assertIn("pull_request_review", job["if"])
+        self.assertIn("pull_request_target", job["if"])
+        self.assertEqual(repo, before)
+
+    def test_selected_dependency_wrapper_refuses_untyped_condition_before_writes(self) -> None:
+        manifest = json.loads(MANIFEST_PATH.read_text())
+        repo = MODULE.find_repo_config(manifest, "bijux-atlas")
+        repo["workflow_execution_policy"] = {"schema": 1, "dependency_pull_requests": "skip-managed-jobs"}
+        repo["workflow_wrappers"] = {"ci": {"on": "pull_request", "jobs": {"owned": {}}},
+                                     "verify": {"on": "pull_request_review", "jobs": {"invalid": {"if": False}}}}
+        with mock.patch.object(MODULE, "write_if_needed") as write:
+            with self.assertRaisesRegex(ValueError, "nonempty source-owned expression"):
+                MODULE.render_repo("bijux-atlas", manifest)
+            write.assert_not_called()
+
     def test_consumer_renderer_uses_synchronized_github_sources(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
             repository_root = Path(temp_dir)

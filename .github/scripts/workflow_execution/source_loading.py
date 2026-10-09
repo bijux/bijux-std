@@ -8,7 +8,7 @@ from pathlib import Path
 from types import ModuleType
 
 
-MODULE_ORDER = ("source_loading", "schema", "yaml_io", "events", "refs", "publication")
+MODULE_ORDER = ("source_loading", "schema", "yaml_io", "events", "refs", "dependency_prs", "publication")
 
 
 def load_package(bootstrap_source: bytes) -> ModuleType:

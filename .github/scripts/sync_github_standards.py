@@ -81,6 +81,7 @@ BASE_FILE_MAPPINGS: list[tuple[str, str]] = [
     (".github/scripts/workflow_execution/yaml_io.py", ".github/scripts/workflow_execution/yaml_io.py"),
     (".github/scripts/workflow_execution/events.py", ".github/scripts/workflow_execution/events.py"),
     (".github/scripts/workflow_execution/refs.py", ".github/scripts/workflow_execution/refs.py"),
+    (".github/scripts/workflow_execution/dependency_prs.py", ".github/scripts/workflow_execution/dependency_prs.py"),
     (".github/scripts/workflow_execution/publication.py", ".github/scripts/workflow_execution/publication.py"),
     (".github/scripts/build_repo_manifest.py", ".github/scripts/build_repo_manifest.py"),
     (".github/scripts/check_pinned_actions.py", ".github/scripts/check_pinned_actions.py"),
@@ -208,7 +209,7 @@ def copy_file_mapping(source_relative: str, destination_relative: str, repo_dir:
 def prepare_runtime_workflows(repo_config: dict[str, Any], manifest: dict[str, Any]) -> dict[str, bytes]:
     name = repo_config["name"]
     policy = WORKFLOW_EXECUTION.validate_manifest(manifest, [name])[name]
-    if not (WORKFLOW_EXECUTION.requires_event_projection(policy) or WORKFLOW_EXECUTION.requires_publication_projection(policy)):
+    if not (WORKFLOW_EXECUTION.requires_event_projection(policy) or WORKFLOW_EXECUTION.requires_publication_projection(policy) or WORKFLOW_EXECUTION.requires_dependency_projection(policy)):
         return {}
     render_spec = importlib.util.spec_from_file_location(
         __name__ + ".canonical_renderer", STD_REPO / ".github/scripts/render_repo_configs.py"
@@ -230,6 +231,7 @@ def prepare_runtime_workflows(repo_config: dict[str, Any], manifest: dict[str, A
         document = WORKFLOW_EXECUTION.parse_workflow((STD_REPO / source).read_bytes(), source)
         projected = WORKFLOW_EXECUTION.project_automatic_events(identity, document, policy)
         projected = WORKFLOW_EXECUTION.project_publication_entrypoints(identity, projected, policy)
+        projected = WORKFLOW_EXECUTION.project_dependency_pull_requests(identity, projected, policy)
         documents[destination] = projected
         prepared[destination] = renderer.render_yaml_document(projected, preserve_scalar_types=True).encode("utf-8")
     # Wrapper qualification precedes even the first raw canonical copy.
