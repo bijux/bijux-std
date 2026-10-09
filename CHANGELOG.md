@@ -6,14 +6,22 @@ This file records notable repository-level changes for `bijux-std`.
 
 ### Pending review
 
-#### [#232](https://github.com/bijux/bijux-std/pull/232) — fix(docs): preserve native palette keyboard and focus continuity
+#### [#237](https://github.com/bijux/bijux-std/pull/237) — fix(docs): retain authored labels for reused navigation pages
+
+Keep each reused page occurrence’s authored navigation name while preserving its route and content identity.
+
+- Match the authored parent and source before recovering aliases such as Overview instead of a reused Home title.
+- Preserve provider Link labels and single-Page titles, using one occurrence census in the existing shared macros.
+- Verify alias, mismatch and provider controls without closing separate active-ancestor semantics.
+
+### Merged pull requests
+
+#### 2026-10-09T05:46:46Z — [#232](https://github.com/bijux/bijux-std/pull/232) — fix(docs): preserve native palette keyboard and focus continuity
 
 Make native Material palette actions reachable by keyboard and retain focus on the next visible action after theme changes.
 
 - Preserve palette radio ownership, persistence and native Enter/Space activation; prevent hidden-radio focus and recover prior pointer focus without taking reader focus.
 - Exercise native and enhanced utility focus through existing contrast journeys across three browser engines, including forced-colour and no-script fallback coverage.
-
-### Merged pull requests
 
 #### 2026-10-09T05:24:47Z — [#228](https://github.com/bijux/bijux-std/pull/228) — ci(docs): observe exact history renderer dependencies on linux
 
