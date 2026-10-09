@@ -262,8 +262,19 @@ def execute(output: Path, node: Path, group: str | None = None) -> dict:
             child = subprocess.run([str(node), '--test', '--test-reporter=' + str(Path(__file__).with_name('node_events.cjs')),
                                     *map(str, files)], cwd=ROOT, stdout=stdout, stderr=stderr, env=node_environment(node))
         node_exit = child.returncode
-    with (output / 'python-unittest.log').open('w') as stream:
-        result = unittest.TextTestRunner(stream=stream, verbosity=2, resultclass=HELPERS.CommandResult).run(suite)
+    # Retain independent interactive source/reference bytes inside this job's
+    # uploaded evidence root so successful assertions remain physically reviewable.
+    artifact_key = 'BIJUX_INTERACTIVE_TEST_ARTIFACTS_ROOT'
+    previous_artifacts = os.environ.get(artifact_key)
+    os.environ[artifact_key] = str(output / 'interactive-reports')
+    try:
+        with (output / 'python-unittest.log').open('w') as stream:
+            result = unittest.TextTestRunner(stream=stream, verbosity=2, resultclass=HELPERS.CommandResult).run(suite)
+    finally:
+        if previous_artifacts is None:
+            os.environ.pop(artifact_key, None)
+        else:
+            os.environ[artifact_key] = previous_artifacts
     cases = node_cases(output / 'node-events.jsonl', files) if files else []
     if node_exit or not result.wasSuccessful():
         raise ValueError('Renderer unit execution failed')
