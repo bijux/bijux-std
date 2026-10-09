@@ -15,6 +15,13 @@ Bind shell behaviour to executable reader cases and reject uncaught runtime fail
 
 ### Merged pull requests
 
+#### 2026-10-09T00:16:26Z — [#220](https://github.com/bijux/bijux-std/pull/220) — fix(github): bind protected path policy to immutable pr source
+
+Keep policy checks bound to the reviewed PR event when main advances.
+
+- Compare validated full event base and head commits without shallow-fetching a mutable branch.
+- Reject incomplete identities and history while preserving earlier protected changes; regenerate the canonical managed runtime.
+
 #### 2026-10-09T00:01:42Z — [#219](https://github.com/bijux/bijux-std/pull/219) — fix(docs): restore fragments without redundant native navigation
 
 Keep browser Back from resurrecting the fragment a reader just left.
