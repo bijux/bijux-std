@@ -6,15 +6,23 @@ This file records notable repository-level changes for `bijux-std`.
 
 ### Pending review
 
-#### [#236](https://github.com/bijux/bijux-std/pull/236) — fix(ci): separate frozen renderer provenance from dependency candidates
+#### [#238](https://github.com/bijux/bijux-std/pull/238) — ci(docs): bound contrast jobs by viewport ownership
+
+Keep contrast qualification within the three-minute whole-job budget by assigning each engine's phone, compact and desktop profiles independently.
+
+- Preserve all 39 contrast cases and all 645 canonical cases, with five phone and four compact/desktop cases per engine.
+- Require complete disjoint profile ownership and all 81 exact suite receipts; retain missing, overlapping and cancelled-result rejection.
+- Keep the existing time limit, runtime pins, case assertions and full source/artifact qualification.
+
+### Merged pull requests
+
+#### 2026-10-09T06:31:01Z — [#236](https://github.com/bijux/bijux-std/pull/236) — fix(ci): separate frozen renderer provenance from dependency candidates
 
 Preserve the exact Canon renderer observation snapshot while keeping dependency automation on active package candidates.
 
 - Move the unchanged 36-package snapshot into its owned recipe boundary and update explicit observer/workflow references.
 - Retain source, lock digest and package provenance; reject changed snapshots even when a caller changes the expected digest.
 - Keep actual consumer security upgrades and production profile qualification separate.
-
-### Merged pull requests
 
 #### 2026-10-09T06:10:24Z — [#235](https://github.com/bijux/bijux-std/pull/235) — fix(docs): retain reader focus and desktop disclosure hit surfaces
 
