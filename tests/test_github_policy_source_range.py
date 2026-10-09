@@ -16,7 +16,8 @@ WORKFLOWS = ('.github/workflows/github-policy.yml', 'shared/bijux-gh/workflows/g
 
 class PullRequestSourceRangeTests(unittest.TestCase):
     def setUp(self):
-        artifacts = ROOT / 'artifacts/contracts/policy-source-range'
+        artifacts = Path(os.environ.get('BIJUX_POLICY_SOURCE_RANGE_ARTIFACTS',
+                                        str(ROOT / 'artifacts/contracts/policy-source-range')))
         artifacts.mkdir(parents=True, exist_ok=True)
         self.sandbox = tempfile.TemporaryDirectory(prefix='event-graph-', dir=artifacts)
         self.addCleanup(self.sandbox.cleanup)
@@ -157,6 +158,20 @@ class PullRequestSourceRangeTests(unittest.TestCase):
         self.commands.append({'command':command,'returncode':result.returncode,'stdout':result.stdout,'stderr':result.stderr})
         self.assertEqual(result.returncode, 1)
         self.assertIn('.github/workflows/bijux-std.yml', result.stdout)
+
+    def test_finite_projection_authority_paths_are_protected_even_when_deleted(self):
+        from types import ModuleType
+        path = ROOT / ".github/scripts/check_protected_github_changes.py"
+        module = ModuleType("bijux_projection_protected_paths")
+        module.__file__ = str(path)
+        exec(compile(path.read_bytes(), str(path), "exec"), module.__dict__)
+        with tempfile.TemporaryDirectory() as workspace:
+            module.ROOT = Path(workspace)
+            module.MANIFEST_PATH = module.ROOT / ".github/standards/repo-config.manifest.json"
+            protected = module.protected_paths()
+        self.assertIn(".github/scripts/workflow_execution/verification.py", protected)
+        self.assertIn(".github/scripts/check_workflow_projection.py", protected)
+        self.assertIn(".github/standards/workflow-sources/source-manifest.json", protected)
 
     def test_generator_control_path_still_admits_protected_intent(self):
         result, output = self.gather(WORKFLOWS[0])

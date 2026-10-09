@@ -28,3 +28,53 @@ def manifest(policy=POLICY, name="bijux-atlas"):
         "name": name, "workflow_allowlist": ["github-policy", "deploy-docs", "release-github"],
         "workflow_execution_policy": copy.deepcopy(policy),
     }]}
+
+
+def source_fixture(directory, *, selected=False):
+    """Build an owning standard fixture; never read a consumer checkout."""
+    import shutil
+    root = (Path(directory) / "owning-standard").resolve()
+    shutil.copytree(ROOT / ".github", root / ".github", ignore=shutil.ignore_patterns("__pycache__"))
+    shutil.copytree(ROOT / "shared/bijux-gh", root / "shared/bijux-gh")
+    guard = "shared/bijux-checks/scripts/verify-accepted-source.sh"
+    (root / guard).parent.mkdir(parents=True, exist_ok=True)
+    shutil.copyfile(ROOT / guard, root / guard)
+    actual_manifest = json.loads((root / ".github/standards/repo-config.manifest.json").read_text())
+    if selected:
+        repo = next(entry for entry in actual_manifest["repositories"] if entry["name"] == "bijux-atlas")
+        repo["workflow_allowlist"] = [entry["id"] for entry in actual_manifest["workflow_inventory"]["managed_workflows"]]
+        repo["workflow_execution_policy"] = copy.deepcopy(POLICY)
+        for name in ["release-ghcr", "release-crates"]:
+            repo["workflow_execution_policy"]["publication_entrypoints"][name] = {"mode": "manual-only"}
+        (root / ".github/standards/repo-config.manifest.json").write_text(json.dumps(actual_manifest, indent=2) + "\n")
+    loader = root / ".github/scripts/workflow_execution/source_loading.py"
+    from types import ModuleType
+    module = ModuleType("bijux_owned_fixture_loader")
+    module.__file__ = str(loader)
+    source = loader.read_bytes()
+    exec(compile(source, str(loader), "exec"), module.__dict__)
+    owned = module.load_package(source)
+    refresh_snapshots(root, owned)
+    return root, owned
+
+
+def refresh_snapshots(root, owned):
+    for relative, body in owned.capture_sources(root).items():
+        path = root / relative
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_bytes(body)
+
+
+def projection_fixture(source, owned, target, repository="bijux-atlas"):
+    expected, _ = owned.verification.expected_projection(source, target, repository)
+    for relative, body in expected.items():
+        if body is not None:
+            path = target / relative
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_bytes(body)
+    return expected
+
+
+def byte_tree(root):
+    return {path.relative_to(root).as_posix(): path.read_bytes()
+            for path in root.rglob("*") if path.is_file() and ".git" not in path.relative_to(root).parts}

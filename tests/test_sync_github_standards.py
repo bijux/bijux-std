@@ -31,6 +31,28 @@ SPEC.loader.exec_module(MODULE)
 
 
 class SyncGithubStandardsTests(unittest.TestCase):
+    def test_source_capture_failure_refuses_before_any_managed_copy(self) -> None:
+        manifest = copy.deepcopy(MODULE.load_manifest())
+        repo = MODULE.find_repo_config(manifest, "bijux-atlas")
+        with (mock.patch.object(MODULE.WORKFLOW_EXECUTION, "capture_sources", side_effect=ValueError("unverifiable source")),
+              mock.patch.object(MODULE, "copy_file_mapping") as copy_file,
+              mock.patch.object(MODULE, "resolve_repository_checkout") as resolve):
+            with self.assertRaisesRegex(ValueError, "unverifiable source"):
+                MODULE.copy_repo_files("bijux-atlas", repo, manifest)
+            copy_file.assert_not_called()
+            resolve.assert_not_called()
+
+    def test_generated_base_originals_and_source_manifest_match_current_canonical_inputs(self) -> None:
+        manifest = copy.deepcopy(MODULE.load_manifest())
+        repo = MODULE.find_repo_config(manifest, "bijux-atlas")
+        expected = MODULE.WORKFLOW_EXECUTION.capture_sources(MODULE.STD_REPO)
+        with tempfile.TemporaryDirectory() as workspace:
+            root = Path(workspace)
+            with mock.patch.object(MODULE, "resolve_repository_checkout", return_value=root):
+                MODULE.copy_repo_files("bijux-atlas", repo, manifest)
+            for relative, body in expected.items():
+                self.assertEqual((root / relative).read_bytes(), body)
+
     def test_explicit_dependency_selection_gates_actual_managed_PR_jobs(self) -> None:
         manifest = copy.deepcopy(MODULE.load_manifest())
         repo = MODULE.find_repo_config(manifest, "bijux-atlas")

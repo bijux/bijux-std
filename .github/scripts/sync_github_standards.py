@@ -83,15 +83,22 @@ BASE_FILE_MAPPINGS: list[tuple[str, str]] = [
     (".github/scripts/workflow_execution/refs.py", ".github/scripts/workflow_execution/refs.py"),
     (".github/scripts/workflow_execution/dependency_prs.py", ".github/scripts/workflow_execution/dependency_prs.py"),
     (".github/scripts/workflow_execution/publication.py", ".github/scripts/workflow_execution/publication.py"),
+    (".github/scripts/workflow_execution/canonical_sources.py", ".github/scripts/workflow_execution/canonical_sources.py"),
+    (".github/scripts/workflow_execution/source_authority.py", ".github/scripts/workflow_execution/source_authority.py"),
+    (".github/scripts/workflow_execution/verification.py", ".github/scripts/workflow_execution/verification.py"),
     (".github/scripts/build_repo_manifest.py", ".github/scripts/build_repo_manifest.py"),
     (".github/scripts/check_pinned_actions.py", ".github/scripts/check_pinned_actions.py"),
     (".github/scripts/check_protected_github_changes.py", ".github/scripts/check_protected_github_changes.py"),
+    (".github/scripts/check_workflow_projection.py", ".github/scripts/check_workflow_projection.py"),
     (".github/scripts/check_workflow_prerequisites.py", ".github/scripts/check_workflow_prerequisites.py"),
     (".github/scripts/render_repo_configs.py", ".github/scripts/render_repo_configs.py"),
     (".github/scripts/sync_github_standards.py", ".github/scripts/sync_github_standards.py"),
     (".github/scripts/wait_for_ci.py", ".github/scripts/wait_for_ci.py"),
     (".github/standards/workflow-inventory.json", ".github/standards/workflow-inventory.json"),
     (".github/standards/repo-config.manifest.json", ".github/standards/repo-config.manifest.json"),
+    (".github/standards/workflow-sources/bijux-std.yml", ".github/standards/workflow-sources/bijux-std.yml"),
+    (".github/standards/workflow-sources/automerge-pr.yml", ".github/standards/workflow-sources/automerge-pr.yml"),
+    (".github/standards/workflow-sources/source-manifest.json", ".github/standards/workflow-sources/source-manifest.json"),
     (".github/workflows/bijux-std.yml", ".github/workflows/bijux-std.yml"),
     (".github/workflows/automerge-pr.yml", ".github/workflows/automerge-pr.yml"),
     (".github/bijux-std-shared.sha256", ".github/bijux-std-shared.sha256"),
@@ -211,12 +218,9 @@ def prepare_runtime_workflows(repo_config: dict[str, Any], manifest: dict[str, A
     policy = WORKFLOW_EXECUTION.validate_manifest(manifest, [name])[name]
     if not (WORKFLOW_EXECUTION.requires_event_projection(policy) or WORKFLOW_EXECUTION.requires_publication_projection(policy) or WORKFLOW_EXECUTION.requires_dependency_projection(policy)):
         return {}
-    render_spec = importlib.util.spec_from_file_location(
-        __name__ + ".canonical_renderer", STD_REPO / ".github/scripts/render_repo_configs.py"
+    renderer = WORKFLOW_EXECUTION.source_loading.load_script(
+        STD_REPO / ".github/scripts/render_repo_configs.py", __name__ + ".canonical_renderer"
     )
-    assert render_spec is not None and render_spec.loader is not None
-    renderer = importlib.util.module_from_spec(render_spec)
-    render_spec.loader.exec_module(renderer)
     sources = {
         destination: (Path(source).stem, source)
         for source, destination in BASE_FILE_MAPPINGS
@@ -281,8 +285,13 @@ def copy_repo_files(target_repo: str, repo_config: dict[str, Any], manifest: dic
     if repo_config != find_repo_config(manifest, target_repo):
         raise ValueError("repository configuration must match canonical manifest")
     prepared = prepare_runtime_workflows(repo_config, manifest)
+    source_snapshots = WORKFLOW_EXECUTION.capture_sources(STD_REPO)
     repo_dir = resolve_repository_checkout(target_repo)
     legacy_helper = qualified_legacy_policy_helper(repo_dir)
+    for relative, content in source_snapshots.items():
+        path = repo_dir / relative
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_bytes(content)
     for source_relative, destination_relative in BASE_FILE_MAPPINGS:
         _copy_runtime_or_source(source_relative, destination_relative, repo_dir, prepared)
 

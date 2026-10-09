@@ -14,6 +14,26 @@ from .policy_fixtures import ROOT, MODULE, INVENTORY, POLICY, manifest
 
 
 class CanonicalYamlProjectionTests(unittest.TestCase):
+    def test_canonical_scripts_execute_current_bytes_despite_timestamp_valid_cache(self):
+        from .policy_fixtures import source_fixture
+        with tempfile.TemporaryDirectory() as workspace:
+            root, owned = source_fixture(workspace)
+            paths = [(root / ".github/scripts/render_repo_configs.py", b"dependabot[bot]", b"dependabox[bot]"),
+                     (root / ".github/scripts/sync_github_standards.py", b"bijux-std.sha", b"bijux-std.shx")]
+            caches = []
+            for path, old, new in paths:
+                before = path.read_bytes();after = before.replace(old, new)
+                self.assertNotEqual(before, after);self.assertEqual(len(before), len(after))
+                stamp = path.stat()
+                cache = Path(py_compile.compile(str(path), doraise=True))
+                caches.append((cache, cache.read_bytes()))
+                path.write_bytes(after);os.utime(path, ns=(stamp.st_atime_ns, stamp.st_mtime_ns))
+            sync, renderer = owned.canonical_sources.owning_scripts(root)
+            self.assertEqual(sync.PIN_PATH, ".github/standards/bijux-std.shx")
+            self.assertIn("dependabox[bot]", renderer.DEPENDABOT_PR_SKIP_CONDITION)
+            for cache, before in caches:
+                self.assertEqual(cache.read_bytes(), before)
+
     def test_same_root_changed_source_and_forged_cache_cannot_select_old_schema(self):
         with tempfile.TemporaryDirectory() as workspace:
             root = Path(workspace)

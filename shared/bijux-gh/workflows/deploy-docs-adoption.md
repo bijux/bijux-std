@@ -76,3 +76,25 @@ rewritten. All other dispatch, build, artifact, profile and deployment content
 stays source-owned. Absent policy or `refs: canonical` preserves the canonical
 ref guard. This selection does not authorize publication or establish deployed,
 manual or profile evidence.
+
+## Canonical workflow verification
+
+The existing `policy / github` job verifies managed runtime bytes without rewriting
+those files. Consumer verification reads the full tracked standard pin and fetches
+that exact official GitHub source into the repository's `artifacts/` cache. The
+source's own verifier checks the origin, full SHA and clean source independently,
+then derives the selected repository policy and compares every governed input and
+managed runtime. A local checksum or source snapshot does not establish accepted
+source authority. The owning standard may qualify its current candidate explicitly;
+that result does not certify accepted consumer adoption.
+
+The governed `workflow-sources` snapshots preserve both base workflow originals and
+the finite canonical input hashes. The standard must refresh these generated
+snapshots when their actual owning inputs change. Verification checks the snapshots
+against the original inputs and rejects source changes during comparison.
+
+Only policies that require structural workflow projection provision the pinned
+`ruby/setup-ruby` action and Ruby `3.3.12` in the existing policy job. The job asserts
+the actual Ruby version and Psych parsing API before verification. The default raw
+workflow path uses the Python standard library without this parser prerequisite.
+Actual hosted parser execution and consumer adoption remain separate qualifications.

@@ -40,6 +40,29 @@ SPEC.loader.exec_module(MODULE)
 
 
 class RenderRepoConfigsTests(unittest.TestCase):
+    def test_pure_preparation_has_no_destination_selection_or_mutation(self) -> None:
+        manifest = json.loads(MANIFEST_PATH.read_text())
+        before = copy.deepcopy(manifest)
+        with mock.patch.object(MODULE, "resolve_repository_checkout", side_effect=AssertionError("writer selected")):
+            prepared = MODULE.prepare_repo_files("bijux-atlas", manifest)
+        self.assertIn(".github/release.env", prepared)
+        self.assertIn(".github/workflows/ci.yml", prepared)
+        self.assertEqual(manifest, before)
+
+    def test_pure_preparation_and_existing_writer_emit_same_all_repository_bytes(self) -> None:
+        manifest = json.loads(MANIFEST_PATH.read_text())
+        for repo in manifest["repositories"]:
+            with self.subTest(repository=repo["name"]), tempfile.TemporaryDirectory() as workspace:
+                root = Path(workspace)
+                expected = MODULE.prepare_repo_files(repo["name"], manifest)
+                with mock.patch.object(MODULE, "resolve_repository_checkout", return_value=root):
+                    MODULE.render_repo(repo["name"], manifest)
+                for relative, body in expected.items():
+                    if body is None:
+                        self.assertFalse((root / relative).exists())
+                    else:
+                        self.assertEqual((root / relative).read_bytes(), body)
+
     def test_selected_dependency_wrapper_preserves_types_and_existing_conditions(self) -> None:
         manifest = json.loads(MANIFEST_PATH.read_text())
         repo = MODULE.find_repo_config(manifest, "bijux-atlas")

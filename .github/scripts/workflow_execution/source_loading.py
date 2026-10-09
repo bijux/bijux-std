@@ -8,7 +8,18 @@ from pathlib import Path
 from types import ModuleType
 
 
-MODULE_ORDER = ("source_loading", "schema", "yaml_io", "events", "refs", "dependency_prs", "publication")
+MODULE_ORDER = ("source_loading", "schema", "yaml_io", "events", "refs", "dependency_prs", "publication",
+                "canonical_sources", "source_authority", "verification")
+
+
+def load_script(path: Path, name: str) -> ModuleType:
+    """Execute an explicitly selected owning script from its captured current bytes."""
+    path = path.resolve()
+    source = path.read_bytes()
+    module = ModuleType(name)
+    module.__file__ = str(path)
+    exec(compile(source, str(path), "exec"), module.__dict__)
+    return module
 
 
 def load_package(bootstrap_source: bytes) -> ModuleType:
