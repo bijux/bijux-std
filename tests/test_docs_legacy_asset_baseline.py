@@ -1,6 +1,7 @@
 """Bind explicitly reviewed historical asset ordering to accepted source bytes."""
 from pathlib import Path
 import copy
+from contextlib import contextmanager
 import hashlib
 import importlib.util
 import json
@@ -45,6 +46,65 @@ class ReviewedLegacyBaselineTests(unittest.TestCase):
         return self.sources[source]
 
     merge = fixture.ManagedAssetAdoptionTests.merge
+
+    @contextmanager
+    def core_predecessor(self):
+        record = self.registry['baselines'][prior.CORE_LEGACY_PIN]
+        record['source_evidence'] = {path: hashlib.sha256(data).hexdigest() for path, data in self.sources.items()}
+        self.write_registry()
+        original_git = self.git
+        original_published = self.published
+        def core_git(root, *args):
+            if args == ('show', 'HEAD:' + prior.PIN):
+                return prior.CORE_LEGACY_PIN
+            return original_git(root, *args)
+        def core_published(context, sha, source):
+            if sha == prior.CORE_LEGACY_PIN:
+                self.calls.append((sha, source))
+                self.assertEqual(context, self.context)
+                return self.sources[source]
+            return original_published(context, sha, source)
+        with mock.patch.object(prior, 'git', side_effect=core_git), mock.patch.object(prior, 'published_bytes', side_effect=core_published):
+            yield
+
+    def test_core_committed_predecessor_requires_its_exact_twelve_sources(self):
+        with self.core_predecessor():
+            after = self.merge()
+            self.assertEqual(after, 'extra_javascript:\n' + ''.join('  - ' + name + '\n' for name in self.required))
+            self.assertEqual({source for sha, source in self.calls if sha == prior.CORE_LEGACY_PIN}, set(self.sources))
+            self.assertNotIn((prior.CORE_LEGACY_PIN, prior.BASELINE), self.calls)
+            self.assertFalse(any(sha == prior.LEGACY_PIN for sha, source in self.calls))
+            self.calls.clear()
+            self.assertEqual(self.merge(after), after)
+            self.assertEqual(self.calls, [])
+
+    def test_core_source_evidence_type_and_digest_mismatches_fail_closed(self):
+        with self.core_predecessor():
+            evidence = self.registry['baselines'][prior.CORE_LEGACY_PIN]['source_evidence']
+            path = next(iter(evidence))
+            expected = evidence[path]
+            for malformed in (True, 123, None, [], 'A' * 64, 'a' * 63):
+                evidence[path] = malformed
+                self.write_registry()
+                with self.subTest(malformed=malformed), self.assertRaisesRegex(RuntimeError, 'invalid reviewed legacy'):
+                    self.merge()
+            evidence[path] = expected
+            self.write_registry()
+            self.sources[path] += b' changed'
+            with self.assertRaisesRegex(RuntimeError, 'legacy source evidence differs'):
+                self.merge()
+
+    def test_core_missing_record_does_not_reuse_other_reviewed_predecessor(self):
+        with self.core_predecessor():
+            del self.registry['baselines'][prior.CORE_LEGACY_PIN]
+            self.write_registry()
+            with self.assertRaisesRegex(RuntimeError, 'invalid reviewed legacy'):
+                self.merge()
+            self.assertFalse(any(sha in prior.LEGACY_PINS for sha, source in self.calls))
+
+    def test_core_plain_review_preserves_rejection_of_authored_execution_changes(self):
+        with self.core_predecessor():
+            fixture.ManagedAssetAdoptionTests.test_custom_order_and_attributes_and_comments_are_never_legacy_adoption(self)
 
     def test_reviewed_plain_list_requires_all_bound_predecessor_sources(self):
         after = self.merge()

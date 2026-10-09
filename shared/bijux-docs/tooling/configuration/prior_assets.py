@@ -13,6 +13,8 @@ from scripts.project_bijux_docs import published_bytes, source_context
 PIN = '.github/standards/bijux-std.sha'
 BASELINE = 'bijux-docs/config/mkdocs-baseline.json'
 LEGACY_PIN = '44e9153959f98bfc27444d6b740144146ed17a77'
+CORE_LEGACY_PIN = '10f073dba1d3a9617c8847d72d2bf62bdf7e996d'
+LEGACY_PINS = frozenset({LEGACY_PIN, CORE_LEGACY_PIN})
 LEGACY_REGISTRY = 'bijux-docs/config/legacy-mkdocs-baselines.json'
 LEGACY_SOURCE_PATHS = frozenset({
     'bijux-docs/CONTRACT.md',
@@ -64,7 +66,7 @@ def reviewed_legacy_javascript(context: dict, previous: str, shared: Path) -> by
         registry = json.loads(data)
         if set(registry) != {'schema', 'baselines'} or type(registry['schema']) is not int or registry['schema'] != 1:
             raise ValueError('registry schema')
-        if not isinstance(registry['baselines'], dict) or set(registry['baselines']) != {LEGACY_PIN}:
+        if not isinstance(registry['baselines'], dict) or set(registry['baselines']) != LEGACY_PINS:
             raise ValueError('reviewed predecessor')
         record = registry['baselines'][previous]
         if set(record) != {'extra_javascript', 'source_evidence', 'review'} or not isinstance(record['review'], str) or not record['review'].strip():
@@ -114,7 +116,7 @@ def prior_javascript(repository: Path, shared: Path) -> tuple[str, ...] | None:
     current = published_bytes(context, context['sha'], BASELINE)
     if hashlib.sha256((shared / 'config/mkdocs-baseline.json').read_bytes()).digest() != hashlib.sha256(current).digest():
         raise RuntimeError('Prior asset authority: current baseline differs from accepted Git source')
-    data = (reviewed_legacy_javascript(context, previous, shared) if previous == LEGACY_PIN
+    data = (reviewed_legacy_javascript(context, previous, shared) if previous in LEGACY_PINS
             else published_bytes(context, previous, BASELINE))
     authority(context)
     try:
