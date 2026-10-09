@@ -345,7 +345,7 @@ jobs:
           name: docs-frontend-faults-public-${{ github.sha }}-${{ github.run_attempt }}
           path: artifacts/bijux-docs/frontend-faults/public
           if-no-files-found: error
-          compression-level: 0
+          compression-level: 1
           retention-days: 14
 
   navigation:
