@@ -197,13 +197,52 @@ def copy_file_mapping(source_relative: str, destination_relative: str, repo_dir:
     destination.write_bytes(source.read_bytes())
 
 
+def prepare_runtime_workflows(repo_config: dict[str, Any], manifest: dict[str, Any]) -> dict[str, bytes]:
+    name = repo_config["name"]
+    policy = WORKFLOW_EXECUTION.validate_manifest(manifest, [name])[name]
+    if policy is None or policy.get("automatic_runs", "canonical") == "canonical":
+        return {}
+    render_spec = importlib.util.spec_from_file_location(
+        __name__ + ".canonical_renderer", STD_REPO / ".github/scripts/render_repo_configs.py"
+    )
+    assert render_spec is not None and render_spec.loader is not None
+    renderer = importlib.util.module_from_spec(render_spec)
+    render_spec.loader.exec_module(renderer)
+    sources = {
+        destination: (Path(source).stem, source)
+        for source, destination in BASE_FILE_MAPPINGS
+        if destination.startswith(".github/workflows/") and destination.endswith(".yml")
+    }
+    for entry in inventory_entries(manifest):
+        if entry["id"] in repo_config.get("workflow_allowlist", []):
+            sources[entry["consumer_runtime"]] = (entry["id"], entry["source"])
+    prepared = {}
+    for destination, (identity, source) in sources.items():
+        document = WORKFLOW_EXECUTION.parse_workflow((STD_REPO / source).read_bytes(), source)
+        projected = WORKFLOW_EXECUTION.project_automatic_events(identity, document, policy)
+        prepared[destination] = renderer.render_yaml_document(projected, preserve_scalar_types=True).encode("utf-8")
+    # Wrapper qualification precedes even the first raw canonical copy.
+    renderer.prepare_workflow_wrappers(repo_config, policy)
+    return prepared
+
+
+def _copy_runtime_or_source(source: str, destination: str, repo_dir: Path, prepared: dict[str, bytes]) -> None:
+    if destination not in prepared:
+        copy_file_mapping(source, destination, repo_dir)
+        return
+    path = repo_dir / destination
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_bytes(prepared[destination])
+
+
 def copy_repo_files(target_repo: str, repo_config: dict[str, Any], manifest: dict[str, Any]) -> None:
     WORKFLOW_EXECUTION.validate_manifest(manifest, [target_repo])
     if repo_config != find_repo_config(manifest, target_repo):
         raise ValueError("repository configuration must match canonical manifest")
+    prepared = prepare_runtime_workflows(repo_config, manifest)
     repo_dir = resolve_repository_checkout(target_repo)
     for source_relative, destination_relative in BASE_FILE_MAPPINGS:
-        copy_file_mapping(source_relative, destination_relative, repo_dir)
+        _copy_runtime_or_source(source_relative, destination_relative, repo_dir, prepared)
 
     allowlist = set(repo_config.get("workflow_allowlist", []))
     managed_runtime_paths: dict[str, str] = {}
@@ -218,7 +257,7 @@ def copy_repo_files(target_repo: str, repo_config: dict[str, Any], manifest: dic
         managed_shared_paths.add(shared_destination)
         managed_runtime_paths[runtime_destination] = workflow_id
         if workflow_id in allowlist:
-            copy_file_mapping(source_relative, runtime_destination, repo_dir)
+            _copy_runtime_or_source(source_relative, runtime_destination, repo_dir, prepared)
 
     for runtime_path, workflow_id in sorted(managed_runtime_paths.items()):
         if workflow_id in allowlist:
@@ -356,6 +395,8 @@ def main() -> None:
     repos = args.repo or DEFAULT_REPOS
     manifest = load_manifest()
     WORKFLOW_EXECUTION.validate_manifest(manifest, ["bijux-std", *repos])
+    for repo_name in ["bijux-std", *repos]:
+        prepare_runtime_workflows(find_repo_config(manifest, repo_name), manifest)
     std_sha = run(["git", "rev-parse", "HEAD"], cwd=STD_REPO)
 
     render_script = STD_REPO / ".github/scripts/render_repo_configs.py"

@@ -104,7 +104,34 @@ def yaml_block_scalar(value: str, indent: int) -> list[str]:
     return lines
 
 
-def dump_yaml(obj: Any, indent: int = 0) -> list[str]:
+def _dump_typed_workflow_yaml(obj: Any, indent: int = 0) -> list[str]:
+    """Retain source scalar and collection types when projecting complete workflows."""
+    pad = " " * indent
+    if isinstance(obj, dict) and obj:
+        lines = []
+        for key, value in obj.items():
+            if not isinstance(key, str):
+                raise ValueError("workflow mapping keys must be strings")
+            label = json.dumps(key, ensure_ascii=False)
+            if isinstance(value, (dict, list)) and value:
+                lines.append(f"{pad}{label}:")
+                lines.extend(_dump_typed_workflow_yaml(value, indent + 2))
+            else:
+                lines.append(f"{pad}{label}: {json.dumps(value, ensure_ascii=False, allow_nan=False)}")
+        return lines
+    if isinstance(obj, list) and obj:
+        lines = []
+        for item in obj:
+            child = _dump_typed_workflow_yaml(item, indent + 2)
+            lines.append(f"{pad}- {child[0].strip()}")
+            lines.extend(child[1:])
+        return lines
+    return [f"{pad}{json.dumps(obj, ensure_ascii=False, allow_nan=False)}"]
+
+
+def dump_yaml(obj: Any, indent: int = 0, *, preserve_scalar_types: bool = False) -> list[str]:
+    if preserve_scalar_types:
+        return _dump_typed_workflow_yaml(obj, indent)
     pad = " " * indent
     lines: list[str] = []
 
@@ -165,8 +192,8 @@ def render_release_env(entries: list[dict]) -> str:
     return PROVENANCE_HEADER + "\n".join(lines)
 
 
-def render_yaml_document(data: Any) -> str:
-    return PROVENANCE_HEADER + "\n".join(dump_yaml(data)) + "\n"
+def render_yaml_document(data: Any, *, preserve_scalar_types: bool = False) -> str:
+    return PROVENANCE_HEADER + "\n".join(dump_yaml(data, preserve_scalar_types=preserve_scalar_types)) + "\n"
 
 
 def render_dependabot_document(data: Any) -> str:
@@ -377,9 +404,20 @@ def inject_dependabot_pull_request_skip(
     return wrapper_definition
 
 
+def prepare_workflow_wrappers(repo: dict, policy: dict | None) -> dict:
+    wrappers = repo.get("workflow_wrappers", {})
+    prepared = {}
+    for name in ["ci", "verify"]:
+        definition = wrappers.get(name)
+        if definition is not None:
+            prepared[name] = WORKFLOW_EXECUTION.project_automatic_events(name, definition, policy)
+    return prepared
+
+
 def render_repo(repo_name: str, manifest: dict) -> None:
-    WORKFLOW_EXECUTION.validate_manifest(manifest, [repo_name])
+    policy = WORKFLOW_EXECUTION.validate_manifest(manifest, [repo_name])[repo_name]
     repo = find_repo_config(manifest, repo_name)
+    wrappers = prepare_workflow_wrappers(repo, policy)
     repo_root = resolve_repository_checkout(repo_name)
 
     release_path = repo_root / ".github/release.env"
@@ -415,7 +453,6 @@ def render_repo(repo_name: str, manifest: dict) -> None:
         codecov_content = render_yaml_document(codecov_data)
         write_if_needed(codecov_path, codecov_content)
 
-    wrappers = repo.get("workflow_wrappers", {})
     wrapper_paths = {
         "ci": repo_root / ".github/workflows/ci.yml",
         "verify": repo_root / ".github/workflows/verify.yml",
@@ -433,7 +470,10 @@ def render_repo(repo_name: str, manifest: dict) -> None:
             wrapper_name,
             wrapper_definition,
         )
-        write_if_needed(wrapper_path, render_yaml_document(wrapper_definition))
+        write_if_needed(wrapper_path, render_yaml_document(
+            wrapper_definition,
+            preserve_scalar_types=policy is not None and policy.get("automatic_runs") == "repository-policy-only",
+        ))
 
 
 def main() -> None:
@@ -445,7 +485,9 @@ def main() -> None:
     manifest = json.loads(Path(args.manifest).read_text(encoding="utf-8"))
     repos = args.repo or [repo["name"] for repo in manifest["repositories"]]
 
-    WORKFLOW_EXECUTION.validate_manifest(manifest, repos)
+    policies = WORKFLOW_EXECUTION.validate_manifest(manifest, repos)
+    for repo_name in repos:
+        prepare_workflow_wrappers(find_repo_config(manifest, repo_name), policies[repo_name])
     for repo_name in repos:
         render_repo(repo_name, manifest)
 

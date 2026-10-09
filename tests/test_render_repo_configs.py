@@ -51,6 +51,36 @@ class RenderRepoConfigsTests(unittest.TestCase):
                 consumer_source,
             )
 
+    def test_selected_workflow_emitter_preserves_version_boolean_and_empty_types(self) -> None:
+        document = {"on": {"workflow_dispatch": {}}, "jobs": {"owned": {"with": {"python-version": "3.11", "flag": "false", "null-string": "null", "number-string": "007", "enabled": True, "arguments": [], "options": {}, "run": "first\nsecond", "trailing": "line\n\n"}}}}
+        emitted = MODULE.render_yaml_document(document, preserve_scalar_types=True)
+        self.assertEqual(MODULE.WORKFLOW_EXECUTION.parse_workflow(emitted.encode(), "projected.yml"), document)
+        self.assertIn('"python-version": "3.11"', emitted)
+        self.assertIn("python-version: 3.11", MODULE.render_yaml_document(document))
+
+    def test_explicit_automatic_policy_projects_wrapper_events_before_render(self) -> None:
+        repo = {"name": "bijux-atlas", "workflow_wrappers": {"ci": {"on": {"push": {"branches": ["main"]}, "pull_request": None, "workflow_dispatch": None}, "jobs": {"fast": {"name": "owned check"}}}}}
+        prepared = MODULE.prepare_workflow_wrappers(repo, {"schema": 1, "automatic_runs": "repository-policy-only"})
+        self.assertNotIn("push", prepared["ci"]["on"])
+        self.assertEqual(prepared["ci"]["jobs"], repo["workflow_wrappers"]["ci"]["jobs"])
+        self.assertIn("push", repo["workflow_wrappers"]["ci"]["on"])
+
+    def test_invalid_later_wrapper_refuses_before_any_governed_render(self) -> None:
+        manifest = json.loads(MANIFEST_PATH.read_text())
+        repo = MODULE.find_repo_config(manifest, "bijux-atlas")
+        repo["workflow_execution_policy"] = {"schema": 1, "automatic_runs": "repository-policy-only"}
+        repo["workflow_wrappers"] = {"ci": {"on": "pull_request", "jobs": {}}, "verify": {"on": "push", "jobs": {}}}
+        with tempfile.TemporaryDirectory() as checkout:
+            root = Path(checkout)
+            sentinel = root / ".github/release.env"
+            sentinel.parent.mkdir()
+            sentinel.write_text("owned preimage\n")
+            with mock.patch.object(MODULE, "resolve_repository_checkout", return_value=root):
+                with self.assertRaisesRegex(ValueError, "no workflow entrypoint"):
+                    MODULE.render_repo("bijux-atlas", manifest)
+            self.assertEqual(sentinel.read_text(), "owned preimage\n")
+            self.assertEqual([p.relative_to(root).as_posix() for p in root.rglob("*") if p.is_file()], [".github/release.env"])
+
     def test_batch_refuses_invalid_later_policy_before_any_render(self) -> None:
         manifest = {"repositories": [{"name": "bijux-atlas"}, {"name": "bijux-canon", "workflow_execution_policy": {"schema": True}}]}
         with tempfile.TemporaryDirectory() as workspace:

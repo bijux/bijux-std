@@ -1,9 +1,12 @@
 from __future__ import annotations
 
+import copy
 import hashlib
 import importlib.util
 import json
 import os
+import subprocess
+import shutil
 import sys
 import tempfile
 import unittest
@@ -28,6 +31,59 @@ SPEC.loader.exec_module(MODULE)
 
 
 class SyncGithubStandardsTests(unittest.TestCase):
+    def test_later_invalid_workflow_source_refuses_before_copying(self) -> None:
+        manifest = copy.deepcopy(MODULE.load_manifest())
+        repo = MODULE.find_repo_config(manifest, "bijux-atlas")
+        repo["workflow_execution_policy"] = {"schema": 1, "automatic_runs": "repository-policy-only"}
+        with tempfile.TemporaryDirectory() as workspace:
+            standard = Path(workspace) / "standard"
+            shutil.copytree(MODULE.STD_REPO / ".github", standard / ".github")
+            shutil.copytree(MODULE.STD_REPO / "shared/bijux-gh", standard / "shared/bijux-gh")
+            source = standard / "shared/bijux-gh/workflows/github-policy.yml"
+            source.write_text("on: push\non: workflow_dispatch\njobs: {}\n")
+            destination = Path(workspace) / "bijux-atlas"
+            destination.mkdir()
+            sentinel = destination / "owned.txt"
+            sentinel.write_text("owned preimage\n")
+            with (mock.patch.object(MODULE, "STD_REPO", standard),
+                  mock.patch.object(MODULE, "resolve_repository_checkout", return_value=destination)):
+                with self.assertRaisesRegex(ValueError, "duplicate YAML mapping"):
+                    MODULE.copy_repo_files("bijux-atlas", repo, manifest)
+            self.assertEqual(sentinel.read_text(), "owned preimage\n")
+            self.assertEqual([p.name for p in destination.iterdir()], ["owned.txt"])
+
+    def test_missing_parser_refuses_before_copying(self) -> None:
+        manifest = copy.deepcopy(MODULE.load_manifest())
+        repo = MODULE.find_repo_config(manifest, "bijux-atlas")
+        repo["workflow_execution_policy"] = {"schema": 1, "automatic_runs": "repository-policy-only"}
+        with (mock.patch.object(MODULE.WORKFLOW_EXECUTION, "parse_workflow", side_effect=RuntimeError("ruby is required")),
+              mock.patch.object(MODULE, "copy_file_mapping") as copy_file):
+            with self.assertRaisesRegex(RuntimeError, "ruby is required"):
+                MODULE.copy_repo_files("bijux-atlas", repo, manifest)
+            copy_file.assert_not_called()
+
+    def test_explicit_automatic_policy_preserves_only_repository_main_push(self) -> None:
+        manifest = copy.deepcopy(MODULE.load_manifest())
+        repo = MODULE.find_repo_config(manifest, "bijux-atlas")
+        repo["workflow_execution_policy"] = {"schema": 1, "automatic_runs": "repository-policy-only"}
+        with tempfile.TemporaryDirectory() as workspace:
+            target = Path(workspace) / "bijux-atlas"
+            target.mkdir()
+            with mock.patch.object(MODULE, "resolve_repository_checkout", return_value=target):
+                MODULE.copy_repo_files("bijux-atlas", repo, manifest)
+            main_push = []
+            tag_push = []
+            for path in (target / ".github/workflows").glob("*.yml"):
+                parsed = json.loads(subprocess.check_output(["ruby", "-ryaml", "-rjson", "-e", "puts JSON.generate(YAML.safe_load(File.read(ARGV[0]), aliases: false))", str(path)], text=True))
+                events = parsed.get("on", parsed.get("true", {}))
+                push = events.get("push", {}) or {}
+                if "main" in push.get("branches", []):
+                    main_push.append(path.name)
+                if "tags" in push:
+                    tag_push.append(path.name)
+            self.assertEqual(sorted(main_push), ["github-policy.yml"])
+            self.assertEqual(tag_push, [])
+
     def test_direct_copy_refuses_invalid_policy_and_inventory_before_write(self) -> None:
         for manifest in [
             {"repositories": [{"name": "bijux-atlas", "workflow_execution_policy": {"schema": True}}]},

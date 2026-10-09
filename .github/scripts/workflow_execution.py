@@ -133,3 +133,109 @@ def validate_manifest(manifest: dict, repositories: list[str]) -> dict[str, Work
     else:
         known = validate_inventory(inventory)
     return {entry["name"]: validate_policy(entry, known) for entry in selected}
+
+
+_SUPPORTED_EVENTS = frozenset({
+    "push", "pull_request", "pull_request_target", "pull_request_review",
+    "merge_group", "workflow_dispatch", "workflow_call",
+})
+_YAML_DOCUMENT_PARSER = r'''
+require "yaml"
+require "json"
+text = STDIN.read
+stream = YAML.parse_stream(text)
+raise "one workflow document required" unless stream.children.length == 1
+node = stream.children.first.root
+value = YAML.safe_load(text, aliases: false)
+def restore_keys(node, value)
+  case node
+  when Psych::Nodes::Mapping
+    raise "ambiguous or duplicate YAML mapping" unless value.is_a?(Hash) && node.children.length == value.length * 2
+    result = {}
+    node.children.each_slice(2).with_index do |(key, child), index|
+      raise "workflow mapping key must be scalar" unless key.is_a?(Psych::Nodes::Scalar)
+      raise "duplicate workflow mapping key" if result.key?(key.value)
+      result[key.value] = restore_keys(child, value.values[index])
+    end
+    result
+  when Psych::Nodes::Sequence
+    raise "ambiguous YAML sequence" unless value.is_a?(Array) && node.children.length == value.length
+    node.children.each_with_index.map { |child, index| restore_keys(child, value[index]) }
+  when Psych::Nodes::Scalar
+    value
+  else
+    raise "unsupported YAML node"
+  end
+end
+puts JSON.generate(restore_keys(node, value))
+'''
+
+
+def parse_workflow(content: bytes, label: str) -> dict:
+    """Use the canonical Ruby YAML tool while preserving actual scalar mapping keys."""
+    import json
+    import subprocess
+
+    try:
+        result = subprocess.run(
+            ["ruby", "-e", _YAML_DOCUMENT_PARSER],
+            input=content.decode("utf-8"), text=True, capture_output=True, check=True,
+        )
+        document = json.loads(result.stdout)
+    except FileNotFoundError as error:
+        raise RuntimeError("ruby is required to parse canonical workflow projection") from error
+    except (subprocess.CalledProcessError, UnicodeError, ValueError) as error:
+        detail = error.stderr.strip() if isinstance(error, subprocess.CalledProcessError) else str(error)
+        raise ValueError(f"unsupported workflow YAML {label}: {detail}") from error
+    if not isinstance(document, dict) or not isinstance(document.get("jobs"), dict):
+        raise ValueError(f"{label} must be a workflow object with jobs")
+    return document
+
+
+def project_automatic_events(
+    workflow_id: str, document: dict, policy: WorkflowExecutionPolicy | None,
+) -> dict:
+    """Restrict explicit consumer automatic runs without altering shared check ownership."""
+    projected = copy.deepcopy(document)
+    if policy is None or policy.get("automatic_runs", "canonical") == "canonical":
+        return projected
+    events = document.get("on")
+    if isinstance(events, str):
+        events = {events: None}
+    elif isinstance(events, list):
+        if any(not isinstance(event, str) for event in events) or len(set(events)) != len(events):
+            raise ValueError(f"{workflow_id} has ambiguous event sequence")
+        events = dict.fromkeys(events)
+    if not isinstance(events, dict) or not events or any(not isinstance(event, str) for event in events):
+        raise ValueError(f"{workflow_id} requires a nonempty structural event declaration")
+    if set(events) - _SUPPORTED_EVENTS:
+        raise ValueError(f"{workflow_id} has unsupported automatic workflow events")
+    if any(value is not None and not isinstance(value, dict) for value in events.values()):
+        raise ValueError(f"{workflow_id} event configuration must be an object or null")
+    if workflow_id == "bijux-std" and not {"pull_request", "merge_group", "workflow_dispatch"}.issubset(events):
+        raise ValueError("standard runtime must retain PR, merge_group and manual qualification")
+    events = copy.deepcopy(events)
+    push = events.get("push")
+    if "push" in events:
+        if push is not None:
+            push = _closed_object(push, {"branches", "branches-ignore", "tags", "tags-ignore", "paths", "paths-ignore"}, f"{workflow_id}.push")
+            for key, values in push.items():
+                if not isinstance(values, list) or any(not isinstance(value, str) for value in values):
+                    raise ValueError(f"{workflow_id}.push.{key} must be an array of patterns")
+            for key in ["branches", "tags", "paths"]:
+                if key in push and key + "-ignore" in push:
+                    raise ValueError(f"{workflow_id}.push has conflicting {key} filters")
+        if workflow_id != "github-policy":
+            del events["push"]
+    if workflow_id == "github-policy":
+        if not isinstance(push, dict) or "main" not in push.get("branches", []):
+            raise ValueError("repository policy source must admit explicit main push")
+        push = copy.deepcopy(push)
+        push["branches"] = ["main"]
+        push.pop("tags", None)
+        push.pop("tags-ignore", None)
+        events["push"] = push
+    if not events:
+        raise ValueError(f"{workflow_id} policy would leave no workflow entrypoint")
+    projected["on"] = events
+    return projected
