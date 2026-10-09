@@ -8,6 +8,7 @@ import json
 import os
 from pathlib import Path
 import re
+import subprocess
 from types import ModuleType
 from urllib.parse import urljoin, urlsplit, unquote
 
@@ -35,8 +36,42 @@ def module(path):
     return result
 
 
-def files(root, *, source=False):
+def repository_files(root):
+    """Capture clean tracked publication source independently of ignored run aliases.
+
+    Actual renderer inputs are additionally checked by build_identity.source_inputs;
+    an ignored document, template or hook cannot become accepted source here.
+    """
+    def git(*args):
+        command = subprocess.run(['git', '-C', str(root), *args], capture_output=True, text=True)
+        require(command.returncode == 0, 'Producer: repository source operation failed')
+        return command.stdout
+    require(Path(git('rev-parse', '--show-toplevel').strip()).resolve() == root.resolve(),
+            'Producer: exact repository root required')
+    require(not git('status', '--porcelain', '--untracked-files=all').strip(),
+            'Producer: tracked or untracked publication source is dirty')
+    result = {}
+    for name in git('ls-files', '-z').split('\0'):
+        if not name:
+            continue
+        relative = Path(name)
+        require(not relative.is_absolute() and '..' not in relative.parts,
+                'Producer: confined tracked source required')
+        path = root
+        for part in relative.parts:
+            path = path / part
+            require(not path.is_symlink(), 'Producer: symlink tracked source forbidden')
+        require(path.is_file(), 'Producer: regular tracked source required')
+        result[name] = path.read_bytes()
+    require(bool(result), 'Producer: tracked publication source missing')
+    return dict(sorted(result.items()))
+
+
+def files(root, *, source=False, publication_source=False):
     require(root.is_dir() and not root.is_symlink(), 'Producer: regular tree required')
+    if publication_source:
+        require(source, 'Producer: publication source selection requires source capture')
+        return repository_files(root)
     result={}
     for directory, directories, names in os.walk(root, followlinks=False):
         current=Path(directory)
@@ -77,7 +112,7 @@ class PreparedProducer:
         self.capabilities, self.redirect_hashes, self.publication_scope = capabilities, redirect_hashes, publication_scope
 
     def unchanged(self):
-        require(self.inputs == files(self.root, source=True), 'Producer: owner source/config changed after reconstruction')
+        require(self.inputs == files(self.root, source=True, publication_source=self.publication_scope), 'Producer: owner source/config changed after reconstruction')
         require(self.shared_inputs == files(self.shared, source=True), 'Producer: standard authority changed after reconstruction')
         require(self.reference == files(self.output), 'Producer: independent reference changed after reconstruction')
         profiles(self.shared).unchanged(self.shared,self.root,self.deps,publication=self.publication_scope)
@@ -100,7 +135,7 @@ def prepare(root: Path, config_name: str, shared: Path, templates: Path, output:
     require(boundary.site_directory(root,site_dir.relative_to(root).as_posix())==site_dir,'Producer: selected artifact must be confined')
     require(boundary.site_directory(root,output.relative_to(root).as_posix())==output and not output.exists(), 'Producer: fresh independent root artifacts output required')
     require(not output.is_relative_to(site_dir) and not site_dir.is_relative_to(output),'Producer: selected/reference artifacts overlap')
-    inputs, shared_inputs = files(root, source=True), files(shared, source=True)
+    inputs, shared_inputs = files(root, source=True, publication_source=publication_scope), files(shared, source=True)
     require(config_name in inputs, 'Producer: config absent from owner source')
     deps = dependencies(shared,root,publication=publication_scope)
     compiler = module(shared/'tooling/material/build_runtime.py')
