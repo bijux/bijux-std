@@ -173,54 +173,6 @@
       "necessity": "existing_preserved_rendered_review_pending"
     },
     {
-      "file": "06-components.css",
-      "conditions": [],
-      "selectors": [
-        ".md-footer__inner.bijux-footer-nav"
-      ],
-      "property": "background",
-      "value": "transparent!important",
-      "owner": "bijux-std",
-      "reason": "Existing three-column footer priority over Material flex/direction-margin composition. Material source and later shared order suggest necessity needs removal control; do not declare unavoidable from source alone.",
-      "necessity": "necessity_unproven"
-    },
-    {
-      "file": "06-components.css",
-      "conditions": [],
-      "selectors": [
-        ".md-footer__inner.bijux-footer-nav"
-      ],
-      "property": "display",
-      "value": "grid!important",
-      "owner": "bijux-std",
-      "reason": "Existing three-column footer priority over Material flex/direction-margin composition. Material source and later shared order suggest necessity needs removal control; do not declare unavoidable from source alone.",
-      "necessity": "necessity_unproven"
-    },
-    {
-      "file": "06-components.css",
-      "conditions": [],
-      "selectors": [
-        ".md-footer__inner.bijux-footer-nav .md-footer__link--prev"
-      ],
-      "property": "margin",
-      "value": "0!important",
-      "owner": "bijux-std",
-      "reason": "Existing three-column footer priority over Material flex/direction-margin composition. Material source and later shared order suggest necessity needs removal control; do not declare unavoidable from source alone.",
-      "necessity": "necessity_unproven"
-    },
-    {
-      "file": "06-components.css",
-      "conditions": [],
-      "selectors": [
-        ".md-footer__inner.bijux-footer-nav .md-footer__link--next"
-      ],
-      "property": "margin",
-      "value": "0!important",
-      "owner": "bijux-std",
-      "reason": "Existing three-column footer priority over Material flex/direction-margin composition. Material source and later shared order suggest necessity needs removal control; do not declare unavoidable from source alone.",
-      "necessity": "necessity_unproven"
-    },
-    {
       "file": "07-utilities.css",
       "conditions": [],
       "selectors": [

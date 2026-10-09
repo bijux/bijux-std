@@ -61,9 +61,28 @@ class CascadeContractTests(unittest.TestCase):
         self.assertEqual(report["styles"], len(self.policy["styles"]))
         self.assertEqual(report["important_declarations"], len(self.policy["important_exceptions"]))
         self.assertEqual(report["duplicate_fallbacks"], len(self.policy["duplicate_fallbacks"]))
-        self.assertTrue(all(row["necessity"] == "necessity_unproven" for row in self.policy["important_exceptions"]
-                            if row["file"] == "06-components.css"))
+        self.assertFalse(any(row["file"] == "06-components.css" for row in self.policy["important_exceptions"]))
         self.assertTrue(any(row["kind"] == "viewport_fallback" for row in report["diagnostics"]))
+
+    def test_footer_priorities_cannot_reclaim_normal_cascade_ownership(self):
+        original = (DOCS / "styles/06-components.css").read_text()
+        for selector, property_name, value in (
+                (".md-footer__inner.bijux-footer-nav", "background", "transparent"),
+                (".md-footer__inner.bijux-footer-nav", "display", "grid"),
+                (".md-footer__inner.bijux-footer-nav .md-footer__link--prev", "margin", "0"),
+                (".md-footer__inner.bijux-footer-nav .md-footer__link--next", "margin", "0")):
+            with self.subTest(selector=selector, property=property_name):
+                start = original.index(selector + " {")
+                end = original.index("}", start)
+                declaration = f"{property_name}: {value};"
+                block = original[start:end]
+                self.assertEqual(block.count(declaration), 1)
+                (self.styles / "06-components.css").write_text(
+                    original[:start] + block.replace(declaration, f"{property_name}: {value} !important;") + original[end:])
+                error = self.assert_guard_error("unreviewed_important")[0]
+                self.assertEqual((error["file"], error["selectors"], error["property"]),
+                                 ("06-components.css", [selector], property_name))
+                self.assertGreater(error["line"], 0)
 
     def test_unknown_priority_reports_actual_selector_property_and_source_line(self):
         self.append(".bijux-header-tools { z-index:2147483647!important; }")

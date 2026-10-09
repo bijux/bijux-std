@@ -271,9 +271,9 @@
 
 .md-footer__inner.bijux-footer-nav {
   align-items: center;
-  background: transparent !important;
+  background: transparent;
   box-shadow: none;
-  display: grid !important;
+  display: grid;
   gap: 0.8rem;
   grid-template-areas: "prev center next";
   grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
@@ -284,13 +284,13 @@
 .md-footer__inner.bijux-footer-nav .md-footer__link--prev {
   grid-area: prev;
   justify-self: start;
-  margin: 0 !important;
+  margin: 0;
 }
 
 .md-footer__inner.bijux-footer-nav .md-footer__link--next {
   grid-area: next;
   justify-self: end;
-  margin: 0 !important;
+  margin: 0;
 }
 
 .bijux-footer-nav-spacer {
