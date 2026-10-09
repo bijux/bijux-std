@@ -50,8 +50,14 @@ async function parser(dependencies) {
 }
 
 function policyRecords(policy) {
-  if (!object(policy) || policy.schema !== 1 || Object.keys(policy).sort().join() !== "duplicate_fallbacks,important_exceptions,layer_strategy,schema,styles") {
+  if (!object(policy) || policy.schema !== 1 || Object.keys(policy).sort().join() !== "duplicate_fallbacks,import_graph,important_exceptions,layer_strategy,schema,styles") {
     throw new Error("Cascade policy: unknown or missing fields/schema");
+  }
+  const graph = policy.import_graph;
+  if (!object(graph) || Object.keys(graph).sort().join() !== "entry,mode,owner,reason" ||
+      graph.entry !== "extra.css" || graph.mode !== "ordered-domain-leaves" || graph.owner !== "bijux-std" ||
+      typeof graph.reason !== "string" || !graph.reason.trim()) {
+    throw new Error("Cascade policy: malformed or unsupported import_graph; only the owned ordered entry and domain leaves are admitted");
   }
   const strategy = policy.layer_strategy;
   if (!object(strategy) || Object.keys(strategy).sort().join() !== "mode,owner,reason" ||
@@ -107,16 +113,43 @@ export async function qualify({ styles, policy: policyPath, dependencies }) {
     const tokens = tokenize(value).filter((token) => token.trim());
     return tokens.at(-2) === "!" && decode(tokens.at(-1) || "").toLowerCase() === "important";
   };
-  const imports = compile((await regular(path.join(styles, "extra.css"))).toString());
-  const names = [];
+  const entry = await regular(path.join(styles, policy.import_graph.entry));
+  const imports = compile(entry.toString());
+  const names = [], edges = [];
   for (const node of imports) {
     if (node.type === "comm") continue;
     const match = node.type === "@import" && /^@import url\("\.\/([a-z0-9-]+\.css)"\);$/.exec(node.value);
     if (!match) throw new Error(`extra.css:${node.line}:${node.column}: expected only canonical local stylesheet imports`);
     names.push(match[1]);
+    edges.push({ file: policy.import_graph.entry, target: match[1], value: node.value, line: node.line, column: node.column });
   }
   if (JSON.stringify(names) !== JSON.stringify(policy.styles)) throw new Error("extra.css: stylesheet import order differs from cascade policy");
-  const declarations = [], duplicates = [], layers = [], sourceFiles = {};
+  const sourceFiles = { [policy.import_graph.entry]: digest(entry) }, sheets = [], importErrors = [];
+  const importGraph = { entry: policy.import_graph.entry, edges, domain_leaves: names };
+  function inspectImports(nodes, file, conditions = []) {
+    for (const node of nodes) {
+      if (atKeyword(node) === "import") {
+        importErrors.push({ kind: "unreviewed_import", file, conditions, value: node.value, line: node.line, column: node.column });
+      }
+      if (Array.isArray(node.children)) {
+        inspectImports(node.children, file, node.type.startsWith("@") ? [...conditions, node.value] : conditions);
+      }
+    }
+  }
+  // Inspect only owned graph nodes. Never follow an undeclared local or remote edge.
+  for (const file of names) {
+    const bytes = await regular(path.join(styles, file)), nodes = compile(bytes.toString());
+    sourceFiles[file] = digest(bytes);
+    sheets.push({ file, nodes });
+    inspectImports(nodes, file);
+  }
+  if (importErrors.length) {
+    return { status: "failed", stage: "import_graph", source_files: sourceFiles, styles: names.length,
+      declarations: 0, important_declarations: 0, duplicate_fallbacks: 0, import_graph: importGraph,
+      layer_strategy: policy.layer_strategy, parser: { name: "stylis", version: admitted.version, files: admitted.files },
+      errors: importErrors, diagnostics: [], limits: ["Owned import graph refused before declaration qualification; undeclared destinations were not read or fetched", "Parser lines/columns are source end locations", "Authored consumer extra_css extensions remain outside this shared graph"] };
+  }
+  const declarations = [], duplicates = [], layers = [];
   function walk(nodes, file, conditions = [], selectors = []) {
     for (const node of nodes) {
       if (atKeyword(node) === "layer") {
@@ -139,11 +172,7 @@ export async function qualify({ styles, policy: policyPath, dependencies }) {
       }
     }
   }
-  for (const file of names) {
-    const bytes = await regular(path.join(styles, file));
-    sourceFiles[file] = digest(bytes);
-    walk(compile(bytes.toString()), file);
-  }
+  for (const { file, nodes } of sheets) walk(nodes, file);
   const errors = [...layers], diagnostics = [], usedImportant = new Set(), usedDuplicates = new Set();
   const important = new Map(policy.important_exceptions.map((record) => [importantIdentity(record), record]));
   const fallback = new Map(policy.duplicate_fallbacks.map((record) => [duplicateIdentity(record), record]));
@@ -164,8 +193,8 @@ export async function qualify({ styles, policy: policyPath, dependencies }) {
   const hidden = declarations.filter((entry) => entry.file === "07-utilities.css" && !entry.conditions.length && JSON.stringify(entry.selectors) === JSON.stringify(['[hidden]:not([hidden="until-found"])']) && entry.property === "display");
   if (hidden.length !== 1 || hidden[0].value !== "none!important" || !hidden[0].important) errors.push({ kind: "semantic_hidden_invariant", file: "07-utilities.css", property: "display", expected: 'one unconditional [hidden]:not([hidden="until-found"]) display:none!important' });
   return { status: errors.length ? "failed" : "passed", source_files: sourceFiles, styles: names.length, declarations: declarations.length,
-    important_declarations: declarations.filter((entry) => entry.important).length, duplicate_fallbacks: duplicates.length, layer_strategy: policy.layer_strategy, parser: { name: "stylis", version: admitted.version, files: admitted.files }, errors, diagnostics,
-    limits: ["Owned unlayered strategy and declaration policy only; no complete CSS validity, cross-rule selector competition or computed specificity proof", "Parser lines/columns are source end locations", "Existing integration necessity flags remain honest; imported domain resources, computed order, token scopes, themes, responsive modes and manual/live qualification remain separate"] };
+    important_declarations: declarations.filter((entry) => entry.important).length, duplicate_fallbacks: duplicates.length, import_graph: importGraph, layer_strategy: policy.layer_strategy, parser: { name: "stylis", version: admitted.version, files: admitted.files }, errors, diagnostics,
+    limits: ["Owned ordered import graph, unlayered strategy and declaration policy only; no complete CSS validity, cross-rule selector competition or computed specificity proof", "Parser lines/columns are source end locations", "Authored consumer imports/resources, computed order, token scopes, themes, responsive modes and manual/live qualification remain separate"] };
 }
 
 if (path.resolve(process.argv[1] || "") === fileURLToPath(import.meta.url)) {

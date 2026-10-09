@@ -62,6 +62,9 @@ class CascadeContractTests(unittest.TestCase):
         self.assertEqual(report["important_declarations"], len(self.policy["important_exceptions"]))
         self.assertEqual(report["duplicate_fallbacks"], len(self.policy["duplicate_fallbacks"]))
         self.assertEqual(report["layer_strategy"], self.policy["layer_strategy"])
+        self.assertEqual(report["import_graph"]["entry"], "extra.css")
+        self.assertEqual([row["target"] for row in report["import_graph"]["edges"]], self.policy["styles"])
+        self.assertEqual(set(report["source_files"]), {"extra.css", *self.policy["styles"]})
         self.assertFalse(any(row["file"] == "06-components.css" for row in self.policy["important_exceptions"]))
         self.assertTrue(any(row["kind"] == "viewport_fallback" for row in report["diagnostics"]))
 
@@ -253,6 +256,104 @@ class CascadeContractTests(unittest.TestCase):
         result = self.run_guard()
         self.assertEqual(result.returncode, 1)
         self.assertIn("import order differs", result.stderr)
+
+    def test_domain_import_cannot_hide_priority_outside_the_reviewed_source_graph(self):
+        source = self.styles / "02-layout.css"
+        source.write_text('@import url("./unreviewed-components.css");\n' + source.read_text())
+        (self.styles / "unreviewed-components.css").write_text('.md-footer__inner.bijux-footer-nav { display:flex!important; }\n')
+        result = self.run_guard()
+        self.assertEqual(result.returncode, 1, result.stdout + result.stderr)
+        report = json.loads(result.stdout)
+        self.assertEqual(report["stage"], "import_graph")
+        self.assertEqual(report["declarations"], 0)
+        self.assertNotIn("unreviewed-components.css", report["source_files"])
+        error = next(row for row in report["errors"] if row["kind"] == "unreviewed_import")
+        self.assertEqual((error["file"], error["conditions"], error["line"]), ("02-layout.css", [], 1))
+        self.assertIn("unreviewed-components.css", error["value"])
+
+    def test_import_keyword_forms_and_conditions_cannot_open_a_domain_leaf(self):
+        original = (DOCS / "styles/02-layout.css").read_text()
+        for css in ('@IMPORT url("./unreviewed.css");', r'@\69mport url("./unreviewed.css");',
+                    r'@\69 mport url("./unreviewed.css");', '@import/**/url("./unreviewed.css");',
+                    '@import "./unreviewed.css";', '@import url(./unreviewed.css);',
+                    '@import url("./unreviewed.css") screen;', '@import url("./unreviewed.css") supports(display:grid);',
+                    '@import url("./unreviewed.css") layer(shell);', '@media screen { @import "./unreviewed.css"; }'):
+            with self.subTest(css=css):
+                (self.styles / "02-layout.css").write_text(css + "\n" + original)
+                error = self.assert_guard_error("unreviewed_import")[0]
+                self.assertEqual(error["file"], "02-layout.css")
+                self.assertGreater(error["line"], 0)
+                self.assertEqual(error["conditions"], ["@media screen"] if css.startswith("@media") else [])
+
+    def test_import_text_in_comments_and_quoted_declarations_is_inert(self):
+        self.append('/* @import url("./unreviewed.css"); */ .bijux-import-example { --example:"@import url(../unreviewed.css);"; }')
+        self.append(r'@import\20 url("./unreviewed.css");')
+        self.append('@im/**/port url("./unreviewed.css");')
+        result = self.run_guard()
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+
+    def test_unknown_local_remote_data_duplicate_and_cyclic_domain_edges_are_refused(self):
+        original = (DOCS / "styles/02-layout.css").read_text()
+        for url in ('./06-components.css', './02-layout.css', '../unreviewed.css', '/unreviewed.css',
+                    'https://styles.example.invalid/unreviewed.css', '//styles.example.invalid/unreviewed.css',
+                    'data:text/css,.md-footer__inner%7Bdisplay:flex%7D', './%2e%2e/unreviewed.css'):
+            with self.subTest(url=url):
+                (self.styles / "02-layout.css").write_text(f'@import url("{url}");\n' + original)
+                error = self.assert_guard_error("unreviewed_import")[0]
+                self.assertEqual(error["line"], 1)
+
+    def test_entry_cannot_replace_canonical_edges_with_external_or_traversing_resources(self):
+        original = (DOCS / "styles/extra.css").read_text()
+        for url in ('../00-tokens.css', './%30%30-tokens.css', '/00-tokens.css', 'https://styles.example.invalid/00-tokens.css'):
+            with self.subTest(url=url):
+                (self.styles / "extra.css").write_text(original.replace('./00-tokens.css', url))
+                result = self.run_guard()
+                self.assertEqual(result.returncode, 1)
+                self.assertIn("canonical local stylesheet imports", result.stderr)
+
+    def test_entry_conditions_cannot_demote_or_disable_a_canonical_sheet(self):
+        original = (DOCS / "styles/extra.css").read_text()
+        for condition in ('screen', 'supports(display:grid)', 'layer(shell)'):
+            with self.subTest(condition=condition):
+                (self.styles / "extra.css").write_text(original.replace('@import url("./06-components.css");',
+                                                                         f'@import url("./06-components.css") {condition};'))
+                result = self.run_guard()
+                self.assertEqual(result.returncode, 1)
+                self.assertIn("canonical local stylesheet imports", result.stderr)
+
+    def test_canonical_sheet_must_not_link_to_an_unowned_resource(self):
+        source = self.styles / "02-layout.css"
+        external = self.case / "external.css"
+        external.write_text(source.read_text())
+        source.unlink()
+        source.symlink_to(external)
+        result = self.run_guard()
+        self.assertEqual(result.returncode, 1)
+        self.assertIn("owned regular file without linked path components", result.stderr)
+
+    def test_unselected_consumer_styles_do_not_become_shared_graph_ownership(self):
+        (self.styles / "consumer.css").write_text('@import url("https://styles.example.invalid/consumer.css");\n'
+                                                '@layer consumer { .consumer { color:teal!important; } }\n')
+        result = self.run_guard()
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+
+    def test_import_policy_cannot_silently_enable_arbitrary_graph_traversal(self):
+        original = self.policy["import_graph"]
+        for graph in (None, {}, {**original, "entry": "../extra.css"}, {**original, "mode": "recursive"},
+                      {**original, "owner": "consumer"}, {**original, "reason": " "}, {**original, "allow_remote": True}):
+            with self.subTest(graph=graph):
+                self.policy["import_graph"] = graph
+                self.save_policy()
+                result = self.run_guard()
+                self.assertEqual(result.returncode, 1)
+                self.assertIn("malformed or unsupported import_graph", result.stderr)
+
+    def test_missing_import_graph_is_not_implicit_traversal_authority(self):
+        del self.policy["import_graph"]
+        self.save_policy()
+        result = self.run_guard()
+        self.assertEqual(result.returncode, 1)
+        self.assertIn("unknown or missing fields", result.stderr)
 
     def test_missing_imported_file_fails(self):
         (self.styles / "01-theme.css").unlink()

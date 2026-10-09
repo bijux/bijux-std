@@ -238,6 +238,24 @@ Consumer additions retain their declared position around the canonical asset;
 an authored root list replaces the inherited list. Additional consumer styles
 do not acquire ownership of private shell display, drawer or hidden states.
 
+The source-owned `import_graph` admits `extra.css` as its ordered entry, using
+the canonical unconditional local `url("./domain.css")` spelling for the nine
+listed domain sheets. Those sheets are leaves. The guard records every entry
+edge and the entry/domain source digests, then refuses any parsed import in a
+domain sheet before qualifying declarations. This includes local, remote,
+conditional, duplicate and cyclic edges: an imported sheet could otherwise
+hide priorities or resources outside the inventory. No undeclared destination
+is read or fetched. Case, escaped keywords and comment boundaries cannot open
+a domain leaf; import text in comments or quoted declarations remains inert.
+Selected entry/domain files must remain regular owned files without linked
+path components. A future nested graph needs a separate finite ownership
+decision; unsupported policy modes cannot silently grant traversal.
+
+This boundary concerns the canonical shared graph. It does not scan arbitrary
+additional files or ban declared consumer `extra_css`. Consumer extensions and
+their effective load order, resources and competing states retain their own
+authored qualification duties.
+
 The admitted Material and shared rules use an unlayered cascade. The policy's
 `layer_strategy` binds that choice to `bijux-std` with its precedence rationale;
 it is not an allowance for arbitrary named layers. Shared domain styles may
@@ -284,9 +302,10 @@ Layer diagnostics retain file, conditional ancestry, parsed rule value and
 source-end location. Case and escaped layer keywords are recognized on parsed
 at-rules; layer text inside comments or quoted declarations remains inert.
 
-This is a bounded unlayered strategy and declaration policy, not a general CSS validity or selector
-specificity checker. It does not certify computed Material/shared/consumer
-precedence, the full domain import/resource graph, complete token purposes/override scopes, all competing state rules,
+This is a bounded ordered import graph, unlayered strategy and declaration
+policy, not a general CSS validity or selector specificity checker. It does
+not certify computed Material/shared/consumer precedence, authored consumer
+import/resource graphs, complete token purposes/override scopes, competing state rules,
 responsive media/attribute agreement, or light/dark/forced-color behavior.
 Those source, rendered, consumer, manual and live duties retain their own
 verification; a source guard must not weaken existing hidden/focus tests.

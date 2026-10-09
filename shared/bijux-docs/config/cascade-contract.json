@@ -1,5 +1,11 @@
 {
   "schema": 1,
+  "import_graph": {
+    "entry": "extra.css",
+    "mode": "ordered-domain-leaves",
+    "owner": "bijux-std",
+    "reason": "The canonical entry imports each owned domain sheet once in styles order. Domain sheets are leaves: undeclared imports could load unreviewed priorities or resources and bypass the declaration inventory. Consumer extra_css extensions retain separate authored ownership."
+  },
   "layer_strategy": {
     "mode": "unlayered",
     "owner": "bijux-std",
