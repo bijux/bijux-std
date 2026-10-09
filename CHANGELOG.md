@@ -6,11 +6,15 @@ This file records notable repository-level changes for `bijux-std`.
 
 ### Pending review
 
-#### [#250](https://github.com/bijux/bijux-std/pull/250) — docs(docs): assign native search template ownership
+#### [#253](https://github.com/bijux/bijux-std/pull/253) — fix(docs): retain native reader context after diagram layout changes
 
-Name the shared native search presentation owner and Material provider boundary, and link the existing site-scope and escaping checks in the executable contract trace.
+Retain the unique authored reading destination and trusted viewport offset through native Back when diagram-source disclosure changes layout, preserving coordinate fallback and trusted-input cancellation.
 
 ### Merged pull requests
+
+#### 2026-10-09T15:59:28Z — [#250](https://github.com/bijux/bijux-std/pull/250) — docs(docs): assign native search template ownership
+
+Name the shared native search presentation owner and Material provider boundary, and link the existing site-scope and escaping checks in the executable contract trace.
 
 #### 2026-10-09T15:21:30Z — [#248](https://github.com/bijux/bijux-std/pull/248) — feat(docs): independently render source-owned passive readers
 
