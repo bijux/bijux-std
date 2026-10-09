@@ -160,7 +160,7 @@ def aggregate() -> None:
     actual = [(path.parent.parent.name, path.parent.name) for path in reports]
     output = ARTIFACTS / 'navigation-qualification.json'
     try:
-        if any(os.environ.get(name, 'success') != 'success' for name in ('FIXTURE_RESULT', 'BROWSER_RESULT', 'COMMAND_RESULT')):
+        if any(os.environ.get(name, 'success') != 'success' for name in ('FIXTURE_RESULT', 'BROWSER_RESULT', 'COMMAND_RESULT', 'RENDERER_RESULT')):
             raise ValueError('A required fixture/browser job or publication command job failed or was cancelled')
         if len(actual) != len(expected) or set(actual) != expected:
             raise ValueError('Missing, duplicate or unexpected browser shard receipt')
@@ -185,6 +185,10 @@ def aggregate() -> None:
         commands = importlib.util.module_from_spec(commands_spec)
         commands_spec.loader.exec_module(commands)
         result['publication_commands'] = commands.verify(ARTIFACTS / 'publication-commands')
+        controls_spec = importlib.util.spec_from_file_location('renderer_controls', TESTS / 'execution/renderer_controls.py')
+        controls = importlib.util.module_from_spec(controls_spec)
+        controls_spec.loader.exec_module(controls)
+        result['renderer_controls'] = controls.verify(ARTIFACTS / 'renderer-controls')
         result['producer_envelope'] = producer
         result['browser_partitions'] = {f'{group}/{suite}': names for (group, suite), names in assignments.items()}
         result['inputs'] = [{'path': str(path.relative_to(ARTIFACTS)), 'sha256': hashlib.sha256(path.read_bytes()).hexdigest()} for path in inventories + reports]

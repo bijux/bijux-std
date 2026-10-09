@@ -13,6 +13,7 @@ Verify explicitly owned passive reports before publication and compare retained 
 - Enforce exact descriptor versions, committed input identities and independent composition; reject forged qualification fields and changed receipts.
 - Keep strict schema-two reconstruction by default and provide explicit bytes-only recovery for bounded historical monitoring.
 - Preserve catalogue configuration guards, schema-one checks and separate production-profile, manual and live qualification.
+- Give every renderer unit a separate mandatory source-bound CI receipt, preserving all cases and the three-minute whole-job limit while removing fixture-production contention.
 
 #### [#245](https://github.com/bijux/bijux-std/pull/245) — feat(docs): integrate source-owned standalone reader discovery
 
