@@ -310,6 +310,257 @@ class EmbeddedReportCompositionTests(unittest.TestCase):
             canonical_root=self.shared,
         )
 
+    def static_reader(self, source=None):
+        source = source or (
+            '<!doctype html><html><head><meta charset="utf-8">'
+            '<title>Unavailable evidence</title><style>p{line-height:1.6}</style>'
+            '</head><body><main><h1>Unavailable evidence</h1>'
+            '<p>No observations are available in this frozen report.</p></main></body></html>'
+        )
+        self.write_source("docs/report/map.html", source)
+        self.write_output("report/map.html", source)
+        self.git("add", "docs/report/map.html")
+        if self.git("diff", "--cached", "--name-only", "--", "docs/report/map.html").strip():
+            self.git("-c", "commit.gpgsign=false", "commit", "--quiet", "-m",
+                     "fixture: own non-executable reader source")
+        self.source_sha = self.git("rev-parse", "HEAD").strip()
+        self.owner["producer_inputs"] = []
+        self.owner["reports"] = [{
+            "report_class": "static-reader", "output": "report/map.html",
+            "source": self.input_record("docs/report/map.html"), "resources": {},
+            "reviewed_scripts": [], "providers": {}, "reviewed_provider_origins": [],
+            "provider_calls": [],
+        }]
+        self.save_owner()
+        return source
+
+    def test_static_reader_composes_without_bootstrap_or_executable_authority(self):
+        source = self.static_reader()
+        report, build = self.complete()
+        result = self.verify(report, build)
+        self.assertTrue(result["verification_only"])
+        record = next(r for r in result["embedded"]["records"] if r["kind"] == "owned-report")
+        self.assertEqual(record["resources"], [])
+        self.assertEqual(record["chunk_count"], 0)
+        self.assertEqual(record["capability"]["script_sources"], ["'none'"])
+        self.assertEqual(record["capability"]["script_hashes"], [])
+        content = (self.site / "report/map.html").read_text()
+        self.assertIn("script-src 'none'", content)
+        self.assertIn("style-src 'unsafe-inline'", content)
+        self.assertNotIn("__config", content)
+        self.assertNotIn("<script", content)
+        self.assertEqual(content.split("<body>", 1)[1], source.split("<body>", 1)[1])
+        self.assertEqual((self.site / "report/records.js").read_bytes(), self.resource)
+
+    def test_static_reader_rejects_fetching_css_before_any_output_write(self):
+        styles = (
+            "p{background:url(https://unreviewed.invalid/a)}",
+            "@import 'https://unreviewed.invalid/style.css';p{color:white}",
+            r"p{background:u\72l(https://unreviewed.invalid/a)}",
+            "p{background:u/**/rl(https://unreviewed.invalid/a)}",
+            "p{background:image-set('https://unreviewed.invalid/a' 1x)}",
+            "@font-face{font-family:unreviewed;src:url(font.woff2)}",
+            "p{--image:url(https://unreviewed.invalid/a);background:var(--image)}",
+            "p{unknown-property:white}", "p{display:unknown-value}",
+            "p{color:rgba(999,0,0,0.5)}", "p{color:rgba(1,2,3,2)}",
+            "p{color:rgba(1,2,3)}", "p{border:1px unknown white}",
+        )
+        for style in styles:
+            with self.subTest(style=style):
+                source = '<html><head><meta charset="utf-8"><style>'+style+'</style></head><body><p>Evidence unavailable</p></body></html>'
+                self.static_reader(source)
+                before = (self.site / "report/map.html").read_bytes()
+                with self.assertRaisesRegex(ValueError, "static reader"):
+                    self.plan()
+                self.assertEqual((self.site / "report/map.html").read_bytes(), before)
+        for style in ("background:url(a.png)", r"background:u\72l(a.png)", "unknown:white"):
+            with self.subTest(style_attribute=style):
+                self.static_reader('<html><head><meta charset="utf-8"></head><body><p style="'+style+'">Unavailable</p></body></html>')
+                with self.assertRaisesRegex(ValueError, "static reader"):
+                    self.plan()
+
+    def test_static_reader_rejects_resource_attributes_and_unsupported_metadata(self):
+        markup = (
+            '<body background="https://unreviewed.invalid/a">Unavailable</body>',
+            '<p srcset="https://unreviewed.invalid/a 2x">Unavailable</p>',
+            '<a href="reader/" ping="https://unreviewed.invalid/track">Reader</a>',
+            '<link rel="stylesheet" href="https://unreviewed.invalid/style.css">',
+            '<link rel="preconnect" href="https://unreviewed.invalid/">',
+            '<img srcset="https://unreviewed.invalid/a 2x">',
+            '<svg><image href="https://unreviewed.invalid/a"></image></svg>',
+            '<p onclick="alert(1)">Unavailable</p>',
+            '<meta http-equiv="refresh" content="0;url=https://unreviewed.invalid/">',
+            '<meta http-equiv="Content-Security-Policy" content="default-src *">',
+            '<meta name="unknown" content="unreviewed">',
+            '<p unknown="unreviewed">Unavailable</p>',
+            '<a href="javascript:alert(1)">Reader</a>',
+            '<a href="reader/" target="unowned">Reader</a>',
+        )
+        for item in markup:
+            with self.subTest(markup=item):
+                self.static_reader('<html><head><meta charset="utf-8"></head><body>'+item+'</body></html>')
+                with self.assertRaises(ValueError):
+                    self.plan()
+
+    def test_static_reader_none_fallbacks_are_independently_verified(self):
+        for directive in ("default-src", "font-src", "media-src", "manifest-src", "frame-src", "base-uri", "form-action"):
+            with self.subTest(directive=directive):
+                self.static_reader()
+                report, build = self.complete()
+                result = self.verify(report, build)
+                path = self.site / "report/map.html"
+                content = path.read_bytes()
+                self.assertIn((directive+" 'none'").encode(), content)
+                path.write_bytes(content.replace((directive+" 'none'").encode(), (directive+" 'self'").encode()))
+                changed = build | {"bundle_sha256": self.identity()}
+                with self.assertRaisesRegex(ValueError, "exceeds reviewed capability"):
+                    self.verify(report, changed)
+                path.write_bytes(content)
+                self.assertTrue(result["verification_only"])
+                self.write_output("index.html", self.ordinary)
+                self.write_output("reader/index.html", self.parent_html)
+
+    def test_static_reader_external_style_authority_is_independently_rejected(self):
+        self.static_reader()
+        report, build = self.complete()
+        path = self.site / "report/map.html"
+        original = path.read_bytes()
+        path.write_bytes(original.replace(b"style-src 'unsafe-inline'", b"style-src 'self' 'unsafe-inline'"))
+        with self.assertRaisesRegex(ValueError, "exceeds reviewed capability"):
+            self.verify(report, build | {"bundle_sha256": self.identity()})
+
+    def test_static_reader_finite_inline_notice_styles_and_navigation_compose(self):
+        source = ('<html lang="en"><head><meta charset="utf-8">'
+                  '<meta name="viewport" content="width=device-width, initial-scale=1">'
+                  '<style>body{margin:0;background:#f8fafc;font-family:ui-sans-serif, system-ui, sans-serif}'
+                  'main{padding:2rem;box-shadow:0 20px 45px rgba(15, 23, 42, 0.08)}'
+                  '.meta{font-size:0.95rem;color:#475569}</style></head><body><main>'
+                  '<h1>Unavailable evidence</h1><p style="line-height:1.6;color:rgb(1,2,3)">'
+                  'No observations are available.</p><a href="../reader/" title="Read documentation" target="_self">Reader</a>'
+                  '</main></body></html>')
+        self.static_reader(source)
+        report, build = self.complete()
+        result = self.verify(report, build)
+        output = (self.site / "report/map.html").read_text()
+        self.assertEqual(source.split("<body>",1)[1], output.split("<body>",1)[1])
+        self.assertIn('href="../reader/"', output)
+        self.assertTrue(result["verification_only"])
+
+    def test_static_reader_requires_explicit_finite_class(self):
+        self.static_reader()
+        self.owner["reports"][0].pop("report_class")
+        self.save_owner()
+        with self.assertRaisesRegex(ValueError, "exactly one executable"):
+            self.plan()
+        self.owner["reports"][0]["report_class"] = "arbitrary-reader"
+        self.save_owner()
+        with self.assertRaisesRegex(ValueError, "unknown reviewed report class"):
+            self.plan()
+
+    def test_static_reader_rejects_all_script_kinds_even_reviewed_hashes(self):
+        for script in ('<script>window.attack=true</script>',
+                       '<script src="records.js"></script>',
+                       '<script type="application/json" id="owned-bootstrap">{}</script>',
+                       '<script type="application/ld+json">{}</script>',
+                       '<script type="module">export default 1</script>'):
+            with self.subTest(script=script):
+                self.static_reader('<html><head><meta charset="utf-8"></head><body>'+script+'</body></html>')
+                if 'window.attack' in script:
+                    self.owner["reports"][0]["reviewed_scripts"] = [digest(b"window.attack=true")]
+                    self.save_owner()
+                before = self.identity()
+                with self.assertRaisesRegex(ValueError, "cannot own scripts"):
+                    self.plan()
+                self.assertEqual(before, self.identity())
+
+    def test_static_reader_rejects_recipe_bootstrap_and_foreign_descriptor_members(self):
+        self.static_reader()
+        for field, value in (("recipe", {"template": "producer/report.html"}),
+                             ("bootstrap_id", "owned-bootstrap"),
+                             ("bootstrap_sha256", digest(b"{}")),
+                             ("accepted", True)):
+            with self.subTest(field=field):
+                self.owner["reports"][0][field] = value
+                self.save_owner()
+                with self.assertRaisesRegex(ValueError, "exact non-executable descriptor"):
+                    self.plan()
+                del self.owner["reports"][0][field]
+
+    def test_static_reader_rejects_resource_and_provider_authority(self):
+        self.static_reader()
+        for field, value in (("resources", {"report/records.js": {
+                "source": "docs/report/records.js", "sha256": digest(self.resource),
+                "bytes": len(self.resource), "kind": "reviewed-script"}}),
+                            ("providers", {"https://tracker.example.invalid": {}}),
+                            ("reviewed_provider_origins", ["https://tracker.example.invalid"]),
+                            ("provider_calls", [{"callee": "fetch"}])):
+            with self.subTest(field=field):
+                self.owner["reports"][0][field] = value
+                self.save_owner()
+                with self.assertRaisesRegex(ValueError, "cannot own scripts"):
+                    self.plan()
+                self.owner["reports"][0][field] = {} if field in ("resources", "providers") else []
+
+    def test_static_reader_rejects_active_foreign_and_linked_resource_markup(self):
+        for markup in ('<img src="local.png">', '<svg></svg>', '<math></math>',
+                       '<video></video>', '<template></template>', '<button>Run</button>',
+                       '<link rel="stylesheet" href="style.css">',
+                       '<base href="https://tracker.example.invalid/">',
+                       '<meta http-equiv="refresh" content="0;url=https://tracker.example.invalid/">',
+                       '<p onclick="attack()">Read</p>'):
+            with self.subTest(markup=markup):
+                self.static_reader('<html><head><meta charset="utf-8"></head><body>'+markup+'</body></html>')
+                with self.assertRaises(ValueError):
+                    self.plan()
+
+    def test_static_reader_forged_script_capability_rejects_before_any_write(self):
+        self.static_reader()
+        plan = self.plan()
+        record = next(r for r in plan["records"] if r["kind"] == "owned-report")
+        record["capability"]["script_sources"] = ["'self'"]
+        record["capability_sha256"] = digest(self.integration.canonical(record["capability"]))
+        before = self.identity()
+        with self.assertRaisesRegex(ValueError, "independently rederived"):
+            self.apply(plan)
+        self.assertEqual(before, self.identity())
+
+    def test_static_reader_script_policy_widening_rejects_rehashed_final_artifact(self):
+        for widened in ("'self'", "'none' "+csp.hash_source(TRUSTED)):
+            with self.subTest(widened=widened):
+                self.static_reader()
+                report, build = self.complete()
+                path = self.site / "report/map.html"
+                path.write_text(path.read_text().replace("script-src 'none'", "script-src "+widened))
+                build["bundle_sha256"] = self.identity()
+                with self.assertRaisesRegex(ValueError, "exceeds reviewed capability"):
+                    self.verify(report, build)
+                self.write_output("index.html", self.ordinary)
+                self.write_output("reader/index.html", self.parent_html)
+
+    def test_static_reader_uncommitted_source_cannot_rehash_into_old_commit(self):
+        self.static_reader()
+        self.write_source("docs/report/map.html", '<html><head><meta charset="utf-8"></head><body>Changed</body></html>')
+        self.write_output("report/map.html", (self.repo / "docs/report/map.html").read_bytes())
+        self.owner["reports"][0]["source"] = self.input_record("docs/report/map.html")
+        self.save_owner()
+        with self.assertRaisesRegex(ValueError, "differs from selected commit"):
+            self.plan()
+
+    def test_static_reader_mismatched_output_preserves_bundle_before_composition(self):
+        self.static_reader()
+        self.write_output("report/map.html", '<html><head><meta charset="utf-8"></head><body>Changed</body></html>')
+        before = self.identity()
+        with self.assertRaisesRegex(ValueError, "differs from reviewed tracked source"):
+            self.apply()
+        self.assertEqual(before, self.identity())
+
+    def test_static_reader_reconstructed_receipt_cannot_claim_publication(self):
+        self.static_reader()
+        report, build = self.complete()
+        with self.assertRaisesRegex(ValueError, "differs from selected commit|untracked"):
+            self.integration.verify_composition(self.site, report, build | {"verification_only": False},
+                publication=True, repository=self.repo, checkpoint={"accepted": True})
+
     def test_tracked_report_registration_parent_and_ordinary_composition_reconstructs(
         self,
     ):

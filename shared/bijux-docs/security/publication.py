@@ -342,7 +342,11 @@ def applied_csp(policy: str, admitted_hashes: set[str], capability: dict | None 
             expected.update({"base-uri": ["'none'"], "form-action": ["'none'"],
                              "worker-src": capability["worker_sources"],
                              "connect-src": capability["connect_sources"],
-                             "img-src": capability["image_sources"]})
+                             "img-src": capability["image_sources"],
+                             "style-src": capability["style_sources"]})
+    if capability is not None and capability.get("script_sources") == ["'none'"]:
+        expected.update({name: ["'none'"] for name in
+                         ("default-src", "font-src", "media-src", "manifest-src")})
     directives = {}
     for section in policy.split(";"):
         tokens = section.strip().split()
@@ -352,6 +356,10 @@ def applied_csp(policy: str, admitted_hashes: set[str], capability: dict | None 
         directives[tokens[0]] = tokens[1:]
     script = directives.pop("script-src", [])
     require(directives == expected, "CSP receipt: policy differs from admitted static capabilities")
+    if capability is not None and capability.get("script_sources") == ["'none'"]:
+        require(script == ["'none'"] and capability.get("script_hashes") == [],
+                "CSP receipt: non-executable reader gained script authority")
+        return set()
     require(script and script[0] == "'self'", "CSP receipt: script policy missing")
     hashes = set(script[1:])
     require(all(re.fullmatch(r"'sha256-[A-Za-z0-9+/]{43}='", value) and value in admitted_hashes for value in hashes),
