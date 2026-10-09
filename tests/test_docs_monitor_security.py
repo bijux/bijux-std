@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from contextlib import contextmanager
 import importlib.util
 import json
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
@@ -268,6 +269,82 @@ class MonitorSecurityTests(unittest.TestCase):
             self.assertFalse(self.smoke(manifest_path=path, repo_root=repo)["passed"])
             (repo / "artifacts/site/index.html").write_text("changed retained bundle")
             with self.assertRaises(ValueError): self.smoke(manifest_path=path, repo_root=repo)
+
+
+    @contextmanager
+    def retained_fixture(self, schema=2):
+        artifacts = ROOT / "artifacts/qualification/retained-monitor/process"
+        artifacts.mkdir(parents=True, exist_ok=True)
+        with tempfile.TemporaryDirectory(dir=artifacts) as location:
+            repo = Path(location)
+            site = repo / "artifacts/site"
+            site.mkdir(parents=True)
+            for url, (_, _, data, _) in self.responses.items():
+                path = url.removeprefix("/bijux-core/")
+                selected = site / (path + "index.html" if not path or path.endswith("/") else path)
+                selected.parent.mkdir(parents=True, exist_ok=True)
+                selected.write_bytes(data)
+            identity = monitor.sibling_module("retained_monitor_identity", ROOT / "shared/bijux-docs/security/build_identity.py")
+            publication = identity.publication()
+            manifest = publication.bundle_manifest(repo, "artifacts/site", self.canonical, "a" * 40, publication.load_policy())
+            if schema == 2:
+                # Sampling cannot grant authority from unavailable historical assertions.
+                manifest |= {"schema": 2, "qualification": {"source": {"path": "artifacts/absent.json"}},
+                             "producer_authority": {"approved_profile": "untrusted historical assertion"}}
+            path = Path("artifacts/retained-manifest.json")
+            (repo / path).write_text(json.dumps(manifest))
+            with mock.patch.object(monitor, "sibling_module", return_value=identity), mock.patch.object(identity, "publication", return_value=publication):
+                yield repo, path, publication
+
+    def test_schema_two_sampling_is_physical_only_without_source_or_producer(self):
+        with self.retained_fixture() as (repo, path, publication):
+            with mock.patch.object(publication, "qualified_manifest", side_effect=AssertionError("source reconstruction forbidden")) as qualified, mock.patch.object(publication, "verify_manifest", side_effect=AssertionError("strict qualification forbidden")) as strict, mock.patch.object(publication, "verify_retained_bytes", wraps=publication.verify_retained_bytes) as physical:
+                result = self.smoke(manifest_path=path, repo_root=repo)
+            self.assertTrue(result["passed"])
+            self.assertEqual(len(self.requests), 5)
+            self.assertEqual(physical.call_count, 2)
+            qualified.assert_not_called()
+            strict.assert_not_called()
+            binding = result["artifact_binding"]
+            self.assertEqual(binding["verification_mode"], "retained-public-bytes-only")
+            self.assertFalse(binding["qualified_source_verified"])
+            self.assertFalse(binding["publication_approval"])
+            self.assertNotIn("approved_profile", json.dumps(result))
+
+    def test_schema_one_sampling_preserves_mechanical_admission(self):
+        with self.retained_fixture(schema=1) as (repo, path, publication):
+            with mock.patch.object(publication, "verify_manifest", wraps=publication.verify_manifest) as mechanical, mock.patch.object(publication, "verify_retained_bytes", side_effect=AssertionError("schema one admission lost")):
+                result = self.smoke(manifest_path=path, repo_root=repo)
+            self.assertTrue(result["passed"])
+            self.assertEqual(mechanical.call_count, 2)
+            self.assertEqual(result["artifact_binding"]["verification_mode"], "mechanical-bundle")
+            self.assertFalse(result["artifact_binding"]["publication_approval"])
+
+    def test_schema_two_sampling_rejects_retained_file_change_after_requests(self):
+        with self.retained_fixture() as (repo, path, _):
+            original = monitor.request
+            def changing_request(*args, **kwargs):
+                response = original(*args, **kwargs)
+                (repo / "artifacts/site/index.html").write_text("changed physical artifact")
+                return response
+            with mock.patch.object(monitor, "request", side_effect=changing_request):
+                with self.assertRaisesRegex(ValueError, "physical inventory differs"):
+                    self.smoke(manifest_path=path, repo_root=repo)
+            self.assertEqual(len(self.requests), 5)
+
+    def test_schema_two_sampling_rejects_selected_manifest_change_after_requests(self):
+        with self.retained_fixture() as (repo, path, _):
+            original = monitor.request
+            def changing_request(*args, **kwargs):
+                response = original(*args, **kwargs)
+                manifest = json.loads((repo / path).read_text())
+                manifest["producer_authority"] = {"approved_profile": "changed declaration"}
+                (repo / path).write_text(json.dumps(manifest))
+                return response
+            with mock.patch.object(monitor, "request", side_effect=changing_request):
+                with self.assertRaisesRegex(ValueError, "retained manifest changed"):
+                    self.smoke(manifest_path=path, repo_root=repo)
+            self.assertEqual(len(self.requests), 5)
 
 
 if __name__ == "__main__":
