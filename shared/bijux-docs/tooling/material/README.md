@@ -107,8 +107,8 @@ artifacts/bijux-docs/python/bin/python shared/bijux-docs/tooling/material/build_
 
 `admission.json` pins the installed version and exact upstream bundle, native
 worker, base layout, source map and license hashes. The compiler accepts exactly
-one index-observable boundary and one worker-transport boundary, adds the readable
-controllers, and replaces only those two call sites. It emits a content-addressed
+one index-observable boundary, one worker-transport boundary and each declared
+native integration boundary, adding their readable owned controllers. It emits a content-addressed
 asset, truthful provenance and the root
 `main.html` scripts override. The override inherits layout/configuration and
 includes configured extra JavaScript exactly once. Projection must place it at
@@ -136,6 +136,20 @@ setup, combined index/worker outage and failure after native readiness. Keyboard
 Retry must return actual native known-answer results with the query preserved.
 No global fetch/XHR proxy, broad error suppression, second ranking engine or
 complete Material restart is used.
+
+## Native fragment restoration
+
+`fragment-restoration.js` restores only the fragment of the current history entry.
+It replaces the uniquely admitted native hash helper through the canonical compiler.
+Scrolling an already-current fragment must not queue another anchor navigation,
+which could finish after Back and resurrect the fragment the reader just left.
+
+Restoration resolves decoded IDs and legacy named anchors, reveals until-found
+ancestors through `beforematch`, opens ancestor disclosures and preserves native
+content-tab selection. The target owns sequential focus: a nonfocusable target
+receives a negative tabindex while focused, and blur restores that owned attribute
+without erasing a later authored value. Provenance binds this source and its exact
+native boundary; the complete generated classic script is parsed before emission.
 
 ## Consumer-owned head additions
 
