@@ -84,7 +84,7 @@ class RequiredNavigationTests(unittest.TestCase):
                 self.assertIn("github.repository == 'bijux/bijux-std'", source)
                 self.assertNotIn('dependabot', source)
         aggregate = job('navigation')
-        self.assertIn('needs: [navigation-fixtures, navigation-browsers, publication-commands]', aggregate)
+        self.assertIn('needs: [navigation-fixtures, navigation-browsers, publication-commands, frontend-browser-faults, frontend-public-faults]', aggregate)
         for variable in ('FIXTURE_RESULT', 'BROWSER_RESULT', 'COMMAND_RESULT'):
             self.assertIn('test "$' + variable + '" = success', aggregate)
 
