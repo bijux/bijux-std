@@ -15,6 +15,13 @@ Allow the explicitly reviewed old44 script-list migration when its standard pred
 
 ### Merged pull requests
 
+#### 2026-10-09T03:45:10Z — [#227](https://github.com/bijux/bijux-std/pull/227) — test(docs): verify native drawer activation and registry input
+
+Require ordinary pointer, trusted touch, Space and Enter to open the drawer once and Escape to restore its trigger.
+
+- Observe native events and expanded-state transitions; qualify current and last registry targets through keyboard and touch input.
+- Retain 126 canonical navigation identities, real destination/heading checks and existing assertions; keep physical touch-pan and manual qualification explicit.
+
 #### 2026-10-09T03:07:07Z — [#226](https://github.com/bijux/bijux-std/pull/226) — fix(docs): admit reviewed revision history capability
 
 Preserve the existing Canon revision-date plugin while validating its real Git history and callback ownership.
