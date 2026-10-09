@@ -1,6 +1,7 @@
 """Explicit Make selection preserves source ownership and literal argument boundaries."""
 from pathlib import Path
 import importlib.util
+import hashlib
 import json
 import os
 import shutil
@@ -78,10 +79,14 @@ prepare-owned-inputs:
                 with self.subTest(target=target,command_owner=command_owner):
                     result,calls = self.run_make(target,owner=owner,command_owner=command_owner)
                     self.assertEqual(result.returncode,0,result.stdout+result.stderr)
-                    render = next(args for args in calls if args[0].endswith('render_publication.py'))
-                    index = render.index('--interactive-report-owner')
-                    self.assertEqual(render[index+1],owner)
-                    self.assertEqual(render.count('--interactive-report-owner'),1)
+                    renders = [args for args in calls if args[0].endswith('render_publication.py')]
+                    self.assertEqual(len(renders),2)
+                    self.assertIn('--preflight',renders[0])
+                    self.assertNotIn('--preflight',renders[1])
+                    for render in renders:
+                        index = render.index('--interactive-report-owner')
+                        self.assertEqual(render[index+1],owner)
+                        self.assertEqual(render.count('--interactive-report-owner'),1)
                     self.assertFalse((self.repo/'marker').exists())
                     self.assertTrue((self.repo/'prepared').exists())
 
@@ -153,6 +158,47 @@ class InteractiveReportMakeOwnershipTests(unittest.TestCase):
         (self.output/(target+'.stderr.txt')).write_text(result.stderr)
         return result
 
+    def run_refused_make(self, target='docs-check', owner=None, **environment):
+        # Refusal must preserve both retained public bytes and their existing
+        # receipts, without executing consumer preparation. These sentinels test
+        # preservation only; they never claim publication or a qualified bundle.
+        self.write('artifacts/docs/site/retained/report.html', '<h1>Retained records</h1>\n')
+        self.write('artifacts/docs/site/retained/data.bin', 'Retained report resources\n')
+        for name in ('build-identity', 'csp', 'producer-reconstruction', 'site-verification'):
+            self.write('artifacts/website-security/'+name+'.json', json.dumps({'retained':name})+'\n')
+        preparation = self.repo/'artifacts/prepared-before-owner-validation'
+        preparation.unlink(missing_ok=True)
+        makefile = self.repo/'Makefile'
+        original = makefile.read_bytes()
+        with makefile.open('a') as output:
+            output.write('DOCS_BUILD_PRE_CLEAN_PATHS := artifacts/docs/site\n'
+                         'DOCS_CHECK_PRE_CLEAN_PATHS := artifacts/docs/site\n'
+                         'DOCS_BUILD_PREPARE_TARGETS := record-preparation\n'
+                         'DOCS_CHECK_PREPARE_TARGETS := record-preparation\n'
+                         '.PHONY: record-preparation\nrecord-preparation:\n'
+                         '\t@touch artifacts/prepared-before-owner-validation\n')
+        def retained():
+            return {path.relative_to(self.repo).as_posix():hashlib.sha256(path.read_bytes()).hexdigest()
+                    for tree in (self.site, self.repo/'artifacts/website-security')
+                    for path in tree.rglob('*') if path.is_file()}
+        before = retained()
+        try:
+            result = self.run_make(target, owner=owner, **environment)
+            after = retained()
+            observation = {'target':target, 'exit':result.returncode,
+                           'before':before, 'after':after,
+                           'preparation_executed':preparation.exists(),
+                           'error':result.stderr, 'verification_only':True}
+            observations = self.output/'retention-observations.jsonl'
+            with observations.open('a') as output:
+                output.write(json.dumps(observation)+'\n')
+            self.assertNotEqual(result.returncode, 0, result.stdout+result.stderr)
+            self.assertEqual(after, before, result.stdout+result.stderr)
+            self.assertFalse(preparation.exists(), result.stdout+result.stderr)
+            return result
+        finally:
+            makefile.write_bytes(original)
+
     def assert_actual_make_reconstruction(self, target):
         source_before=self.git(self.repo,'rev-parse','HEAD').stdout.strip()
         result=self.run_make(target)
@@ -182,32 +228,52 @@ class InteractiveReportMakeOwnershipTests(unittest.TestCase):
         self.assert_actual_make_reconstruction('docs-check')
 
     def test_committed_config_cannot_autoactivate_without_explicit_make_selection(self):
-        result=self.run_make(owner='')
+        result=self.run_refused_make(owner='')
         self.assertNotEqual(result.returncode,0)
         self.assertIn('requires explicit renderer selection',result.stderr)
 
     def test_explicit_make_selector_cannot_replace_committed_configuration(self):
-        result=self.run_make(owner='ops/website/unselected-owner.json')
+        result=self.run_refused_make(owner='ops/website/unselected-owner.json')
         self.assertNotEqual(result.returncode,0)
         self.assertIn('differs from committed configuration',result.stderr)
 
     def test_passive_selection_remains_incompatible_with_interactive_make_selection(self):
-        result=self.run_make(BIJUX_DOCS_READER_OWNER=self.owner_name)
+        result=self.run_refused_make(BIJUX_DOCS_READER_OWNER=self.owner_name)
         self.assertNotEqual(result.returncode,0)
         self.assertIn('cannot be mixed',result.stderr)
 
     def test_changed_source_cannot_reuse_committed_descriptor(self):
         self.write('docs/report/records.js','window.changedRecords=true;\n')
-        result=self.run_make()
+        result=self.run_refused_make()
         self.assertNotEqual(result.returncode,0)
         self.assertIn('fingerprint',result.stderr.lower())
+
+    def test_missing_owner_config_and_changed_producer_preserve_retained_outputs(self):
+        cases = ((self.owner_name, None, 'missing owner descriptor'),
+                 ('mkdocs.yml', None, 'missing tracked configuration'),
+                 ('producer/report.html', b'<html>changed producer</html>\n', 'changed producer fingerprint'))
+        for target in ('docs', 'docs-check'):
+            for name, changed, duty in cases:
+                with self.subTest(target=target,duty=duty):
+                    path = self.repo/name
+                    previous = path.read_bytes()
+                    try:
+                        if changed is None:
+                            path.unlink()
+                        else:
+                            path.write_bytes(changed)
+                        result = self.run_refused_make(target)
+                        self.assertIn("mkdocs config '" if name == 'mkdocs.yml' else
+                                      'Documentation artifact rejected:', result.stderr)
+                    finally:
+                        path.write_bytes(previous)
 
     def test_unresolved_provider_owner_decisions_remain_refused(self):
         provider='https://tiles.example.invalid'
         self.owner['reports'][0]['providers']={provider:{'purpose':'Frozen fixture','activation':None,'attribution':'Fixture','terms':None}}
         self.owner['reports'][0]['provider_calls']=[{'callee':'L.tileLayer'}]
         self.save_owner();self.commit()
-        result=self.run_make()
+        result=self.run_refused_make()
         self.assertNotEqual(result.returncode,0)
         self.assertIn('provider',result.stderr.lower())
 

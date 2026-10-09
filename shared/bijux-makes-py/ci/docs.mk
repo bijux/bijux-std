@@ -60,6 +60,16 @@ define assert_docs_interactive_report_dispatch
 	fi
 endef
 
+# Refuse source selection before consumer cleanup or preparation can erase an
+# existing site. The actual producer independently repeats this source check.
+define assert_docs_report_source
+	@if [ "$(DOCS_PUBLICATION_FRAMEWORK)" = "1" ]; then \
+	  set --; \
+	  if [ -n "$$DOCS_INTERACTIVE_REPORT_OWNER" ]; then set -- --interactive-report-owner "$$DOCS_INTERACTIVE_REPORT_OWNER"; fi; \
+	  $(DOCS_ENV) $(1) ENABLE_SOCIAL_CARDS="$(DOCS_ENABLE_SOCIAL_CARDS)" env -u SITE_URL $(if $(strip $(2)),SITE_URL="$(2)") "$(DOCS_PYTHON)" "$(DOCS_PUBLICATION_RENDERER)" --preflight --config "$(patsubst $(PROJECT_DIR)/%,%,$(3))" --site-dir "$(patsubst $(PROJECT_DIR)/%,%,$(4))" --site-url "$(2)" "$$@"; \
+	fi
+endef
+
 define assert_docs_source_authority
 	@test -f "$(DOCS_SOURCE_VERIFIER)" || { echo "ERROR: missing accepted documentation source verifier" >&2; exit 1; }
 	@DOCS_PYTHON="$(DOCS_PYTHON)" bash "$(DOCS_SOURCE_VERIFIER)" --source-only
@@ -97,6 +107,7 @@ docs:
 	$(call run_make_targets,$(DOCS_BUILD_GUARD_TARGETS),$(MAKE))
 	$(call assert_docs_source_authority)
 	$(call assert_docs_material_runtime,$(DOCS_BUILD_ENV))
+	$(call assert_docs_report_source,$(DOCS_BUILD_ENV),$(DOCS_BUILD_SITE_URL),$(DOCS_BUILD_CONFIG_FILE),$(DOCS_BUILD_SITE_DIR))
 	$(call clean_paths,$(DOCS_BUILD_PRE_CLEAN_PATHS))
 	$(call run_make_targets,$(DOCS_BUILD_PREPARE_TARGETS),$(MAKE))
 	@echo "→ Building documentation"
@@ -159,6 +170,7 @@ docs-check:
 	$(call run_make_targets,$(DOCS_CHECK_GUARD_TARGETS),$(MAKE))
 	$(call assert_docs_source_authority)
 	$(call assert_docs_material_runtime,$(DOCS_CHECK_ENV))
+	$(call assert_docs_report_source,$(DOCS_CHECK_ENV),$(DOCS_CHECK_SITE_URL),$(DOCS_CHECK_CONFIG_FILE),$(DOCS_CHECK_SITE_DIR))
 	$(call clean_paths,$(DOCS_CHECK_PRE_CLEAN_PATHS))
 	$(call run_make_targets,$(DOCS_CHECK_PREPARE_TARGETS),$(MAKE))
 	@echo "→ Checking documentation build integrity"

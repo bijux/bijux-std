@@ -8,7 +8,7 @@ This file records notable repository-level changes for `bijux-std`.
 
 #### [#258](https://github.com/bijux/bijux-std/pull/258) — feat(docs): select owned interactive reports through python make
 
-Forward one explicitly selected committed interactive report owner through the existing Python Make delivery and checks. Require a separate bounded Make qualification job while preserving the complete renderer case union.
+Select committed interactive report ownership consistently through Python Make and publication validation. Validate source selection before cleanup so refusals preserve verified output, and qualify every renderer and Make duty in seven bounded source-owned groups.
 
 ### Merged pull requests
 

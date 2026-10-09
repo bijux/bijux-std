@@ -61,6 +61,7 @@ def group_python_ids(group: str | None = None) -> list[str]:
         'test_changed_source_cannot_reuse_committed_descriptor',
         'test_committed_config_cannot_autoactivate_without_explicit_make_selection',
         'test_explicit_make_selector_cannot_replace_committed_configuration',
+        'test_missing_owner_config_and_changed_producer_preserve_retained_outputs',
         'test_passive_selection_remains_incompatible_with_interactive_make_selection',
         'test_unresolved_provider_owner_decisions_remain_refused',
     )
