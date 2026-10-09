@@ -6,6 +6,14 @@ This file records notable repository-level changes for `bijux-std`.
 
 ### Pending review
 
+#### [#228](https://github.com/bijux/bijux-std/pull/228) — ci(docs): observe exact history renderer dependencies on linux
+
+Capture the actual hosted Linux runtime for Canon's exact documentation dependency recipe before independent publication-profile review.
+
+- Keep the canonical fixture environment unchanged and bind all36 dependency pins to reviewed source/lock provenance.
+- Reuse physical package, runtime, startup and callback observers in a read-only3-minute job; retain actual source/run/attempt evidence.
+- Keep profile approval, consumer acceptance, authored build and publication separate; this review depends on #226.
+
 #### [#226](https://github.com/bijux/bijux-std/pull/226) — fix(docs): admit reviewed revision history capability
 
 Preserve the existing Canon revision-date plugin while validating its real Git history and callback ownership.
