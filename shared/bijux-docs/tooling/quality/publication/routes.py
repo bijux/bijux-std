@@ -8,6 +8,7 @@ import re
 from urllib.parse import quote, unquote, urljoin, urlsplit
 import xml.etree.ElementTree as ET
 from validate_production_url import development_host
+from . import style_references
 
 
 def responsive_candidates(value: str) -> list[str]:
@@ -306,16 +307,27 @@ def validate(site: Path, site_url: str, docs: dict[Path, Document], network_urls
     errors.extend(redirect_cycles(site,redirect_edges))
     for path in sorted(site.rglob('*.css')):
         css = path.read_text(encoding='utf-8')
-        values = re.findall(r'url\(\s*[\'"]?([^\'"\)\s]+)',css)
-        values += re.findall(r'@import\s+[\'"]([^\'"]+)',css)
-        for value in values:
-            failure = validate_reference(value,urljoin(site_url,path.relative_to(site).as_posix()),'asset',path.relative_to(site).as_posix(),exceptions,observations)
+        label = path.relative_to(site).as_posix()
+        current = urljoin(site_url,label)
+        try:
+            references = style_references.references(css)
+        except ValueError as exc:
+            errors.append(f'{label}: CSS resource syntax: {exc}')
+            continue
+        for reference in references:
+            value = reference.url
+            location = f'{label}:{reference.line}:{reference.column}'
+            failure = validate_reference(value,current,'asset',label,exceptions,observations)
             if failure:
-                errors.append(f'{path.relative_to(site)}: {failure}')
+                errors.append(f'{location}: {failure}')
                 continue
-            target, _ = resolve(site,site_url,urljoin(site_url,path.relative_to(site).as_posix()),value)
+            try:
+                target, _ = resolve(site,site_url,current,value)
+            except ValueError as exc:
+                errors.append(f'{location}: {exc}')
+                continue
             if target is not None and not target.is_file():
-                errors.append(f'{path.relative_to(site)}: missing CSS asset {value}')
+                errors.append(f'{location}: missing CSS asset {value}')
     sitemap = site/'sitemap.xml'
     if not sitemap.is_file():
         errors.append('Selected artifact is missing sitemap.xml')

@@ -290,6 +290,87 @@ class PublicSiteRouteTests(unittest.TestCase):
         self.assert_rejected('missing link destination evidence.pdf')
         self.assert_rejected('missing CSS asset missing.css')
 
+    def test_css_resource_identifiers_are_case_insensitive_and_escaped(self):
+        for css in ('body{background:URL("missing.png")}',
+                    r'body{background:u\72l("missing.png")}',
+                    '@IMPORT "missing.css";',
+                    r'@\69mport "missing.css";'):
+            with self.subTest(css=css):
+                self.write('assets/site.css',css)
+                self.assert_rejected('missing CSS asset missing.')
+
+    def test_css_decoded_resources_cannot_hide_private_or_insecure_hosts(self):
+        for css in ('body{background:URL("http://127.0.0.1/private.png")}',
+                    r'body{background:url("http\3a //127.0.0.1/private.png")}',
+                    '@IMPORT/**/"https://private.internal/site.css";',
+                    'body{background:URL(http://cdn.example.com/image.png)}'):
+            with self.subTest(css=css):
+                self.write('assets/site.css',css)
+                self.assertEqual(self.report()['result'],'fail')
+                self.assertTrue(any('development/private host' in message or
+                                    'insecure active resource' in message for message in self.report()['errors']))
+
+    def test_css_comments_and_non_resource_strings_remain_inert(self):
+        self.write('assets/site.css','''/* url("missing.png") @import "missing.css" */
+            body::after{content:'url("missing.png")';--example:'@IMPORT "missing.css"'}
+            /* an EOF-terminated comment mentioning URL("missing.png")''')
+        self.assertEqual(self.report()['result'],'pass')
+
+    def test_css_quoted_and_escaped_space_destinations_resolve_complete_names(self):
+        self.write('assets/present image.png','existing asset bytes')
+        for css in ('body{background:url("present image.png")}',
+                    r'body{background:url(present\20 image.png)}',
+                    'body{background:url("present\\\n image.png")}'):
+            with self.subTest(css=css):
+                self.write('assets/site.css',css)
+                self.assertEqual(self.report()['result'],'pass')
+        self.write('assets/site.css','body{background:URL("absent image.png")}')
+        self.assert_rejected('missing CSS asset absent image.png')
+
+    def test_css_import_strings_and_url_functions_keep_stylesheet_relative_base(self):
+        self.write('assets/theme/palette.css','body{color:teal}')
+        self.write('assets/present.png','existing asset bytes')
+        for css in ('@IMPORT/**/"theme/palette.css" screen;',
+                    '@import URL("theme/palette.css") layer(theme);'):
+            with self.subTest(css=css):
+                self.write('assets/site.css',css)
+                self.write('assets/theme/palette.css','body{background:URL("../present.png")}')
+                self.assertEqual(self.report()['result'],'pass')
+        (self.site/'assets/present.png').unlink()
+        self.assert_rejected('missing CSS asset ../present.png')
+
+    def test_css_resource_errors_name_raw_reference_source_line(self):
+        self.write('assets/site.css','/* ownership */\nbody{background:URL("missing.png")}')
+        errors=self.report()['errors']
+        self.assertTrue(any(message.startswith('assets/site.css:2:17:') and
+                            'missing CSS asset missing.png' in message for message in errors),errors)
+
+    def test_css_data_urls_and_public_https_resources_preserve_existing_boundary(self):
+        self.write('assets/site.css','body{background:URL("data:image/svg+xml,<svg/>")}'
+                   '@IMPORT "https://cdn.example.com/site.css";')
+        self.assertEqual(self.report()['result'],'pass')
+
+    def test_css_material_data_svg_strings_preserve_complete_literal_payload(self):
+        from publication.style_references import references
+        css=r'body{background:url("data:image/svg+xml;charset=utf-8,<svg xmlns=\"http://www.w3.org/2000/svg\"><path d=\"M0 0\"/></svg>")}'
+        self.write('assets/site.css',css)
+        self.assertEqual(self.report()['result'],'pass')
+        urls=references(css)
+        self.assertEqual(len(urls),1)
+        self.assertEqual(urls[0].url,'data:image/svg+xml;charset=utf-8,<svg xmlns="http://www.w3.org/2000/svg"><path d="M0 0"/></svg>')
+
+    def test_css_malformed_literal_resources_cannot_silently_skip_destination_checks(self):
+        for css in ('body{background:URL("missing.png"}',
+                    'body{background:url(missing image.png)}',
+                    'body{background:url(missing(thing).png)}'):
+            with self.subTest(css=css):
+                self.write('assets/site.css',css)
+                self.assert_rejected('CSS resource syntax')
+
+    def test_css_artifact_escape_reports_failure_without_raising_from_resolver(self):
+        self.write('assets/site.css','body{background:URL("%2e%2e/%2e%2e/outside.png")}')
+        self.assert_rejected('Local reference escapes the selected artifact')
+
     def test_search_index_404_fails_before_browser_promotion(self):
         (self.site/'search/search_index.json').unlink()
         self.assert_rejected('Search index is absent')
