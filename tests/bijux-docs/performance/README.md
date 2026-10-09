@@ -96,3 +96,57 @@ These distributions are not field populations or field INP. No timing ceiling
 is invented. The real plain/diagram fixture has the same limited production,
 Material and native-history scope as transport accounting. Its initial render
 bounds and producer fallback remain unchanged.
+
+## Shared reader interaction observations
+
+```sh
+node tests/bijux-docs/performance/interaction.cjs \
+  --source-root "$PWD" --source-sha "$(git rev-parse HEAD)" \
+  --fixture-dir artifacts/qualification/payload-reader-interaction/site \
+  --fixture-manifest artifacts/qualification/payload-reader-interaction/fixture.json \
+  --fixture-manifest-sha256 '<externally verified full manifest digest>' --cycles 3 \
+  --output artifacts/qualification/payload-reader-interaction/chromium.json
+node --test tests/bijux-docs/performance/interaction.test.cjs
+```
+
+This runner selects a retained canonical long-registry slice, serves its exact
+112 files and 32 HTML routes, and binds all 53 selected shared shell source
+inputs to the committed standard. The pinned fixture manifest retains accepted
+source/tree/origin, complete site bytes/digests, original generator manifest,
+configuration assertion and MkDocs/Material toolchain. When the physical
+configuration is unavailable, the report says it was not reread; the original
+producer assertion does not become a new physical verification. Current tool
+source and historical accepted fixture provenance remain separate.
+
+The same declared Chromium profile applies to an initially cold isolated
+context. Three to ten cycles use ordinary clicks, Tab traversal, Enter/Space,
+typing, Clear and Escape on the real shared drawer, disclosure and search.
+Search must produce the latest full known-answer query and authored destination.
+The existing drawer/search, diagram and native-history suites retain their
+broader obligations; this runner changes none of their inputs or assertions.
+Later cycles use the same loaded document, without claiming warm HTTP delivery.
+
+[Event Timing](https://www.w3.org/TR/event-timing/) entries correlate with
+captured trusted inputs and retain input delay, processing time, interaction
+identity and estimated next-rendering-update duration. Browser durations are
+rounded to 8 ms; the observer requests the minimum 16 ms threshold. Missing,
+unsupported, dropped, invalid or below-threshold observations remain unknown.
+Functional state/geometry qualification is separate from complete EventTiming
+coverage. Incomplete required timing coverage produces an incomplete result
+and a nonzero CLI exit, retaining partial distributions without fabricating
+zeros. These finite lab samples do not measure field INP.
+
+The observer records the first two matching animation-frame states, focus,
+inert ownership, rectangles and pointer-center ownership. The elapsed time from
+trusted input to the first matching frame is a **rendering opportunity**, not
+actual pixel paint. [Paint Timing](https://www.w3.org/TR/paint-timing/) describes
+rendering updates; an animation-frame callback alone does not prove pixels were
+presented. Asynchronous native-search result readiness also remains distinct
+from an EventTiming entry's next-update duration. No latency ceiling is added.
+
+`interaction-server.cjs` owns finite source/bundle selection and unchanged
+HTTP bodies; `interaction-observer.cjs` owns passive capture and rendering
+opportunity observations; `interaction-evidence.cjs` owns exact named
+transition qualification and partial distributions. `interaction.cjs` owns
+ordinary browser input, emulation and terminal lifetime. No positive request
+routing, source rewriting, fake renderer or production publication participates.
