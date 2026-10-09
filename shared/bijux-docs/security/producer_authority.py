@@ -37,23 +37,48 @@ def module(path):
 
 
 def repository_files(root):
-    """Capture clean tracked publication source independently of ignored run aliases.
+    """Bind physical publication inputs to the complete current committed Git tree.
 
-    Actual renderer inputs are additionally checked by build_identity.source_inputs;
-    an ignored document, template or hook cannot become accepted source here.
+    Git status can hide local bytes through index flags. Capture verifies every
+    tracked blob and mode independently, without spawning Git for each file.
+    Actual renderer inputs are additionally checked by build_identity.source_inputs.
     """
     def git(*args):
         command = subprocess.run(['git', '-C', str(root), *args], capture_output=True, text=True)
         require(command.returncode == 0, 'Producer: repository source operation failed')
         return command.stdout
+
     require(Path(git('rev-parse', '--show-toplevel').strip()).resolve() == root.resolve(),
             'Producer: exact repository root required')
     require(not git('status', '--porcelain', '--untracked-files=all').strip(),
             'Producer: tracked or untracked publication source is dirty')
-    result = {}
-    for name in git('ls-files', '-z').split('\0'):
-        if not name:
+    head = git('rev-parse', 'HEAD').strip()
+    object_format = git('rev-parse', '--show-object-format').strip()
+    require(object_format in {'sha1', 'sha256'}, 'Producer: supported Git object format required')
+    committed = {}
+    for record in git('ls-tree', '-rz', '--full-tree', head).split('\0'):
+        if not record:
             continue
+        metadata, name = record.split('\t', 1)
+        mode, kind, blob = metadata.split()
+        require(mode in {'100644', '100755'} and kind == 'blob',
+                'Producer: symlink tracked source or nonregular committed source forbidden')
+        require(name not in committed, 'Producer: duplicate committed source path')
+        committed[name] = (mode, blob)
+
+    indexed = {}
+    for record in git('ls-files', '--stage', '-z').split('\0'):
+        if not record:
+            continue
+        metadata, name = record.split('\t', 1)
+        mode, blob, stage = metadata.split()
+        require(stage == '0' and name not in indexed, 'Producer: unmerged or duplicate indexed source')
+        indexed[name] = (mode, blob)
+    require(bool(committed) and indexed == committed,
+            'Producer: indexed source paths, modes or blobs differ from committed source')
+
+    result = {}
+    for name, (mode, blob) in sorted(committed.items()):
         relative = Path(name)
         require(not relative.is_absolute() and '..' not in relative.parts,
                 'Producer: confined tracked source required')
@@ -62,9 +87,18 @@ def repository_files(root):
             path = path / part
             require(not path.is_symlink(), 'Producer: symlink tracked source forbidden')
         require(path.is_file(), 'Producer: regular tracked source required')
-        result[name] = path.read_bytes()
-    require(bool(result), 'Producer: tracked publication source missing')
-    return dict(sorted(result.items()))
+        captured = path.read_bytes()
+        header = ('blob ' + str(len(captured)) + '\0').encode()
+        actual_blob = hashlib.new(object_format, header + captured).hexdigest()
+        actual_mode = '100755' if path.stat().st_mode & 0o100 else '100644'
+        require(actual_blob == blob and actual_mode == mode,
+                'Producer: physical tracked source blob or mode differs from committed source: ' + name)
+        result[name] = captured
+    require(git('rev-parse', 'HEAD').strip() == head,
+            'Producer: committed source changed during capture')
+    require(not git('status', '--porcelain', '--untracked-files=all').strip(),
+            'Producer: tracked or untracked publication source changed during capture')
+    return result
 
 
 def files(root, *, source=False, publication_source=False):
@@ -103,6 +137,23 @@ def dependencies(shared, root, *, publication=False):
     return profiles(shared).select(shared,root,publication=publication)
 
 
+def require_committed_hook_inputs(capabilities, inputs, *, publication):
+    """Bind publication callback source and assets to verified committed bytes."""
+    if not publication:
+        return
+
+    def bind(path, expected):
+        require(isinstance(path, str) and path in inputs,
+                'Producer: publication hook input is not committed source: ' + str(path))
+        require(expected == digest(inputs[path]),
+                'Producer: publication hook input digest differs from committed source: ' + path)
+
+    for hook in capabilities['hooks']:
+        bind(hook['source'], hook['source_sha256'])
+        for item in hook['inputs']:
+            bind(item['path'], item['sha256'])
+
+
 class PreparedProducer:
     """In-process reconstruction result; a deserialized receipt is never this authority."""
     def __init__(self, root, config, shared, templates, output, inputs, shared_inputs, reference, native, deps, config_sha, capabilities, redirect_hashes, publication_scope):
@@ -119,6 +170,7 @@ class PreparedProducer:
         from mkdocs.config import load_config
         configuration=load_config(config_file=str(self.root/self.config),site_dir=str(self.selected_site))
         actual=module(self.shared/'security/producer_capabilities.py').preflight(configuration,self.root,publication=self.publication_scope)
+        require_committed_hook_inputs(actual, self.inputs, publication=self.publication_scope)
         require(actual==self.capabilities,'Producer: callback/source/history changed after reconstruction')
 
 
@@ -151,6 +203,7 @@ def prepare(root: Path, config_name: str, shared: Path, templates: Path, output:
     require(Path(configuration.docs_dir).is_relative_to(root), 'Producer: docs source outside owner root')
     capabilities=module(shared/'security/producer_capabilities.py')
     capability_inputs=capabilities.preflight(configuration,root,publication=publication_scope)
+    require_committed_hook_inputs(capability_inputs, inputs, publication=publication_scope)
     configuration.site_dir = str(output)
     build(configuration)
     capabilities.verify_outputs(output,capability_inputs)

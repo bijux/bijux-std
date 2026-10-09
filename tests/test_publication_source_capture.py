@@ -71,4 +71,71 @@ class PublicationSourceCapture(unittest.TestCase):
   with self.assertRaisesRegex(ValueError,'ignored renderer source'):
    identity.source_inputs(config,self.root,publication_scope=True)
 
+class CommittedPublicationSourceCapture(unittest.TestCase):
+    setUp = PublicationSourceCapture.setUp
+    git = PublicationSourceCapture.git
+    commit = PublicationSourceCapture.commit
+
+    def test_assume_unchanged_cannot_hide_changed_source_bytes(self):
+        self.git('update-index', '--assume-unchanged', 'docs/guide.md')
+        (self.root / 'docs/guide.md').write_text('# Changed despite clean status\n')
+        self.assertEqual(self.git('status', '--porcelain').strip(), '')
+        with self.assertRaisesRegex(ValueError, 'physical tracked source blob'):
+            authority.files(self.root, source=True, publication_source=True)
+
+    def test_skip_worktree_cannot_hide_changed_source_bytes(self):
+        self.git('update-index', '--skip-worktree', 'docs/guide.md')
+        (self.root / 'docs/guide.md').write_text('# Changed despite clean status\n')
+        self.assertEqual(self.git('status', '--porcelain').strip(), '')
+        with self.assertRaisesRegex(ValueError, 'physical tracked source blob'):
+            authority.files(self.root, source=True, publication_source=True)
+
+    def test_unchanged_index_flags_preserve_exact_source_capture(self):
+        before = authority.files(self.root, source=True, publication_source=True)
+        for flag in ('--assume-unchanged', '--skip-worktree'):
+            with self.subTest(flag=flag):
+                self.git('update-index', flag, 'docs/guide.md')
+                self.assertEqual(authority.files(self.root, source=True, publication_source=True), before)
+
+    def test_index_hidden_executable_mode_change_is_rejected(self):
+        self.git('config', 'core.filemode', 'false')
+        path = self.root / 'docs/guide.md'
+        path.chmod(path.stat().st_mode | 0o100)
+        self.assertEqual(self.git('status', '--porcelain').strip(), '')
+        with self.assertRaisesRegex(ValueError, 'physical tracked source blob or mode'):
+            authority.files(self.root, source=True, publication_source=True)
+
+    def test_index_blob_divergence_is_rejected_independently_of_status(self):
+        guide = self.root / 'docs/guide.md'
+        guide.write_text('# Staged changed source\n')
+        self.git('add', 'docs/guide.md')
+        run = authority.subprocess.run
+        def observe(argv, **kwargs):
+            result = run(argv, **kwargs)
+            if 'status' in argv:
+                result.stdout = ''
+            return result
+        with patch.object(authority.subprocess, 'run', observe):
+            with self.assertRaisesRegex(ValueError, 'indexed source paths, modes or blobs'):
+                authority.files(self.root, source=True, publication_source=True)
+
+    def test_ordinary_mutation_after_initial_status_cannot_be_captured(self):
+        read = Path.read_bytes
+        def mutate(path):
+            if path == self.root / 'docs/guide.md':
+                path.write_text('# Mutation during physical capture\n')
+            return read(path)
+        with patch.object(Path, 'read_bytes', mutate):
+            with self.assertRaisesRegex(ValueError, 'physical tracked source blob'):
+                authority.files(self.root, source=True, publication_source=True)
+
+    def test_hidden_mutation_after_reconstruction_is_rejected(self):
+        before = authority.files(self.root, source=True, publication_source=True)
+        self.git('update-index', '--assume-unchanged', 'docs/guide.md')
+        (self.root / 'docs/guide.md').write_text('# Hidden post-capture mutation\n')
+        self.assertTrue(before)
+        with self.assertRaisesRegex(ValueError, 'physical tracked source blob'):
+            authority.files(self.root, source=True, publication_source=True)
+
+
 if __name__=='__main__':unittest.main(verbosity=2)
