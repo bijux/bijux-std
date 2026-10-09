@@ -15,6 +15,14 @@ Resolve relative redirect canonicals against their source route before checking 
 
 ### Merged pull requests
 
+#### 2026-10-09T00:59:18Z — [#217](https://github.com/bijux/bijux-std/pull/217) — fix(docs): contain focus paint within navigation boundaries
+
+Keep the visible focus ring inside disclosure scroll bounds and masthead repository controls.
+
+- Measure actual clipping and adjacent paint through ordinary keyboard focus and Auto theme transitions.
+- Retain every existing contrast case and detect the historical clipped-ring regression.
+- Admit focus geometry only after passive layout and finite-transition settlement; retain raw samples and strict clipping assertions.
+
 #### 2026-10-09T00:47:06Z — [#218](https://github.com/bijux/bijux-std/pull/218) — test(docs): keep shell acceptance executable and reject runtime errors
 
 Bind shell behaviour to executable reader cases and reject uncaught runtime failures in every shell journey.
