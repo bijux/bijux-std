@@ -136,9 +136,13 @@ test("trusted wheel during native diagram rebuilding owns the reader position", 
     });
     await page.goBack({ waitUntil: "domcontentloaded" });
     await expect(page.locator("body")).toHaveAttribute("data-bijux-drawer-ready", "true");
+    // Native Back settles its initial scroll in the browser's layout frames.
+    // Act after that handoff while the real renderer response remains pending.
+    await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
     const pending = await figures(page).locator(".bijux-diagram-preview > svg").count();
     expect(pending, "Actual pending renderer when the reader acts").toBeLessThan(5);
     const before = await page.evaluate(() => scrollY);
+    records.push({ label: "pending native input geometry", pending, ...await position(page.locator("#reader-native-next")) });
     await page.mouse.move(190, 400);
     await page.mouse.wheel(0, -500);
     await expect.poll(() => page.evaluate(() => scrollY)).toBeLessThan(before);

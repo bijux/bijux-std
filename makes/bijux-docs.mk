@@ -115,6 +115,10 @@ ui-test-link-policy: ui-test-prepare-runtime ## Qualify authored link intent, na
 ui-test-history: ui-test-prepare-runtime ui-test-fixtures ui-test-unit ## Qualify history through ordinary generated Material journeys
 	@NPM_CONFIG_CACHE="$(abspath $(UI_TESTS_NPM_CACHE_DIR))" PLAYWRIGHT_BROWSERS_PATH="$(abspath $(UI_TESTS_PLAYWRIGHT_BROWSERS_DIR))" BIJUX_UI_ARTIFACT_ROOT="$(abspath $(BIJUX_DOCS_ARTIFACTS_DIR))/history-playwright" BIJUX_UI_FULL_GATE=1 npm --prefix "$(UI_TESTS_RUNTIME_DIR)" exec -- playwright test --config "$(UI_TESTS_DIR)/playwright.history.config.js"
 
+.PHONY: ui-test-registry-overflow
+ui-test-registry-overflow: ui-test-prepare-runtime ui-test-fixtures ui-test-unit ## Qualify bounded desktop registry pointer keyboard and touch journeys
+	@NPM_CONFIG_CACHE="$(abspath $(UI_TESTS_NPM_CACHE_DIR))" PLAYWRIGHT_BROWSERS_PATH="$(abspath $(UI_TESTS_PLAYWRIGHT_BROWSERS_DIR))" BIJUX_UI_ARTIFACT_ROOT="$(abspath $(BIJUX_DOCS_ARTIFACTS_DIR))/registry-overflow-playwright" BIJUX_UI_FULL_GATE=1 npm --prefix "$(UI_TESTS_RUNTIME_DIR)" exec -- playwright test --config "$(UI_TESTS_DIR)/playwright.registry-overflow.config.js"
+
 .PHONY: ui-test-native-reader-history
 ui-test-native-reader-history: ui-test-prepare-runtime ui-test-fixtures ui-test-unit ## Qualify native diagram restoration, instant continuity and trusted input
 	@NPM_CONFIG_CACHE="$(abspath $(UI_TESTS_NPM_CACHE_DIR))" PLAYWRIGHT_BROWSERS_PATH="$(abspath $(UI_TESTS_PLAYWRIGHT_BROWSERS_DIR))" BIJUX_UI_ARTIFACT_ROOT="$(abspath $(BIJUX_DOCS_ARTIFACTS_DIR))/native-reader-history-playwright" BIJUX_UI_FULL_GATE=1 npm --prefix "$(UI_TESTS_RUNTIME_DIR)" exec -- playwright test --config "$(UI_TESTS_DIR)/playwright.native-reader-history.config.js"

@@ -149,6 +149,11 @@
         "suite": "search-reflow-desktop"
       }
     ],
+    "registry-overflow": [
+      {
+        "suite": "registry-overflow"
+      }
+    ],
     "native-reader-history": [
       {
         "suite": "native-reader-history"
