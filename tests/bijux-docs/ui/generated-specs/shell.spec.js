@@ -20,24 +20,59 @@ async function openDrawer(page) {
   await expect(page.locator("#__drawer")).toBeChecked();
   await expect(exposedLinks(page).first()).toBeInViewport();
 }
-async function registryDestination(page, link, expected) {
+let registryTouchSequence = 0;
+function assertRegistryTarget(target) {
+  expect(target.height).toBeGreaterThanOrEqual(44);
+  expect(target.width).toBeGreaterThanOrEqual(44);
+  expect(target.owned).toBe(true);
+  expect(target.fit).toBe(true);
+  expect(target.labelFit).toBe(true);
+}
+async function registryDestination(page, link, expected, input = "pointer") {
   await expect(link).toHaveCount(1);
   await expect(link).toHaveAccessibleName(expected.label);
   expect(await link.evaluate(node => node.href)).toBe(expected.url);
-  await link.hover();
-  const target = await link.evaluate(node => {
+  if (input === "keyboard") {
+    await tabTo(page, link, page.context().browser().browserType().name(), 160);
+    await expect(link).toBeFocused();
+    await settle(link);
+  } else if (input !== "touch") {
+    await link.hover();
+  }
+  const target = input === "touch" ? null : await link.evaluate(node => {
     const rect = node.getBoundingClientRect();
     const hit = document.elementFromPoint(rect.x + rect.width / 2, rect.y + rect.height / 2);
     return { width: rect.width, height: rect.height, owned: hit === node || node.contains(hit),
       fit: rect.left >= 0 && rect.right <= innerWidth + 1 && rect.top >= 0 && rect.bottom <= innerHeight + 1,
       labelFit: node.scrollWidth <= node.clientWidth && node.scrollHeight <= node.clientHeight };
   });
-  expect(target.height).toBeGreaterThanOrEqual(44);
-  expect(target.width).toBeGreaterThanOrEqual(44);
-  expect(target.owned).toBe(true);
-  expect(target.fit).toBe(true);
-  expect(target.labelFit).toBe(true);
+  if (target) assertRegistryTarget(target);
   expect(await page.evaluate(() => document.documentElement.scrollWidth - innerWidth)).toBeLessThanOrEqual(1);
+  const touches = [];
+  let touchObservation;
+  if (input === "touch") {
+    const callback = `bijuxRegistryTouch${registryTouchSequence++}`;
+    await page.exposeFunction(callback, observation => touches.push(observation));
+    touchObservation = await link.evaluateHandle((node, name) => {
+      const listener = event => {
+        const rect = node.getBoundingClientRect();
+        const hit = document.elementFromPoint(rect.x + rect.width / 2, rect.y + rect.height / 2);
+        const owners = [];
+        for (let ancestor = node.parentElement; ancestor; ancestor = ancestor.parentElement) {
+          const style = getComputedStyle(ancestor);
+          if (["auto", "scroll"].includes(style.overflowY) && ancestor.scrollHeight > ancestor.clientHeight + 1)
+            owners.push({ primary: ancestor.matches(".md-sidebar--primary"), offset: ancestor.scrollTop });
+          if (ancestor.matches(".md-sidebar--primary")) break;
+        }
+        window[name]({ trusted: event.isTrusted, count: event.touches.length, owners,
+          target: { width: rect.width, height: rect.height, owned: hit === node || node.contains(hit),
+            fit: rect.left >= 0 && rect.right <= innerWidth + 1 && rect.top >= 0 && rect.bottom <= innerHeight + 1,
+            labelFit: node.scrollWidth <= node.clientWidth && node.scrollHeight <= node.clientHeight } });
+      };
+      node.addEventListener("touchstart", listener, { capture: true, once: true });
+      return { dispose() { node.removeEventListener("touchstart", listener, true); } };
+    }, callback);
+  }
   const previousDocument = await page.evaluateHandle(() => document);
   const documentRequests = [];
   let retainedDocument;
@@ -46,7 +81,17 @@ async function registryDestination(page, link, expected) {
   };
   page.on("request", observeDocument);
   try {
-    await link.click();
+    if (input === "keyboard") await page.keyboard.press("Enter");
+    else if (input === "touch") {
+      await link.tap();
+      await expect.poll(() => touches.length).toBe(1);
+      expect(touches[0].trusted).toBe(true);
+      expect(touches[0].count).toBe(1);
+      expect(touches[0].owners).toHaveLength(1);
+      expect(touches[0].owners[0].primary).toBe(true);
+      assertRegistryTarget(touches[0].target);
+    }
+    else await link.click();
     await expect(page).toHaveURL(expected.url);
     await expect(page.locator("main h1")).toHaveText(expected.heading);
     try {
@@ -61,6 +106,11 @@ async function registryDestination(page, link, expected) {
   } finally {
     page.off("request", observeDocument);
     await previousDocument.dispose();
+    if (touchObservation) {
+      try { await touchObservation.evaluate(observation => observation.dispose()); }
+      catch (error) { if (!/Execution context was destroyed|JSHandles can be evaluated only in the context|Execution context is not available|Cannot find context/.test(error.message)) throw error; }
+      await touchObservation.dispose();
+    }
   }
   await expect(page.locator("main h1")).toHaveText(expected.heading);
   // Cross-site registry links may use a native document navigation. Retained
@@ -80,6 +130,94 @@ async function registryDestination(page, link, expected) {
   expect(incorrect).toEqual([]);
   await page.keyboard.press("Escape");
   await expect(control(page, "drawer")).toBeFocused();
+}
+
+async function touchJourney(browser, info, journey) {
+  const context = await browser.newContext({ hasTouch: true, viewport: { width: 390, height: 844 }, baseURL: info.project.use.baseURL });
+  const errors = [];
+  try {
+    const page = await context.newPage();
+    page.on("pageerror", error => errors.push(error.message));
+    const reportedTouchPoints = await page.evaluate(() => navigator.maxTouchPoints);
+    await info.attach("touch-context.json", { body: Buffer.from(JSON.stringify({ hasTouch: true, reportedTouchPoints, physicalDeviceQualified: false })), contentType: "application/json" });
+    await journey(page);
+    expect(errors, "Touch context has no uncaught runtime errors").toEqual([]);
+  } finally {
+    await context.close();
+  }
+}
+async function drawerActivationOnce(page, input, info) {
+  const opener = control(page, "drawer"), checkbox = page.locator("#__drawer");
+  await expect(checkbox).not.toBeChecked();
+  await expect(opener).toHaveAttribute("aria-expanded", "false");
+  const observed = await opener.evaluateHandle(node => {
+    const toggle = document.getElementById("__drawer");
+    const record = { initial: toggle.checked, changes: [], clicks: [], touches: [] };
+    const change = () => record.changes.push({ checked: toggle.checked, expanded: node.getAttribute("aria-expanded") });
+    const click = event => record.clicks.push({ trusted: event.isTrusted, detail: event.detail });
+    const touch = event => record.touches.push({ trusted: event.isTrusted, count: event.touches.length });
+    toggle.addEventListener("change", change);
+    node.addEventListener("click", click, true);
+    node.addEventListener("touchstart", touch, true);
+    return { record, dispose() { toggle.removeEventListener("change", change); node.removeEventListener("click", click, true); node.removeEventListener("touchstart", touch, true); } };
+  });
+  try {
+    if (input === "Space" || input === "Enter") {
+      await tabTo(page, opener, info.project.use.browserName, 160);
+      await expect(opener).toBeFocused();
+      await page.keyboard.press(input);
+    } else if (input === "touch") await opener.tap();
+    else await opener.click();
+    await expect(checkbox).toBeChecked();
+    await expect(opener).toHaveAttribute("aria-expanded", "true");
+    await expect(exposedLinks(page).first()).toBeInViewport();
+    const opened = await observed.evaluate(value => value.record);
+    expect(opened.initial).toBe(false);
+    expect(opened.changes).toEqual([{ checked: true, expanded: "true" }]);
+    expect(opened.clicks).toHaveLength(1);
+    expect(opened.clicks[0].trusted).toBe(true);
+    if (input === "touch") expect(opened.touches).toEqual([{ trusted: true, count: 1 }]);
+    await page.keyboard.press("Escape");
+    await expect(checkbox).not.toBeChecked();
+    await expect(opener).toHaveAttribute("aria-expanded", "false");
+    await expect(opener).toBeFocused();
+    const completed = await observed.evaluate(value => value.record);
+    expect(completed.changes).toEqual([{ checked: true, expanded: "true" }, { checked: false, expanded: "false" }]);
+    await info.attach(`drawer-${input}-transitions.json`, { body: Buffer.from(JSON.stringify(completed, null, 2)), contentType: "application/json" });
+  } finally {
+    await observed.evaluate(value => value.dispose());
+    await observed.dispose();
+  }
+}
+async function lastAndCurrentRegistry(page, info, entries, route, input) {
+  const root = process.env.BIJUX_GENERATED_ROOT || path.resolve(__dirname, "../../../../artifacts/bijux-docs/generated");
+  const manifest = JSON.parse(fs.readFileSync(path.join(root, "manifest.json")));
+  const scenario = manifest.scenarios.find(entry => entry.route === route);
+  expect(scenario, "The actual served route has a declared producer identity").toBeTruthy();
+  const currentURL = new URL(scenario.identity === "bijux" ? "/" : `/${scenario.identity}/`, info.project.use.baseURL).href;
+  const currentEntry = entries.find(entry => entry.url === currentURL);
+  expect(currentEntry, "Current registry destination belongs to the declared route identity").toBeTruthy();
+  for (const entry of [currentEntry, entries.at(-1)]) {
+    await phone(page, route);
+    await expect(page.locator("[data-bijux-active-repository]")).toHaveAttribute("data-bijux-active-repository", scenario.identity);
+    const opener = control(page, "drawer");
+    await expect(opener).toBeVisible();
+    await expect(opener).toHaveAccessibleName("Open navigation drawer");
+    await expect(page.locator("#__drawer")).not.toBeChecked();
+    if (input === "keyboard") {
+      await tabTo(page, opener, info.project.use.browserName, 160);
+      await page.keyboard.press("Space");
+    } else await opener.tap();
+    await expect(page.locator("#__drawer")).toBeChecked();
+    await expect(opener).toHaveAttribute("aria-expanded", "true");
+    const links = drawer(page).locator(".bijux-site-registry");
+    const current = links.locator("[aria-current='location']");
+    await expect(current).toHaveCount(1);
+    await expect(current).toHaveAccessibleName(currentEntry.label);
+    expect(await current.evaluate(node => node.href)).toBe(currentURL);
+    const target = links.getByRole("link", { name: entry.label, exact: true });
+    await registryDestination(page, target, entry, input);
+  }
 }
 
 async function mastheadGeometry(page, firstContent = false) {
@@ -241,20 +379,19 @@ test("tablet drawer exposes real destinations through ordinary pointer input", a
   await openDrawer(page);
   expect(await exposedLinks(page).count()).toBeGreaterThan(1);
 });
-test("drawer opens on Space from a known closed state", async ({ page }) => {
-  await phone(page);
-  await expect(page.locator("#__drawer")).not.toBeChecked();
-  await control(page, "drawer").focus();
-  await page.keyboard.press("Space");
-  await expect(page.locator("#__drawer")).toBeChecked();
-  await expect(exposedLinks(page).first()).toBeInViewport();
+test("drawer opens on Space from a known closed state", async ({ page, browser }, info) => {
+  for (const input of ["Space", "pointer"]) {
+    await phone(page);
+    await drawerActivationOnce(page, input, info);
+  }
+  if (info.project.name.endsWith("-phone")) await touchJourney(browser, info, async touchPage => {
+    await phone(touchPage);
+    await drawerActivationOnce(touchPage, "touch", info);
+  });
 });
-test("drawer opens on Enter from a known closed state", async ({ page }) => {
+test("drawer opens on Enter from a known closed state", async ({ page }, info) => {
   await phone(page);
-  await control(page, "drawer").focus();
-  await page.keyboard.press("Enter");
-  await expect(page.locator("#__drawer")).toBeChecked();
-  await expect(exposedLinks(page).first()).toBeInViewport();
+  await drawerActivationOnce(page, "Enter", info);
 });
 test("Escape dismisses drawer and restores its trigger", async ({ page }) => {
   await phone(page);
@@ -272,7 +409,7 @@ test("parent overview remains a real navigation destination", async ({ page }) =
   await expect(page).toHaveURL(/\/platform\/$/);
   await expect(page.locator("h1")).toHaveText(/^Platform overview(?:¶)?$/);
 });
-test("all nine shared site destinations are reachable from phone drawer", async ({ page }, info) => {
+test("all nine shared site destinations are reachable from phone drawer", async ({ page, browser }, info) => {
   expect(registry).toHaveLength(9);
   for (const destination of registry) {
     await phone(page);
@@ -285,6 +422,12 @@ test("all nine shared site destinations are reachable from phone drawer", async 
       heading: destination.key === "bijux" ? /^Bijux reference(?:¶)?$/ : /^Product overview(?:¶)?$/,
       title: destination.key === "bijux" ? "Bijux" : destination.key,
     });
+  }
+  const entries = registry.map(entry => ({ label: entry.label, url: new URL(entry.key === "bijux" ? "/" : `/${entry.key}/`, info.project.use.baseURL).href,
+    heading: entry.key === "bijux" ? /^Bijux reference(?:¶)?$/ : /^Product overview(?:¶)?$/, title: entry.key === "bijux" ? "Bijux" : entry.key }));
+  if (info.project.name.endsWith("-phone")) {
+    await lastAndCurrentRegistry(page, info, entries, "/", "keyboard");
+    await touchJourney(browser, info, touchPage => lastAndCurrentRegistry(touchPage, info, entries, "/", "touch"));
   }
 });
 test("deep documents have truthful current page state", async ({ page }) => {
@@ -345,7 +488,7 @@ test("rich content renders actual Material enhancements", async ({ page }) => {
   await expect(page.locator("table")).toContainText("Measurement");
   expect(errors).toEqual([]);
 });
-test("empty and expanded-registry fixtures retain useful navigation", async ({ page }, info) => {
+test("empty and expanded-registry fixtures retain useful navigation", async ({ page, browser }, info) => {
   for (const route of ["/fixtures/empty/", "/fixtures/long-registry/"]) {
     await phone(page, route);
     await openDrawer(page);
@@ -369,6 +512,10 @@ test("empty and expanded-registry fixtures retain useful navigation", async ({ p
     await openDrawer(page);
     await expect(drawer(page).locator(".bijux-mobile-hub__link:visible")).toHaveCount(11);
     await registryDestination(page, drawer(page).locator(".bijux-site-registry").getByRole("link", { name: entry.label, exact: true }), entry);
+  }
+  if (info.project.name.endsWith("-phone")) {
+    await lastAndCurrentRegistry(page, info, expected, "/fixtures/long-registry/", "keyboard");
+    await touchJourney(browser, info, touchPage => lastAndCurrentRegistry(touchPage, info, expected, "/fixtures/long-registry/", "touch"));
   }
 });
 test("no-script generated document retains ordinary destination links", async ({ browser }, info) => {
