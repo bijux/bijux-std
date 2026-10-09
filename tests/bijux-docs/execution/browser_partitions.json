@@ -11,6 +11,11 @@
     "desktop"
   ],
   "groups": {
+    "navigation-destinations": [
+      {
+        "suite": "navigation-destinations"
+      }
+    ],
     "navigation-phone": [
       {
         "suite": "navigation",
