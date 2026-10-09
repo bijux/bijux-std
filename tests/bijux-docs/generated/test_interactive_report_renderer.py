@@ -11,6 +11,7 @@ import shutil
 import subprocess
 import sys
 import unittest
+from unittest import mock
 
 ROOT = Path(__file__).resolve().parents[3]
 sys.path.insert(0, str(ROOT/'tests'))
@@ -208,6 +209,71 @@ class InteractiveReportRendererTests(unittest.TestCase):
     def test_actual_report_bootstrap_must_match_committed_registration_identity(self):
         self.owner['reports'][0]['bootstrap_sha256']='0'*64;self.save_owner();self.commit()
         with self.assertRaisesRegex(ValueError,'bootstrap differs'):self.source()
+
+    def publisher_dispatch(self, csp, *, build=None):
+        """Control only the independent-source precondition for adapter routing.
+
+        These fixtures grant no production profile or whole-publisher approval;
+        actual descriptor validation and source-configured selection still run.
+        """
+        publication = load('bijux_interactive_publisher_dispatch', self.shared/'security/publication.py')
+        identity = publication.identity_module()
+        config = self.record('mkdocs.yml')
+        checkpoint = {'repository_source': {'sha': self.git(self.repo, 'rev-parse', 'HEAD').stdout.strip()},
+                      'config': config, 'site_url': self.url, 'site_dir': 'artifacts/docs/site',
+                      'standard': {'sha': 'a'*40}}
+        paths = {'source': 'artifacts/website-security/dispatch-source.json',
+                 'build': 'artifacts/website-security/dispatch-build.json',
+                 'verification': 'artifacts/website-security/dispatch-verification.json',
+                 'csp': 'artifacts/website-security/dispatch-csp.json'}
+        for name, value in [('source', checkpoint), ('build', build or {}), ('verification', {}), ('csp', csp)]:
+            self.write(paths[name], json.dumps(value))
+        def verified_fixture_source(repository, selected):
+            self.assertEqual(Path(repository), self.repo)
+            self.assertEqual(selected, checkpoint)
+            self.assertEqual(self.git(self.repo, 'show', checkpoint['repository_source']['sha']+':mkdocs.yml').stdout,
+                             (self.repo/'mkdocs.yml').read_text())
+        identity.verify_source = verified_fixture_source
+        publication.identity_module = lambda: identity
+        admitted = publication.embedded_module()
+        interactive = importlib.import_module(admitted.__package__+'.interactive_rendering')
+        passive = importlib.import_module(admitted.__package__+'.publication')
+        def call():
+            return publication.qualified_manifest(self.repo, 'artifacts/docs/site', self.url,
+                checkpoint['repository_source']['sha'], {}, *(paths[name] for name in ('source','build','verification','csp')))
+        return interactive, passive, checkpoint, call
+
+    def test_qualified_publisher_uses_committed_interactive_selector(self):
+        csp = {'embedded': {'descriptor_path': str(self.repo/self.owner_name)}}
+        interactive, passive, checkpoint, call = self.publisher_dispatch(csp)
+        class SelectedAdapter(RuntimeError): pass
+        with mock.patch.object(interactive, 'verify_publication', side_effect=SelectedAdapter('source-selected')) as selected, \
+             mock.patch.object(passive, 'verify_readers', side_effect=AssertionError('wrong passive capability')):
+            with self.assertRaisesRegex(SelectedAdapter, 'source-selected'): call()
+        selected.assert_called_once()
+        self.assertEqual(selected.call_args.args[0], self.site)
+        self.assertEqual(selected.call_args.kwargs['repository'], self.repo)
+        self.assertEqual(selected.call_args.kwargs['checkpoint'], checkpoint)
+
+    def test_qualified_publisher_rejects_forged_retained_owner(self):
+        other = 'ops/website/other-owner.json'
+        self.write(other, (self.repo/self.owner_name).read_text()); self.commit()
+        csp = {'embedded': {'descriptor_path': str(self.repo/other),
+                           'source_sha': self.git(self.repo, 'rev-parse', 'HEAD').stdout.strip()}}
+        interactive, passive, checkpoint, call = self.publisher_dispatch(csp)
+        with mock.patch.object(passive, 'verify_readers', side_effect=AssertionError('wrong passive capability')):
+            with self.assertRaisesRegex(ValueError, 'cannot select another committed owner'): call()
+
+    def test_qualified_publisher_cannot_activate_interactive_from_retained_receipt(self):
+        import yaml
+        configuration = yaml.safe_load((self.repo/'mkdocs.yml').read_text())
+        del configuration['extra']['bijux']['interactive_report_owner']
+        self.write('mkdocs.yml', yaml.safe_dump(configuration, sort_keys=False)); self.commit()
+        csp = {'embedded': {'descriptor_path': str(self.repo/self.owner_name),
+                           'source_sha': self.git(self.repo, 'rev-parse', 'HEAD').stdout.strip()}}
+        interactive, passive, checkpoint, call = self.publisher_dispatch(csp, build={'state':'complete'})
+        with mock.patch.object(interactive, 'verify_publication', side_effect=AssertionError('unselected interactive capability')):
+            with self.assertRaisesRegex(ValueError, 'interactive producer/resource/provider admission remains separate'): call()
 
     def test_forged_publication_selection_cannot_replace_committed_configuration(self):
         other='ops/website/other-owner.json';self.write(other,(self.repo/self.owner_name).read_text());self.commit()

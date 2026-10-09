@@ -576,11 +576,21 @@ def qualified_manifest(repo_root: Path, site_dir: str, site_url: str, source_sha
     embedded = None
     if records["csp"]["receipt"].get("embedded") is not None:
         integration = embedded_module()
-        readers = importlib.import_module(integration.__package__ + ".publication")
+        interactive = importlib.import_module(integration.__package__ + ".interactive_rendering")
         try:
-            embedded = readers.verify_readers(selected, records["csp"]["receipt"],
-                                              records["build"]["receipt"], repository=root,
-                                              identity=identity, checkpoint=source)
+            # Source authority chooses the capability; transported CSP cannot.
+            from mkdocs.config import load_config
+            configuration = load_config(config_file=str(identity.regular(root, source["config"]["path"])),
+                                        site_dir=str(selected))
+            if interactive.configured_owner(configuration) is not None:
+                embedded = interactive.verify_publication(selected, records["csp"]["receipt"],
+                                                          records["build"]["receipt"], repository=root,
+                                                          identity=identity, checkpoint=source)
+            else:
+                readers = importlib.import_module(integration.__package__ + ".publication")
+                embedded = readers.verify_readers(selected, records["csp"]["receipt"],
+                                                  records["build"]["receipt"], repository=root,
+                                                  identity=identity, checkpoint=source)
         except (ValueError, KeyError, OSError) as error:
             raise AdmissionError(
                 "Embedded publication: independently reconstructed producer capability admission is required: " + str(error)
