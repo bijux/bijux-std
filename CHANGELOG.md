@@ -6,7 +6,17 @@ This file records notable repository-level changes for `bijux-std`.
 
 ### Pending review
 
-#### [#243](https://github.com/bijux/bijux-std/pull/243) — feat(docs): qualify committed catalogue reader sources
+#### [#245](https://github.com/bijux/bijux-std/pull/245) — feat(docs): integrate source-owned standalone reader discovery
+
+Make passive report notices reachable through native documentation Return/Search links and source-owned search/sitemap entries.
+
+- Bind exact tracked purposes to real delivered native targets; independently rederive search, sitemap and gzip composition.
+- Retain original report body bytes and restrictive CSP; unknown or mutated standalone routes remain rejected.
+- Correct ordinary filenames ending in index.html and qualify six current three-engine reader journeys without claiming full consumer publication.
+
+### Merged pull requests
+
+#### 2026-10-09T12:24:07Z — [#243](https://github.com/bijux/bijux-std/pull/243) — feat(docs): qualify committed catalogue reader sources
 
 Bind generated catalogue pages to reviewed generators and committed originals while retaining their public routes and native source/history identity.
 
@@ -16,7 +26,6 @@ Bind generated catalogue pages to reviewed generators and committed originals wh
 - Reuse distribution membership within each fresh capture and own the pinned verification interpreter; retain per-module checks and independent receipt verification.
 - Derive the complete job inventory from the catalogue registry and enforce whole-job budgets for every required group.
 
-### Merged pull requests
 
 #### 2026-10-09T11:29:05Z — [#244](https://github.com/bijux/bijux-std/pull/244) — feat(docs): admit passive source-owned reader reports
 
