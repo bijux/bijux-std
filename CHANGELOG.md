@@ -6,14 +6,21 @@ This file records notable repository-level changes for `bijux-std`.
 
 ### Pending review
 
-#### [#219](https://github.com/bijux/bijux-std/pull/219) — fix(docs): restore fragments without redundant native navigation
+#### [#220](https://github.com/bijux/bijux-std/pull/220) — fix(github): bind protected path policy to immutable pr source
+
+Keep policy checks bound to the reviewed PR event when main advances.
+
+- Compare validated full event base and head commits without shallow-fetching a mutable branch.
+- Reject incomplete identities and history while preserving earlier protected changes; regenerate the canonical managed runtime.
+
+### Merged pull requests
+
+#### 2026-10-09T00:01:42Z — [#219](https://github.com/bijux/bijux-std/pull/219) — fix(docs): restore fragments without redundant native navigation
 
 Keep browser Back from resurrecting the fragment a reader just left.
 
 - Restore only the current history entry through the uniquely admitted Material helper, preserving native target reveal and sequential focus.
 - Bind the readable helper, generated runtime and exact boundary in source-derived provenance; retain race failures and native-semantics comparisons.
-
-### Merged pull requests
 
 #### 2026-10-08T23:36:47Z — [#216](https://github.com/bijux/bijux-std/pull/216) — fix(docs): expose one contextual navigation surface
 
