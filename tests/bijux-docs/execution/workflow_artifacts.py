@@ -229,39 +229,48 @@ def select(api, observation: dict, roles: dict, *, now: datetime | None = None) 
         require(job == matches[0], 'Owner job changed since complete API observation')
         require(job.get('run_id') == identity['run_id'] and job.get('head_sha') == identity['head']
                 and job.get('run_attempt') == identity['attempt'], 'Cross-attempt input requires explicit lineage admission')
-        require(job.get('status') == 'completed' and job.get('conclusion') == 'success', 'Latest owner is not terminal-success')
-        created, started, ended = (timestamp(job.get(key)) for key in ('created_at', 'started_at', 'completed_at'))
-        require(created <= started <= ended and (ended - started).total_seconds() < 180, 'Owner reached the strict 180-second job limit')
-        steps = job.get('steps')
-        require(isinstance(steps, list) and bool(steps), 'Actual owner steps are required')
-        require(all(step.get('status') == 'completed' and step.get('conclusion') in ('success', 'skipped') for step in steps),
-                'Owner has failed or nonterminal steps')
-        uploads = [step for step in steps if step.get('name') == spec['upload_step']]
-        require(len(uploads) == 1 and uploads[0].get('conclusion') == 'success', 'Exactly one successful owned upload step is required')
-        before, after = timestamp(uploads[0].get('started_at')), timestamp(uploads[0].get('completed_at'))
-        require(started <= before <= after <= ended, 'Upload step is outside owner execution')
-        name = spec['artifact_prefix'] + '-' + identity['checkout_sha'] + '-' + str(job['run_attempt'])
-        artifacts = [row for row in observation['artifacts']['artifacts'] if row.get('name') == name]
-        require(len(artifacts) == 1, 'Missing or duplicate exact owned artifact')
-        artifact = api.json('repos/' + api.repository + '/actions/artifacts/' + str(artifacts[0]['id']))
-        require(artifact == artifacts[0], 'Artifact changed since complete API observation')
-        require(artifact.get('expired') is False and timestamp(artifact.get('expires_at')) > now, 'Artifact is expired')
-        require(type(artifact.get('size_in_bytes')) is int and 0 < artifact['size_in_bytes'] <= MAX_ARCHIVE_BYTES,
-                'Artifact byte count is unbounded')
-        require(isinstance(artifact.get('digest'), str) and re.fullmatch(r'sha256:[a-f0-9]{64}', artifact['digest']),
-                'Actual API artifact SHA256 is required')
-        workflow_run = artifact.get('workflow_run', {})
-        require(workflow_run.get('id') == identity['run_id'] and workflow_run.get('head_sha') == identity['head']
-                and workflow_run.get('head_branch') == identity['head_branch']
-                and workflow_run.get('repository_id') == observation['run']['repository'].get('id')
-                and workflow_run.get('head_repository_id') == observation['run']['head_repository'].get('id'),
-                'Artifact workflow source/repository mismatch')
-        require(before <= timestamp(artifact.get('created_at')) <= after, 'Artifact was not created by the owned upload interval')
-        selected[role] = {'role': role, 'identity': dict(identity), 'owner_job': job, 'artifact': artifact,
-                          'binding': 'exact-source-owned-name-and-successful-upload-interval',
-                          'limits': ['API transport ownership does not certify internal receipt/source/configuration bodies.']}
+        selected[role] = _owner_pin(api, observation, role, spec, job, now)
     require(len({pin['artifact']['id'] for pin in selected.values()}) == len(selected), 'Artifact ID is shared by distinct owners')
     return selected
+
+
+def _owner_pin(api, observation: dict, role: str, spec: dict, job: dict, now: datetime) -> dict:
+    """Shared ownership proof; only explicit API lineage may call it for retained inputs."""
+    identity = observation['identity']
+    require(job.get('run_id') == identity['run_id'] and job.get('head_sha') == identity['head']
+            and positive(job.get('run_attempt')) and job['run_attempt'] <= identity['attempt'],
+            'Owned input run/source/attempt mismatch')
+    require(job.get('status') == 'completed' and job.get('conclusion') == 'success', 'Latest owner is not terminal-success')
+    created, started, ended = (timestamp(job.get(key)) for key in ('created_at', 'started_at', 'completed_at'))
+    require(created <= started <= ended and (ended - started).total_seconds() < 180, 'Owner reached the strict 180-second job limit')
+    steps = job.get('steps')
+    require(isinstance(steps, list) and bool(steps), 'Actual owner steps are required')
+    require(all(step.get('status') == 'completed' and step.get('conclusion') in ('success', 'skipped') for step in steps),
+            'Owner has failed or nonterminal steps')
+    uploads = [step for step in steps if step.get('name') == spec['upload_step']]
+    require(len(uploads) == 1 and uploads[0].get('conclusion') == 'success', 'Exactly one successful owned upload step is required')
+    before, after = timestamp(uploads[0].get('started_at')), timestamp(uploads[0].get('completed_at'))
+    require(started <= before <= after <= ended, 'Upload step is outside owner execution')
+    name = spec['artifact_prefix'] + '-' + identity['checkout_sha'] + '-' + str(job['run_attempt'])
+    artifacts = [row for row in observation['artifacts']['artifacts'] if row.get('name') == name]
+    require(len(artifacts) == 1, 'Missing or duplicate exact owned artifact')
+    artifact = api.json('repos/' + api.repository + '/actions/artifacts/' + str(artifacts[0]['id']))
+    require(artifact == artifacts[0], 'Artifact changed since complete API observation')
+    require(artifact.get('expired') is False and timestamp(artifact.get('expires_at')) > now, 'Artifact is expired')
+    require(type(artifact.get('size_in_bytes')) is int and 0 < artifact['size_in_bytes'] <= MAX_ARCHIVE_BYTES,
+            'Artifact byte count is unbounded')
+    require(isinstance(artifact.get('digest'), str) and re.fullmatch(r'sha256:[a-f0-9]{64}', artifact['digest']),
+            'Actual API artifact SHA256 is required')
+    workflow_run = artifact.get('workflow_run', {})
+    require(workflow_run.get('id') == identity['run_id'] and workflow_run.get('head_sha') == identity['head']
+            and workflow_run.get('head_branch') == identity['head_branch']
+            and workflow_run.get('repository_id') == observation['run']['repository'].get('id')
+            and workflow_run.get('head_repository_id') == observation['run']['head_repository'].get('id'),
+            'Artifact workflow source/repository mismatch')
+    require(before <= timestamp(artifact.get('created_at')) <= after, 'Artifact was not created by the owned upload interval')
+    return {'role': role, 'identity': dict(identity), 'owner_job': job, 'artifact': artifact,
+            'binding': 'exact-source-owned-name-and-successful-upload-interval',
+            'limits': ['API transport ownership does not certify internal receipt/source/configuration bodies.']}
 
 
 def archive_members(data: bytes, expected_digest: str) -> dict[str, bytes]:
