@@ -1,5 +1,10 @@
 {
   "schema": 1,
+  "layer_strategy": {
+    "mode": "unlayered",
+    "owner": "bijux-std",
+    "reason": "Admitted Material and shared rules are unlayered. Normal shared footer declarations rely on their canonical later load order; placing them in a layer demotes them below unlayered Material rules. Layer blocks and order declarations require a separate reviewed architecture with native precedence evidence."
+  },
   "styles": [
     "00-tokens.css",
     "01-theme.css",

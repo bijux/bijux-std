@@ -1,4 +1,4 @@
-/* Guard owned declaration exceptions; rendered cascade behavior has separate owners. */
+/* Guard owned stylesheet strategy and declaration exceptions; rendered behavior has separate owners. */
 import { createHash } from "node:crypto";
 import { readFile, realpath, stat } from "node:fs/promises";
 import path from "node:path";
@@ -50,8 +50,13 @@ async function parser(dependencies) {
 }
 
 function policyRecords(policy) {
-  if (!object(policy) || policy.schema !== 1 || Object.keys(policy).sort().join() !== "duplicate_fallbacks,important_exceptions,schema,styles") {
+  if (!object(policy) || policy.schema !== 1 || Object.keys(policy).sort().join() !== "duplicate_fallbacks,important_exceptions,layer_strategy,schema,styles") {
     throw new Error("Cascade policy: unknown or missing fields/schema");
+  }
+  const strategy = policy.layer_strategy;
+  if (!object(strategy) || Object.keys(strategy).sort().join() !== "mode,owner,reason" ||
+      strategy.mode !== "unlayered" || strategy.owner !== "bijux-std" || typeof strategy.reason !== "string" || !strategy.reason.trim()) {
+    throw new Error("Cascade policy: malformed or unsupported layer_strategy; only reviewed unlayered ownership is admitted");
   }
   if (!strings(policy.styles) || new Set(policy.styles).size !== policy.styles.length || policy.styles.some((name) => !/^\d\d-[a-z-]+\.css$/.test(name))) {
     throw new Error("Cascade policy: styles must be unique owned stylesheet names in import order");
@@ -88,6 +93,16 @@ export async function qualify({ styles, policy: policyPath, dependencies }) {
     const decoded = decode(value);
     return decoded.startsWith("--") ? decoded : decoded.toLowerCase();
   };
+  const atKeyword = (node) => {
+    if (!node.type.startsWith("@")) return "";
+    // The parser retains the keyword boundary across comments, unlike its concatenated value.
+    if (!node.type.includes("\\")) return node.type.slice(1).toLowerCase();
+    // An escaped keyword type can end at the hex escape's terminator. Read the complete
+    // escaped identifier from the parsed value before decoding; an escaped space is part
+    // of that identifier, not a separator that turns a different keyword into @layer.
+    const keyword = /^@((?:\\(?:[0-9a-f]{1,6}[ \t\r\n\f]?|[^\r\n\f])|[a-z0-9_-]|[^\x00-\x7f])+)/i.exec(node.value);
+    return keyword ? decode(keyword[1]).toLowerCase() : "";
+  };
   const priority = (value) => {
     const tokens = tokenize(value).filter((token) => token.trim());
     return tokens.at(-2) === "!" && decode(tokens.at(-1) || "").toLowerCase() === "important";
@@ -101,9 +116,12 @@ export async function qualify({ styles, policy: policyPath, dependencies }) {
     names.push(match[1]);
   }
   if (JSON.stringify(names) !== JSON.stringify(policy.styles)) throw new Error("extra.css: stylesheet import order differs from cascade policy");
-  const declarations = [], duplicates = [], sourceFiles = {};
+  const declarations = [], duplicates = [], layers = [], sourceFiles = {};
   function walk(nodes, file, conditions = [], selectors = []) {
     for (const node of nodes) {
+      if (atKeyword(node) === "layer") {
+        layers.push({ kind: "unreviewed_layer", file, conditions, value: node.value, line: node.line, column: node.column });
+      }
       if (node.type === "decl") {
         declarations.push({ file, conditions, selectors, property: property(node.props), value: node.children, important: priority(node.children), line: node.line, column: node.column });
       } else if (Array.isArray(node.children)) {
@@ -126,7 +144,7 @@ export async function qualify({ styles, policy: policyPath, dependencies }) {
     sourceFiles[file] = digest(bytes);
     walk(compile(bytes.toString()), file);
   }
-  const errors = [], diagnostics = [], usedImportant = new Set(), usedDuplicates = new Set();
+  const errors = [...layers], diagnostics = [], usedImportant = new Set(), usedDuplicates = new Set();
   const important = new Map(policy.important_exceptions.map((record) => [importantIdentity(record), record]));
   const fallback = new Map(policy.duplicate_fallbacks.map((record) => [duplicateIdentity(record), record]));
   for (const declaration of declarations.filter((entry) => entry.important)) {
@@ -146,8 +164,8 @@ export async function qualify({ styles, policy: policyPath, dependencies }) {
   const hidden = declarations.filter((entry) => entry.file === "07-utilities.css" && !entry.conditions.length && JSON.stringify(entry.selectors) === JSON.stringify(['[hidden]:not([hidden="until-found"])']) && entry.property === "display");
   if (hidden.length !== 1 || hidden[0].value !== "none!important" || !hidden[0].important) errors.push({ kind: "semantic_hidden_invariant", file: "07-utilities.css", property: "display", expected: 'one unconditional [hidden]:not([hidden="until-found"]) display:none!important' });
   return { status: errors.length ? "failed" : "passed", source_files: sourceFiles, styles: names.length, declarations: declarations.length,
-    important_declarations: declarations.filter((entry) => entry.important).length, duplicate_fallbacks: duplicates.length, parser: { name: "stylis", version: admitted.version, files: admitted.files }, errors, diagnostics,
-    limits: ["Owned declaration policy only; no complete CSS validity, cross-rule selector competition or computed specificity proof", "Parser lines/columns are source end locations", "Existing integration necessity flags remain honest; computed order, token scopes, themes, responsive modes and manual/live qualification remain separate"] };
+    important_declarations: declarations.filter((entry) => entry.important).length, duplicate_fallbacks: duplicates.length, layer_strategy: policy.layer_strategy, parser: { name: "stylis", version: admitted.version, files: admitted.files }, errors, diagnostics,
+    limits: ["Owned unlayered strategy and declaration policy only; no complete CSS validity, cross-rule selector competition or computed specificity proof", "Parser lines/columns are source end locations", "Existing integration necessity flags remain honest; imported domain resources, computed order, token scopes, themes, responsive modes and manual/live qualification remain separate"] };
 }
 
 if (path.resolve(process.argv[1] || "") === fileURLToPath(import.meta.url)) {

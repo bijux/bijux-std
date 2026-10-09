@@ -238,6 +238,16 @@ Consumer additions retain their declared position around the canonical asset;
 an authored root list replaces the inherited list. Additional consumer styles
 do not acquire ownership of private shell display, drawer or hidden states.
 
+The admitted Material and shared rules use an unlayered cascade. The policy's
+`layer_strategy` binds that choice to `bijux-std` with its precedence rationale;
+it is not an allowance for arbitrary named layers. Shared domain styles may
+not introduce named or anonymous `@layer` blocks, ordering statements or nested
+layer rules. Moving the existing component sheet into a layer makes its normal
+footer grid lose to Material's unlayered flex declaration, even when shared CSS
+loads later. A layered strategy therefore requires a separate architecture
+decision covering Material, shared and consumer precedence, with native
+evidence; editing the policy to an unsupported mode cannot silently enable it.
+
 [`config/cascade-contract.json`](config/cascade-contract.json) records the exact
 shared declaration exceptions. Each priority exception identifies its file,
 conditional ancestry, selector list, property and value, with owner, reason and
@@ -270,10 +280,13 @@ conditional ancestry, property and conflicting values. Unknown priorities,
 unreviewed same-block duplicates, stale exception records, missing imported
 styles and changed parser ownership fail. Case, comments and escaped priority
 identifiers cannot bypass the guard; quoted text is not interpreted as priority.
+Layer diagnostics retain file, conditional ancestry, parsed rule value and
+source-end location. Case and escaped layer keywords are recognized on parsed
+at-rules; layer text inside comments or quoted declarations remains inert.
 
-This is a bounded declaration policy, not a general CSS validity or selector
+This is a bounded unlayered strategy and declaration policy, not a general CSS validity or selector
 specificity checker. It does not certify computed Material/shared/consumer
-precedence, complete token purposes/override scopes, all competing state rules,
+precedence, the full domain import/resource graph, complete token purposes/override scopes, all competing state rules,
 responsive media/attribute agreement, or light/dark/forced-color behavior.
 Those source, rendered, consumer, manual and live duties retain their own
 verification; a source guard must not weaken existing hidden/focus tests.

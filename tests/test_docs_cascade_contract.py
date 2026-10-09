@@ -61,6 +61,7 @@ class CascadeContractTests(unittest.TestCase):
         self.assertEqual(report["styles"], len(self.policy["styles"]))
         self.assertEqual(report["important_declarations"], len(self.policy["important_exceptions"]))
         self.assertEqual(report["duplicate_fallbacks"], len(self.policy["duplicate_fallbacks"]))
+        self.assertEqual(report["layer_strategy"], self.policy["layer_strategy"])
         self.assertFalse(any(row["file"] == "06-components.css" for row in self.policy["important_exceptions"]))
         self.assertTrue(any(row["kind"] == "viewport_fallback" for row in report["diagnostics"]))
 
@@ -83,6 +84,68 @@ class CascadeContractTests(unittest.TestCase):
                 self.assertEqual((error["file"], error["selectors"], error["property"]),
                                  ("06-components.css", [selector], property_name))
                 self.assertGreater(error["line"], 0)
+
+    def test_layer_cannot_demote_existing_component_declarations_below_material(self):
+        source = self.styles / "06-components.css"
+        source.write_text("@layer bijux-components {\n" + source.read_text() + "\n}\n")
+        error = self.assert_guard_error("unreviewed_layer")[0]
+        self.assertEqual((error["file"], error["conditions"], error["value"]),
+                         ("06-components.css", [], "@layer bijux-components"))
+        self.assertGreater(error["line"], 0)
+        self.assertGreater(error["column"], 0)
+
+    def test_named_anonymous_ordered_and_nested_layers_require_explicit_ownership(self):
+        original = (DOCS / "styles/07-utilities.css").read_text()
+        for css, conditions in (
+                ("@layer shell { .bijux-layer-example { color:inherit; } }", []),
+                ("@layer { .bijux-layer-example { color:inherit; } }", []),
+                ("@layer material, shell;", []),
+                ("@layer/**/shell { .bijux-layer-example { color:inherit; } }", []),
+                ("@media screen { @layer shell { .bijux-layer-example { color:inherit; } } }", ["@media screen"]),
+                ("@supports (display:grid) { @layer shell; }", ["@supports (display:grid)"])):
+            with self.subTest(css=css):
+                (self.styles / "07-utilities.css").write_text(original)
+                self.append(css)
+                error = self.assert_guard_error("unreviewed_layer")[0]
+                self.assertEqual(error["conditions"], conditions)
+                self.assertIn("@layer", (self.styles / error["file"]).read_text().splitlines()[error["line"] - 1])
+
+    def test_case_and_escape_equivalent_layer_keywords_cannot_bypass_ownership(self):
+        original = (DOCS / "styles/07-utilities.css").read_text()
+        for keyword in ["@LAYER", r"@\6c ayer", r"@la\79 er"]:
+            with self.subTest(keyword=keyword):
+                (self.styles / "07-utilities.css").write_text(original)
+                self.append(f"{keyword} shell {{ .bijux-layer-example {{ color:inherit; }} }}")
+                self.assert_guard_error("unreviewed_layer")
+
+    def test_layer_text_in_comments_and_quoted_values_does_not_change_ownership(self):
+        self.append('/* @layer shell { } */ .bijux-layer-example { --example:"@layer shell;"; content:"@layer"; }')
+        result = self.run_guard()
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+
+    def test_escaped_space_in_a_different_at_keyword_is_not_layer_ownership(self):
+        self.append(r'@layer\20 shell { .bijux-layer-example { color:inherit; } }')
+        self.append('@la/**/yer shell { .bijux-layer-example { color:inherit; } }')
+        result = self.run_guard()
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+
+    def test_layer_strategy_cannot_silently_admit_unreviewed_architecture(self):
+        original = self.policy["layer_strategy"]
+        for strategy in (None, {}, {**original, "mode": "layered"}, {**original, "owner": "consumer"},
+                         {**original, "reason": " "}, {**original, "allowed_layers": ["shell"]}):
+            with self.subTest(strategy=strategy):
+                self.policy["layer_strategy"] = strategy
+                self.save_policy()
+                result = self.run_guard()
+                self.assertEqual(result.returncode, 1)
+                self.assertIn("malformed or unsupported layer_strategy", result.stderr)
+
+    def test_missing_layer_strategy_is_not_an_implicit_permission(self):
+        del self.policy["layer_strategy"]
+        self.save_policy()
+        result = self.run_guard()
+        self.assertEqual(result.returncode, 1)
+        self.assertIn("unknown or missing fields", result.stderr)
 
     def test_unknown_priority_reports_actual_selector_property_and_source_line(self):
         self.append(".bijux-header-tools { z-index:2147483647!important; }")
