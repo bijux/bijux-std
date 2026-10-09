@@ -54,3 +54,45 @@ controls, and `transport.cjs` owns browser lifetime and the callable/CLI journey
 Failed actions retain browser/server observations before closure. No result
 passes while the browser or server remains active. These measurements introduce
 no mobile throttle preset, timing ceiling, field certification or optimization.
+
+## Repeated constrained viewport lab
+
+```sh
+node tests/bijux-docs/performance/lab.cjs \
+  --source-root "$PWD" --source-sha "$(git rev-parse HEAD)" --samples 3 \
+  --output artifacts/qualification/payload-mobile-lab/chromium.json
+node --test tests/bijux-docs/performance/lab.test.cjs
+```
+
+The named `constrained-phone-viewport` profile uses Chromium at 390×844 CSS
+pixels, DPR 1, touch enabled and **`isMobile:false`**. It is a desktop engine with
+a phone-shaped viewport, not a physical or named mobile device. The unchanged
+owned fixture has no mobile viewport metadata. CPU slowdown is 4; network
+latency is 150 ms, download 200,000 B/s and upload 93,750 B/s. Exact source assets,
+served document bytes, profile, installed browser/version and host are recorded.
+Every sample starts an independent context, clears its cache, then retains a
+cold load and warm new-document reload. Cache remains enabled for warm reuse.
+
+[Chromium CDP](https://chromedevtools.github.io/devtools-protocol/) supplies
+`Emulation.setCPUThrottlingRate`, `Network.emulateNetworkConditionsByRule` and
+`Network.overrideNetworkState`; each requested setting and acknowledgement is
+retained. Unsupported commands fail with evidence. [Playwright CDP sessions](https://playwright.dev/docs/api/class-browsercontext#browser-context-new-cdp-session)
+are Chromium-specific; this profile does not certify Firefox/WebKit emulation.
+
+Observers are installed before document scripts. [LCP](https://www.w3.org/TR/largest-contentful-paint/)
+retains candidate timing and element attribution; the reported lab value is the
+latest observed candidate. [Unexpected layout shifts](https://wicg.github.io/layout-instability/)
+retain raw values and recent-input flags. The bounded [CLS session-window value](https://web.dev/articles/cls)
+uses the maximum window with gaps under one second and duration under five
+seconds, excluding recent-input shifts. [Long tasks](https://www.w3.org/TR/longtasks-1/)
+retain durations/attribution, count, maximum and sum. These are observed task
+costs, not total CPU or field interaction latency. Unsupported, dropped or
+missing required observations remain unknown and fail qualification.
+
+The observation ends 1,000 ms after actual load/render readiness. Three to ten
+independent sample pairs per route retain individual values, minimum/maximum,
+mean/median, standard deviation and explicitly labelled nearest-rank lab p75.
+These distributions are not field populations or field INP. No timing ceiling
+is invented. The real plain/diagram fixture has the same limited production,
+Material and native-history scope as transport accounting. Its initial render
+bounds and producer fallback remain unchanged.
