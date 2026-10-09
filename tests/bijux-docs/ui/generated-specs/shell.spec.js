@@ -2,7 +2,6 @@ const fs = require("node:fs");
 const path = require("node:path");
 const registry = JSON.parse(fs.readFileSync(path.resolve(__dirname, "../../../../shared/bijux-docs/config/hub-links.json"), "utf8"));
 const { test, expect } = require("./helpers/document");
-const { authoredDestinationCoverage } = require("./navigation/destinations");
 const { tabTo, settle, focus: measureFocus } = require("./contrast-targets/measurement");
 const control = (page, kind) => page.locator(`[data-bijux-header-control='${kind}-toggle']`);
 const drawer = (page) => page.locator(".md-sidebar--primary");
@@ -467,10 +466,6 @@ test("Escape dismisses drawer and restores its trigger", async ({ page }) => {
   await expect(control(page, "drawer")).toBeFocused();
 });
 test("parent overview remains a real navigation destination", async ({ page }, info) => {
-  if (info.project.name.endsWith("-phone")) {
-    await authoredDestinationCoverage(page, info);
-    return;
-  }
   await phone(page);
   await openDrawer(page);
   await drawer(page).locator("summary").filter({ hasText: /^Platform$/ }).click();

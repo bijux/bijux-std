@@ -8,9 +8,13 @@ This file records notable repository-level changes for `bijux-std`.
 
 #### [#253](https://github.com/bijux/bijux-std/pull/253) — fix(docs): retain native reader context after diagram layout changes
 
-Retain the unique authored reading destination and trusted viewport offset through native Back when diagram-source disclosure changes layout, preserving coordinate fallback and trusted-input cancellation. Reacquire the current owned history entry on persisted document return so completed layout can restore it without overriding trusted reader input.
+Retain the unique authored reading destination and trusted viewport offset through native Back when diagram-source disclosure changes layout, preserving coordinate fallback and trusted-input cancellation. Reacquire the current owned history entry on persisted document return and defer early layout restoration until pageshow, preserving trusted reader input.
 
 ### Merged pull requests
+
+#### 2026-10-09T17:51:20Z — [#255](https://github.com/bijux/bijux-std/pull/255) — test(docs): bound authored navigation journeys by ancestry
+
+Give every authored root, section and nested route a bounded disjoint journey in all three phone engines while preserving the original overview case and existing deadlines.
 
 #### 2026-10-09T16:52:53Z — [#252](https://github.com/bijux/bijux-std/pull/252) — test(docs): require rendered authored content coverage
 
