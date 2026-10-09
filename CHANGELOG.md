@@ -15,6 +15,17 @@ Make native Material palette actions reachable by keyboard and retain focus on t
 
 ### Merged pull requests
 
+#### 2026-10-09T05:24:47Z — [#228](https://github.com/bijux/bijux-std/pull/228) — ci(docs): observe exact history renderer dependencies on linux
+
+Capture the actual hosted Linux runtime for Canon's exact documentation dependency recipe before independent publication-profile review.
+
+- Keep the canonical fixture environment unchanged and bind all 36 dependency pins to reviewed source/lock provenance.
+- Reuse physical package, runtime, startup and callback observers in a read-only 3-minute job; retain actual source/run/attempt evidence.
+- Compare cached numeric constants by exact IEEE representation and preserve non-reflexive reference graphs, rejecting altered values, aliases and executable fields.
+- Keep profile approval, consumer acceptance, authored build and publication separate; the prerequisite #226 is accepted.
+- Compare legitimate large unordered constant sets with explicit search frames while preserving NaN reference bijections, typed payloads, multiplicity and the fail-closed search budget.
+- Preserve initial API job rows and fetch only incomplete exact job identities once within a bounded observation window; terminal failures and strict duration checks remain unchanged.
+
 #### 2026-10-09T05:04:52Z — [#231](https://github.com/bijux/bijux-std/pull/231) — fix(docs): bind reviewed historical asset migration to source evidence
 
 Allow the explicitly reviewed historical script-list migrations when their standard predates the canonical baseline file.
