@@ -33,6 +33,14 @@
     ],
     "retained": "Focused native query/result keyboard subscriptions and browser modifier defaults."
   },
+  "fragment_restoration_owned_source": "tooling/material/fragment-restoration.js",
+  "fragment_restoration_sha256": "608c93415e2d852b0399f71a9464d259df7cd3a56b4ba7961f5bf277a18dc873",
+  "fragment_restoration_boundary": {
+    "original": "function gn(e){let t=x(\"a\",{href:e});t.addEventListener(\"click\",r=>r.stopPropagation()),t.click()}",
+    "replacement": "function gn(e){__bijuxScrollCurrentFragment(e)}",
+    "occurrences": 1,
+    "behavior": "Scroll only the fragment of the current native history entry; do not queue a redundant native anchor navigation."
+  },
   "element_resize_owned_source": "tooling/material/element-resize-delivery.js",
   "element_resize_sha256": "c673a8ff4d509c9af14b4a6c9692c7d29feb5a6f32fc129140e4a2169153e4c9",
   "element_resize_boundary": {
@@ -49,8 +57,8 @@
     "occurrences": 1,
     "helper_scope": "unique admitted native runtime IIFE"
   },
-  "output_asset": "assets/javascripts/material-search.dfd4eada60aad3990940d5559b5cc6295c4a1b9f65a32e29e912f0d2acbbc9b0.js",
-  "output_sha256": "dfd4eada60aad3990940d5559b5cc6295c4a1b9f65a32e29e912f0d2acbbc9b0",
+  "output_asset": "assets/javascripts/material-search.430a43a148880186a0981dcff9aea38caff90b29d2744b91a38ebe37f6213a19.js",
+  "output_sha256": "430a43a148880186a0981dcff9aea38caff90b29d2744b91a38ebe37f6213a19",
   "syntax_validation": {
     "parser": "Node.js vm.Script",
     "required_version": "v24.21.0",
