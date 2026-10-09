@@ -76,7 +76,7 @@ jobs:
   report:
     name: std / report
     if: ${{ always() && (github.repository == 'bijux/bijux-std' || github.event_name != 'pull_request' || github.event.pull_request.user.login != 'dependabot[bot]') }}
-    needs: [checks, navigation]
+    needs: [checks, navigation, catalogue-renderer]
     permissions:
       contents: read
       actions: read
@@ -92,13 +92,16 @@ jobs:
         env:
           CHECK_RESULT: ${{ needs.checks.result }}
           NAVIGATION_RESULT: ${{ needs.navigation.result }}
+          CATALOGUE_RESULT: ${{ needs.catalogue-renderer.result }}
         run: |
           set -euo pipefail
           test "$CHECK_RESULT" = success
           if [[ "$GITHUB_REPOSITORY" == "bijux/bijux-std" ]]; then
             test "$NAVIGATION_RESULT" = success
+            test "$CATALOGUE_RESULT" = success
           else
             test "$NAVIGATION_RESULT" = skipped
+            test "$CATALOGUE_RESULT" = skipped
           fi
       - name: Verify complete frontend job duration
         if: ${{ github.repository == 'bijux/bijux-std' }}
@@ -183,6 +186,52 @@ jobs:
             artifacts/bijux-checks
             artifacts/bijux-docs/job-budget
           if-no-files-found: error
+
+  catalogue-renderer:
+    name: std / catalogue ${{ matrix.group }}
+    if: ${{ github.repository == 'bijux/bijux-std' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    strategy:
+      fail-fast: false
+      matrix:
+        group: [source, renderer, typed-entrypoint, tracked-entrypoint]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Select the catalogue verification Python
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
+        with:
+          python-version: '3.14.4'
+      - name: Prepare the pinned dependency installer
+        uses: astral-sh/setup-uv@20cfd1bf945f4377ade1205e4dbc17946fc9a30d
+        with:
+          version: '0.11.17'
+          enable-cache: false
+      - name: Install exact isolated catalogue dependencies
+        shell: bash
+        run: make ui-test-install-catalogue
+      - name: Install the unchanged default renderer for its entrypoint
+        if: ${{ matrix.group == 'tracked-entrypoint' }}
+        shell: bash
+        run: make ui-test-install-catalogue-default
+      - name: Require complete source-bound catalogue execution
+        shell: bash
+        run: |
+          set -euo pipefail
+          make ui-test-catalogue UI_CATALOGUE_GROUP='${{ matrix.group }}'
+      - name: Retain catalogue source runtime and test evidence
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: docs-catalogue-${{ matrix.group }}-${{ github.sha }}-${{ github.run_attempt }}
+          path: |
+            artifacts/bijux-docs/catalogue/reports
+            artifacts/catalogue-entrypoint-tests
+            artifacts/catalogue-native-sources
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 14
 
   publication-commands:
     name: std / publication commands
