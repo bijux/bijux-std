@@ -19,6 +19,14 @@ Capture the actual hosted Linux runtime for Canon's exact documentation dependen
 
 ### Merged pull requests
 
+#### 2026-10-09T05:04:52Z — [#231](https://github.com/bijux/bijux-std/pull/231) — fix(docs): bind reviewed historical asset migration to source evidence
+
+Allow the explicitly reviewed historical script-list migrations when their standard predates the canonical baseline file.
+
+- Bind both full predecessor refs (44e9153 and 10f073d) and each twelve-file source digest set to the reviewed registry.
+- Select the committed Core predecessor without widening fallback to unknown or customized asset lists.
+- Distinguish nine shared destinations from the authored external-link predecessor; preserve rejection of custom order, comments, attributes and unknown missing baselines.
+
 #### 2026-10-09T04:43:58Z — [#229](https://github.com/bijux/bijux-std/pull/229) — fix(docs): preserve enlarged compact masthead identity
 
 Keep the complete site identity and utility controls visible when compact readers enlarge text or apply spacing.
