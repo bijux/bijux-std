@@ -76,6 +76,33 @@ mismatched bytecode fail. Generated catalog Markdown outside the tracked source
 requires its own generator/source attribution; a build-date fallback proves
 neither authored freshness nor science qualification.
 
+The `masterclass-catalogue` source recipe reconstructs derived Markdown and
+`artifacts/mkdocs.root.yml` from captured committed originals. `mkdocs.yml` remains
+the tracked configuration owner. Exact reviewed generator digests are fixed by
+shared source; each run binds its actual owner/configuration, explicit `SITE_URL`
+presence/value and original document map. Unknown recipes, generators, parent
+configuration inheritance, extra derived bytes, source changes, symlinks and
+hardlinks fail. A local publication-hook cache is accepted only when its original
+is captured and the existing bytecode validator proves exact compiled equivalence.
+
+Catalogue files retain their public routes while their native absolute source and
+edit identity point to committed originals. The reviewed public `on_files` and
+`on_page_read_source` events supply reconstructed text; native revision callbacks
+run unchanged against original Git history. Complete history is required, with
+replacement namespaces and grafts rejected. Explicit `GIT_GRAFT_FILE`, `GIT_DIR`,
+`GIT_COMMON_DIR` and `GIT_WORK_TREE` environment selections, including empty
+values, are rejected before capture and every native history call. Their presence
+can redirect Git ownership or history independently of unchanged source bytes.
+Build-time fallback configuration is preserved but cannot qualify a missing
+original history. No generated-file clock
+or altered native revision callback stands in for provenance.
+
+For this recipe, `capture-source` selects `--config mkdocs.yml --source-recipe masterclass-catalogue`; `render_publication.py` selects
+`--config artifacts/mkdocs.root.yml --source-recipe masterclass-catalogue` and the
+same source checkpoint. Ordinary tracked configurations retain their existing
+entrypoints. This capability does not approve a publication profile, select a
+consumer's dependencies or certify live delivery.
+
 Run [build_identity.py](build_identity.py) with the actual `DOCS_PYTHON` immediately
 before rendering and after CSP transformation. It records the loaded MkDocs
 configuration, resolved environment values as a digest, source/override inputs,

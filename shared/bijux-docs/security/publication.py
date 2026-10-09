@@ -600,6 +600,13 @@ def qualified_manifest(repo_root: Path, site_dir: str, site_url: str, source_sha
             "build receipt: another source checkpoint")
     require(build.get("processor_sha256") == hashlib.sha256(Path(__file__).with_name("build_identity.py").read_bytes()).hexdigest(),
             "build receipt: identity processor differs from accepted source")
+    require(build.get("derivation") == source.get("derivation"),
+            "source identity: build derivation differs from owner checkpoint")
+    if source.get("derivation"):
+        require(build.get("effective_config") == source["derivation"]["configuration"],
+                "source identity: exact reconstructed configuration required")
+    else:
+        require("effective_config" not in build, "source identity: unreviewed derived configuration")
     config = build["config"]
     require(hashlib.sha256(identity.regular(root, config["path"]).read_bytes()).hexdigest() == config["sha256"],
             "build receipt: actual renderer configuration changed")

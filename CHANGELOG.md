@@ -16,6 +16,17 @@ Make passive report notices reachable through native documentation Return/Search
 
 ### Merged pull requests
 
+#### 2026-10-09T12:24:07Z — [#243](https://github.com/bijux/bijux-std/pull/243) — feat(docs): qualify committed catalogue reader sources
+
+Bind generated catalogue pages to reviewed generators and committed originals while retaining their public routes and native source/history identity.
+
+- Distinguish tracked configuration ownership from derived render configuration and reject alternate Git stores, grafts and stale generated inputs.
+- Carry source attribution through capture, rendering, reconstruction, redirects, CSP and publication checks.
+- Require all 58 catalogue controls in four bounded CI groups while preserving default and historical dependency recipes.
+- Reuse distribution membership within each fresh capture and own the pinned verification interpreter; retain per-module checks and independent receipt verification.
+- Derive the complete job inventory from the catalogue registry and enforce whole-job budgets for every required group.
+
+
 #### 2026-10-09T11:29:05Z — [#244](https://github.com/bijux/bijux-std/pull/244) — feat(docs): admit passive source-owned reader reports
 
 Admit explicitly reviewed non-executable report notices with source-bound ownership and restrictive independent CSP verification.

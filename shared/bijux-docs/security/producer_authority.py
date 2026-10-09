@@ -161,20 +161,41 @@ class PreparedProducer:
         self.inputs, self.shared_inputs, self.reference = inputs, shared_inputs, reference
         self.native, self.deps, self.config_sha = native, deps, config_sha
         self.capabilities, self.redirect_hashes, self.publication_scope = capabilities, redirect_hashes, publication_scope
+        self.source_recipe, self.derivation = None, None
 
     def unchanged(self):
-        require(self.inputs == files(self.root, source=True, publication_source=self.publication_scope), 'Producer: owner source/config changed after reconstruction')
+        require(self.inputs == files(self.root, source=True, publication_source=self.publication_scope or bool(self.source_recipe)), 'Producer: owner source/config changed after reconstruction')
         require(self.shared_inputs == files(self.shared, source=True), 'Producer: standard authority changed after reconstruction')
         require(self.reference == files(self.output), 'Producer: independent reference changed after reconstruction')
         profiles(self.shared).unchanged(self.shared,self.root,self.deps,publication=self.publication_scope)
         from mkdocs.config import load_config
-        configuration=load_config(config_file=str(self.root/self.config),site_dir=str(self.selected_site))
-        actual=module(self.shared/'security/producer_capabilities.py').preflight(configuration,self.root,publication=self.publication_scope)
-        require_committed_hook_inputs(actual, self.inputs, publication=self.publication_scope)
+        catalogue = None
+        if self.source_recipe:
+            catalogue = module(self.shared/'security/catalogue_recipe.py').derive(
+                self.root, self.shared, self.source_recipe, inputs=self.inputs, expected=self.derivation)
+            configuration = catalogue.configuration(self.selected_site)
+        else:
+            configuration=load_config(config_file=str(self.root/self.config),site_dir=str(self.selected_site))
+        actual=module(self.shared/'security/producer_capabilities.py').preflight(
+            configuration,self.root,publication=self.publication_scope,catalogue=catalogue)
+        require_committed_hook_inputs(actual, self.inputs, publication=self.publication_scope or catalogue is not None)
         require(actual==self.capabilities,'Producer: callback/source/history changed after reconstruction')
 
 
-def prepare(root: Path, config_name: str, shared: Path, templates: Path, output: Path, site_dir: Path, *, publication_scope=False):
+def render(configuration, *, catalogue=False):
+    """Use native public lifecycle for source-backed catalogue event ownership."""
+    from mkdocs.commands.build import build
+    if not catalogue:
+        return build(configuration)
+    configuration.plugins.on_startup(command='build', dirty=False)
+    try:
+        return build(configuration)
+    finally:
+        configuration.plugins.on_shutdown()
+
+
+def prepare(root: Path, config_name: str, shared: Path, templates: Path, output: Path, site_dir: Path,
+            *, publication_scope=False, source_recipe=None):
     """Run only under the trusted renderer, with owner-selected config and frozen source.
 
     Production callers must independently verify the clean source checkpoint before
@@ -187,9 +208,14 @@ def prepare(root: Path, config_name: str, shared: Path, templates: Path, output:
     require(boundary.site_directory(root,site_dir.relative_to(root).as_posix())==site_dir,'Producer: selected artifact must be confined')
     require(boundary.site_directory(root,output.relative_to(root).as_posix())==output and not output.exists(), 'Producer: fresh independent root artifacts output required')
     require(not output.is_relative_to(site_dir) and not site_dir.is_relative_to(output),'Producer: selected/reference artifacts overlap')
-    inputs, shared_inputs = files(root, source=True, publication_source=publication_scope), files(shared, source=True)
-    require(config_name in inputs, 'Producer: config absent from owner source')
+    inputs, shared_inputs = files(root, source=True, publication_source=publication_scope or bool(source_recipe)), files(shared, source=True)
+    if not source_recipe:
+        require(config_name in inputs, 'Producer: config absent from owner source')
     deps = dependencies(shared,root,publication=publication_scope)
+    catalogue = None
+    if source_recipe:
+        catalogue = module(shared/'security/catalogue_recipe.py').derive(root, shared, source_recipe, inputs=inputs)
+        require(config_name == catalogue.record['configuration']['path'], 'Producer: exact reconstructed configuration selection required')
     compiler = module(shared/'tooling/material/build_runtime.py')
     asset, runtime, provenance, template = compiler.compile_runtime(templates, importlib.metadata.version('mkdocs-material'))
     require(shared_inputs.get(asset) == runtime, 'Producer: compiled runtime differs from owned compiler/adapters')
@@ -197,18 +223,19 @@ def prepare(root: Path, config_name: str, shared: Path, templates: Path, output:
     require(json.loads(shared_inputs['tooling/material/runtime-provenance.json']) == provenance, 'Producer: runtime provenance differs from reconstruction')
     from mkdocs.config import load_config
     from mkdocs.commands.build import build
-    configuration = load_config(config_file=str(root/config_name), site_dir=str(site_dir))
+    configuration = (catalogue.configuration(site_dir) if catalogue else
+                     load_config(config_file=str(root/config_name), site_dir=str(site_dir)))
     identity = module(shared/'security/build_identity.py')
     config_sha = identity.configuration_identity(configuration, root)
     require(Path(configuration.docs_dir).is_relative_to(root), 'Producer: docs source outside owner root')
     capabilities=module(shared/'security/producer_capabilities.py')
-    capability_inputs=capabilities.preflight(configuration,root,publication=publication_scope)
-    require_committed_hook_inputs(capability_inputs, inputs, publication=publication_scope)
+    capability_inputs=capabilities.preflight(configuration,root,publication=publication_scope,catalogue=catalogue)
+    require_committed_hook_inputs(capability_inputs, inputs, publication=publication_scope or catalogue is not None)
     configuration.site_dir = str(output)
-    build(configuration)
+    render(configuration, catalogue=catalogue is not None)
     capabilities.verify_outputs(output,capability_inputs)
     redirects=module(shared/'security/redirects.py')
-    plan=redirects.normalize_redirects(configuration,output,configuration.site_url,write=False)
+    plan=redirects.normalize_redirects(configuration,output,configuration.site_url,write=False,source_root=root if catalogue else None)
     csp=module(shared/'security/csp.py')
     csp.apply(output,shared,templates,plan)
     redirect_hashes={item['path']:item['csp_hash'] for item in plan['records']}
@@ -225,6 +252,8 @@ def prepare(root: Path, config_name: str, shared: Path, templates: Path, output:
                                  'worker_sha256': digest(reference[worker]), 'index_sha256': digest(index),
                                  'index_bytes': len(index), 'index_documents': len(parsed['docs'])}, deps, config_sha, capability_inputs, redirect_hashes, publication_scope)
     prepared.selected_site=site_dir
+    prepared.source_recipe=source_recipe
+    prepared.derivation=catalogue.record if catalogue else None
     prepared.unchanged()
     return prepared
 
@@ -337,14 +366,19 @@ def verify_publication(root: Path, site: Path, shared: Path, build_receipt: dict
     identity.verify_source(root, checkpoint)
     require(build_receipt.get('config') == checkpoint.get('config'), 'Producer: build receipt cannot select owner config')
     require(checkpoint.get('config') is not None, 'Producer: owner config source checkpoint required')
+    require(build_receipt.get('derivation') == checkpoint.get('derivation'), 'Producer: source/build derivation differs')
     from mkdocs.config import load_config
     import material
-    configuration = load_config(config_file=str(root/checkpoint['config']['path']), site_dir=str(site))
+    record = checkpoint.get('derivation')
+    source_recipe = record.get('recipe') if record else None
+    catalogue = module(shared/'security/catalogue_recipe.py').derive(root, shared, source_recipe, expected=record) if record else None
+    configuration = (catalogue.configuration(site) if catalogue else
+                     load_config(config_file=str(root/checkpoint['config']['path']), site_dir=str(site)))
     require(configuration.site_url == checkpoint['site_url'], 'Producer: actual config site URL differs')
-    require(identity.renderer(configuration) == build_receipt['renderer'], 'Producer: publication must use actual trusted renderer environment, never receipt executable')
+    require(identity.renderer(configuration,catalogue) == build_receipt['renderer'], 'Producer: publication must use actual trusted renderer environment, never receipt executable')
     parent = root/'artifacts/website-security/producer-reconstruction';parent.mkdir(parents=True, exist_ok=True)
     with tempfile.TemporaryDirectory(dir=parent) as scratch:
-        prepared = prepare(root, checkpoint['config']['path'], shared, Path(material.__file__).parent/'templates', Path(scratch)/'site', site, publication_scope=True)
+        prepared = prepare(root, record['configuration']['path'] if record else checkpoint['config']['path'], shared, Path(material.__file__).parent/'templates', Path(scratch)/'site', site, publication_scope=True, source_recipe=source_recipe)
         require(prepared.config_sha == build_receipt['resolved_config_sha256'], 'Producer: resolved config differs from independent actual renderer')
         report = verify(site, prepared, build_receipt['renderer'], csp_receipt, checkpoint['site_url'])
         identity.verify_source(root, checkpoint)
