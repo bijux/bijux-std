@@ -13,6 +13,7 @@ Bind generated catalogue pages to reviewed generators and committed originals wh
 - Distinguish tracked configuration ownership from derived render configuration and reject alternate Git stores, grafts and stale generated inputs.
 - Carry source attribution through capture, rendering, reconstruction, redirects, CSP and publication checks.
 - Require all 58 catalogue controls in four bounded CI groups while preserving default and historical dependency recipes.
+- Reuse distribution membership within each fresh capture and own the pinned verification interpreter; retain per-module checks and independent receipt verification.
 
 ### Merged pull requests
 
