@@ -19,7 +19,9 @@ ROOT = Path(__file__).resolve().parents[3]
 TESTS = ROOT / 'tests/bijux-docs'
 NODE_TEST_COUNT = 413
 NODE_VERSION = 'v24.21.0'
-GROUPS = ('renderer', 'passive-reader', 'interactive-make')
+GROUPS = ('renderer', 'passive-reader', 'interactive-reports',
+          'interactive-make-dispatch', 'interactive-make-refusal',
+          'interactive-make-docs', 'interactive-make-docs-check')
 PASSIVE_READER_ID = ('test_standalone_reader_renderer.StandaloneRendererTests.'
                      'test_committed_passive_reader_and_native_search_reconstruct_together')
 
@@ -53,15 +55,38 @@ def group_python_ids(group: str | None = None) -> list[str]:
         return expected
     if group not in GROUPS or expected.count(PASSIVE_READER_ID) != 1:
         raise ValueError('Unknown renderer group or missing source-owned passive reader')
-    make_ids = [name for name in expected if name.startswith('test_interactive_report_make.')]
-    if not make_ids:
-        raise ValueError('Missing source-owned interactive Make controls')
-    if group == 'interactive-make':
-        return make_ids
-    if group == 'passive-reader':
-        return [PASSIVE_READER_ID]
-    excluded = {*make_ids, PASSIVE_READER_ID}
-    return [name for name in expected if name not in excluded]
+    make_owner = 'test_interactive_report_make.InteractiveReportMakeOwnershipTests.'
+    make_dispatch = 'test_interactive_report_make.InteractiveReportMakeDispatchTests.'
+    refusal_methods = (
+        'test_changed_source_cannot_reuse_committed_descriptor',
+        'test_committed_config_cannot_autoactivate_without_explicit_make_selection',
+        'test_explicit_make_selector_cannot_replace_committed_configuration',
+        'test_passive_selection_remains_incompatible_with_interactive_make_selection',
+        'test_unresolved_provider_owner_decisions_remain_refused',
+    )
+    partitions = {
+        'passive-reader': [PASSIVE_READER_ID],
+        'interactive-reports': [name for name in expected if name.startswith('test_interactive_report_renderer.')],
+        'interactive-make-dispatch': [name for name in expected if name.startswith(make_dispatch)],
+        'interactive-make-refusal': [make_owner + method for method in refusal_methods],
+        'interactive-make-docs': [make_owner + 'test_actual_make_selected_and_reference_artifacts_reconstruct_docs'],
+        'interactive-make-docs-check': [make_owner + 'test_actual_make_selected_and_reference_artifacts_reconstruct_docs_check'],
+    }
+    make_ids = {name for name in expected if name.startswith('test_interactive_report_make.')}
+    owned_make = {name for owner, names in partitions.items() if owner.startswith('interactive-make-') for name in names}
+    if not make_ids or make_ids != owned_make:
+        raise ValueError('Missing, relocated or unowned source-owned interactive Make controls')
+    excluded = [name for names in partitions.values() for name in names]
+    if (not all(partitions.values()) or len(excluded) != len(set(excluded))
+            or not set(excluded).issubset(expected)):
+        raise ValueError('Missing or overlapping source-owned renderer controls')
+    excluded_ids = set(excluded)
+    partitions['renderer'] = [name for name in expected if name not in excluded_ids]
+    if (set(partitions) != set(GROUPS) or len(partitions) != len(GROUPS)
+            or not all(partitions.values())
+            or sorted(name for names in partitions.values() for name in names) != expected):
+        raise ValueError('Incomplete source-owned renderer group union')
+    return sorted(partitions[group])
 
 
 def group_node_count(group: str | None = None) -> int:

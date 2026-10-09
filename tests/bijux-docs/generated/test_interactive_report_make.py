@@ -153,28 +153,33 @@ class InteractiveReportMakeOwnershipTests(unittest.TestCase):
         (self.output/(target+'.stderr.txt')).write_text(result.stderr)
         return result
 
-    def test_actual_make_selected_and_reference_artifacts_reconstruct_for_both_targets(self):
+    def assert_actual_make_reconstruction(self, target):
         source_before=self.git(self.repo,'rev-parse','HEAD').stdout.strip()
-        for target in ('docs','docs-check'):
-            with self.subTest(target=target):
-                result=self.run_make(target)
-                self.assertEqual(result.returncode,0,result.stdout+result.stderr)
-                self.assertEqual(self.git(self.repo,'rev-parse','HEAD').stdout.strip(),source_before)
-                self.assertEqual((self.repo/'docs/report/records.html').read_text(),self.raw)
-                receipt=json.loads((self.repo/'artifacts/website-security/producer-reconstruction.json').read_text())
-                self.assertTrue(receipt['verification_only'])
-                reports={name:json.loads((self.repo/('artifacts/website-security/'+name+'.json')).read_text())
-                         for name in ('build-identity','csp','site-verification')}
-                self.assertTrue(reports['site-verification']['passed'])
-                self.assertEqual(len({reports[name]['bundle_sha256'] for name in reports}),1)
-                owned=self.source();self.assertEqual(owned.source_sha,source_before)
-                scope=owned.verify(self.site,reports['csp'],reports['build-identity'])
-                scope.unchanged(self.site,reports['csp'])
-                retained=self.output/target/'consumer'
-                retained.parent.mkdir(parents=True,exist_ok=True)
-                shutil.copytree(self.repo,retained,ignore=shutil.ignore_patterns('__pycache__','*.pyc'))
-                self.assertTrue((self.site/'report/records.html').is_file())
-                self.assertTrue((self.site/'search/search_index.json').is_file())
+        result=self.run_make(target)
+        self.assertEqual(result.returncode,0,result.stdout+result.stderr)
+        self.assertEqual(self.git(self.repo,'rev-parse','HEAD').stdout.strip(),source_before)
+        self.assertEqual((self.repo/'docs/report/records.html').read_text(),self.raw)
+        receipt=json.loads((self.repo/'artifacts/website-security/producer-reconstruction.json').read_text())
+        self.assertTrue(receipt['verification_only'])
+        reports={name:json.loads((self.repo/('artifacts/website-security/'+name+'.json')).read_text())
+                 for name in ('build-identity','csp','site-verification')}
+        self.assertTrue(reports['site-verification']['passed'])
+        self.assertEqual(len({reports[name]['bundle_sha256'] for name in reports}),1)
+        owned=self.source();self.assertEqual(owned.source_sha,source_before)
+        scope=owned.verify(self.site,reports['csp'],reports['build-identity'])
+        scope.unchanged(self.site,reports['csp'])
+        retained=self.output/target/'consumer'
+        retained.parent.mkdir(parents=True,exist_ok=True)
+        shutil.copytree(self.repo,retained,ignore=shutil.ignore_patterns('__pycache__','*.pyc'))
+        self.assertTrue((self.site/'report/records.html').is_file())
+        self.assertTrue((self.site/'search/search_index.json').is_file())
+
+
+    def test_actual_make_selected_and_reference_artifacts_reconstruct_docs(self):
+        self.assert_actual_make_reconstruction('docs')
+
+    def test_actual_make_selected_and_reference_artifacts_reconstruct_docs_check(self):
+        self.assert_actual_make_reconstruction('docs-check')
 
     def test_committed_config_cannot_autoactivate_without_explicit_make_selection(self):
         result=self.run_make(owner='')

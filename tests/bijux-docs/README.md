@@ -284,13 +284,17 @@ timing. These browser cases do not qualify manual devices, OS keyboard access,
 all authored opt-ins, accepted publication profiles or production URLs.
 
 Renderer unit controls run independently of the immutable browser fixture producer.
-The three-minute `std / renderer controls / renderer`,
-`std / renderer controls / passive-reader` and
-`std / renderer controls / interactive-make` jobs retain disjoint source-derived
-controls. Renderer owns all native Node units and the remaining installed Python
-controls. Passive-reader owns the installed passive-reader reconstruction control;
-interactive-make owns every generated interactive Make dispatch and ownership
-control, including the docs and docs-check selected/reference renders.
+The three-minute `std / renderer controls / <group>` jobs retain disjoint
+source-derived controls. Renderer owns all native Node units and the remaining
+installed Python controls. Passive-reader owns the installed passive-reader
+reconstruction control; interactive-reports owns the interactive report adapter,
+source authority and actual selected/reference reconstruction controls.
+Interactive-make-dispatch owns literal argument and prepare/cleanup boundaries;
+interactive-make-refusal owns source, configuration and provider refusal controls.
+Interactive-make-docs and interactive-make-docs-check each own their actual target's
+selected/reference reconstruction, including retained source and public bytes.
+Both target-owned cases execute the same complete reconstruction assertions
+in separate fixtures.
 Each group retains its exact dependency locks, physical runtime before/after
 identities, source and workflow. The navigation aggregate independently rederives
 the complete disjoint union; failed, skipped, missing or substituted controls
