@@ -6,6 +6,10 @@ This file records notable repository-level changes for `bijux-std`.
 
 ### Pending review
 
+#### [#263](https://github.com/bijux/bijux-std/pull/263) — feat(github): verify source-owned workflow execution policy
+
+Capture canonical policy sources, admit repository events before preparation, guard manual publishers and dependency routing, and independently rederive every workflow projection through finite source-owned helpers and snapshots. Preserve default repository behavior and introduce no consumer activation.
+
 #### [#262](https://github.com/bijux/bijux-std/pull/262) — ci(docs): recover exact source-owned qualification attempts
 
 Admit retained fixtures and execution evidence through exact live API source and owner identity, preserve each actual workflow attempt, and qualify the full latest job union without relaxing coverage or whole-job limits. Keep ordinary first-attempt downloads and retain failed admission diagnostics.
