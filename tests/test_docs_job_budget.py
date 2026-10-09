@@ -30,7 +30,7 @@ class FrontendJobBudgetTests(unittest.TestCase):
         receipt = self.verify()
         self.assertEqual(receipt['maximum_seconds'], 179.999)
         self.assertEqual(receipt['maximum_queue_seconds'], 300)
-        self.assertEqual(receipt['executed_jobs'], 9)
+        self.assertEqual(receipt['executed_jobs'], 13)
 
     def test_report_can_be_running_while_completed_dependencies_are_checked(self):
         report = next(j for j in self.data['jobs'] if j['name'] == 'std / report')
