@@ -17,7 +17,7 @@ def load(name, path):
 csp = load("bijux_search_boundary_csp", SECURITY / "csp.py")
 publication = load("bijux_search_boundary_publication", SECURITY / "publication.py")
 integration = csp.embedded_module()
-nav = importlib.import_module("bijux_owned_embedded.navigation")
+nav = importlib.import_module(integration.__package__ + ".navigation")
 BASE = "https://bijux.io/bijux-pollenomics/"
 
 
