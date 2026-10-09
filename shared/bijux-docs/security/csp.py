@@ -133,7 +133,12 @@ def qualify_html(html: str, allowed: set[str], normalized_base: str, capability:
             directives.update({"base-uri": ["'none'"], "form-action": ["'none'"],
                                "worker-src": capability["worker_sources"],
                                "connect-src": capability["connect_sources"],
-                               "img-src": capability["image_sources"]})
+                               "img-src": capability["image_sources"],
+                               "style-src": capability["style_sources"],
+                               "script-src": [*capability["script_sources"], *sorted(hashes)]})
+        if owned_report and capability["script_sources"] == ["'none'"]:
+            directives.update({name: ["'none'"] for name in
+                               ("default-src", "font-src", "media-src", "manifest-src")})
         directives["frame-src"] = capability["frame_uris"] or ["'none'"]
         policy = "; ".join(name + " " + " ".join(values) for name, values in directives.items())
     charset = re.search(r'<meta\s+charset=["\']?utf-8["\']?\s*/?>', html, flags=re.IGNORECASE)
