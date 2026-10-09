@@ -6,13 +6,6 @@ This file records notable repository-level changes for `bijux-std`.
 
 ### Pending review
 
-#### [#219](https://github.com/bijux/bijux-std/pull/219) — fix(docs): restore fragments without redundant native navigation
-
-Keep browser Back from resurrecting the fragment a reader just left.
-
-- Restore only the current history entry through the uniquely admitted Material helper, preserving native target reveal and sequential focus.
-- Bind the readable helper, generated runtime and exact boundary in source-derived provenance; retain race failures and native-semantics comparisons.
-
 #### [#213](https://github.com/bijux/bijux-std/pull/213) — fix(docs): adopt exact source-bound legacy script defaults
 
 Refresh the complete previous canonical script list from its committed accepted standard source.
@@ -21,6 +14,20 @@ Refresh the complete previous canonical script list from its committed accepted 
 - Resolve prior ownership from the exact official GitHub authority only when an order conflict needs it.
 
 ### Merged pull requests
+
+#### 2026-10-09T00:01:42Z — [#219](https://github.com/bijux/bijux-std/pull/219) — fix(docs): restore fragments without redundant native navigation
+
+Keep browser Back from resurrecting the fragment a reader just left.
+
+- Restore only the current history entry through the uniquely admitted Material helper, preserving native target reveal and sequential focus.
+- Bind the readable helper, generated runtime and exact boundary in source-derived provenance; retain race failures and native-semantics comparisons.
+
+#### 2026-10-08T23:36:47Z — [#216](https://github.com/bijux/bijux-std/pull/216) — fix(docs): expose one contextual navigation surface
+
+Keep the complete sidebar as the visible local navigation when duplicate contextual ribbons are unnecessary.
+
+- Preserve the closed compact header and native Material fallback; opening the native compact drawer exposes one local navigation surface.
+- Verify ordinary keyboard reading routes, Back and no-script navigation in the maintained browser matrix.
 
 #### 2026-10-08T23:19:00Z — [#214](https://github.com/bijux/bijux-std/pull/214) — fix(docs): preserve visible focus through navigation handoff
 
