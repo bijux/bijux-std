@@ -91,6 +91,10 @@ ui-test-search: ui-test-prepare-runtime ui-test-fixtures ui-test-unit ## Qualify
 ui-test-content: ui-test-prepare-runtime ui-test-fixtures ui-test-unit ## Qualify authored Material content in every engine and viewport
 	@NPM_CONFIG_CACHE="$(abspath $(UI_TESTS_NPM_CACHE_DIR))" PLAYWRIGHT_BROWSERS_PATH="$(abspath $(UI_TESTS_PLAYWRIGHT_BROWSERS_DIR))" BIJUX_UI_ARTIFACT_ROOT="$(abspath $(BIJUX_DOCS_ARTIFACTS_DIR))/content-playwright" BIJUX_UI_FULL_GATE=1 npm --prefix "$(UI_TESTS_RUNTIME_DIR)" exec -- playwright test --config "$(UI_TESTS_DIR)/playwright.content.config.js"
 
+.PHONY: ui-test-navigation-destinations
+ui-test-navigation-destinations: ui-test-prepare-runtime ui-test-fixtures ui-test-unit ## Qualify every authored destination through bounded ancestry owners
+	@NPM_CONFIG_CACHE="$(abspath $(UI_TESTS_NPM_CACHE_DIR))" PLAYWRIGHT_BROWSERS_PATH="$(abspath $(UI_TESTS_PLAYWRIGHT_BROWSERS_DIR))" BIJUX_UI_ARTIFACT_ROOT="$(abspath $(BIJUX_DOCS_ARTIFACTS_DIR))/navigation-destinations-playwright" BIJUX_UI_FULL_GATE=1 npm --prefix "$(UI_TESTS_RUNTIME_DIR)" exec -- playwright test --config "$(UI_TESTS_DIR)/playwright.navigation-destinations.config.js"
+
 .PHONY: ui-test-native-navigation
 ui-test-native-navigation: ui-test-prepare-runtime ui-test-fixtures ui-test-unit ## Qualify native drawer fallback, readiness and controlled faults in three engines
 	@NPM_CONFIG_CACHE="$(abspath $(UI_TESTS_NPM_CACHE_DIR))" PLAYWRIGHT_BROWSERS_PATH="$(abspath $(UI_TESTS_PLAYWRIGHT_BROWSERS_DIR))" BIJUX_UI_ARTIFACT_ROOT="$(abspath $(BIJUX_DOCS_ARTIFACTS_DIR))/native-navigation-playwright" BIJUX_UI_FULL_GATE=1 npm --prefix "$(UI_TESTS_RUNTIME_DIR)" exec -- playwright test --config "$(UI_TESTS_DIR)/playwright.native-navigation.config.js"

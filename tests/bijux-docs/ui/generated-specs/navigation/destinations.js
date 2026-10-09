@@ -245,12 +245,12 @@ async function destinationLink(page, destination) {
   return link;
 }
 
-async function authoredDestinationCoverage(page, info) {
+async function authoredDestinationCoverage(page, info, assignedDestinations = destinations) {
   const observations = [];
   const rootURL = new URL("/", info.project.use.baseURL).href;
   await page.goto(rootURL);
   await expect(page.locator("main h1")).toHaveText(heading("Bijux reference"));
-  for (const destination of destinations) {
+  for (const destination of assignedDestinations) {
     await expect(page).toHaveURL(rootURL);
     await openNavigation(page);
     const link = await destinationLink(page, destination);
@@ -294,6 +294,11 @@ async function authoredDestinationCoverage(page, info) {
     }
   }
   await info.attach("authored-destination-coverage.json", { body: Buffer.from(JSON.stringify(observations)), contentType: "application/json" });
-  expect(observations).toHaveLength(destinations.length);
+  expect(observations).toEqual(assignedDestinations.map((destination, index) => ({
+    ...destination,
+    retainedDocument: observations[index].retainedDocument,
+    observedURL: new URL(destination.route, rootURL).href,
+    current: "page",
+  })));
 }
 module.exports = { destinations, authoredDestinationCoverage };
