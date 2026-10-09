@@ -11,6 +11,7 @@ This file records notable repository-level changes for `bijux-std`.
 Keep the complete site identity and utility controls visible when compact readers enlarge text or apply spacing.
 
 - Own logical title spacing above Material and allow intrinsic wrapping with natural height.
+- Preserve the native fallback focus-ring backdrop with an intrinsic minimum while retaining ordinary no-script navigation and strict contrast assertions.
 - Check complete utility census, glyph clipping, pointer targets and supplemental breakpoints while retaining the 126 navigation cases.
 - Keep physical zoom, assistive/device and consumer qualification separate; this review depends on #227.
 

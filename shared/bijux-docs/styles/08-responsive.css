@@ -373,6 +373,12 @@ body:has(> header[data-bijux-drawer-target]):not([data-bijux-drawer-ready="true"
 body:has(> header[data-bijux-drawer-target]):not([data-bijux-drawer-ready="true"]) .md-overlay { display: none; }
 
 @media screen and (max-width: 76.2344em) {
+  /* Keep the native 44px target and its 5px outer focus extent on the
+     opaque header surface while allowing enlarged content to grow. */
+  body:has(> header[data-bijux-drawer-target]):not([data-bijux-drawer-ready="true"]) > header .md-header__inner {
+    min-block-size: 54px;
+  }
+
   body:has(> header[data-bijux-drawer-target]):not([data-bijux-drawer-ready="true"]) #__drawer {
     display: block;
     position: fixed;
