@@ -6,14 +6,21 @@ This file records notable repository-level changes for `bijux-std`.
 
 ### Pending review
 
-#### [#220](https://github.com/bijux/bijux-std/pull/220) — fix(github): bind protected path policy to immutable pr source
+#### [#213](https://github.com/bijux/bijux-std/pull/213) — fix(docs): adopt exact source-bound legacy script defaults
+
+Refresh the complete previous canonical script list from its committed accepted standard source.
+
+- Preserve authored order, attributes, comments, configuration and capabilities outside the exact plain default.
+- Resolve prior ownership from the exact official GitHub authority only when an order conflict needs it.
+
+### Merged pull requests
+
+#### 2026-10-09T00:16:26Z — [#220](https://github.com/bijux/bijux-std/pull/220) — fix(github): bind protected path policy to immutable pr source
 
 Keep policy checks bound to the reviewed PR event when main advances.
 
 - Compare validated full event base and head commits without shallow-fetching a mutable branch.
 - Reject incomplete identities and history while preserving earlier protected changes; regenerate the canonical managed runtime.
-
-### Merged pull requests
 
 #### 2026-10-09T00:01:42Z — [#219](https://github.com/bijux/bijux-std/pull/219) — fix(docs): restore fragments without redundant native navigation
 
