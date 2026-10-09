@@ -6,6 +6,13 @@ This file records notable repository-level changes for `bijux-std`.
 
 ### Pending review
 
+#### [#221](https://github.com/bijux/bijux-std/pull/221) — test(docs): verify compact reading space and control geometry
+
+Require useful first-screen reading space and unobstructed compact controls in existing browser journeys.
+
+- Check actual heading/text visibility, utility names/targets/hits, hidden helper spans, and drawer logo/name/Close geometry.
+- Preserve canonical cases and the runtime-error guard; retain exact counterexamples and wider viewport/manual qualification limits.
+
 #### [#218](https://github.com/bijux/bijux-std/pull/218) — test(docs): keep shell acceptance executable and reject runtime errors
 
 Bind shell behaviour to executable reader cases and reject uncaught runtime failures in every shell journey.
