@@ -403,9 +403,22 @@ class QualifiedPublicationTests(unittest.TestCase):
                                               self.paths["verification"], self.paths["csp"])
 
     def test_local_embedded_candidate_receipt_cannot_bypass_independent_producer(self):
-        self.records["csp"]["embedded"] = {"verification_only": True, "applied": True}
-        with self.assertRaisesRegex(publication.AdmissionError, "independently reconstructed producer capability admission"):
-            self.qualified()
+        original_import = __import__
+        def guarded_import(name, *args, **kwargs):
+            if name == "mkdocs" or name.startswith("mkdocs."):
+                raise AssertionError("Missing source-owned descriptor must fail before optional renderer import")
+            return original_import(name, *args, **kwargs)
+        cases = ({"verification_only":True,"applied":True},
+                 {"descriptor_path":""},
+                 {"descriptor_path":"../outside-owner.json"},
+                 {"descriptor_path":str(self.root.parent/'outside-owner.json')},
+                 {"descriptor_path":str(self.root/'missing-owner.json')})
+        for retained in cases:
+            with self.subTest(retained=retained):
+                self.records["csp"]["embedded"] = retained
+                with mock.patch("builtins.__import__", side_effect=guarded_import):
+                    with self.assertRaisesRegex(publication.AdmissionError, "independently reconstructed producer capability admission"):
+                        self.qualified()
 
     def test_scoped_receipts_bind_real_clean_source_and_exact_standard(self):
         manifest = self.qualified()
