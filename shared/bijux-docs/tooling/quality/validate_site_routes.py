@@ -49,13 +49,19 @@ def link_exceptions(path: Path | None) -> tuple[list[dict], str | None]:
 def independently_verified_readers(site: Path, site_url: str, evidence: dict | None) -> dict:
     if evidence is None:
         return {}
-    if not isinstance(evidence, dict) or set(evidence) != {'csp', 'completed_build', 'source_sha'}:
+    if not isinstance(evidence, dict) or set(evidence) not in ({'csp', 'completed_build', 'source_sha'}, {'csp', 'completed_build', 'source_sha', 'source_checkpoint', 'repository'}):
         raise ValueError('Standalone readers require complete source/CSP/build evidence')
     policy_path = Path(__file__).resolve().parents[2]/'security/publication.py'
     spec = importlib.util.spec_from_file_location('bijux_reader_composition_policy', policy_path)
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
-    result = module.embedded_module().verify_composition(site, evidence['csp'], evidence['completed_build'])
+    if 'source_checkpoint' in evidence:
+        identity = module.identity_module()
+        adapter = importlib.import_module(module.embedded_module().__package__ + '.publication')
+        result = adapter.verify_readers(site, evidence['csp'], evidence['completed_build'],
+                                        repository=evidence['repository'], identity=identity, checkpoint=evidence['source_checkpoint'])
+    else:
+        result = module.embedded_module().verify_composition(site, evidence['csp'], evidence['completed_build'])
     receipt = result['receipt']
     if receipt['source_sha'] != evidence['source_sha'] or result['site_url'] != site_url:
         raise ValueError('Standalone reader source/site identity differs')
@@ -82,9 +88,9 @@ def qualify(site: Path, site_url: str, network_urls: list[str], exceptions: list
               dict(id='SEARCH-DELIVERY',passed=not search_errors,errors=search_errors),
               dict(id='PRODUCTION-URLS',passed=not production_errors,errors=production_errors)]
     return dict(schema=1,scope=SCOPES,passed=not errors,result='fail' if errors else 'pass',
-                verification_only=embedded_evidence is not None or not bool(os.environ.get('DOCS_SOURCE_IDENTITY')) or
-                                  os.environ.get('BIJUX_STD_LOCAL_VERIFY') == '1' or
-                                  os.environ.get('BIJUX_STD_ALLOW_LOCAL_SOURCE') == '1',
+                verification_only=(('source_checkpoint' not in embedded_evidence) if embedded_evidence is not None else
+                                  (not bool(os.environ.get('DOCS_SOURCE_IDENTITY')) or os.environ.get('BIJUX_STD_LOCAL_VERIFY') == '1' or
+                                   os.environ.get('BIJUX_STD_ALLOW_LOCAL_SOURCE') == '1')),
                 site_dir=str(site),site_url=site_url,bundle_sha256=identity,
                 artifact_inventory_sha256=identity,files=files,
                 route_count=len(docs),search_entries=count,errors=errors,checks=checks,
@@ -103,6 +109,8 @@ def main() -> int:
     parser.add_argument('--embedded-csp-report',type=Path)
     parser.add_argument('--completed-build-receipt',type=Path)
     parser.add_argument('--source-sha')
+    parser.add_argument('--source-identity', type=Path)
+    parser.add_argument('--reader-owner')
     args = parser.parse_args()
     root = args.repo_root.resolve()
     site = (root/args.site_dir).resolve()
@@ -117,7 +125,7 @@ def main() -> int:
             raise ValueError('Development link policy must be reviewed repository source outside the public artifact')
         exceptions, policy_digest = link_exceptions(policy)
         selected = (args.embedded_csp_report, args.completed_build_receipt, args.source_sha)
-        if any(selected) and not all(selected):
+        if (any(selected) and not all(selected)) or (args.source_identity and not all(selected)):
             raise ValueError('Standalone qualification requires all three complete evidence inputs')
         evidence = None
         if all(selected):
@@ -125,7 +133,19 @@ def main() -> int:
             if any(not path.is_relative_to(root/'artifacts') or path.is_relative_to(site) for path in paths):
                 raise ValueError('Standalone evidence must remain in artifacts outside the public bundle')
             evidence = dict(csp=json.loads(paths[0].read_text()), completed_build=json.loads(paths[1].read_text()), source_sha=args.source_sha)
+        if args.reader_owner:
+            if evidence is None or Path(evidence['csp'].get('embedded', {}).get('descriptor_path', '')).resolve() != (root/args.reader_owner).resolve():
+                raise ValueError('Standalone verifier owner differs from explicit source selection')
+        if args.source_identity:
+            spec = importlib.util.spec_from_file_location('bijux_reader_route_identity', Path(__file__).resolve().parents[2]/'security/build_identity.py')
+            identity = importlib.util.module_from_spec(spec); spec.loader.exec_module(identity)
+            checkpoint = json.loads(identity.artifact(root, str(args.source_identity)).read_text())
+            identity.verify_source(root, checkpoint)
+            if checkpoint['repository_source']['sha'] != args.source_sha or checkpoint['site_url'] != args.site_url or checkpoint['site_dir'] != site.relative_to(root).as_posix():
+                raise ValueError('Standalone route checkpoint selects another source or artifact')
+            evidence.update(source_checkpoint=checkpoint, repository=root)
         report = qualify(site,args.site_url,urls,exceptions,embedded_evidence=evidence)
+        if args.source_identity: identity.verify_source(root, checkpoint)
         report.update(site_dir=site.relative_to(root).as_posix(),
                       development_link_policy_sha256=policy_digest,
                       development_link_policy=policy.relative_to(root).as_posix() if policy else None)
