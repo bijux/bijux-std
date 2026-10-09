@@ -6,7 +6,16 @@ This file records notable repository-level changes for `bijux-std`.
 
 ### Pending review
 
-#### [#221](https://github.com/bijux/bijux-std/pull/221) — test(docs): verify compact reading space and control geometry
+#### [#224](https://github.com/bijux/bijux-std/pull/224) — test(docs): verify authored reader history policy inheritance
+
+Make the product-owned reader URL policy explicit when a legacy inherited feature list enables anchor tracking.
+
+- Verify actual MkDocs list replacement while retaining theme settings, plugins and required capabilities.
+- Preserve deliberate tracking opt-ins and qualify exact Back/Forward URLs separately from visible reading context.
+
+### Merged pull requests
+
+#### 2026-10-09T01:32:43Z — [#221](https://github.com/bijux/bijux-std/pull/221) — test(docs): verify compact reading space and control geometry
 
 Require useful first-screen reading space and unobstructed compact controls in existing browser journeys.
 
@@ -19,9 +28,6 @@ Bind shell behaviour to executable reader cases and reject uncaught runtime fail
 
 - Reference the actual parametrized local-reader acceptance without adding a duplicate gate.
 - Reuse the shared automatic runtime-error guard, preserving all canonical case identities and browser coverage.
-
-
-### Merged pull requests
 
 #### 2026-10-09T01:13:15Z — [#222](https://github.com/bijux/bijux-std/pull/222) — fix(docs): resolve redirect canonicals before route qualification
 
