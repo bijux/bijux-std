@@ -51,6 +51,16 @@ class RenderRepoConfigsTests(unittest.TestCase):
                 consumer_source,
             )
 
+    def test_manual_publisher_wrapper_call_refuses_before_render(self) -> None:
+        manifest = json.loads(MANIFEST_PATH.read_text())
+        repo = MODULE.find_repo_config(manifest, "bijux-atlas")
+        repo["workflow_execution_policy"] = {"schema": 1, "publication_entrypoints": {"release-github": {"mode": "manual-only"}}}
+        repo["workflow_wrappers"] = {"ci": {"on": "pull_request", "jobs": {"publisher": {"uses": "./.github/workflows/release-github.yml"}}}}
+        with mock.patch.object(MODULE, "write_if_needed") as write:
+            with self.assertRaisesRegex(ValueError, "manual-only publication"):
+                MODULE.render_repo("bijux-atlas", manifest)
+            write.assert_not_called()
+
     def test_selected_workflow_emitter_preserves_version_boolean_and_empty_types(self) -> None:
         document = {"on": {"workflow_dispatch": {}}, "jobs": {"owned": {"with": {"python-version": "3.11", "flag": "false", "null-string": "null", "number-string": "007", "enabled": True, "arguments": [], "options": {}, "run": "first\nsecond", "trailing": "line\n\n"}}}}
         emitted = MODULE.render_yaml_document(document, preserve_scalar_types=True)

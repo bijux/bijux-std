@@ -8,16 +8,18 @@ import json
 import os
 import shutil
 import subprocess
+import sys
 from pathlib import Path
+from types import ModuleType
 from typing import Any
 
-# Bind the policy helper to this canonical script tree, never the process import cache.
-_POLICY_SPEC = importlib.util.spec_from_file_location(
-    __name__ + ".workflow_execution", Path(__file__).resolve().with_name("workflow_execution.py")
-)
-assert _POLICY_SPEC is not None and _POLICY_SPEC.loader is not None
-WORKFLOW_EXECUTION = importlib.util.module_from_spec(_POLICY_SPEC)
-_POLICY_SPEC.loader.exec_module(WORKFLOW_EXECUTION)
+# Bootstrap only the adjacent finite package loader from its captured source bytes.
+_POLICY_LOADER_PATH = Path(__file__).resolve().with_name("workflow_execution") / "source_loading.py"
+_POLICY_LOADER_SOURCE = _POLICY_LOADER_PATH.read_bytes()
+_POLICY_LOADER = ModuleType("bijux_workflow_source_loading")
+_POLICY_LOADER.__file__ = str(_POLICY_LOADER_PATH)
+exec(compile(_POLICY_LOADER_SOURCE, str(_POLICY_LOADER_PATH), "exec"), _POLICY_LOADER.__dict__)
+WORKFLOW_EXECUTION = _POLICY_LOADER.load_package(_POLICY_LOADER_SOURCE)
 
 ROOT = Path(__file__).resolve().parents[3]
 SCRIPT_REPO_ROOT = Path(__file__).resolve().parents[2]
@@ -73,7 +75,12 @@ BASE_FILE_MAPPINGS: list[tuple[str, str]] = [
     (".github/automation-identity.md", ".github/automation-identity.md"),
     (".github/required-status-checks.md", ".github/required-status-checks.md"),
     (".github/rulesets/main-branch-protection.json", ".github/rulesets/main-branch-protection.json"),
-    (".github/scripts/workflow_execution.py", ".github/scripts/workflow_execution.py"),
+    (".github/scripts/workflow_execution/__init__.py", ".github/scripts/workflow_execution/__init__.py"),
+    (".github/scripts/workflow_execution/source_loading.py", ".github/scripts/workflow_execution/source_loading.py"),
+    (".github/scripts/workflow_execution/schema.py", ".github/scripts/workflow_execution/schema.py"),
+    (".github/scripts/workflow_execution/yaml_io.py", ".github/scripts/workflow_execution/yaml_io.py"),
+    (".github/scripts/workflow_execution/events.py", ".github/scripts/workflow_execution/events.py"),
+    (".github/scripts/workflow_execution/publication.py", ".github/scripts/workflow_execution/publication.py"),
     (".github/scripts/build_repo_manifest.py", ".github/scripts/build_repo_manifest.py"),
     (".github/scripts/check_pinned_actions.py", ".github/scripts/check_pinned_actions.py"),
     (".github/scripts/check_protected_github_changes.py", ".github/scripts/check_protected_github_changes.py"),
@@ -200,7 +207,7 @@ def copy_file_mapping(source_relative: str, destination_relative: str, repo_dir:
 def prepare_runtime_workflows(repo_config: dict[str, Any], manifest: dict[str, Any]) -> dict[str, bytes]:
     name = repo_config["name"]
     policy = WORKFLOW_EXECUTION.validate_manifest(manifest, [name])[name]
-    if policy is None or policy.get("automatic_runs", "canonical") == "canonical":
+    if not (WORKFLOW_EXECUTION.requires_event_projection(policy) or WORKFLOW_EXECUTION.requires_publication_projection(policy)):
         return {}
     render_spec = importlib.util.spec_from_file_location(
         __name__ + ".canonical_renderer", STD_REPO / ".github/scripts/render_repo_configs.py"
@@ -217,12 +224,28 @@ def prepare_runtime_workflows(repo_config: dict[str, Any], manifest: dict[str, A
         if entry["id"] in repo_config.get("workflow_allowlist", []):
             sources[entry["consumer_runtime"]] = (entry["id"], entry["source"])
     prepared = {}
+    documents = {}
     for destination, (identity, source) in sources.items():
         document = WORKFLOW_EXECUTION.parse_workflow((STD_REPO / source).read_bytes(), source)
         projected = WORKFLOW_EXECUTION.project_automatic_events(identity, document, policy)
+        projected = WORKFLOW_EXECUTION.project_publication_entrypoints(identity, projected, policy)
+        documents[destination] = projected
         prepared[destination] = renderer.render_yaml_document(projected, preserve_scalar_types=True).encode("utf-8")
     # Wrapper qualification precedes even the first raw canonical copy.
-    renderer.prepare_workflow_wrappers(repo_config, policy)
+    wrappers = renderer.prepare_workflow_wrappers(repo_config, policy)
+    documents.update({f".github/workflows/{name}.yml": definition for name, definition in wrappers.items()})
+    if WORKFLOW_EXECUTION.requires_publication_projection(policy):
+        target = resolve_repository_checkout(name)
+        owned = {destination for _, destination in BASE_FILE_MAPPINGS}
+        owned.update(entry["consumer_runtime"] for entry in inventory_entries(manifest))
+        owned.update({".github/workflows/ci.yml", ".github/workflows/verify.yml"})
+        workflows = target / ".github/workflows"
+        if workflows.is_dir():
+            for path in sorted(workflows.iterdir()):
+                relative = path.relative_to(target).as_posix()
+                if path.suffix in {".yml", ".yaml"} and relative not in owned:
+                    documents[relative] = WORKFLOW_EXECUTION.parse_workflow(path.read_bytes(), relative)
+    WORKFLOW_EXECUTION.validate_publication_calls(documents, policy)
     return prepared
 
 
@@ -235,12 +258,28 @@ def _copy_runtime_or_source(source: str, destination: str, repo_dir: Path, prepa
     path.write_bytes(prepared[destination])
 
 
+def qualified_legacy_policy_helper(repo_dir: Path) -> Path | None:
+    relative = ".github/scripts/workflow_execution.py"
+    helper = repo_dir / relative
+    if not helper.exists() and not helper.is_symlink():
+        return None
+    checksum = repo_dir / ".github/bijux-std-shared.sha256"
+    if helper.is_symlink() or not helper.is_file() or not checksum.is_file():
+        raise ValueError("legacy policy helper requires an unchanged managed preimage")
+    entries = [line.split() for line in checksum.read_text(encoding="utf-8").splitlines()]
+    matches = [parts[0] for parts in entries if len(parts) == 2 and parts[1] == relative]
+    if len(matches) != 1 or matches[0] != hashlib.sha256(helper.read_bytes()).hexdigest():
+        raise ValueError("legacy policy helper is unowned or differs from its managed preimage")
+    return helper
+
+
 def copy_repo_files(target_repo: str, repo_config: dict[str, Any], manifest: dict[str, Any]) -> None:
     WORKFLOW_EXECUTION.validate_manifest(manifest, [target_repo])
     if repo_config != find_repo_config(manifest, target_repo):
         raise ValueError("repository configuration must match canonical manifest")
     prepared = prepare_runtime_workflows(repo_config, manifest)
     repo_dir = resolve_repository_checkout(target_repo)
+    legacy_helper = qualified_legacy_policy_helper(repo_dir)
     for source_relative, destination_relative in BASE_FILE_MAPPINGS:
         _copy_runtime_or_source(source_relative, destination_relative, repo_dir, prepared)
 
@@ -268,6 +307,9 @@ def copy_repo_files(target_repo: str, repo_config: dict[str, Any], manifest: dic
                 shutil.rmtree(path)
             else:
                 path.unlink()
+
+    if legacy_helper is not None:
+        legacy_helper.unlink()
 
     for runtime_path in sorted(LEGACY_MANAGED_RUNTIME_PATHS):
         if runtime_path in managed_runtime_paths:

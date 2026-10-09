@@ -42,3 +42,19 @@ before publication; keep blocked remote/admin/manual evidence accurately unresol
 Use [security](../../bijux-docs/security/SECURITY.md) for trust and public-artifact
 admission and [operations](../../bijux-docs/security/OPERATIONS.md) for local smoke,
 cache compatibility, monitoring limits and recovery.
+
+Repository publication entrypoints can be explicitly selected in the canonical
+repository manifest through `workflow_execution_policy.publication_entrypoints`.
+The supported `deploy-docs`, `release-github`, `release-ghcr` and `release-crates`
+entries accept `mode: manual-only` or `mode: canonical`. Manual-only removes the
+reusable `workflow_call` API while preserving the exact dispatch inputs, defaults,
+help text and publication jobs. Canonical mode and an absent selection retain the
+shared callable API. Local workflow or wrapper calls to a selected manual-only
+publisher fail canonical preparation before files are written; internal
+`release-artifacts` calls remain callable.
+
+This selection supplies no publication authorization, profile qualification or
+production evidence. Ref admission and existing source/artifact/verifier guards
+remain separate requirements. Release tag resolution still honors an explicit
+input before its existing defaults; changing workflow entrypoint selection does
+not change that resolver.

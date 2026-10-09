@@ -31,6 +31,58 @@ SPEC.loader.exec_module(MODULE)
 
 
 class SyncGithubStandardsTests(unittest.TestCase):
+    def test_old_flat_generated_helper_retires_only_with_owned_unchanged_preimage(self) -> None:
+        manifest = MODULE.load_manifest()
+        repo = MODULE.find_repo_config(manifest, "bijux-atlas")
+        for state in ["owned", "unowned", "modified"]:
+            with self.subTest(state=state), tempfile.TemporaryDirectory() as workspace:
+                target = Path(workspace)
+                helper = target / ".github/scripts/workflow_execution.py"
+                helper.parent.mkdir(parents=True)
+                helper.write_text("source-owned preimage\n")
+                checksum = target / ".github/bijux-std-shared.sha256"
+                digest = hashlib.sha256(helper.read_bytes()).hexdigest()
+                checksum.write_text(f"{digest}  .github/scripts/{'other.py' if state == 'unowned' else 'workflow_execution.py'}\n")
+                if state == "modified":
+                    helper.write_text("preserve user change\n")
+                before = {p.relative_to(target).as_posix(): p.read_bytes() for p in target.rglob("*") if p.is_file()}
+                with mock.patch.object(MODULE, "resolve_repository_checkout", return_value=target):
+                    if state == "owned":
+                        MODULE.copy_repo_files("bijux-atlas", repo, manifest)
+                        self.assertFalse(helper.exists())
+                        self.assertTrue((target / ".github/scripts/workflow_execution/schema.py").exists())
+                    else:
+                        with self.assertRaisesRegex(ValueError, "managed preimage"):
+                            MODULE.copy_repo_files("bijux-atlas", repo, manifest)
+                        self.assertEqual({p.relative_to(target).as_posix(): p.read_bytes() for p in target.rglob("*") if p.is_file()}, before)
+
+    def test_manual_publisher_call_refuses_before_any_destination_write(self) -> None:
+        manifest = copy.deepcopy(MODULE.load_manifest())
+        repo = MODULE.find_repo_config(manifest, "bijux-atlas")
+        repo["workflow_execution_policy"] = {"schema": 1, "publication_entrypoints": {"release-github": {"mode": "manual-only"}}}
+        for suffix in ["yml", "yaml"]:
+            with self.subTest(suffix=suffix), tempfile.TemporaryDirectory() as workspace:
+                target = Path(workspace) / "bijux-atlas"
+                workflow = target / f".github/workflows/authored.{suffix}"
+                workflow.parent.mkdir(parents=True)
+                workflow.write_text("on: workflow_dispatch\njobs:\n  publish:\n    uses: ./.github/workflows/release-github.yml\n")
+                before = workflow.read_bytes()
+                with mock.patch.object(MODULE, "resolve_repository_checkout", return_value=target):
+                    with self.assertRaisesRegex(ValueError, "manual-only publication"):
+                        MODULE.copy_repo_files("bijux-atlas", repo, manifest)
+                self.assertEqual(workflow.read_bytes(), before)
+                self.assertEqual([p.relative_to(target).as_posix() for p in target.rglob("*") if p.is_file()], [f".github/workflows/authored.{suffix}"])
+
+    def test_wrapper_call_refuses_before_any_copy(self) -> None:
+        manifest = copy.deepcopy(MODULE.load_manifest())
+        repo = MODULE.find_repo_config(manifest, "bijux-atlas")
+        repo["workflow_execution_policy"] = {"schema": 1, "publication_entrypoints": {"release-github": {"mode": "manual-only"}}}
+        repo["workflow_wrappers"] = {"ci": {"on": "pull_request", "jobs": {"publish": {"uses": "./.github/workflows/release-github.yml"}}}}
+        with tempfile.TemporaryDirectory() as workspace, mock.patch.object(MODULE, "resolve_repository_checkout", return_value=Path(workspace)), mock.patch.object(MODULE, "copy_file_mapping") as copy_file:
+            with self.assertRaisesRegex(ValueError, "manual-only publication"):
+                MODULE.copy_repo_files("bijux-atlas", repo, manifest)
+            copy_file.assert_not_called()
+
     def test_later_invalid_workflow_source_refuses_before_copying(self) -> None:
         manifest = copy.deepcopy(MODULE.load_manifest())
         repo = MODULE.find_repo_config(manifest, "bijux-atlas")
@@ -107,8 +159,11 @@ class SyncGithubStandardsTests(unittest.TestCase):
             process.assert_not_called()
             checksum.assert_not_called()
 
-    def test_policy_helper_is_canonical_managed_script(self) -> None:
-        self.assertIn((".github/scripts/workflow_execution.py", ".github/scripts/workflow_execution.py"), MODULE.BASE_FILE_MAPPINGS)
+    def test_policy_package_is_canonical_managed_source(self) -> None:
+        for name in ["__init__", "source_loading", "schema", "yaml_io", "events", "publication"]:
+            path = f".github/scripts/workflow_execution/{name}.py"
+            self.assertIn((path, path), MODULE.BASE_FILE_MAPPINGS)
+        self.assertNotIn((".github/scripts/workflow_execution.py", ".github/scripts/workflow_execution.py"), MODULE.BASE_FILE_MAPPINGS)
 
     def test_observe_merge_reads_status_once(self) -> None:
         payload = '{"number":7,"state":"OPEN","mergeStateStatus":"BLOCKED"}'

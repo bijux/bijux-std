@@ -1,21 +1,21 @@
 #!/usr/bin/env python3
 from __future__ import annotations
 
-import importlib.util
 import json
 import os
 import shlex
 import subprocess
 from pathlib import Path
+from types import ModuleType
 from typing import Any
 
-# Bind the policy helper to this canonical script tree, never the process import cache.
-_POLICY_SPEC = importlib.util.spec_from_file_location(
-    __name__ + ".workflow_execution", Path(__file__).resolve().with_name("workflow_execution.py")
-)
-assert _POLICY_SPEC is not None and _POLICY_SPEC.loader is not None
-WORKFLOW_EXECUTION = importlib.util.module_from_spec(_POLICY_SPEC)
-_POLICY_SPEC.loader.exec_module(WORKFLOW_EXECUTION)
+# Bootstrap only the adjacent finite package loader from its captured source bytes.
+_POLICY_LOADER_PATH = Path(__file__).resolve().with_name("workflow_execution") / "source_loading.py"
+_POLICY_LOADER_SOURCE = _POLICY_LOADER_PATH.read_bytes()
+_POLICY_LOADER = ModuleType("bijux_workflow_source_loading")
+_POLICY_LOADER.__file__ = str(_POLICY_LOADER_PATH)
+exec(compile(_POLICY_LOADER_SOURCE, str(_POLICY_LOADER_PATH), "exec"), _POLICY_LOADER.__dict__)
+WORKFLOW_EXECUTION = _POLICY_LOADER.load_package(_POLICY_LOADER_SOURCE)
 
 ROOT = Path(__file__).resolve().parents[3]
 SCRIPT_REPO_ROOT = Path(__file__).resolve().parents[2]

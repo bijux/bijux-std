@@ -27,6 +27,10 @@ SPEC.loader.exec_module(MODULE)
 
 
 class BuildRepoManifestTests(unittest.TestCase):
+    def test_builder_uses_adjacent_domain_package(self) -> None:
+        self.assertEqual(Path(MODULE.WORKFLOW_EXECUTION.__file__).resolve(), SCRIPT_PATH.with_name("workflow_execution") / "__init__.py")
+        self.assertTrue(hasattr(MODULE.WORKFLOW_EXECUTION, "validate_manifest"))
+
     def test_capture_retains_reviewed_policy_without_inferring_from_runtime(self) -> None:
         inventory = MODULE.load_workflow_inventory()
         policy = {"schema": 1, "automatic_runs": "repository-policy-only", "publication_entrypoints": {"deploy-docs": {"mode": "manual-only", "refs": "main-only"}}}
