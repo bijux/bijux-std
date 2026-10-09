@@ -7,6 +7,7 @@ import importlib.util
 import io
 import marshal
 import re
+import struct
 import types
 import json
 import os
@@ -68,8 +69,26 @@ def validate_bytecode(path: Path, *, root: Path | None = None, stdlib=False):
     require(isinstance(actual,types.CodeType) and stream.read()==b'', 'Renderer profile: bytecode payload is not one code object')
     match=re.search(r'\.opt-([12])\.pyc$',path.name)
     expected=compile(source.read_bytes(),str(source),'exec',dont_inherit=True,optimize=int(match[1]) if match else 0)
+    def constant_identity(value):
+        if isinstance(value, types.CodeType):
+            return ('code', normalized(value))
+        if type(value) is float:
+            return ('float', struct.pack('>d', value))
+        if type(value) is complex:
+            return ('complex', struct.pack('>dd', value.real, value.imag))
+        if type(value) is tuple:
+            return ('tuple', tuple(constant_identity(item) for item in value))
+        if type(value) is frozenset:
+            return ('frozenset', frozenset(constant_identity(item) for item in value))
+        require(type(value) in {type(None), type(Ellipsis), bool, int, str, bytes},
+                'Renderer profile: unsupported executable constant type')
+        return (type(value).__name__, value)
+
     def normalized(code):
-        return code.replace(co_filename='{source}',co_consts=tuple(normalized(value) if isinstance(value,types.CodeType) else value for value in code.co_consts))
+        # Every immutable public code field remains bound to the compiled source.
+        # Only filenames are normalized; NaNs retain their exact IEEE bits.
+        return tuple((name, constant_identity('{source}' if name == 'co_filename' else getattr(code, name)))
+                     for name in dir(code) if name.startswith('co_') and not callable(getattr(code, name)))
     require(normalized(actual)==normalized(expected),
             'Renderer profile: cached executable bytecode differs from owned source: '+str(path))
 
