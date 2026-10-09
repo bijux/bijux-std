@@ -303,6 +303,7 @@ jobs:
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: docs-renderer-controls-${{ matrix.group }}-${{ github.sha }}-${{ github.run_attempt }}
+          include-hidden-files: true
           path: artifacts/bijux-docs/renderer-controls
           if-no-files-found: error
           compression-level: 0
@@ -532,6 +533,7 @@ jobs:
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: docs-navigation-complete-${{ github.sha }}-${{ github.run_attempt }}
+          include-hidden-files: true
           path: |
             artifacts/bijux-docs/navigation-qualification.json
             artifacts/bijux-docs/frontend-faults/qualification.json

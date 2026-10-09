@@ -4,13 +4,15 @@ This file records notable repository-level changes for `bijux-std`.
 
 ## Pull request history
 
-### Pending review
+### Merged pull requests
 
-#### [#254](https://github.com/bijux/bijux-std/pull/254) — test(docs): qualify independent storage denial journeys
+#### 2026-10-09T18:52:16Z — [#256](https://github.com/bijux/bijux-std/pull/256) — feat(docs): reconstruct committed interactive report ownership
+
+Render explicitly selected committed interactive report recipes and independently reconstruct their resource, bootstrap and provider authority. Execute captured processor source bytes to preserve provenance across stale bytecode caches.
+
+#### 2026-10-09T18:24:41Z — [#254](https://github.com/bijux/bijux-std/pull/254) — test(docs): qualify independent storage denial journeys
 
 Require getter, read and write denial independently through initial load, session theme, instant navigation and cross-site reading across all three engines.
-
-### Merged pull requests
 
 #### 2026-10-09T17:51:20Z — [#255](https://github.com/bijux/bijux-std/pull/255) — test(docs): bound authored navigation journeys by ancestry
 
