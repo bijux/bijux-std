@@ -1,5 +1,6 @@
 """Reject incomplete, stale and over-budget frontend job observations."""
 import copy
+import sys
 import tempfile
 import importlib.util
 from pathlib import Path
@@ -188,14 +189,14 @@ class FrontendJobBudgetTests(unittest.TestCase):
             catalogue = owner / 'catalogue'
             catalogue.mkdir()
             (catalogue / 'execution.py').write_text("GROUPS = {'source': ('test_source',)}\n")
-            for name in ('browser_gate.py', 'browser_partitions.py', 'browser_partitions.json', 'renderer_controls.py', 'node_events.cjs', 'persisted_reader.py'):
+            for name in ('browser_gate.py', 'browser_partitions.py', 'browser_partitions.json', 'renderer_controls.py', 'node_events.cjs', 'persisted_reader.py', 'workflow_artifacts.py', 'workflow_lineage.py', 'workflow_collection.py', 'workflow_controllers.py'):
                 (root / name).write_text(name)
             for name in ('playwright.persisted-reader-history.config.js', 'ui/generated-specs/persisted-reader-history.spec.js'):
                 path = owner / name
                 path.parent.mkdir(parents=True, exist_ok=True)
                 path.write_text(name)
             before = BUDGET.registry_digests(root / 'browser_gate.py')
-            self.assertEqual(set(before), {'browser_gate.py', 'browser_partitions.py', 'browser_partitions.json', 'renderer_controls.py', 'node_events.cjs', 'persisted_reader.py', 'playwright.persisted-reader-history.config.js', 'ui/generated-specs/persisted-reader-history.spec.js', 'catalogue/execution.py'})
+            self.assertEqual(set(before), {'browser_gate.py', 'browser_partitions.py', 'browser_partitions.json', 'renderer_controls.py', 'node_events.cjs', 'persisted_reader.py', 'workflow_artifacts.py', 'workflow_lineage.py', 'workflow_collection.py', 'workflow_controllers.py', 'playwright.persisted-reader-history.config.js', 'ui/generated-specs/persisted-reader-history.spec.js', 'catalogue/execution.py'})
             (root / 'browser_partitions.json').write_text('changed declaration')
             after = BUDGET.registry_digests(root / 'browser_gate.py')
             self.assertNotEqual(before['browser_partitions.json'], after['browser_partitions.json'])
@@ -203,6 +204,9 @@ class FrontendJobBudgetTests(unittest.TestCase):
             (catalogue / 'execution.py').write_text("GROUPS = {'renderer': ('test_renderer',)}\n")
             changed = BUDGET.registry_digests(root / 'browser_gate.py')
             self.assertNotEqual(before['catalogue/execution.py'], changed['catalogue/execution.py'])
+            for name in ('workflow_artifacts.py', 'workflow_lineage.py', 'workflow_collection.py', 'workflow_controllers.py'):
+                (root / name).write_text('changed admission source')
+                self.assertNotEqual(before[name], BUDGET.registry_digests(root / 'browser_gate.py')[name])
             (root / 'browser_partitions.py').unlink()
             with self.assertRaises(FileNotFoundError):
                 BUDGET.registry_digests(root / 'browser_gate.py')
@@ -335,6 +339,139 @@ class FrontendJobBudgetTests(unittest.TestCase):
         catalogue = text.split('  catalogue-renderer:', 1)[1].split('  publication-commands:', 1)[0]
         matrix = catalogue.split('group: [', 1)[1].split(']', 1)[0]
         self.assertEqual({'std / catalogue ' + item.strip() for item in matrix.split(',')}, BUDGET.catalogue_job_names())
+
+
+class LatestFrontendJobBudgetTests(unittest.TestCase):
+    setUp = FrontendJobBudgetTests.setUp
+
+    def observation(self):
+        path = ROOT / 'tests/bijux-docs/execution/workflow_lineage.py'
+        name = 'budget_workflow_lineage'
+        if name not in sys.modules:
+            spec = importlib.util.spec_from_file_location(name, path)
+            module = importlib.util.module_from_spec(spec)
+            sys.modules[name] = module
+            spec.loader.exec_module(module)
+        module = sys.modules[name]
+        identity = {'run_id': 123, 'attempt': 2, 'head': self.head, 'checkout_sha': self.head,
+                    'source_tree': 'c' * 40, 'workflow_id': 456,
+                    'workflow_path': '.github/workflows/bijux-std.yml', 'head_branch': 'feat/docs-reader'}
+        parent = self
+        class API:
+            repository = 'bijux/bijux-std'
+
+            def json(self, endpoint):
+                prefix = 'repos/' + self.repository + '/'
+                relative = endpoint.removeprefix(prefix)
+                if relative == 'actions/runs/123':
+                    return {'id': 123, 'run_attempt': 2, 'head_sha': parent.head,
+                            'workflow_id': 456, 'path': identity['workflow_path'], 'head_branch': identity['head_branch'],
+                            'repository': {'id': 789, 'full_name': self.repository},
+                            'head_repository': {'id': 789, 'full_name': self.repository}}
+                if relative == 'actions/workflows/456':
+                    return {'id': 456, 'path': identity['workflow_path']}
+                if relative == 'git/commits/' + parent.head:
+                    return {'sha': parent.head, 'tree': {'sha': 'c' * 40}}
+                if relative.startswith('actions/runs/123/jobs?'):
+                    rows = parent.data['jobs'] if 'filter=latest' in relative else parent.history
+                    page = int(relative.rsplit('page=', 1)[1])
+                    return copy.deepcopy({'total_count': len(rows), 'jobs': rows[(page - 1) * 100:page * 100]})
+                if relative.startswith('actions/runs/123/artifacts?'):
+                    return {'total_count': 0, 'artifacts': []}
+                if relative.startswith('actions/jobs/'):
+                    identifier = int(relative.rsplit('/', 1)[1])
+                    row = next(job for job in parent.data['jobs'] if job['id'] == identifier)
+                    return copy.deepcopy(parent.changed_jobs.get(identifier, row))
+                raise AssertionError('Unexpected API request: ' + relative)
+        self.changed_jobs = getattr(self, 'changed_jobs', {})
+        self.history = getattr(self, 'history', copy.deepcopy(self.data['jobs']))
+        return module.observe_source(API(), identity)
+
+    def verify(self):
+        return BUDGET.qualify_latest(self.observation(), groups=self.groups, engines=self.engines,
+                                    run_id=123, attempt=2, head=self.head)
+
+    def test_actual_same_attempt_api_observation_retains_complete_owned_jobs(self):
+        receipt = self.verify()
+        self.assertEqual(receipt['maximum_seconds'], 179.999)
+        self.assertEqual(receipt['collector_identity']['attempt'], 2)
+        self.assertEqual(len(receipt['selected_jobs']), len(self.data['jobs']))
+        self.assertTrue(all(row['workflow_attempt'] == 2 for row in receipt['jobs']))
+
+    def test_mixed_latest_attempts_keep_actual_identity_and_failed_history(self):
+        self.target['run_attempt'] = 1
+        failed = {**copy.deepcopy(next(job for job in self.data['jobs'] if job is not self.target)),
+                  'id': 10_001, 'run_attempt': 1, 'conclusion': 'cancelled'}
+        self.history = copy.deepcopy(self.data['jobs']) + [failed]
+        receipt = self.verify()
+        row = next(row for row in receipt['jobs'] if row['id'] == self.target['id'])
+        self.assertEqual(row['workflow_attempt'], 1)
+        self.assertEqual(receipt['collector_identity']['attempt'], 2)
+        self.assertIn(failed, receipt['execution_history'])
+        with self.assertRaisesRegex(ValueError, 'attempt or source mismatch'):
+            BUDGET.qualify(self.data, groups=self.groups, engines=self.engines, run_id=123, attempt=2, head=self.head)
+
+    def test_new_failed_cancelled_pending_or_missing_latest_cannot_hide_behind_old_success(self):
+        baseline = copy.deepcopy(self.data)
+        for status, conclusion in [('completed', 'failure'), ('completed', 'cancelled'), ('queued', None), ('in_progress', None)]:
+            with self.subTest(status=status, conclusion=conclusion):
+                self.data = copy.deepcopy(baseline)
+                row = next(job for job in self.data['jobs'] if job['id'] == self.target['id'])
+                old = {**copy.deepcopy(row), 'id': 10_001, 'run_attempt': 1}
+                row.update(status=status, conclusion=conclusion)
+                self.history = copy.deepcopy(self.data['jobs']) + [old]
+                with self.assertRaises(ValueError):
+                    self.verify()
+        self.data = copy.deepcopy(baseline)
+        self.history = copy.deepcopy(self.data['jobs'])
+        self.data['jobs'] = [job for job in self.data['jobs'] if job['id'] != self.target['id']]
+        with self.assertRaises(ValueError):
+            self.verify()
+
+    def test_all_actual_latest_jobs_rebind_authoritative_records(self):
+        self.changed_jobs = {self.target['id']: {**self.target, 'conclusion': 'cancelled'}}
+        with self.assertRaises(ValueError):
+            self.verify()
+
+    def test_collector_context_and_serialized_observations_cannot_enable_admission(self):
+        observation = self.observation()
+        for run, attempt, head in [(124, 2, self.head), (123, 3, self.head), (123, 2, 'b' * 40)]:
+            with self.subTest(run=run, attempt=attempt, head=head), self.assertRaises(ValueError):
+                BUDGET.qualify_latest(observation, groups=self.groups, engines=self.engines,
+                                     run_id=run, attempt=attempt, head=head)
+        with self.assertRaisesRegex(ValueError, 'API-created'):
+            BUDGET.qualify_latest(observation.observation, groups=self.groups, engines=self.engines,
+                                 run_id=123, attempt=2, head=self.head)
+
+    def test_strict_whole_job_boundary_and_missing_steps_apply_to_old_attempts(self):
+        self.target['run_attempt'] = 1
+        self.target['completed_at'] = '2026-01-01T00:08:00Z'
+        with self.assertRaisesRegex(ValueError, '180-second'):
+            self.verify()
+        self.target['completed_at'] = '2026-01-01T00:07:59.999Z'
+        self.target['steps'] = []
+        del self.history
+        with self.assertRaisesRegex(ValueError, 'steps'):
+            self.verify()
+
+    def test_only_current_reporting_execution_may_still_be_active(self):
+        report = next(job for job in self.data['jobs'] if job['name'] == 'std / report')
+        report.update(status='in_progress', conclusion=None, completed_at=None)
+        self.assertEqual(self.verify()['status'], 'passed')
+        report['run_attempt'] = 1
+        del self.history
+        with self.assertRaisesRegex(ValueError, 'current reporting'):
+            self.verify()
+
+    def test_failed_standard_or_contract_baseline_remains_unresolved(self):
+        for name in ('std / standard', 'std / contracts'):
+            with self.subTest(name=name):
+                row = next(job for job in self.data['jobs'] if job['name'] == name)
+                row['conclusion'] = 'failure'
+                with self.assertRaisesRegex(ValueError, 'Baseline'):
+                    self.verify()
+                row['conclusion'] = 'success'
+                del self.history
 
 
 if __name__ == '__main__':

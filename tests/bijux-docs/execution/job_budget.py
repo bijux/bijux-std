@@ -114,6 +114,11 @@ def refresh_nonterminal(payload: dict, *, fetch, groups: dict, engines: tuple | 
 def qualify(payload: dict, *, groups: dict, engines: tuple | list, run_id: int, attempt: int, head: str) -> dict:
     jobs, names = current_inventory(payload, groups=groups, engines=engines,
                                     run_id=run_id, attempt=attempt, head=head)
+    return _qualify_jobs(jobs, names, run_id=run_id, attempt=attempt, head=head)
+
+
+def _qualify_jobs(jobs: list[dict], names: set[str], *, run_id: int, attempt: int, head: str) -> dict:
+    """Apply unchanged whole-job and step duties after a source-owned admission."""
     records = []
     for job in jobs:
         if job['name'] not in names:
@@ -146,8 +151,63 @@ def qualify(payload: dict, *, groups: dict, engines: tuple | list, run_id: int, 
             'limits': ['Queue is reported separately. Provider performance is observed, not guaranteed. No browser case or release acceptance is inferred.']}
 
 
+def qualify_latest(observation, *, groups: dict, engines: tuple | list,
+                   run_id: int, attempt: int, head: str) -> dict:
+    """Qualify API-admitted latest executions while retaining every actual attempt.
+
+    Serialized audit records cannot enable this path. The observation factory
+    owns source/run admission and authoritative per-job reobservation.
+    """
+    import inspect
+    require(type(run_id) is int and run_id > 0 and type(attempt) is int and attempt > 0,
+            'Invalid requested run or attempt')
+    require(isinstance(head, str) and re.fullmatch(r'[a-f0-9]{40}', head),
+            'Full workflow source SHA is required')
+    require(type(observation).__name__ == 'SourceObservation', 'API-created source observation is required')
+    require(Path(inspect.getfile(type(observation).__init__)).resolve() == Path(__file__).with_name('workflow_lineage.py').resolve(),
+            'Source observation must come from the owned lineage factory')
+    identity = observation.identity
+    require(identity.get('run_id') == run_id and identity.get('attempt') == attempt and identity.get('head') == head,
+            'Latest observation run, collector attempt or source mismatch')
+    names = expected_job_names(groups, engines)
+    expected = names | BASELINE_JOBS
+    snapshot = observation.observation
+    latest = snapshot['latest']
+    history = snapshot['history']
+    require(latest['total_count'] == len(latest['jobs']) and history['total_count'] == len(history['jobs']),
+            'Incomplete latest/history API inventory')
+    require(len(latest['jobs']) == len(expected) and {job.get('name') for job in latest['jobs']} == expected,
+            'Missing or unexpected latest job name')
+    jobs = observation.verify_jobs(expected, workers=8)
+    require(len(jobs) == len(expected) and {job.get('name') for job in jobs} == expected
+            and len({job.get('id') for job in jobs}) == len(jobs), 'Latest job admission is incomplete or duplicated')
+    require(all(job.get('run_id') == run_id and job.get('head_sha') == head
+                and type(job.get('run_attempt')) is int and 0 < job['run_attempt'] <= attempt for job in jobs),
+            'Admitted latest job run, source or attempt mismatch')
+    for job in jobs:
+        if job['name'] in BASELINE_JOBS:
+            if job['name'] == 'std / report' and job.get('status') == 'in_progress':
+                require(job.get('run_attempt') == attempt and job.get('conclusion') is None,
+                        'Only the actual current reporting execution may remain active')
+            else:
+                require(job.get('status') == 'completed' and job.get('conclusion') == 'success',
+                        'Baseline standard, contracts and report must be terminal-success')
+    receipt = _qualify_jobs(jobs, names, run_id=run_id, attempt=attempt, head=head)
+    attempts = {job['id']: job['run_attempt'] for job in jobs}
+    for row in receipt['jobs']:
+        row['workflow_attempt'] = attempts[row['id']]
+    receipt['attempt_scope'] = 'actual-latest-execution-per-source-owned-job'
+    receipt['collector_identity'] = identity
+    receipt['selected_jobs'] = [{key: job[key] for key in ('id', 'name', 'run_id', 'run_attempt', 'head_sha')}
+                                for job in sorted(jobs, key=lambda row: row['name'])]
+    receipt['execution_history'] = history['jobs']
+    receipt['api_inventory_sha256'] = {key: hashlib.sha256(json.dumps(snapshot[key], sort_keys=True,
+        separators=(',', ':'), ensure_ascii=False).encode()).hexdigest() for key in ('latest', 'history')}
+    return receipt
+
+
 def registry_digests(registry_path: Path) -> dict[str, str]:
-    names = ('browser_gate.py', 'browser_partitions.py', 'browser_partitions.json', 'renderer_controls.py', 'node_events.cjs', 'persisted_reader.py')
+    names = ('browser_gate.py', 'browser_partitions.py', 'browser_partitions.json', 'renderer_controls.py', 'node_events.cjs', 'persisted_reader.py', 'workflow_artifacts.py', 'workflow_lineage.py', 'workflow_collection.py', 'workflow_controllers.py')
     digests = {name: hashlib.sha256(registry_path.with_name(name).read_bytes()).hexdigest() for name in names}
     for name in ('playwright.persisted-reader-history.config.js', 'ui/generated-specs/persisted-reader-history.spec.js'):
         digests[name] = hashlib.sha256((registry_path.parent.parent / name).read_bytes()).hexdigest()
@@ -158,7 +218,9 @@ def registry_digests(registry_path: Path) -> dict[str, str]:
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('--jobs-json', type=Path, required=True)
+    inputs = parser.add_mutually_exclusive_group(required=True)
+    inputs.add_argument('--jobs-json', type=Path)
+    inputs.add_argument('--observe-latest', action='store_true', help='Observe actual source-owned latest executions through GitHub read-only API')
     parser.add_argument('--run-id', type=int, required=True)
     parser.add_argument('--attempt', type=int, required=True)
     parser.add_argument('--workflow-head', required=True)
@@ -168,9 +230,40 @@ def main() -> int:
         registry_path = Path(__file__).with_name('browser_gate.py')
         registry = {'__name__': 'budget_registry', '__file__': str(registry_path)}
         exec(compile(registry_path.read_text(), str(registry_path), 'exec'), registry)
-        receipt = qualify(json.loads(args.jobs_json.read_text()), groups=registry['GROUPS'], engines=registry['ENGINES'],
-                          run_id=args.run_id, attempt=args.attempt, head=args.workflow_head)
-        receipt['input_sha256'] = hashlib.sha256(args.jobs_json.read_bytes()).hexdigest()
+        if args.observe_latest:
+            import os
+            import sys
+            from types import ModuleType
+            path = Path(__file__).with_name('workflow_lineage.py')
+            lineage = ModuleType('budget_workflow_lineage')
+            lineage.__file__ = str(path)
+            sys.modules[lineage.__name__] = lineage
+            exec(compile(path.read_bytes(), str(path), 'exec'), lineage.__dict__)
+            collection_path = path.with_name('workflow_collection.py')
+            collection = ModuleType('budget_workflow_collection')
+            collection.__file__ = str(collection_path)
+            exec(compile(collection_path.read_bytes(), str(collection_path), 'exec'), collection.__dict__)
+            api = lineage.ARTIFACTS.GitHubAPI(os.environ['GITHUB_REPOSITORY'], os.environ['GH_TOKEN'])
+            context = collection.context_from_environment(api, args.workflow_head)
+            if context['run_id'] != args.run_id or context['attempt'] != args.attempt:
+                raise ValueError('Requested budget run/attempt differs from actual runner identity')
+            observation = lineage.observe_source(api, context)
+            args.output.parent.mkdir(parents=True, exist_ok=True)
+            raw = args.output.parent / 'source-observation.json'
+            raw.write_text(json.dumps(observation.observation, indent=2) + '\n')
+            try:
+                receipt = qualify_latest(observation, groups=registry['GROUPS'], engines=registry['ENGINES'],
+                                         run_id=args.run_id, attempt=args.attempt, head=args.workflow_head)
+                require(collection.checkout_state() == {key: context[key] for key in ('checkout_sha', 'source_tree')},
+                        'Actual source changed during budget observation')
+            finally:
+                (args.output.parent / 'owner-observation.json').write_text(json.dumps(observation.export_record(), indent=2) + '\n')
+            (args.output.parent / 'jobs-selected.json').write_text(json.dumps(receipt['selected_jobs'], indent=2) + '\n')
+            receipt['input_sha256'] = hashlib.sha256(raw.read_bytes()).hexdigest()
+        else:
+            receipt = qualify(json.loads(args.jobs_json.read_text()), groups=registry['GROUPS'], engines=registry['ENGINES'],
+                              run_id=args.run_id, attempt=args.attempt, head=args.workflow_head)
+            receipt['input_sha256'] = hashlib.sha256(args.jobs_json.read_bytes()).hexdigest()
         receipt['registry_sha256'] = hashlib.sha256(registry_path.read_bytes()).hexdigest()
         receipt['registry_files_sha256'] = registry_digests(registry_path)
     except (ValueError, KeyError, TypeError, OSError) as error:
@@ -178,7 +271,7 @@ def main() -> int:
     receipt['requested_workflow_run_id'] = args.run_id
     receipt['requested_workflow_attempt'] = args.attempt
     receipt['requested_workflow_head'] = args.workflow_head
-    if args.jobs_json.is_file():
+    if args.jobs_json is not None and args.jobs_json.is_file():
         receipt['input_sha256'] = hashlib.sha256(args.jobs_json.read_bytes()).hexdigest()
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(json.dumps(receipt, indent=2) + '\n')

@@ -105,7 +105,9 @@ def validate_pair(clean: dict, fault: dict):
 
 def browser(engine: str):
     gate = load(TESTS / 'execution/browser_gate.py', 'browser_gate')
-    gate.verify_producer_envelope()
+    controllers = gate.workflow_controllers()
+    collection = controllers.collect('producer') if controllers.recovery() else None
+    producer = gate.verify_producer_envelope(collection.producer if collection is not None else None)
     gate.unpack()
     gate.install_browser_runtime()
     folder = OUT / engine
@@ -139,6 +141,7 @@ def browser(engine: str):
           'workflow_run_id': os.environ.get('GITHUB_RUN_ID'),
           'workflow_attempt': os.environ.get('GITHUB_RUN_ATTEMPT'),
           'commands': commands, 'files': hashes(folder), 'status': 'passed'})
+    controllers.record_execution(folder, 'fault-' + engine, producer)
 
 
 def public(python: Path):
@@ -208,21 +211,25 @@ def public(python: Path):
           'verification_only': True, 'publication_admission': False, 'commands': commands, 'files': hashes(folder)})
 
 
-def aggregate():
+def aggregate(collection=None):
+    if collection is not None:
+        load(TESTS / 'execution/workflow_controllers.py', 'fault_workflow_controllers').require_collection(collection)
     current = source()
     inventories, clean, fault = [], [], []
     for owner in (*ENGINES, 'public'):
         folder = OUT / owner
         receipt = json.loads((folder / 'receipt.json').read_text())
-        if receipt['source'] != current or receipt['status'] != 'passed' or any(
-            receipt[key] != os.environ.get(env) for key, env in
-            (('workflow_run_id', 'GITHUB_RUN_ID'), ('workflow_attempt', 'GITHUB_RUN_ATTEMPT'))):
+        identity = collection.inputs['fault-public' if owner == 'public' else 'fault-' + owner].workflow_identity() if collection is not None else {
+            'workflow_run_id': os.environ.get('GITHUB_RUN_ID'), 'workflow_attempt': os.environ.get('GITHUB_RUN_ATTEMPT')}
+        if receipt['source'] != current or receipt['status'] != 'passed' or any(receipt[key] != value for key, value in identity.items()):
             raise ValueError('Current source/run fault receipt is required: ' + owner)
         for name, expected in receipt['files'].items():
             if hashlib.sha256((folder / name).read_bytes()).hexdigest() != expected:
                 raise ValueError('Fault artifact digest changed: ' + owner + '/' + name)
         if owner == 'public':
             continue
+        if collection is not None:
+            load(TESTS / 'execution/workflow_controllers.py', 'fault_workflow_controllers').verify_execution(collection, 'fault-' + owner, folder)
         inventory = json.loads((folder / 'inventory.json').read_text())
         if inventory['source_identity'] != current:
             raise ValueError('Fault inventory does not bind current source')
