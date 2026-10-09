@@ -6,14 +6,22 @@ This file records notable repository-level changes for `bijux-std`.
 
 ### Pending review
 
-#### [#226](https://github.com/bijux/bijux-std/pull/226) — fix(docs): admit reviewed revision history capability
+#### [#231](https://github.com/bijux/bijux-std/pull/231) — fix(docs): bind reviewed historical asset migration to source evidence
+
+Allow the explicitly reviewed old44 script-list migration when its standard predates the canonical baseline file.
+
+- Bind the full predecessor and twelve actual source hashes to the accepted registry.
+- Distinguish nine shared destinations from the authored external-link predecessor; preserve rejection of custom order, comments, attributes and unknown missing baselines.
+
+### Merged pull requests
+
+#### 2026-10-09T03:07:07Z — [#226](https://github.com/bijux/bijux-std/pull/226) — fix(docs): admit reviewed revision history capability
 
 Preserve the existing Canon revision-date plugin while validating its real Git history and callback ownership.
 
 - Admit revision-date-localized 1.5.1 after payload comparison with the reviewed 1.5.3 implementation.
 - Test version boundaries, registered callback inputs and tracked-history ownership; keep renderer-profile approval separate.
 
-### Merged pull requests
 
 #### 2026-10-09T02:38:35Z — [#225](https://github.com/bijux/bijux-std/pull/225) — test(docs): require frontend fault rejection in navigation ci
 
