@@ -148,6 +148,11 @@
       {
         "suite": "search-reflow-desktop"
       }
+    ],
+    "native-reader-history": [
+      {
+        "suite": "native-reader-history"
+      }
     ]
   }
 }

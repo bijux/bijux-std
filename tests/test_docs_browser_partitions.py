@@ -33,9 +33,9 @@ def inventories() -> dict:
 class BrowserPartitionTests(unittest.TestCase):
     def test_all_canonical_projects_have_exactly_one_owner(self) -> None:
         assignments = PARTITIONS.plan(inventories())
-        self.assertEqual(len(PARTITIONS.GROUPS), 24)
-        self.assertEqual(len(PARTITIONS.SUITES), 21)
-        self.assertEqual(len(assignments), 81)
+        self.assertEqual(len(PARTITIONS.GROUPS), 25)
+        self.assertEqual(len(PARTITIONS.SUITES), 22)
+        self.assertEqual(len(assignments), 84)
         claimed = [(suite, name) for (_, suite), names in assignments.items() for name in names]
         expected = [(suite, project['name']) for suite, data in inventories().items() for project in data['canonical_projects']]
         self.assertCountEqual(claimed, expected)
@@ -43,6 +43,9 @@ class BrowserPartitionTests(unittest.TestCase):
         self.assertEqual(assignments[('navigation-compact-webkit', 'navigation')], ['webkit-compact'])
         self.assertEqual(assignments[('search-scope-desktop-firefox', 'search-scope')], ['firefox-desktop'])
         self.assertEqual(assignments[('navigation-controls-chromium', 'drawer')], ['chromium-phone'])
+        for engine in PARTITIONS.ENGINES:
+            self.assertEqual(assignments[(f'native-reader-history-{engine}', 'native-reader-history')],
+                             [f'{engine}-phone'])
 
     def test_workflow_jobs_match_registry_and_keep_budget(self) -> None:
         workflow = (ROOT / '.github/workflows/bijux-std.yml').read_text()
@@ -53,7 +56,7 @@ class BrowserPartitionTests(unittest.TestCase):
         self.assertEqual(engines, list(PARTITIONS.ENGINES))
         self.assertIn('timeout-minutes: 3', job)
         self.assertIn('fail-fast: false', job)
-        self.assertEqual(len(groups) * len(engines), 72)
+        self.assertEqual(len(groups) * len(engines), 75)
 
     def test_contrast_profiles_preserve_all_thirty_nine_canonical_cases(self) -> None:
         data = inventories()

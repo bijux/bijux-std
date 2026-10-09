@@ -43,10 +43,17 @@ function documentFixture(source, {empty = false, vendor = true} = {}) {
     body: {getAttribute() { return scheme; }},
     createElement(tag) { return new Element(tag); },
     querySelectorAll() { return nodes.filter(node => node.isConnected); },
+    querySelector() { return nodes.find(node => node.isConnected && node.localName === 'figure') || null; },
+    addEventListener(name, handler) { events.set(`document:${name}`, handler); },
     importNode(node) { return node; },
     head: {appendChild(script) { scripts.push(script); queueMicrotask(() => { if (vendor) { window.mermaid = api; script.onload(); } else script.onerror(); }); }},
   };
-  const context = { window, document, URL, setTimeout() { return 1; }, clearTimeout() {},
+  const context = { window, document, URL,
+    location: new URL('https://example.invalid/reader/'),
+    history: {state: null, replaceState(state) { this.state = state; }},
+    performance: {getEntriesByType() { return [{type: 'navigate'}]; }},
+    requestAnimationFrame(callback) { queueMicrotask(callback); },
+    setTimeout() { return 1; }, clearTimeout() {},
     DOMParser: class { parseFromString(svg) { const root = new Element('svg'); root.textContent = svg; return {body: {firstElementChild: root, children: [root]}}; } },
   };
   vm.runInNewContext(source, context, {timeout: 1000});

@@ -239,3 +239,20 @@ invoker inventories. Native browser character defaults are observed rather than
 replaced with scripted focus or state changes. Material runtime emission parses
 the entire final generated script before writing assets; malformed output cannot
 replace the previous valid bundle.
+
+## Native diagram reader restoration
+
+`make ui-test-native-reader-history` exercises three cases in each Chromium,
+Firefox and WebKit phone profile, nine cases total. The generated long diagram
+reader authors an internal `target="_self"` link: Material preserves this native
+same-window navigation while the ordinary link to the same destination retains
+instant navigation. Back/Forward must preserve the full URL, exact source and
+visible departure link after diagram layout. A delayed owned renderer response
+permits real wheel input to cancel deferred position restoration. Its passive
+scroll-call observer delegates every original call and never assigns position.
+
+The existing 27 history and 36 diagram cases remain required. The independent
+`native-reader-history` group retains the strict three-minute whole-job limit;
+actual hosted job metadata qualifies that limit separately from local case
+timing. These browser cases do not qualify manual devices, OS keyboard access,
+all authored opt-ins, accepted publication profiles or production URLs.
