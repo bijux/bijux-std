@@ -12,6 +12,11 @@ Enforce reviewed declaration priorities, unlayered shared styles and a closed im
 
 ### Merged pull requests
 
+#### 2026-10-09T21:51:39Z — [#257](https://github.com/bijux/bijux-std/pull/257) — fix(docs): validate public artifact redirect and asset destinations
+
+Reject redirect cycles and private destinations, normalize Unicode hostname boundaries, and validate responsive, stylesheet and SVG resources against actual public assets and symbols. Preserve harmless scientific SVG metadata while refusing internal entity authority.
+
+
 #### 2026-10-09T21:28:33Z — [#253](https://github.com/bijux/bijux-std/pull/253) — fix(docs): retain native reader context after diagram layout changes
 
 Preserve authored reading context through diagram layout changes and native history, defer restoration until pageshow, and yield palette callbacks to trusted reader input. Retain source inspection across proven cached entries using a private entry-bound snapshot, with a required full-Chromium native cache qualification alongside the unchanged three-engine history cases.
