@@ -79,6 +79,27 @@ class PublicSiteRouteTests(unittest.TestCase):
         path.write_text(path.read_text().replace(self.url,'http://bijux.io/bijux-core/'))
         self.assert_rejected('redirect canonical does not reach a built route')
 
+    def test_nested_relative_redirect_canonical_identifies_the_built_destination(self):
+        self.write('retired/nested/index.html', '<html><head><link rel="canonical" '
+                   'href="../../guide/"><meta http-equiv="refresh" '
+                   'content="0; url=../../guide/"></head></html>')
+        self.assertEqual(self.report()['errors'], [])
+        self.assertEqual(self.report()['result'], 'pass')
+
+    def test_relative_redirect_canonical_cannot_escape_or_misidentify_the_destination(self):
+        for target in ('../../outside/', '../missing/', 'http://127.0.0.1/guide/',
+                       'https://other.example/guide/', '../guide/?variant=1', '../guide/#use'):
+            with self.subTest(target=target):
+                self.write('retired/index.html', '<html><head><link rel="canonical" '
+                           'href="' + target + '"><meta http-equiv="refresh" '
+                           'content="0; url=' + target + '"></head></html>')
+                self.assert_rejected('redirect canonical does not reach a built route')
+
+    def test_relative_canonical_remains_invalid_on_an_ordinary_content_route(self):
+        path = self.site/'guide/index.html'
+        path.write_text(path.read_text().replace(self.url+'guide/', './'))
+        self.assert_rejected('canonical must identify this production route')
+
     def test_encoded_hostname_and_browser_backslash_cannot_bypass_public_url_check(self):
         original=(self.site/'index.html').read_text()
         for url in ('https://%31%32%37.0.0.1/', 'https://example.com:wrong/', 'https:\\\\127.0.0.1\\example'):
