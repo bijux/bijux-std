@@ -57,7 +57,7 @@ class CanonicalVerificationWorkflowTests(unittest.TestCase):
             file=Path(workspace)/'source-bootstrap.sh';file.write_text(script)
             subprocess.run(['bash','-n',str(file)],check=True,capture_output=True)
 
-    def test_actual_candidate_cli_checks_read_only_and_reports_parser_false(self):
+    def test_actual_candidate_cli_checks_read_only_and_requires_foundation_parser(self):
         with tempfile.TemporaryDirectory() as workspace:
             source, owned, sha, _ = committed_fixture(workspace)
             # Prepare governed outputs in this owning source fixture before binding a new source commit.
@@ -75,7 +75,7 @@ class CanonicalVerificationWorkflowTests(unittest.TestCase):
             self.assertIn('candidate-only',full.stdout)
             parser=subprocess.run(command+['--requires-parser'],env=env,capture_output=True,text=True)
             self.assertEqual(parser.returncode,0,parser.stderr)
-            self.assertEqual(parser.stdout.strip(),'false')
+            self.assertEqual(parser.stdout.strip(),'true')
             self.assertEqual(before,byte_tree(source))
             self.assertEqual(subprocess.check_output(['git','-C',str(source),'status','--porcelain'],text=True),'')
 

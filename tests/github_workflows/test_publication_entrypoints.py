@@ -64,6 +64,17 @@ class ControllerPublicationTests(unittest.TestCase):
     def policy(self):
         return {"schema": 1, "publication_entrypoints": {"release-pypi": {"mode": "manual-only", "controller": "iac"}}}
 
+    def test_explicitly_publisher_free_repositories_reject_canonical_and_renamed_calls(self):
+        policy = {"schema": 1, "publication_entrypoints": {}}
+        self.assertTrue(MODULE.requires_publication_projection(policy))
+        for job in [{"uses": "bijux/bijux-canon/.github/workflows/release-pypi.yml@main"},
+                    {"steps": [{"run": "gh release create v1.2.3"}]},
+                    {"steps": [{"uses": "actions/deploy-pages@" + "a" * 40}]}]:
+            with self.subTest(job=job), self.assertRaises(ValueError):
+                MODULE.validate_publication_calls({".github/workflows/shipping.yml": {"jobs": {"ship": job}}}, policy)
+        MODULE.validate_publication_calls({"ci.yml": {"jobs": {"evidence": {"steps": [
+            {"uses": "actions/upload-artifact@" + "a" * 40}, {"run": "cargo publish --dry-run"}]}}}}, policy)
+
     def test_pypi_credentials_depend_on_read_only_authenticated_admission(self):
         source = {"on": {"workflow_dispatch": {"inputs": {"release_tag": {"type": "string"}}}, "workflow_call": None},
                   "jobs": {"publish": {"runs-on": "ubuntu-latest", "env": {"PYPI_TOKEN": "${{ secrets.PYPI_TOKEN }}"},
