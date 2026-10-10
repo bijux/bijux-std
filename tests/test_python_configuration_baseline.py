@@ -60,7 +60,7 @@ dev = ["ruff>=0.13,<1.0", "mypy>=1.18,<3.0", "pytest>=9,<10"]
                     "engines": {"node": ">=22.12.0"},
                     "devDependencies": {
                         "@openapitools/openapi-generator-cli": "2.41.0",
-                        "@redocly/cli": "2.47.0",
+                        "@redocly/cli": "2.58.1",
                     },
                 }
             ),
@@ -93,6 +93,13 @@ setenv =
 
     def test_accepts_repository_owned_configuration_inside_shared_envelopes(self) -> None:
         self.assertEqual(self.validate(), [])
+
+    def test_rejects_openapi_tool_versions_outside_baseline(self) -> None:
+        path = self.fixture / "configs/package.json"
+        package = json.loads(path.read_text(encoding="utf-8"))
+        package["devDependencies"]["@redocly/cli"] = "0.0.0"
+        path.write_text(json.dumps(package), encoding="utf-8")
+        self.assertTrue(any("redocly" in error.lower() for error in self.validate()))
 
     def test_rejects_unbounded_python_and_tool_support(self) -> None:
         path = self.fixture / "packages/example/pyproject.toml"

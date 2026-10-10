@@ -4,7 +4,21 @@ This file records notable repository-level changes for `bijux-std`.
 
 ## Pull request history
 
+### Unreleased
+
+Admit all fifteen preserved Proteomics public install surfaces to build, PyPI, and GHCR matrices with explicit runtime, library, and compatibility roles. Verify all sixteen owned package profiles, including development governance, and remove unsupported package documentation defaults while retaining repository documentation publication qualification.
+
+Request merge commits for reviewed safe dependency automation, preserving original ancestry under the admitted merge-only repository settings.
+
+Verify Python repository governance through its independently fetched, exact GitHub standards pin. Compare canonical projected workflow bytes without rendering, copying, or restoring product files.
+
+Use the repository-owned OpenAPI package manifest and lock for strict sandbox installation, reject unreviewed dependency fallback, and invalidate installed tools when either reviewed input changes. Align API workflows with Node 24.21.0, setup-java v6.0.1, and the Redocly 2.58.1 configuration baseline.
+
 ### Merged pull requests
+
+#### 2026-10-10T22:49:23Z — [#277](https://github.com/bijux/bijux-std/pull/277) — docs(governance): explain publication admission and reconcile accepted history
+
+Document manual publication admission and accepted documentation source bootstrap, reconcile verified merge dates, and preserve the original accepted action-pin history.
 
 #### 2026-10-10T21:43:13Z — [#276](https://github.com/bijux/bijux-std/pull/276) — fix(docs): admit exact accepted standards before publication builds
 

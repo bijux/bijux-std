@@ -1,6 +1,8 @@
 from __future__ import annotations
 
+import json
 import os
+import runpy
 import shutil
 import subprocess
 import unittest
@@ -74,16 +76,38 @@ class SharedStandardCapabilityTests(unittest.TestCase):
         shared_make = (
             REPOSITORY_ROOT / "shared/bijux-makes-py/bijux.mk"
         ).read_text(encoding="utf-8")
-        rendered_block, required_block = shared_make.split(
+        required_block = shared_make.split(
             "BIJUX_STANDARD_REQUIRED_FILES ?=", maxsplit=1
+        )[1]
+        renderer = runpy.run_path(
+            str(REPOSITORY_ROOT / ".github/scripts/render_repo_configs.py")
+        )
+        manifest = json.loads(
+            (REPOSITORY_ROOT / ".github/standards/repo-config.manifest.json").read_text()
         )
 
-        for path in (
-            ".github/required-status-checks.md",
-            ".github/rulesets/main-branch-protection.json",
+        for repository in (
+            "bijux-canon", "bijux-proteomics", "bijux-pollenomics", "bijux-phylogenetics"
         ):
-            self.assertIn(path, rendered_block)
-            self.assertNotIn(path.removeprefix(".github/"), required_block)
+            configured = renderer["find_repo_config"](manifest, repository)
+            context = f"verification / {repository} product contract"
+            configured.setdefault("additional_required_status_checks", []).append(
+                {"context": context, "workflow": "verify"}
+            )
+            rendered = renderer["prepare_repo_files"](repository, manifest)
+            for path in (
+                ".github/required-status-checks.md",
+                ".github/rulesets/main-branch-protection.json",
+            ):
+                with self.subTest(repository=repository, path=path):
+                    self.assertIsInstance(rendered[path], bytes)
+                    self.assertIn(context.encode(), rendered[path])
+                    source = (
+                        REPOSITORY_ROOT / "shared/bijux-gh"
+                        / path.removeprefix(".github/")
+                    )
+                    self.assertNotEqual(rendered[path], source.read_bytes())
+                    self.assertNotIn(path.removeprefix(".github/"), required_block)
 
     def test_python_security_evidence_fails_closed_without_suppressions(self) -> None:
         shared_root = REPOSITORY_ROOT / "shared/bijux-makes-py"

@@ -331,7 +331,7 @@ class RenderRepoConfigsTests(unittest.TestCase):
             "actions/setup-python": "5fda3b95a4ea91299a34e894583c3862153e4b97",
             "astral-sh/setup-uv": "c18668ad3cf93ea998bef934396af7bb5c839dc7",
             "actions/setup-node": "949feb2413d6458794dcd2491c4babbbce0c15c1",
-            "actions/setup-java": "03ad4de0992f5dab5e18fcb136590ce7c4a0ac95",
+            "actions/setup-java": "de7274f081f381c8f8158605e0321c36c376e2e6",
         }
 
         for repository in manifest["repositories"]:
@@ -346,6 +346,28 @@ class RenderRepoConfigsTests(unittest.TestCase):
                                     f"{name}@{revision}",
                                     f"{repository['name']} uses a stale {name} revision",
                                 )
+
+    def test_python_api_node_runtime_satisfies_openapi_baseline(self) -> None:
+        import tomllib
+
+        baseline_path = MANIFEST_PATH.parents[2] / "shared/bijux-makes-py/config/python-baseline.toml"
+        baseline = tomllib.loads(baseline_path.read_text(encoding="utf-8"))
+        minimum = tuple(int(part) for part in baseline["openapi"]["node"].removeprefix(">=").split("."))
+        manifest = json.loads(MANIFEST_PATH.read_text(encoding="utf-8"))
+        admitted_repositories = set()
+        for repository in manifest["repositories"]:
+            for wrapper in repository.get("workflow_wrappers", {}).values():
+                for job in wrapper.get("jobs", {}).values():
+                    for step in job.get("steps", []):
+                        if not step.get("uses", "").startswith("actions/setup-node@"):
+                            continue
+                        if "api_toolchain_targets" not in step.get("if", ""):
+                            continue
+                        runtime = str(step["with"]["node-version"])
+                        self.assertEqual(len(runtime.split(".")), 3, "API tooling requires an immutable Node version")
+                        self.assertGreaterEqual(tuple(int(part) for part in runtime.split(".")), minimum)
+                        admitted_repositories.add(repository["name"])
+        self.assertEqual(admitted_repositories, {"bijux-pollenomics", "bijux-proteomics", "bijux-phylogenetics"})
 
     def test_rust_repositories_expose_foundational_ci_gates(self) -> None:
         manifest = json.loads(MANIFEST_PATH.read_text(encoding="utf-8"))
