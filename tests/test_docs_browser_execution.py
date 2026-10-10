@@ -9,7 +9,9 @@ from pathlib import Path
 import tarfile
 import tempfile
 import unittest
-from unittest.mock import patch
+from contextlib import ExitStack, contextmanager
+from types import SimpleNamespace
+from unittest.mock import Mock, patch
 
 ROOT = Path(__file__).resolve().parents[1]
 SPEC = importlib.util.spec_from_file_location('browser_gate', ROOT / 'tests/bijux-docs/execution/browser_gate.py')
@@ -122,6 +124,145 @@ class FixtureTransferTests(unittest.TestCase):
                 (root / 'producer-envelope.json').write_text(json.dumps(receipt))
                 with self.assertRaisesRegex(ValueError, 'workflow/candidate identity mismatch'):
                     GATE.verify_producer_envelope()
+
+
+class RecoveryProducerOrderTests(unittest.TestCase):
+    """Exercise cold entry ordering without claiming API or browser qualification."""
+
+    def materialize(self, root: Path) -> None:
+        profiles = {}
+        for entries in GATE.PARTITIONS.REGISTRY['groups'].values():
+            for entry in entries:
+                profiles.setdefault(entry['suite'], set()).add(entry.get('profile', 'phone'))
+        for suite, selected in profiles.items():
+            projects = [{'name': f'{engine}-{profile}', 'engine': engine, 'count': 1}
+                        for engine in GATE.ENGINES for profile in sorted(selected)]
+            path = root / 'inventories' / f'{suite}.json'
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_text(json.dumps({'canonical_projects': projects,
+                'cases': [{'id': suite + '/' + project['name'], 'project': project['name']}
+                          for project in projects]}))
+        (root / 'producer-envelope.json').write_text('{"controlled": "producer"}')
+
+    @contextmanager
+    def execution(self, *, recovery=True, collection_error=None, verification_error=None):
+        with tempfile.TemporaryDirectory(dir=ROOT / 'artifacts') as directory, ExitStack() as stack:
+            root = Path(directory)
+            events = []
+            member = object()
+            collection = SimpleNamespace(producer=member)
+            original_plan = GATE.partition_plan
+
+            def collect(stage):
+                events.append('collect')
+                self.assertEqual(stage, 'producer')
+                self.assertFalse((root / 'inventories').exists())
+                if collection_error:
+                    raise ValueError(collection_error)
+                self.materialize(root)
+                return collection
+
+            def verify(admission):
+                events.append('verify')
+                self.assertIs(admission, member if recovery else None)
+                self.assertTrue((root / 'producer-envelope.json').is_file())
+                if verification_error:
+                    raise ValueError(verification_error)
+                return {'controlled': 'verified producer'}
+
+            def plan():
+                events.append('partition')
+                return original_plan()
+
+            def native(*args, **kwargs):
+                events.append('native')
+                return SimpleNamespace(returncode=0)
+
+            controllers = SimpleNamespace(recovery=lambda: recovery,
+                collect=Mock(side_effect=collect), record_execution=Mock(side_effect=lambda *a: events.append('record')))
+            if not recovery:
+                self.materialize(root)
+            stack.enter_context(patch.dict(GATE.os.environ, {}, clear=True))
+            stack.enter_context(patch.object(GATE, 'ARTIFACTS', root))
+            loader = stack.enter_context(patch.object(GATE, 'workflow_controllers', return_value=controllers))
+            verifier = stack.enter_context(patch.object(GATE, 'verify_producer_envelope', side_effect=verify))
+            planner = stack.enter_context(patch.object(GATE, 'partition_plan', side_effect=plan))
+            unpack = stack.enter_context(patch.object(GATE, 'unpack', side_effect=lambda: events.append('unpack')))
+            install = stack.enter_context(patch.object(GATE, 'install_browser_runtime', side_effect=lambda: events.append('install')))
+            runner = stack.enter_context(patch.object(GATE.subprocess, 'run', side_effect=native))
+            yield SimpleNamespace(root=root, events=events, controllers=controllers,
+                loader=loader, verifier=verifier, planner=planner, unpack=unpack, install=install, runner=runner)
+
+    def test_cold_recovery_materializes_verified_producer_before_actual_partition_reads(self):
+        with self.execution() as observed:
+            self.assertFalse((observed.root / 'inventories').exists())
+            GATE.run('navigation-destinations', 'firefox')
+            self.assertEqual(observed.events[:5], ['collect', 'verify', 'partition', 'unpack', 'install'])
+            self.assertEqual(observed.events[5:], ['native', 'record'])
+            observed.controllers.collect.assert_called_once_with('producer')
+
+    def test_first_attempt_verifies_downloaded_producer_without_api_collection(self):
+        with self.execution(recovery=False) as observed:
+            GATE.run('navigation-destinations', 'chromium')
+            observed.controllers.collect.assert_not_called()
+            self.assertEqual(observed.events[:4], ['verify', 'partition', 'unpack', 'install'])
+            self.assertEqual(observed.events[4:], ['native', 'record'])
+
+    def test_admission_failure_prevents_inventory_reads_unpack_install_and_native_execution(self):
+        with self.execution(collection_error='Controlled producer admission refused') as observed:
+            with self.assertRaisesRegex(ValueError, 'producer admission refused'):
+                GATE.run('navigation-destinations', 'firefox')
+            self.assertEqual(observed.events, ['collect'])
+            for operation in (observed.verifier, observed.planner, observed.unpack, observed.install, observed.runner):
+                operation.assert_not_called()
+            self.assertFalse((observed.root / 'inventories').exists())
+            observed.controllers.record_execution.assert_not_called()
+
+    def test_producer_verification_failure_prevents_partition_and_native_execution(self):
+        with self.execution(verification_error='Controlled producer digest refused') as observed:
+            with self.assertRaisesRegex(ValueError, 'producer digest refused'):
+                GATE.run('navigation-destinations', 'webkit')
+            self.assertEqual(observed.events, ['collect', 'verify'])
+            for operation in (observed.planner, observed.unpack, observed.install, observed.runner):
+                operation.assert_not_called()
+            observed.controllers.record_execution.assert_not_called()
+
+    def test_invalid_assignment_refuses_before_collection_or_cold_inventory_reads(self):
+        for group, engine in [('unknown-group', 'firefox'), ('navigation-destinations', 'unknown-engine')]:
+            with self.subTest(group=group, engine=engine), self.execution() as observed:
+                with self.assertRaisesRegex(ValueError, 'Unknown assigned'):
+                    GATE.run(group, engine)
+                self.assertEqual(observed.events, [])
+                observed.loader.assert_not_called()
+                observed.runner.assert_not_called()
+
+    def test_external_selection_refuses_before_collection_and_native_execution(self):
+        for variable in ('BIJUX_UI_BROWSER_ENGINE', 'BIJUX_UI_PROJECTS', 'BIJUX_UI_PROFILE'):
+            with self.subTest(variable=variable), self.execution() as observed:
+                with patch.dict(GATE.os.environ, {variable: 'external'}), self.assertRaisesRegex(ValueError, 'assigned group/engine'):
+                    GATE.run('navigation-destinations', 'firefox')
+                self.assertEqual(observed.events, [])
+                observed.loader.assert_not_called()
+                observed.runner.assert_not_called()
+
+    def test_verified_materialization_still_requires_actual_partition_coverage(self):
+        with self.execution() as observed:
+            collect = observed.controllers.collect.side_effect
+            def incomplete(stage):
+                result = collect(stage)
+                path = observed.root / 'inventories/navigation-destinations.json'
+                inventory = json.loads(path.read_text())
+                inventory['cases'].pop()
+                path.write_text(json.dumps(inventory))
+                return result
+            observed.controllers.collect.side_effect = incomplete
+            with self.assertRaisesRegex(ValueError, 'case/project mismatch|case count mismatch'):
+                GATE.run('navigation-destinations', 'firefox')
+            self.assertEqual(observed.events, ['collect', 'verify', 'partition'])
+            observed.unpack.assert_not_called()
+            observed.install.assert_not_called()
+            observed.runner.assert_not_called()
+            observed.controllers.record_execution.assert_not_called()
 
 
 if __name__ == '__main__':
