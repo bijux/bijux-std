@@ -97,8 +97,15 @@ class GitHubAPI:
                 return error.code, {'Location': location}, b''
             # Provider error bodies/URLs may contain credentials or signed query strings.
             code = error.code
+            origin = 'GitHub API' if authenticated else 'artifact CDN'
+            details = []
+            for name in ('X-RateLimit-Remaining', 'X-RateLimit-Reset', 'Retry-After'):
+                value = error.headers.get(name)
+                if isinstance(value, str) and value.isdecimal() and len(value) <= 20:
+                    details.append(name.lower() + '=' + value)
             error.close()
-            raise ValueError('GitHub transport failed with HTTP ' + str(code)) from None
+            suffix = ' (' + ', '.join(details) + ')' if details else ''
+            raise ValueError(origin + ' transport failed with HTTP ' + str(code) + suffix) from None
         except (URLError, OSError):
             raise ValueError('GitHub transport could not complete') from None
         with response:

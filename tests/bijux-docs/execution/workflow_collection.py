@@ -279,7 +279,8 @@ def collect(api, identity: dict, stage: str, output: Path, *, audit=None, caller
             roles = {'producer': roles['producer']}
         before = checkout_state()
         require(all(before[key] == identity[key] for key in before), 'Actual checkout differs from input source context')
-        source = LINEAGE.observe_source(api, identity, reconcile=True, caller=caller_name) if reconcile else LINEAGE.observe_source(api, identity)
+        source = LINEAGE.observe_source(api, identity, reconcile=True, caller=caller_name,
+            names=sorted({spec['job_name'] for spec in roles.values()} | {caller_name})) if reconcile else LINEAGE.observe_source(api, identity)
         specs = {role: {key: spec[key] for key in ('job_name', 'artifact_prefix', 'upload_step')} for role, spec in roles.items()}
         inputs = source.admit(specs, workers=8)
         collection = Collection(source, inputs, roles, _created=_CREATED)

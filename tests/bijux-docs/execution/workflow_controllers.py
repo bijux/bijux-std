@@ -54,6 +54,22 @@ def recovery() -> bool:
     return int(attempt) > 1
 
 
+def retained_producer() -> bool:
+    """Fresh verified fixture inputs use the ordinary path on any attempt."""
+    if not recovery():
+        return False
+    path = ARTIFACTS / 'producer-envelope.json'
+    if not path.exists():
+        return True
+    envelope = json.loads(path.read_text())
+    if envelope.get('workflow_attempt') == os.environ['GITHUB_RUN_ATTEMPT']:
+        # The native validator binds source, run, partition registry and every
+        # physical input digest before current-attempt inputs avoid live recovery.
+        load('browser_gate').verify_producer_envelope()
+        return False
+    return True
+
+
 def collect(stage: str, *, caller=None):
     require(recovery(), 'Retained inputs require an owning-repository recovery execution')
     collection = load('workflow_collection')

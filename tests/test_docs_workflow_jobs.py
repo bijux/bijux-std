@@ -287,6 +287,30 @@ class PhysicalWorkflowTests(unittest.TestCase):
             with self.subTest(identifier=identifier),self.assertRaises(KeyError):self.observe()
             self.responses[endpoint]=old
 
+    def test_scoped_worker_retains_history_without_reading_unrelated_job_owners(self):
+        frame = self.responses[self.runpath + '/attempts/1/jobs?per_page=100&page=1']
+        for number in range(70):
+            row = self.job(1000 + number, 1, 'unrelated-' + str(number),
+                           '2026-01-01T00:00:02Z', '2026-01-01T00:01:00Z')
+            frame['jobs'].append(row)
+        frame['total_count'] = len(frame['jobs'])
+        source = LINEAGE.observe_source(self.api, self.identity, reconcile=True,
+                                        names=[self.producer['name']])
+        inputs = source.admit(self.roles, now=datetime(2026, 1, 2, tzinfo=timezone.utc))
+        self.assertEqual(inputs['producer'].read('producer-envelope.json'),
+                         json.dumps({'source_head':'a'*40,'workflow_run_id':'123','workflow_attempt':'1'}).encode())
+        self.assertGreater(source.observation['execution_reconciliation']['raw_rows'], 70)
+        self.assertLess(len(self.api.calls), 40)
+        self.assertFalse(any(isinstance(call, str) and ('/actions/jobs/1000' in call or '/check-runs/1000' in call)
+                             for call in self.api.calls))
+        with self.assertRaisesRegex(ValueError, 'outside verified execution scope'):
+            source.verify_jobs([self.browser['name']])
+
+    def test_scoped_worker_still_rejects_changed_required_owner(self):
+        self.responses[self.prefix + 'check-runs/11']['app']['id'] = 0
+        with self.assertRaisesRegex(ValueError, 'Check source'):
+            LINEAGE.observe_source(self.api, self.identity, reconcile=True, names=[self.producer['name']])
+
     def test_collection_caller_role_is_required_before_api_admission(self):
         path=PATH.with_name('workflow_collection.py')
         spec=importlib.util.spec_from_file_location('physical_collection_tests',path)
@@ -304,7 +328,8 @@ class PhysicalWorkflowTests(unittest.TestCase):
         with patch.object(module,'checkout_state',return_value=state),patch.object(module.LINEAGE,'observe_source',side_effect=ValueError('admission boundary'))as observe:
             with self.assertRaisesRegex(ValueError,'admission boundary'):
                 module.collect(self.api,self.identity,'producer',ROOT/'artifacts',reconcile=True,caller='browser-contrast-desktop-chromium')
-            observe.assert_called_once_with(self.api,self.identity,reconcile=True,caller=self.browser['name'])
+            observe.assert_called_once_with(self.api,self.identity,reconcile=True,caller=self.browser['name'],
+                                            names=sorted([self.browser['name'], self.producer['name']]))
         self.assertEqual(self.api.calls,[])
 
     def test_incomplete_attempt_page_refuses(self):

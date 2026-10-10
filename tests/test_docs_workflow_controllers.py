@@ -145,6 +145,28 @@ class RecoverySelectionTests(unittest.TestCase):
         with patch.dict(os.environ, {'GITHUB_REPOSITORY': 'bijux/bijux-std', 'GITHUB_RUN_ATTEMPT': '2'}, clear=True):
             self.assertTrue(CONTROLLERS.recovery())
 
+    def test_fresh_producer_uses_native_validation_and_retained_producer_requires_recovery(self):
+        from types import SimpleNamespace
+        from unittest.mock import Mock
+        with tempfile.TemporaryDirectory(dir=ROOT / 'artifacts') as directory:
+            folder = Path(directory)
+            guard = Mock()
+            with patch.object(CONTROLLERS, 'ARTIFACTS', folder), patch.dict(os.environ,
+                    {'GITHUB_REPOSITORY': 'bijux/bijux-std', 'GITHUB_RUN_ATTEMPT': '2'}, clear=True), \
+                    patch.object(CONTROLLERS, 'load', return_value=SimpleNamespace(verify_producer_envelope=guard)):
+                self.assertTrue(CONTROLLERS.retained_producer())
+                guard.assert_not_called()
+                (folder / 'producer-envelope.json').write_text('{"workflow_attempt":"2"}')
+                self.assertFalse(CONTROLLERS.retained_producer())
+                guard.assert_called_once_with()
+                guard.side_effect = ValueError('Producer evidence digest mismatch')
+                with self.assertRaisesRegex(ValueError, 'digest mismatch'):
+                    CONTROLLERS.retained_producer()
+                guard.reset_mock()
+                (folder / 'producer-envelope.json').write_text('{"workflow_attempt":"1"}')
+                self.assertTrue(CONTROLLERS.retained_producer())
+                guard.assert_not_called()
+
     def test_malformed_attempt_cannot_select_a_legacy_bypass(self):
         for attempt in ('0', '-1', '', 'previous', '01'):
             with self.subTest(attempt=attempt), patch.dict(os.environ,

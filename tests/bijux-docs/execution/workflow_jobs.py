@@ -86,10 +86,17 @@ def check(fetch, row, repository, frame):
     return result
 
 
-def capture(api, identity, pages, *, fetch=None, caller=None):
+def capture(api, identity, pages, *, fetch=None, caller=None, names=None):
     """Complete bounded attempt frames, canonical executions and untouched aliases."""
     require(type(identity['attempt']) is int and 1 <= identity['attempt'] <= MAX_ATTEMPTS, 'Physical attempt capture exceeds finite bound')
     require(caller is None or isinstance(caller, str) and caller.startswith('std / '), 'Caller must be a source-owned workflow role')
+    if names is not None:
+        require(isinstance(names, (list, tuple)) and 0 < len(names) <= 128
+                and all(isinstance(name, str) and name for name in names)
+                and len(set(names)) == len(names) and (caller is None or caller in names),
+                'Finite explicit owner scope must include its active caller')
+    def needed(row):
+        return names is None or row['name'] in names
     fetch = fetch or api.json
     run_path = 'repos/' + api.repository + '/actions/runs/' + str(identity['run_id'])
     def attempt_frame(attempt):
@@ -165,23 +172,29 @@ def capture(api, identity, pages, *, fetch=None, caller=None):
         else:
             require(live == row, 'Live per-ID execution differs from attempt frame')
         return row['id'], check(fetch, live, api.repository, frames[row['run_attempt'] - 1]['run'])
-    # Every canonical original, including a carried owner, is positively checked.
+    # Every requested canonical original, including a carried owner, is positively
+    # checked. Complete attempt frames remain observations; they cannot extend
+    # a scoped worker’s authority to unrelated owners.
     with ThreadPoolExecutor(max_workers=8) as pool:
-        checks.update(pool.map(verify, physical_rows))
+        checks.update(pool.map(verify, [row for row in physical_rows if needed(row)]))
         def verify_nonexecution(item):
             row = item['row']
             require(fetch('repos/' + api.repository + '/actions/jobs/' + str(row['id'])) == row,
                     'Live unassigned cancellation differs from attempt frame')
             return {**item, 'check': check(fetch, row, api.repository,
                                           frames[row['run_attempt'] - 1]['run'])}
-        nonexecutions = list(pool.map(verify_nonexecution, nonexecutions))
+        nonexecutions = [*list(pool.map(verify_nonexecution, [item for item in nonexecutions if needed(item['row'])])),
+                         *[item for item in nonexecutions if not needed(item['row'])]]
         def projection(alias):
             row = alias['projection']
             require(fetch('repos/' + api.repository + '/actions/jobs/' + str(row['id'])) == row,
                     'Live projected row changed')
-        list(pool.map(projection, aliases))
+        list(pool.map(projection, [alias for alias in aliases if needed(alias['projection'])]))
     relations = []
     for row, frame in reservations:
+        if not needed(row):
+            unresolved.append({'row': copy.deepcopy(row), 'reason': 'outside explicit owner scope'})
+            continue
         reservation_check = check(api.json, row, api.repository, frame['run'])
         binding = reservation_check.get('external_id')
         matches = [actual for actual in physical_rows if actual['run_attempt'] == frame['attempt']
@@ -209,5 +222,6 @@ def capture(api, identity, pages, *, fetch=None, caller=None):
             'execution_reconciliation': {'frames': frames, 'aliases': aliases, 'reservations': relations,
                 'nonexecutions': nonexecutions,
                 'unresolved': unresolved, 'checks': checks, 'caller': caller,
+                **({'checked_job_names': sorted(names)} if names is not None else {}),
                 'raw_rows': sum(frame['inventory']['total_count'] for frame in frames),
                 'physical_rows': len(physical_rows), 'physical_names': len(selected)}}

@@ -156,6 +156,8 @@ class SourceObservation:
         require(isinstance(names, (list, tuple, set)) and 0 < len(names) <= ARTIFACTS.MAX_ROLES
                 and all(isinstance(name, str) and bool(name) for name in names)
                 and len(set(names)) == len(names), 'Finite unique source-owned job names are required')
+        scope = self._observed.get('execution_reconciliation', {}).get('checked_job_names')
+        require(scope is None or set(names).issubset(scope), 'Requested owner is outside verified execution scope')
         return sorted(names)
 
     def _current_report(self, row: dict) -> bool:
@@ -168,7 +170,8 @@ class SourceObservation:
 
     def physical_capture(self, api, identity):
         return JOBS.capture(api, identity, ARTIFACTS.pages, fetch=self.json,
-                            caller=self._observed['execution_reconciliation']['caller'])
+                            caller=self._observed['execution_reconciliation']['caller'],
+                            names=self._observed['execution_reconciliation'].get('checked_job_names'))
 
     def refresh(self, names) -> None:
         """One coherent current-source boundary for all needed owners, not one query per artifact."""
@@ -311,9 +314,9 @@ class SourceObservation:
                            'Native cases, configuration, runtime, browser and publication checks remain separate mandatory duties.']}
 
 
-def observe_source(api, identity: dict, *, reconcile=False, caller=None) -> SourceObservation:
+def observe_source(api, identity: dict, *, reconcile=False, caller=None, names=None) -> SourceObservation:
     """Only live owned source can issue original physical execution authority."""
-    require(type(reconcile) is bool and (reconcile or caller is None), 'Caller requires physical reconciliation')
+    require(type(reconcile) is bool and (reconcile or caller is None and names is None), 'Caller/scope requires physical reconciliation')
     if not reconcile:
         return SourceObservation(api, ARTIFACTS.observe(api, identity), _created=_CREATED)
     cache, lock = {}, Lock()
@@ -328,7 +331,7 @@ def observe_source(api, identity: dict, *, reconcile=False, caller=None) -> Sour
                 require(previous == value, 'Concurrent physical execution observations differ')
         return value
     observed = ARTIFACTS.observe(api, identity, execution_observer=lambda transport, context:
-        JOBS.capture(transport, context, ARTIFACTS.pages, fetch=fetch, caller=caller))
+        JOBS.capture(transport, context, ARTIFACTS.pages, fetch=fetch, caller=caller, names=names))
     result = SourceObservation(api, observed, _created=_CREATED)
     result._cache.update(cache)
     return result
