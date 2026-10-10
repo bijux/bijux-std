@@ -42,3 +42,59 @@ before publication; keep blocked remote/admin/manual evidence accurately unresol
 Use [security](../../bijux-docs/security/SECURITY.md) for trust and public-artifact
 admission and [operations](../../bijux-docs/security/OPERATIONS.md) for local smoke,
 cache compatibility, monitoring limits and recovery.
+
+Repository publication entrypoints can be explicitly selected in the canonical
+repository manifest through `workflow_execution_policy.publication_entrypoints`.
+The supported `deploy-docs`, `release-github`, `release-ghcr` and `release-crates`
+entries accept `mode: manual-only` or `mode: canonical`. Manual-only removes the
+reusable `workflow_call` API while preserving the exact dispatch inputs, defaults,
+help text and publication jobs. Canonical mode and an absent selection retain the
+shared callable API. Local workflow or wrapper calls to a selected manual-only
+publisher fail canonical preparation before files are written; internal
+`release-artifacts` calls remain callable.
+
+This selection supplies no publication authorization, profile qualification or
+production evidence. Ref admission and existing source/artifact/verifier guards
+remain separate requirements. Release tag resolution still honors an explicit
+input before its existing defaults; changing workflow entrypoint selection does
+not change that resolver.
+
+Documentation owners can explicitly select
+`publication_entrypoints.deploy-docs: {mode: manual-only, refs: main-only}`
+in the canonical repository policy. This restricts both publication jobs to
+`workflow_dispatch` on the literal `refs/heads/main`, independently of the
+repository default branch. The existing deploy dependency and `site_available`
+check remain intact. The named publication event/ref shell guard runs first,
+before checkout, configuration, installation or artifact writes, and repeats
+the same exact event/ref restriction. Tags, other branches and reusable calls
+cannot qualify this selected publication path.
+
+Projection admits the reviewed build/deploy conditions and shell guard before
+writing managed output. Missing, ambiguous or changed guard bodies and job
+predicates require review of the canonical source; they are not silently
+rewritten. All other dispatch, build, artifact, profile and deployment content
+stays source-owned. Absent policy or `refs: canonical` preserves the canonical
+ref guard. This selection does not authorize publication or establish deployed,
+manual or profile evidence.
+
+## Canonical workflow verification
+
+The existing `policy / github` job verifies managed runtime bytes without rewriting
+those files. Consumer verification reads the full tracked standard pin and fetches
+that exact official GitHub source into the repository's `artifacts/` cache. The
+source's own verifier checks the origin, full SHA and clean source independently,
+then derives the selected repository policy and compares every governed input and
+managed runtime. A local checksum or source snapshot does not establish accepted
+source authority. The owning standard may qualify its current candidate explicitly;
+that result does not certify accepted consumer adoption.
+
+The governed `workflow-sources` snapshots preserve both base workflow originals and
+the finite canonical input hashes. The standard must refresh these generated
+snapshots when their actual owning inputs change. Verification checks the snapshots
+against the original inputs and rejects source changes during comparison.
+
+Only policies that require structural workflow projection provision the pinned
+`ruby/setup-ruby` action and Ruby `3.3.12` in the existing policy job. The job asserts
+the actual Ruby version and Psych parsing API before verification. The default raw
+workflow path uses the Python standard library without this parser prerequisite.
+Actual hosted parser execution and consumer adoption remain separate qualifications.

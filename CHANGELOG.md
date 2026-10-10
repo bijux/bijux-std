@@ -6,6 +6,10 @@ This file records notable repository-level changes for `bijux-std`.
 
 ### Pending review
 
+#### [#263](https://github.com/bijux/bijux-std/pull/263) — feat(github): verify source-owned workflow execution policy
+
+Capture canonical policy sources, admit repository events before preparation, guard manual publishers and dependency routing, and independently rederive every workflow projection through finite source-owned helpers and snapshots. Preserve default repository behavior and introduce no consumer activation.
+
 #### [#260](https://github.com/bijux/bijux-std/pull/260) — refactor(docs): separate publication validation responsibilities
 
 Give HTML parsing, destination authority, redirect graphs, stylesheet/SVG resources and sitemap reconciliation explicit module ownership while preserving the public qualification command and diagnostics.
