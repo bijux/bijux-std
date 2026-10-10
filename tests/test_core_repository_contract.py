@@ -76,12 +76,15 @@ class CoreRepositoryContractTests(unittest.TestCase):
                     "BIJUX_GHCR_RELEASE_PACKAGE_MATRIX_JSON"
                 ]
             ],
-            ["bijux-cli", "bijux-dag"],
+            list(CRATES_IO_PACKAGES),
         )
         self.assertEqual(
             self.release_env["BIJUX_GHCR_RELEASE_ALLOWED_PACKAGES"],
-            "bijux-cli bijux-dag",
+            " ".join(CRATES_IO_PACKAGES),
         )
+        for entry in self.release_env["BIJUX_GHCR_RELEASE_PACKAGE_MATRIX_JSON"]:
+            expected = "bijux-dag-release" if entry["package_slug"].startswith("bijux-dag-") else "bijux-cli-release"
+            self.assertEqual(entry["artifact_name"], expected)
 
     def test_crates_release_order_and_allowlist_match_public_packages(self) -> None:
         expected = " ".join(CRATES_IO_PACKAGES)
