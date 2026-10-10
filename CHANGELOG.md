@@ -4,26 +4,43 @@ This file records notable repository-level changes for `bijux-std`.
 
 ## Pull request history
 
-### Pending review
+### Merged pull requests
 
-#### [#275](https://github.com/bijux/bijux-std/pull/275) — fix(publication): preserve ghcr build families and promote action pins
-
-Keep shared release build families intact when selecting individual GHCR publication packages. Map Core's public DAG crates to their shared DAG bundle and CLI to its own bundle; validate both matrix shapes and reject malformed configuration. Promote verified setup-node v7.1.0, download-artifact v8.0.2 and upload-artifact v7.0.2 pins through their canonical owners and generated projections.
-
-#### [#276](https://github.com/bijux/bijux-std/pull/276) — fix(docs): admit exact accepted standards before publication builds
+#### 2026-10-10T21:43:13Z — [#276](https://github.com/bijux/bijux-std/pull/276) — fix(docs): admit exact accepted standards before publication builds
 
 Fetch and admit the repository's immutable GitHub standards pin before documentation setup and build. Reject missing or malformed pins and fetched commit mismatches; pass explicit source authority to guarded build commands without dispatching publication.
 
-#### [#274](https://github.com/bijux/bijux-std/pull/274) — ci(genomics): admit source through format lint and dependency audit
+#### 2026-10-10T22:06:55Z — [#275](https://github.com/bijux/bijux-std/pull/275) — fix(publication): preserve ghcr build families and promote action pins
+
+Keep shared release build families intact when selecting individual GHCR publication packages. Map Core's public DAG crates to their shared DAG bundle and CLI to its own bundle; validate both matrix shapes and reject malformed configuration. Promote verified setup-node v7.1.0, download-artifact v8.0.2 and upload-artifact v7.0.2 pins through their canonical owners and generated projections.
+
+#### 2026-10-10T21:16:11Z — [#274](https://github.com/bijux/bijux-std/pull/274) — ci(genomics): admit source through format lint and dependency audit
 
 Run the Genomics canonical source admission through formatting, lint and dependency audit while its product suites are repaired. Preserve independent publication qualification and other repository test lanes.
 
-#### [#267](https://github.com/bijux/bijux-std/pull/267) — fix(docs): cancel viewport history writes before cached departure
+#### 2026-10-10T20:21:54Z — [#273](https://github.com/bijux/bijux-std/pull/273) — fix(docs): distinguish scientific assets from generated website output
+
+Allow repository-owned scientific assets while keeping generated documentation output and source verification boundaries explicit.
+
+#### 2026-10-10T19:56:23Z — [#272](https://github.com/bijux/bijux-std/pull/272) — fix(github): render workflow block scalars without whitespace drift
+
+Render workflow shell block scalars without indentation-only trailing lines or extra blank lines, preserving executable shell content.
+
+#### 2026-10-10T19:18:46Z — [#271](https://github.com/bijux/bijux-std/pull/271) — fix(governance): reject publication in publisher-free foundations
+
+Declare publisher-free foundation repositories and reject reusable publisher calls or recognizable publication commands in their authored workflows.
+
+#### 2026-10-10T19:03:09Z — [#270](https://github.com/bijux/bijux-std/pull/270) — fix(docs): retire generated guides from accepted prior source
+
+Retire generated documentation guides against the previously accepted source while admitting their replacements from the new immutable standards pin.
+
+#### 2026-10-10T18:43:53Z — [#269](https://github.com/bijux/bijux-std/pull/269) — fix(governance): admit publication only through authenticated iac dispatch
+
+Require authenticated manual IaC admission for applicable release and documentation publishers. Verify controller identity, accepted protected-main source and producer evidence before jobs receive publication credentials.
+
+#### 2026-10-10T13:25:56Z — [#267](https://github.com/bijux/bijux-std/pull/267) — fix(docs): cancel viewport history writes before cached departure
 
 Cancel pending native viewport-history work before cross-document departure or browser-cache entry, and resume fresh work after trusted cached restoration or cancelled departure. Preserve same-document navigation and other readers' history state; bind the owned lifecycle source to the reproduced Material runtime and exercise its cancellation boundaries.
-
-
-### Merged pull requests
 
 #### 2026-10-10T12:44:46Z — [#266](https://github.com/bijux/bijux-std/pull/266) — ci(docs): require hub diagram rendering in the standards report
 
