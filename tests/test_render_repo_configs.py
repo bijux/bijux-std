@@ -308,7 +308,7 @@ class RenderRepoConfigsTests(unittest.TestCase):
         expected_revisions = {
             "actions/checkout": "3d3c42e5aac5ba805825da76410c181273ba90b1",
             "actions/setup-python": "5fda3b95a4ea91299a34e894583c3862153e4b97",
-            "astral-sh/setup-uv": "20cfd1bf945f4377ade1205e4dbc17946fc9a30d",
+            "astral-sh/setup-uv": "c18668ad3cf93ea998bef934396af7bb5c839dc7",
             "actions/setup-node": "820762786026740c76f36085b0efc47a31fe5020",
             "actions/setup-java": "03ad4de0992f5dab5e18fcb136590ce7c4a0ac95",
         }
@@ -372,7 +372,7 @@ class RenderRepoConfigsTests(unittest.TestCase):
 
         rust_toolchain_action = (
             "dtolnay/rust-toolchain@"
-            "6c977a6ca4077a0ceb28ffbe03f59d46e9ac8772"
+            "e2a55d2ffb04f378e9626c28d38b36d230d1e12f"
         )
         for job in wrapper["jobs"].values():
             for step in job.get("steps", []):
