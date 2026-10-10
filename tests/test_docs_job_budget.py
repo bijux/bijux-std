@@ -189,14 +189,14 @@ class FrontendJobBudgetTests(unittest.TestCase):
             catalogue = owner / 'catalogue'
             catalogue.mkdir()
             (catalogue / 'execution.py').write_text("GROUPS = {'source': ('test_source',)}\n")
-            for name in ('browser_gate.py', 'browser_partitions.py', 'browser_partitions.json', 'renderer_controls.py', 'node_events.cjs', 'persisted_reader.py', 'workflow_artifacts.py', 'workflow_lineage.py', 'workflow_collection.py', 'workflow_controllers.py'):
+            for name in ('browser_gate.py', 'browser_partitions.py', 'browser_partitions.json', 'renderer_controls.py', 'node_events.cjs', 'persisted_reader.py', 'workflow_artifacts.py', 'workflow_jobs.py', 'workflow_lineage.py', 'workflow_collection.py', 'workflow_controllers.py'):
                 (root / name).write_text(name)
             for name in ('playwright.persisted-reader-history.config.js', 'ui/generated-specs/persisted-reader-history.spec.js'):
                 path = owner / name
                 path.parent.mkdir(parents=True, exist_ok=True)
                 path.write_text(name)
             before = BUDGET.registry_digests(root / 'browser_gate.py')
-            self.assertEqual(set(before), {'browser_gate.py', 'browser_partitions.py', 'browser_partitions.json', 'renderer_controls.py', 'node_events.cjs', 'persisted_reader.py', 'workflow_artifacts.py', 'workflow_lineage.py', 'workflow_collection.py', 'workflow_controllers.py', 'playwright.persisted-reader-history.config.js', 'ui/generated-specs/persisted-reader-history.spec.js', 'catalogue/execution.py'})
+            self.assertEqual(set(before), {'browser_gate.py', 'browser_partitions.py', 'browser_partitions.json', 'renderer_controls.py', 'node_events.cjs', 'persisted_reader.py', 'workflow_artifacts.py', 'workflow_jobs.py', 'workflow_lineage.py', 'workflow_collection.py', 'workflow_controllers.py', 'playwright.persisted-reader-history.config.js', 'ui/generated-specs/persisted-reader-history.spec.js', 'catalogue/execution.py'})
             (root / 'browser_partitions.json').write_text('changed declaration')
             after = BUDGET.registry_digests(root / 'browser_gate.py')
             self.assertNotEqual(before['browser_partitions.json'], after['browser_partitions.json'])
@@ -204,7 +204,7 @@ class FrontendJobBudgetTests(unittest.TestCase):
             (catalogue / 'execution.py').write_text("GROUPS = {'renderer': ('test_renderer',)}\n")
             changed = BUDGET.registry_digests(root / 'browser_gate.py')
             self.assertNotEqual(before['catalogue/execution.py'], changed['catalogue/execution.py'])
-            for name in ('workflow_artifacts.py', 'workflow_lineage.py', 'workflow_collection.py', 'workflow_controllers.py'):
+            for name in ('workflow_artifacts.py', 'workflow_jobs.py', 'workflow_lineage.py', 'workflow_collection.py', 'workflow_controllers.py'):
                 (root / name).write_text('changed admission source')
                 self.assertNotEqual(before[name], BUDGET.registry_digests(root / 'browser_gate.py')[name])
             (root / 'browser_partitions.py').unlink()

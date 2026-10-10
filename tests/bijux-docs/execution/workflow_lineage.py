@@ -19,6 +19,10 @@ _SOURCE = Path(__file__).with_name('workflow_artifacts.py')
 ARTIFACTS = ModuleType('bijux_workflow_artifacts')
 ARTIFACTS.__file__ = str(_SOURCE)
 exec(compile(_SOURCE.read_bytes(), str(_SOURCE), 'exec'), ARTIFACTS.__dict__)
+_JOBS_SOURCE = Path(__file__).with_name('workflow_jobs.py')
+JOBS = ModuleType('bijux_workflow_jobs')
+JOBS.__file__ = str(_JOBS_SOURCE)
+exec(compile(_JOBS_SOURCE.read_bytes(), str(_JOBS_SOURCE), 'exec'), JOBS.__dict__)
 _CREATED = object()
 MAX_REFRESHES = 32
 MAX_INPUT_ARCHIVE_BYTES = 2 * 1024 * 1024 * 1024
@@ -136,13 +140,13 @@ class SourceObservation:
 
     def json(self, endpoint: str) -> dict:
         """Cache immutable per-ID observations, never run/latest inventories."""
-        cacheable = re.fullmatch(r'repos/' + re.escape(self.repository) + r'/actions/(jobs|artifacts)/[1-9][0-9]*', endpoint)
+        cacheable = re.fullmatch(r'repos/' + re.escape(self.repository) + r'/(?:actions/(?:jobs|artifacts)|check-runs)/[1-9][0-9]*', endpoint)
         if cacheable:
             with self._lock:
                 if endpoint in self._cache:
                     return copy.deepcopy(self._cache[endpoint])
         value = self._api.json(endpoint)
-        if cacheable:
+        if cacheable and ('/actions/artifacts/' in endpoint or value.get('status') == 'completed'):
             with self._lock:
                 previous = self._cache.setdefault(endpoint, copy.deepcopy(value))
                 require(previous == value, 'Concurrent authoritative owner observations disagree')
@@ -155,7 +159,16 @@ class SourceObservation:
         return sorted(names)
 
     def _current_report(self, row: dict) -> bool:
-        return row.get('name') == 'std / report' and row.get('run_attempt') == self.identity['attempt']
+        caller = self._observed.get('execution_reconciliation', {}).get('caller', 'std / report')
+        return row.get('name') == caller and row.get('run_attempt') == self.identity['attempt']
+
+    def active_identity(self, row):
+        return ARTIFACTS.job_identity(row) + tuple(row.get(key) for key in
+            ('started_at', 'runner_id', 'runner_name', 'check_run_url'))
+
+    def physical_capture(self, api, identity):
+        return JOBS.capture(api, identity, ARTIFACTS.pages, fetch=self.json,
+                            caller=self._observed['execution_reconciliation']['caller'])
 
     def refresh(self, names) -> None:
         """One coherent current-source boundary for all needed owners, not one query per artifact."""
@@ -172,7 +185,20 @@ class SourceObservation:
                      ('path', 'workflow_path'), ('head_branch', 'head_branch'))), 'Observed source run was superseded or changed')
         require(all(run.get(key) == self._observed['run'].get(key) for key in ('repository', 'head_repository')),
                 'Observed source repository changed')
-        latest_observation = ARTIFACTS.pages(self._api.json, endpoint + '/jobs?filter=latest', 'jobs')
+        if 'execution_reconciliation' in self._observed:
+            executions = self.physical_capture(self._api, identity)
+            frame['execution_reconciliation'] = copy.deepcopy(executions['execution_reconciliation'])
+            require(not any(item['row']['name'] in names for item in executions['execution_reconciliation']['unresolved']),
+                    'Needed role has unresolved physical execution rows')
+            original_checks = self._observed['execution_reconciliation']['checks']
+            require(all(row['id'] in executions['execution_reconciliation']['checks']
+                        and executions['execution_reconciliation']['checks'][row['id']].get('external_id')
+                        == original_checks[row['id']].get('external_id')
+                        for row in self._observed['latest']['jobs'] if row['name'] in names),
+                    'Physical check execution binding changed')
+            latest_observation = executions['latest']
+        else:
+            latest_observation = ARTIFACTS.pages(self._api.json, endpoint + '/jobs?filter=latest', 'jobs')
         frame['latest'] = copy.deepcopy(latest_observation)
         latest = latest_observation['jobs']
         require(len({row.get('name') for row in latest}) == len(latest), 'Duplicate refreshed latest owner name')
@@ -182,7 +208,7 @@ class SourceObservation:
         selected = {row['name']: row for row in latest}
         original = {row['name']: row for row in self._observed['latest']['jobs']}
         require(all(name in original and name in selected
-                    and (ARTIFACTS.job_identity(selected[name]) == ARTIFACTS.job_identity(original[name])
+                    and (self.active_identity(selected[name]) == self.active_identity(original[name])
                          if self._current_report(original[name]) else selected[name] == original[name]) for name in names),
                 'Source-owned latest execution changed since observation')
         frame['status'] = 'passed'
@@ -203,7 +229,7 @@ class SourceObservation:
                 observed = self._api.json(endpoint)
                 with self._lock:
                     self._report_observations.append({'endpoint': endpoint, 'job': copy.deepcopy(observed)})
-                require(ARTIFACTS.job_identity(observed) == ARTIFACTS.job_identity(expected),
+                require(self.active_identity(observed) == self.active_identity(expected),
                         'Authoritative current report execution identity changed')
             else:
                 observed = self.json(endpoint)
@@ -285,6 +311,24 @@ class SourceObservation:
                            'Native cases, configuration, runtime, browser and publication checks remain separate mandatory duties.']}
 
 
-def observe_source(api, identity: dict) -> SourceObservation:
-    """Verify an owning-repository head; this does not enable fork recovery."""
-    return SourceObservation(api, ARTIFACTS.observe(api, identity), _created=_CREATED)
+def observe_source(api, identity: dict, *, reconcile=False, caller=None) -> SourceObservation:
+    """Only live owned source can issue original physical execution authority."""
+    require(type(reconcile) is bool and (reconcile or caller is None), 'Caller requires physical reconciliation')
+    if not reconcile:
+        return SourceObservation(api, ARTIFACTS.observe(api, identity), _created=_CREATED)
+    cache, lock = {}, Lock()
+    def fetch(endpoint):
+        with lock:
+            if endpoint in cache:
+                return copy.deepcopy(cache[endpoint])
+        value = api.json(endpoint)
+        if value.get('status') == 'completed':
+            with lock:
+                previous = cache.setdefault(endpoint, copy.deepcopy(value))
+                require(previous == value, 'Concurrent physical execution observations differ')
+        return value
+    observed = ARTIFACTS.observe(api, identity, execution_observer=lambda transport, context:
+        JOBS.capture(transport, context, ARTIFACTS.pages, fetch=fetch, caller=caller))
+    result = SourceObservation(api, observed, _created=_CREATED)
+    result._cache.update(cache)
+    return result

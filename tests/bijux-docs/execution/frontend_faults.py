@@ -106,7 +106,7 @@ def validate_pair(clean: dict, fault: dict):
 def browser(engine: str):
     gate = load(TESTS / 'execution/browser_gate.py', 'browser_gate')
     controllers = gate.workflow_controllers()
-    collection = controllers.collect('producer') if controllers.recovery() else None
+    collection = controllers.collect('producer', caller='fault-' + engine) if controllers.recovery() else None
     producer = gate.verify_producer_envelope(collection.producer if collection is not None else None)
     gate.unpack()
     gate.install_browser_runtime()

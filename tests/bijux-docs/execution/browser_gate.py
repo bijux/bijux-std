@@ -143,12 +143,13 @@ def install_browser_runtime() -> None:
 def run(group: str, engine: str) -> None:
     if any(name in os.environ for name in ('BIJUX_UI_BROWSER_ENGINE', 'BIJUX_UI_PROJECTS', 'BIJUX_UI_PROFILE')):
         raise ValueError('Browser execution selection must come from its assigned group/engine')
-    assignments = partition_plan()
     if group not in GROUPS or engine not in ENGINES:
         raise ValueError('Unknown assigned browser group or engine')
     controllers = workflow_controllers()
-    collection = controllers.collect('producer') if controllers.recovery() else None
+    collection = controllers.collect('producer', caller='browser-' + group + '-' + engine) if controllers.recovery() else None
     producer = verify_producer_envelope(collection.producer if collection is not None else None)
+    # Cold recovery must admit and verify inventories before deriving their ownership.
+    assignments = partition_plan()
     unpack()
     install_browser_runtime()
     failed = []

@@ -172,6 +172,8 @@ def qualify_latest(observation, *, groups: dict, engines: tuple | list,
     names = expected_job_names(groups, engines)
     expected = names | BASELINE_JOBS
     snapshot = observation.observation
+    require(not snapshot.get('execution_reconciliation', {}).get('unresolved'),
+            'Whole-job qualification has unresolved execution rows')
     latest = snapshot['latest']
     history = snapshot['history']
     require(latest['total_count'] == len(latest['jobs']) and history['total_count'] == len(history['jobs']),
@@ -201,13 +203,15 @@ def qualify_latest(observation, *, groups: dict, engines: tuple | list,
     receipt['selected_jobs'] = [{key: job[key] for key in ('id', 'name', 'run_id', 'run_attempt', 'head_sha')}
                                 for job in sorted(jobs, key=lambda row: row['name'])]
     receipt['execution_history'] = history['jobs']
+    if 'execution_reconciliation' in snapshot:
+        receipt['execution_reconciliation'] = snapshot['execution_reconciliation']
     receipt['api_inventory_sha256'] = {key: hashlib.sha256(json.dumps(snapshot[key], sort_keys=True,
         separators=(',', ':'), ensure_ascii=False).encode()).hexdigest() for key in ('latest', 'history')}
     return receipt
 
 
 def registry_digests(registry_path: Path) -> dict[str, str]:
-    names = ('browser_gate.py', 'browser_partitions.py', 'browser_partitions.json', 'renderer_controls.py', 'node_events.cjs', 'persisted_reader.py', 'workflow_artifacts.py', 'workflow_lineage.py', 'workflow_collection.py', 'workflow_controllers.py')
+    names = ('browser_gate.py', 'browser_partitions.py', 'browser_partitions.json', 'renderer_controls.py', 'node_events.cjs', 'persisted_reader.py', 'workflow_artifacts.py', 'workflow_jobs.py', 'workflow_lineage.py', 'workflow_collection.py', 'workflow_controllers.py')
     digests = {name: hashlib.sha256(registry_path.with_name(name).read_bytes()).hexdigest() for name in names}
     for name in ('playwright.persisted-reader-history.config.js', 'ui/generated-specs/persisted-reader-history.spec.js'):
         digests[name] = hashlib.sha256((registry_path.parent.parent / name).read_bytes()).hexdigest()
@@ -247,7 +251,8 @@ def main() -> int:
             context = collection.context_from_environment(api, args.workflow_head)
             if context['run_id'] != args.run_id or context['attempt'] != args.attempt:
                 raise ValueError('Requested budget run/attempt differs from actual runner identity')
-            observation = lineage.observe_source(api, context)
+            observation = lineage.observe_source(api, context, reconcile=args.attempt > 1,
+                                                 caller='std / report' if args.attempt > 1 else None)
             args.output.parent.mkdir(parents=True, exist_ok=True)
             raw = args.output.parent / 'source-observation.json'
             raw.write_text(json.dumps(observation.observation, indent=2) + '\n')
