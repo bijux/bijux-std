@@ -17,7 +17,7 @@ import unittest
 
 ROOT = Path(__file__).resolve().parents[3]
 TESTS = ROOT / 'tests/bijux-docs'
-NODE_TEST_COUNT = 509
+NODE_TEST_COUNT = 522
 NODE_VERSION = 'v24.21.0'
 GROUPS = ('renderer', 'passive-reader', 'interactive-reports',
           'interactive-make-dispatch', 'interactive-make-refusal',
