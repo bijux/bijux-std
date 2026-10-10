@@ -357,7 +357,6 @@ class RenderRepoConfigsTests(unittest.TestCase):
         for repository_name in (
             "bijux-atlas",
             "bijux-core",
-            "bijux-genomics",
             "bijux-gnss",
         ):
             wrapper = repositories[repository_name]["workflow_wrappers"]["ci"]
@@ -378,7 +377,7 @@ class RenderRepoConfigsTests(unittest.TestCase):
                 ]
                 self.assertIn(f"make {gate}", commands)
 
-    def test_genomics_ci_uses_governed_fast_rust_lanes(self) -> None:
+    def test_genomics_ci_runs_format_lint_and_audit_without_product_tests(self) -> None:
         manifest = json.loads(MANIFEST_PATH.read_text(encoding="utf-8"))
         repository = next(
             repository
@@ -389,7 +388,13 @@ class RenderRepoConfigsTests(unittest.TestCase):
 
         self.assertEqual(wrapper["env"]["RUST_TOOLCHAIN_VERSION"], "1.95.0")
         self.assertEqual(wrapper["on"]["workflow_dispatch"], {})
-        self.assertNotIn("slow-tier", wrapper["jobs"])
+        self.assertEqual(set(wrapper["jobs"]), {"fmt", "lint", "audit"})
+        self.assertNotIn("CARGO_NEXTEST_VERSION", wrapper["env"])
+        for gate in ("fmt", "lint", "audit"):
+            commands = [step.get("run") for step in wrapper["jobs"][gate]["steps"]]
+            self.assertIn(f"make {gate}", commands)
+        for job in wrapper["jobs"].values():
+            self.assertNotIn("continue-on-error", job)
 
         rust_toolchain_action = (
             "dtolnay/rust-toolchain@"
@@ -407,7 +412,7 @@ class RenderRepoConfigsTests(unittest.TestCase):
             "mozilla/sccache-action@"
             "7d986dd989559c6ecdb630a3fd2557667be217ad"
         )
-        for gate in ("fmt", "lint", "audit", "test"):
+        for gate in ("fmt", "lint", "audit"):
             uses = {
                 step.get("uses")
                 for step in wrapper["jobs"][gate]["steps"]
