@@ -28,7 +28,7 @@
     ".github/scripts/workflow_execution/source_loading.py": "e2fa9e92e2cd20f29e97125ea7e850beb09c03f0ad30419fba875ee4a132b27d",
     ".github/scripts/workflow_execution/verification.py": "5970caad32f9c7c5a53c33e4dda0eacb7c7de00688cf4d084285a0283cba30df",
     ".github/scripts/workflow_execution/yaml_io.py": "0ce0b2dcda55b4a1764b2e73dba510d44ff3af40961b142f91e91fed9fde68aa",
-    ".github/standards/repo-config.manifest.json": "ae8de215d891f3748f311833e7a787d616bd104fc1164cfb45b4cac34a42f877",
+    ".github/standards/repo-config.manifest.json": "e699269c5eaeb6822531c3116f372c61eb68a34b0fd78e3172effe4b4b31603b",
     ".github/standards/workflow-inventory.json": "885f21b63b5bd12a72e643de1870d6ccb3f6402eaeb906724a2df76e0de62c9c",
     ".github/workflows/automerge-pr.yml": "033998646ada52d8fa64aa56f1ff38dd01fd783fd7ed93daa4c1d9670867c610",
     ".github/workflows/bijux-std.yml": "3685edd0641261db890ea1c29ffbe752cfa11b68c101b355de79d73d6f7ff5b1",
@@ -43,7 +43,7 @@
     "shared/bijux-gh/workflows/pr-approval-policy.yml": "2b078d61f8d12a89d594bbc801683c68304b670e29bda656d8af5a20ab1db5fd",
     "shared/bijux-gh/workflows/release-artifacts.yml": "e433bf8517ccc4d6413888b2e504df817a67e4ce23585b1e5999c3361f54d2fc",
     "shared/bijux-gh/workflows/release-crates.yml": "2f68ce14478c109eb58de9ad1e3ea6e3645a4e2bb9435a291510fa17f06c3230",
-    "shared/bijux-gh/workflows/release-ghcr.yml": "6bf768b9d8e68c56880fa506317d2fcc6e72f0f1b1c63eaa1303a987778b91d7",
+    "shared/bijux-gh/workflows/release-ghcr.yml": "e9d14a6e6b2177955fa4217c43ed6e51b03ffd15490e4468dd441e74e7f6443c",
     "shared/bijux-gh/workflows/release-github.yml": "27872bcbbc14d75979895138339ae1004f5bb96734fa4b3eef80e8ae370dcece",
     "shared/bijux-gh/workflows/release-pypi.yml": "174101720d28916b3ef0c187b3f9a3a9a18ace8198f7d162f51e0b15c83a8f8e"
   },

@@ -241,7 +241,9 @@ jobs:
             exit 1
           fi
 
-          build_matrix_json="$(filter_matrix "${build_matrix_json}" "${allowed_packages}")"
+          # Build families may supply several publication packages; validate their
+          # shape without applying the publication package allowlist.
+          build_matrix_json="$(filter_matrix "${build_matrix_json}" "")"
           package_matrix_json="$(filter_matrix "${package_matrix_json}" "${allowed_packages}")"
 
           if [[ "${build_matrix_json}" == "[]" || "${package_matrix_json}" == "[]" ]]; then
