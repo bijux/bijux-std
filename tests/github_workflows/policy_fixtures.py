@@ -40,8 +40,12 @@ def source_fixture(directory, *, selected=False):
     (root / guard).parent.mkdir(parents=True, exist_ok=True)
     shutil.copyfile(ROOT / guard, root / guard)
     actual_manifest = json.loads((root / ".github/standards/repo-config.manifest.json").read_text())
+    repo = next(entry for entry in actual_manifest["repositories"] if entry["name"] == "bijux-atlas")
+    # The default fixture deliberately exercises an unselected repository;
+    # production family entries now select the controller publication policy.
+    repo.pop("workflow_execution_policy", None)
+    (root / ".github/standards/repo-config.manifest.json").write_text(json.dumps(actual_manifest, indent=2) + "\n")
     if selected:
-        repo = next(entry for entry in actual_manifest["repositories"] if entry["name"] == "bijux-atlas")
         repo["workflow_allowlist"] = [entry["id"] for entry in actual_manifest["workflow_inventory"]["managed_workflows"]]
         repo["workflow_execution_policy"] = copy.deepcopy(POLICY)
         for name in ["release-ghcr", "release-crates"]:

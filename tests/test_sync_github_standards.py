@@ -86,7 +86,7 @@ class SyncGithubStandardsTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as workspace:
             standard = Path(workspace) / "owning-standard"
             shutil.copytree(MODULE.STD_REPO / ".github", standard / ".github")
-            shutil.copytree(MODULE.STD_REPO / "shared/bijux-gh", standard / "shared/bijux-gh")
+            shutil.copytree(MODULE.STD_REPO / "shared", standard / "shared")
             source = standard / "shared/bijux-gh/workflows/github-policy.yml"
             original = source.read_text()
             source.write_text(original.replace("  policy:\n", "  policy:\n    if: false\n", 1))
@@ -137,7 +137,7 @@ class SyncGithubStandardsTests(unittest.TestCase):
             with self.subTest(variant=variant), tempfile.TemporaryDirectory() as workspace:
                 standard = Path(workspace) / "owning-standard"
                 shutil.copytree(MODULE.STD_REPO / ".github", standard / ".github")
-                shutil.copytree(MODULE.STD_REPO / "shared/bijux-gh", standard / "shared/bijux-gh")
+                shutil.copytree(MODULE.STD_REPO / "shared", standard / "shared")
                 source = standard / "shared/bijux-gh/workflows/deploy-docs.yml"
                 original = source.read_text()
                 if variant == "boolean-predicate":
@@ -219,7 +219,7 @@ class SyncGithubStandardsTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as workspace:
             standard = Path(workspace) / "standard"
             shutil.copytree(MODULE.STD_REPO / ".github", standard / ".github")
-            shutil.copytree(MODULE.STD_REPO / "shared/bijux-gh", standard / "shared/bijux-gh")
+            shutil.copytree(MODULE.STD_REPO / "shared", standard / "shared")
             source = standard / "shared/bijux-gh/workflows/github-policy.yml"
             source.write_text("on: push\non: workflow_dispatch\njobs: {}\n")
             destination = Path(workspace) / "bijux-atlas"
