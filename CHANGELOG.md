@@ -12,6 +12,11 @@ Enforce reviewed declaration priorities, unlayered shared styles and a closed im
 
 ### Merged pull requests
 
+#### 2026-10-10T00:09:55Z — [#261](https://github.com/bijux/bijux-std/pull/261) — test(docs): measure attributable website performance populations
+
+Account for served payload and navigation ownership, observe controlled cold/warm transport and reader interactions, and compare only source-bound compatible populations. Retain unavailable metrics and failed observations without granting production performance acceptance.
+
+
 #### 2026-10-09T21:51:39Z — [#257](https://github.com/bijux/bijux-std/pull/257) — fix(docs): validate public artifact redirect and asset destinations
 
 Reject redirect cycles and private destinations, normalize Unicode hostname boundaries, and validate responsive, stylesheet and SVG resources against actual public assets and symbols. Preserve harmless scientific SVG metadata while refusing internal entity authority.
