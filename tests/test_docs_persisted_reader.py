@@ -32,6 +32,9 @@ def result(project='chromium-reader-narrow'):
     return {'project': project, 'case_id': project + '-case', 'status': 'passed', 'retry': 0, 'errors': [],
             'annotations': [{'type': 'browser-version', 'description': '145.0.0.0'},
                             {'type': 'persisted-browser-runtime', 'description': json.dumps(runtime)},
+                            {'type': 'persisted-cache-diagnostics', 'description': json.dumps({'rejections': [], 'lifecycle': [
+                                {'frameId': 'reader-frame', 'loaderId': loader, 'name': 'load', 'timestamp': timestamp}
+                                for loader, timestamp in [('reader-loader', 1), ('table-loader', 2)]]})},
                             {'type': 'persisted-native-journey', 'description': json.dumps(journey)}]}
 
 
@@ -44,6 +47,29 @@ def changed(name, value, change):
 
 
 class NativeCacheAuthorityTests(unittest.TestCase):
+    def test_missing_browser_load_observations_refuse_the_native_cache_claim(self):
+        value = changed('persisted-cache-diagnostics', result(), lambda body: body.update(lifecycle=[]))
+        with self.assertRaisesRegex(ValueError, 'Browser load observations'):
+            READER.qualify_journey(value)
+
+    def test_missing_diagnostics_refuses_the_native_cache_claim(self):
+        value = result()
+        value['annotations'] = [item for item in value['annotations'] if item['type'] != 'persisted-cache-diagnostics']
+        with self.assertRaisesRegex(ValueError, 'Missing or duplicate'):
+            READER.qualify_journey(value)
+
+    def test_browser_cache_rejection_refuses_otherwise_complete_cycles(self):
+        value = changed('persisted-cache-diagnostics', result(), lambda body: body['rejections'].append(
+            {'notRestoredExplanations': [{'reason': 'IgnoreEventAndEvict'}]}))
+        with self.assertRaisesRegex(ValueError, 'browser cache rejection'):
+            READER.qualify_journey(value)
+
+    def test_malformed_protocol_lifecycle_refuses_the_native_cache_claim(self):
+        value = changed('persisted-cache-diagnostics', result(), lambda body: body['lifecycle'].append(
+            {'frameId': 'frame', 'loaderId': 'loader', 'name': 'load', 'timestamp': 'unknown'}))
+        with self.assertRaisesRegex(ValueError, 'native cache diagnostics'):
+            READER.qualify_journey(value)
+
     def test_actual_two_cached_cycles_qualify_only_chromium(self):
         qualified = READER.qualify_journey(result())
         self.assertEqual(qualified['cycles'], 2)
