@@ -33,3 +33,4 @@ d577b98092b7326c75ee960a58ff9282f0268c8e58a25fd71cb270b38653fa75  .github/standa
 0090f9a287ee27620d10f32f01f57c75349b05ec773402e584d2dca78daef57e  .github/standards/workflow-sources/source-manifest.json
 033998646ada52d8fa64aa56f1ff38dd01fd783fd7ed93daa4c1d9670867c610  .github/workflows/automerge-pr.yml
 d577b98092b7326c75ee960a58ff9282f0268c8e58a25fd71cb270b38653fa75  .github/workflows/bijux-std.yml
+0df937d71566fbb5f6d8002311955bcfb5b324f1e04a3abc8d491b30a870e7dd  .bijux/shared/bijux-gh/scripts/publication_admission.py
