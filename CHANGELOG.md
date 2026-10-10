@@ -6,11 +6,15 @@ This file records notable repository-level changes for `bijux-std`.
 
 ### Pending review
 
-#### [#259](https://github.com/bijux/bijux-std/pull/259) — feat(docs): govern shared stylesheet precedence and token ownership
+#### [#262](https://github.com/bijux/bijux-std/pull/262) — ci(docs): recover exact source-owned qualification attempts
 
-Enforce reviewed declaration priorities, unlayered shared styles and a closed import graph; remove unnecessary footer priority flags and bind owned token references to exact definition scopes.
+Admit retained fixtures and execution evidence through exact live API source and owner identity, preserve each actual workflow attempt, and qualify the full latest job union without relaxing coverage or whole-job limits. Keep ordinary first-attempt downloads and retain failed admission diagnostics.
 
 ### Merged pull requests
+
+#### 2026-10-10T00:34:46Z — [#259](https://github.com/bijux/bijux-std/pull/259) — feat(docs): govern shared stylesheet precedence and token ownership
+
+Enforce reviewed declaration priorities, unlayered shared styles and a closed import graph; remove unnecessary footer priority flags and bind owned token references to exact definition scopes.
 
 #### 2026-10-10T00:09:55Z — [#261](https://github.com/bijux/bijux-std/pull/261) — test(docs): measure attributable website performance populations
 

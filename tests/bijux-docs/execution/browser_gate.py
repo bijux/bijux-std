@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import argparse
 import hashlib
+import inspect
 import importlib.util
 import json
 import os
@@ -80,10 +81,21 @@ def prepare() -> None:
     })
 
 
-def verify_producer_envelope() -> dict:
-    receipt = json.loads((ARTIFACTS / 'producer-envelope.json').read_text())
+def workflow_controllers():
+    return load_module(TESTS / 'execution/workflow_controllers.py', 'browser_workflow_controllers')
+
+
+def verify_producer_envelope(admission=None) -> dict:
+    data = (ARTIFACTS / 'producer-envelope.json').read_bytes()
+    receipt = json.loads(data)
     expected = {'source_head': subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=ROOT, text=True).strip(),
                 'workflow_run_id': os.environ.get('GITHUB_RUN_ID'), 'workflow_attempt': os.environ.get('GITHUB_RUN_ATTEMPT')}
+    if admission is not None:
+        if (type(admission).__name__ != 'ArtifactInput'
+                or Path(inspect.getfile(type(admission).verify_receipt)).resolve() != TESTS / 'execution/workflow_lineage.py'):
+            raise ValueError('API-created source-owned producer input is required')
+        admission.verify_receipt('producer-envelope.json', data)
+        expected.update(admission.workflow_identity())
     if any(receipt.get(key) != value for key, value in expected.items()):
         raise ValueError('Producer workflow/candidate identity mismatch')
     if receipt.get('partition_registry_sha256') != hashlib.sha256(PARTITIONS.REGISTRY_PATH.read_bytes()).hexdigest():
@@ -92,7 +104,10 @@ def verify_producer_envelope() -> dict:
     if set(receipt.get('artifact_digests', {})) != set(paths):
         raise ValueError('Producer evidence inventory mismatch')
     for name in paths:
-        if hashlib.sha256((ARTIFACTS / name).read_bytes()).hexdigest() != receipt['artifact_digests'][name]:
+        body = (ARTIFACTS / name).read_bytes()
+        if admission is not None:
+            admission.verify_file(name, body)
+        if hashlib.sha256(body).hexdigest() != receipt['artifact_digests'][name]:
             raise ValueError('Producer evidence digest mismatch: ' + name)
     observation = json.loads((ARTIFACTS / 'renderer-source-observation.json').read_text())
     if observation['source']['sha'] != expected['source_head'] or observation['verification_only'] is not True or observation['admission_created'] is not False:
@@ -128,10 +143,13 @@ def install_browser_runtime() -> None:
 def run(group: str, engine: str) -> None:
     if any(name in os.environ for name in ('BIJUX_UI_BROWSER_ENGINE', 'BIJUX_UI_PROJECTS', 'BIJUX_UI_PROFILE')):
         raise ValueError('Browser execution selection must come from its assigned group/engine')
-    assignments = partition_plan()
     if group not in GROUPS or engine not in ENGINES:
         raise ValueError('Unknown assigned browser group or engine')
-    verify_producer_envelope()
+    controllers = workflow_controllers()
+    collection = controllers.collect('producer', caller='browser-' + group + '-' + engine) if controllers.recovery() else None
+    producer = verify_producer_envelope(collection.producer if collection is not None else None)
+    # Cold recovery must admit and verify inventories before deriving their ownership.
+    assignments = partition_plan()
     unpack()
     install_browser_runtime()
     failed = []
@@ -147,9 +165,10 @@ def run(group: str, engine: str) -> None:
             failed.append(suite)
     if failed:
         raise ValueError('Browser qualification failed: ' + ', '.join(failed))
+    controllers.record_execution(ARTIFACTS / 'shards' / f'{group}-{engine}', f'browser-{group}-{engine}', producer)
 
 
-def aggregate() -> None:
+def aggregate(collection=None) -> None:
     module_path = TESTS / 'reporting/aggregate.py'
     spec = importlib.util.spec_from_file_location('browser_aggregation', module_path)
     module = importlib.util.module_from_spec(spec)
@@ -161,11 +180,18 @@ def aggregate() -> None:
     actual = [(path.parent.parent.name, path.parent.name) for path in reports]
     output = ARTIFACTS / 'navigation-qualification.json'
     try:
-        if any(os.environ.get(name, 'success') != 'success' for name in ('FIXTURE_RESULT', 'BROWSER_RESULT', 'COMMAND_RESULT', 'RENDERER_RESULT', 'PERSISTED_RESULT')):
+        if collection is None and any(os.environ.get(name, 'success') != 'success' for name in ('FIXTURE_RESULT', 'BROWSER_RESULT', 'COMMAND_RESULT', 'RENDERER_RESULT', 'PERSISTED_RESULT')):
             raise ValueError('A required fixture/browser job or publication command job failed or was cancelled')
         if len(actual) != len(expected) or set(actual) != expected:
             raise ValueError('Missing, duplicate or unexpected browser shard receipt')
-        producer = verify_producer_envelope()
+        if collection is not None:
+            workflow_controllers().require_collection(collection)
+        producer = verify_producer_envelope(collection.producer if collection is not None else None)
+        controllers = workflow_controllers()
+        if collection is not None:
+            for group in GROUPS:
+                for engine in ENGINES:
+                    controllers.verify_execution(collection, f'browser-{group}-{engine}', ARTIFACTS / 'shards' / f'{group}-{engine}')
         assignments = partition_plan()
         evidence = []
         partition_reports = []
@@ -185,19 +211,28 @@ def aggregate() -> None:
         commands_spec = importlib.util.spec_from_file_location('publication_commands', TESTS / 'execution/publication_gate.py')
         commands = importlib.util.module_from_spec(commands_spec)
         commands_spec.loader.exec_module(commands)
-        result['publication_commands'] = commands.verify(ARTIFACTS / 'publication-commands')
+        result['publication_commands'] = commands.verify(ARTIFACTS / 'publication-commands',
+            workflow=collection.inputs['commands'].workflow_identity() if collection is not None else None)
         controls_spec = importlib.util.spec_from_file_location('renderer_controls', TESTS / 'execution/renderer_controls.py')
         controls = importlib.util.module_from_spec(controls_spec)
         controls_spec.loader.exec_module(controls)
-        result['renderer_controls'] = controls.verify_groups(ARTIFACTS / 'renderer-controls')
+        if collection is None:
+            result['renderer_controls'] = controls.verify_groups(ARTIFACTS / 'renderer-controls')
+        else:
+            result['renderer_controls'] = controls.verify_groups(ARTIFACTS / 'renderer-controls',
+                workflows={group: collection.inputs['renderer-' + group].workflow_identity() for group in controls.GROUPS})
         persisted = persisted_reader()
         cached = persisted.verify(ARTIFACTS / 'persisted-reader')
+        if collection is not None:
+            controllers.verify_execution(collection, 'persisted', ARTIFACTS / 'persisted-reader')
         if cached['source_identity'] != result['source_identity']:
             raise ValueError('Cached reader receipt does not qualify this Git candidate')
         result['persisted_native_reader'] = cached
         result['producer_envelope'] = producer
         result['browser_partitions'] = {f'{group}/{suite}': names for (group, suite), names in assignments.items()}
         result['inputs'] = [{'path': str(path.relative_to(ARTIFACTS)), 'sha256': hashlib.sha256(path.read_bytes()).hexdigest()} for path in inventories + reports]
+        if collection is not None:
+            result['workflow_input_admission'] = collection.export_record()
     except (ValueError, KeyError, OSError, TypeError, ET.ParseError) as error:
         result = {'schema': 1, 'status': 'failed', 'error': str(error)}
     write_json(output, result)
