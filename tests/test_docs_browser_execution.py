@@ -179,7 +179,7 @@ class RecoveryProducerOrderTests(unittest.TestCase):
                 events.append('native')
                 return SimpleNamespace(returncode=0)
 
-            controllers = SimpleNamespace(recovery=lambda: recovery,
+            controllers = SimpleNamespace(retained_producer=lambda: recovery,
                 collect=Mock(side_effect=collect), record_execution=Mock(side_effect=lambda *a: events.append('record')))
             if not recovery:
                 self.materialize(root)

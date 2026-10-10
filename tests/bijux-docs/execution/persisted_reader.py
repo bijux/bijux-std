@@ -155,7 +155,7 @@ def run() -> None:
             'Dedicated cached reader owner does not admit external project selection')
     gate = load(TESTS / 'execution/browser_gate.py', 'persisted_fixture_gate')
     controllers = gate.workflow_controllers()
-    collection = controllers.collect('producer', caller='persisted') if controllers.recovery() else None
+    collection = controllers.collect('producer', caller='persisted') if controllers.retained_producer() else None
     producer = gate.verify_producer_envelope(collection.producer if collection is not None else None)
     gate.unpack()
     gate.install_browser_runtime()

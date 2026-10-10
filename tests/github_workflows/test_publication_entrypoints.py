@@ -60,5 +60,33 @@ class PublicationEntrypointTests(unittest.TestCase):
                 MODULE.validate_publication_calls({"authored.yml": document}, POLICY)
 
 
+class ControllerPublicationTests(unittest.TestCase):
+    def policy(self):
+        return {"schema": 1, "publication_entrypoints": {"release-pypi": {"mode": "manual-only", "controller": "iac"}}}
+
+    def test_pypi_credentials_depend_on_read_only_authenticated_admission(self):
+        source = {"on": {"workflow_dispatch": {"inputs": {"release_tag": {"type": "string"}}}, "workflow_call": None},
+                  "jobs": {"publish": {"runs-on": "ubuntu-latest", "env": {"PYPI_TOKEN": "${{ secrets.PYPI_TOKEN }}"},
+                                       "steps": [{"run": "uv publish"}]}}}
+        projected = MODULE.project_publication_entrypoints("release-pypi", source, self.policy())
+        guard = projected["jobs"]["publication_admission"]
+        self.assertEqual(guard["permissions"], {"contents": "read", "checks": "read"})
+        self.assertNotIn("secrets.", str(guard))
+        self.assertEqual(projected["jobs"]["publish"]["needs"], ["publication_admission"])
+        self.assertIn("needs.publication_admission.result == 'success'", projected["jobs"]["publish"]["if"])
+        self.assertTrue(projected["on"]["workflow_dispatch"]["inputs"]["accepted_commit"]["required"])
+        self.assertNotIn("workflow_call", projected["on"])
+        self.assertEqual(MODULE.project_publication_entrypoints("release-pypi", projected, self.policy()), projected)
+
+    def test_renamed_and_indirect_external_publishers_are_rejected(self):
+        for job in [{"steps": [{"run": "uv publish"}]},
+                    {"steps": [{"uses": "actions/deploy-pages@immutable"}]},
+                    {"uses": "bijux/bijux-canon/.github/workflows/release-pypi.yml@main"}]:
+            with self.subTest(job=job), self.assertRaises(ValueError):
+                MODULE.validate_publication_calls({".github/workflows/renamed.yml": {"jobs": {"publish": job}}}, self.policy())
+        MODULE.validate_publication_calls({".github/workflows/ci.yml": {"jobs": {"evidence": {"steps": [
+            {"uses": "actions/upload-artifact@immutable"}, {"run": "cargo publish --dry-run"}]}}}}, self.policy())
+
+
 if __name__ == "__main__":
     unittest.main()

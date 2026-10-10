@@ -335,6 +335,21 @@ class WorkflowArtifactTransportTests(unittest.TestCase):
         opener.open = lambda *args, **kwargs: (_ for _ in ()).throw(URLError('sig=secret private-token'))
         with self.assertRaisesRegex(ValueError, '^GitHub transport could not complete$'): api.archive(33)
 
+    def test_transport_errors_identify_origin_and_safe_rate_limit_headers_only(self):
+        class Opener:
+            def open(self, request, timeout):
+                raise HTTPError(request.full_url + '?sig=secret', 403, 'private-token',
+                    {'X-RateLimit-Remaining':'0', 'X-RateLimit-Reset':'1760112000',
+                     'Retry-After':'private-token', 'Authorization':'private-token'}, io.BytesIO(b'secret'))
+        api = ARTIFACTS.GitHubAPI('bijux/bijux-std', 'private-token', opener=Opener())
+        with self.assertRaisesRegex(ValueError, '^GitHub API transport failed with HTTP 403') as raised:
+            api.json('repos/bijux/bijux-std/actions/runs/123')
+        self.assertIn('x-ratelimit-remaining=0', str(raised.exception))
+        self.assertNotIn('secret', str(raised.exception))
+        self.assertNotIn('private-token', str(raised.exception))
+        with self.assertRaisesRegex(ValueError, '^artifact CDN transport failed with HTTP 403'):
+            api._read('https://owned.blob.core.windows.net/archive?sig=secret', authenticated=False, maximum=10)
+
     def test_json_duplicate_keys_cross_repository_redirect_and_byte_limit_are_refused(self):
         class Opener:
             body = b'{"id":1,"id":2}'
