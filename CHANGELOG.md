@@ -6,6 +6,10 @@ This file records notable repository-level changes for `bijux-std`.
 
 ### Pending review
 
+#### [#274](https://github.com/bijux/bijux-std/pull/274) — ci(genomics): admit source through format lint and dependency audit
+
+Run the Genomics canonical source admission through formatting, lint and dependency audit while its product suites are repaired. Preserve independent publication qualification and other repository test lanes.
+
 #### [#267](https://github.com/bijux/bijux-std/pull/267) — fix(docs): cancel viewport history writes before cached departure
 
 Cancel pending native viewport-history work before cross-document departure or browser-cache entry, and resume fresh work after trusted cached restoration or cancelled departure. Preserve same-document navigation and other readers' history state; bind the owned lifecycle source to the reproduced Material runtime and exercise its cancellation boundaries.
