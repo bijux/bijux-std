@@ -18,6 +18,12 @@ async function snapshot(page) {
 test("actual cached native reader Back and Forward retain this entry and its source inspection", async ({ page, browser }, info) => {
   const origin = info.project.use.baseURL, reader = origin + "/reader-diagrams/", checkpoint = origin + "/reader-table/";
   const events = [], records = [], external = [], observed = new Set();
+  const cacheDiagnostics = { rejections: [], lifecycle: [] };
+  const pageProtocol = await page.context().newCDPSession(page);
+  await pageProtocol.send("Page.enable");
+  await pageProtocol.send("Page.setLifecycleEventsEnabled", { enabled: true });
+  pageProtocol.on("Page.backForwardCacheNotUsed", event => cacheDiagnostics.rejections.push(event));
+  pageProtocol.on("Page.lifecycleEvent", event => cacheDiagnostics.lifecycle.push(event));
   page.on("request", request => { if (new URL(request.url()).origin !== origin) external.push(request.url()); });
   page.on("console", message => {
     if (!message.text().startsWith(prefix)) return;
@@ -34,18 +40,23 @@ test("actual cached native reader Back and Forward retain this entry and its sou
       console.log(prefix + JSON.stringify({ type: event.type, sequence: ++sequence, trusted: event.isTrusted,
         persisted: event.persisted, href: location.href, entryKey: window.navigation?.currentEntry?.key,
         timeOrigin: performance.timeOrigin, y: scrollY, top: link?.getBoundingClientRect().top,
+        readyState: document.readyState,
+        notRestoredReasons: performance.getEntriesByType("navigation")[0]?.notRestoredReasons?.toJSON() ?? null,
         sources: [...document.querySelectorAll(".md-content article .bijux-diagram-source code")].map(node => node.textContent),
         disclosures: [...document.querySelectorAll(".md-content article .bijux-diagram-source")].map(node => node.open),
       }));
     }
     window.addEventListener("pageshow", observe);
     window.addEventListener("pagehide", observe);
+    window.addEventListener("load", observe);
     document.addEventListener("click", event => { if (event.target.closest?.("#reader-native-next")) observe(event); }, true);
   }, { prefix });
   const protocol = await browser.newBrowserCDPSession();
   const runtime = { version: await protocol.send("Browser.getVersion"),
     commandLine: await protocol.send("Browser.getBrowserCommandLine") };
-  await protocol.detach();
+  // Chromium's public rejection reason can mask the activation operation.
+  // Navigation traces retain the browser's physical eviction explanation.
+  await protocol.send("Tracing.start", { categories: "navigation", transferMode: "ReturnAsStream" });
   const executable = runtime.commandLine.arguments[0];
   expect(executable).toBeTruthy(); expect(executable).not.toMatch(/headless[_-]shell/i);
   expect(runtime.commandLine.arguments).not.toContain("--disable-back-forward-cache");
@@ -98,6 +109,22 @@ test("actual cached native reader Back and Forward retain this entry and its sou
     expect(external).toEqual([]);
     info.annotations.push({ type: "persisted-native-journey", description: JSON.stringify({ departure, initial, target, records, external }) });
   } finally {
-    await info.attach("persisted-native-reader-observations", { body: Buffer.from(JSON.stringify({ runtime, events, records, external }, null, 2)), contentType: "application/json" });
+    // Read-only browser rejection evidence survives an assertion failure. It
+    // cannot substitute for the trusted native cached journeys above.
+    info.annotations.push({ type: "persisted-cache-diagnostics", description: JSON.stringify(cacheDiagnostics) });
+    await info.attach("persisted-native-reader-observations", { body: Buffer.from(JSON.stringify({ runtime, events, records, external, cacheDiagnostics }, null, 2)), contentType: "application/json" });
+    const complete = new Promise(resolve => protocol.once("Tracing.tracingComplete", resolve));
+    await protocol.send("Tracing.end");
+    const { stream } = await complete;
+    let trace = "", eof = false;
+    while (!eof) {
+      const chunk = await protocol.send("IO.read", { handle: stream });
+      trace += chunk.data;
+      eof = chunk.eof;
+    }
+    await protocol.send("IO.close", { handle: stream });
+    await info.attach("persisted-native-navigation-trace", { body: Buffer.from(trace), contentType: "application/json" });
+    await protocol.detach();
+    await pageProtocol.detach();
   }
 });

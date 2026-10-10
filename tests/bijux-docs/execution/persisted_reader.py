@@ -59,6 +59,15 @@ def qualify_journey(result: dict) -> dict:
     require(len(versions) == 1 and runtime['version']['product'] == 'Chrome/' + versions[0],
             'Actual Chromium protocol version is required')
     journey = annotation(result, 'persisted-native-journey')
+    diagnostics = annotation(result, 'persisted-cache-diagnostics')
+    require(set(diagnostics) == {'rejections', 'lifecycle'}
+            and diagnostics['rejections'] == [] and isinstance(diagnostics['lifecycle'], list)
+            and all(isinstance(event, dict) and isinstance(event.get('frameId'), str)
+                    and isinstance(event.get('loaderId'), str) and isinstance(event.get('name'), str)
+                    and type(event.get('timestamp')) in (int, float) for event in diagnostics['lifecycle']),
+            'Missing native cache diagnostics or actual browser cache rejection')
+    require(len({event['loaderId'] for event in diagnostics['lifecycle'] if event['name'] == 'load'}) >= 2,
+            'Browser load observations for both native documents are required')
     departure, initial, target = (journey[key] for key in ('departure', 'initial', 'target'))
     require(departure['trusted'] is True and departure['type'] == 'click', 'Trusted native departure is required')
     require(isinstance(departure['entryKey'], str) and bool(departure['entryKey'])
@@ -93,7 +102,8 @@ def qualify_journey(result: dict) -> dict:
         require(type(returned['top']) in (int, float) and type(departure['top']) in (int, float)
                 and abs(returned['top'] - departure['top']) < 1
                 and cycle['absoluteOffset'] == abs(returned['top'] - departure['top']), 'Cached offset reached the original one-pixel limit')
-    return {'project': result['project'], 'cycles': 2, 'runtime': runtime, 'journey': journey}
+    return {'project': result['project'], 'cycles': 2, 'runtime': runtime, 'journey': journey,
+            'cache_diagnostics': diagnostics}
 
 
 def current_source_identity() -> dict:
