@@ -6,6 +6,8 @@ This file records notable repository-level changes for `bijux-std`.
 
 ### Unreleased
 
+Request merge commits for reviewed safe dependency automation, preserving original ancestry under the admitted merge-only repository settings.
+
 Verify Python repository governance through its independently fetched, exact GitHub standards pin. Compare canonical projected workflow bytes without rendering, copying, or restoring product files.
 
 Use the repository-owned OpenAPI package manifest and lock for strict sandbox installation, reject unreviewed dependency fallback, and invalidate installed tools when either reviewed input changes. Align API workflows with Node 24.21.0, setup-java v6.0.1, and the Redocly 2.58.1 configuration baseline.
