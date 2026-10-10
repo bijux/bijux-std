@@ -10,11 +10,21 @@ This file records notable repository-level changes for `bijux-std`.
 
 Admit retained fixtures and execution evidence through exact live API source and owner identity, preserve each actual workflow attempt, and qualify the full latest job union without relaxing coverage or whole-job limits. Keep ordinary first-attempt downloads and retain failed admission diagnostics.
 
-#### [#257](https://github.com/bijux/bijux-std/pull/257) — fix(docs): validate public artifact redirect and asset destinations
+### Merged pull requests
+
+#### 2026-10-10T00:34:46Z — [#259](https://github.com/bijux/bijux-std/pull/259) — feat(docs): govern shared stylesheet precedence and token ownership
+
+Enforce reviewed declaration priorities, unlayered shared styles and a closed import graph; remove unnecessary footer priority flags and bind owned token references to exact definition scopes.
+
+#### 2026-10-10T00:09:55Z — [#261](https://github.com/bijux/bijux-std/pull/261) — test(docs): measure attributable website performance populations
+
+Account for served payload and navigation ownership, observe controlled cold/warm transport and reader interactions, and compare only source-bound compatible populations. Retain unavailable metrics and failed observations without granting production performance acceptance.
+
+
+#### 2026-10-09T21:51:39Z — [#257](https://github.com/bijux/bijux-std/pull/257) — fix(docs): validate public artifact redirect and asset destinations
 
 Reject redirect cycles and private destinations, normalize Unicode hostname boundaries, and validate responsive, stylesheet and SVG resources against actual public assets and symbols. Preserve harmless scientific SVG metadata while refusing internal entity authority.
 
-### Merged pull requests
 
 #### 2026-10-09T21:28:33Z — [#253](https://github.com/bijux/bijux-std/pull/253) — fix(docs): retain native reader context after diagram layout changes
 
