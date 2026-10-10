@@ -6,12 +6,16 @@ This file records notable repository-level changes for `bijux-std`.
 
 ### Pending review
 
-#### [#266](https://github.com/bijux/bijux-std/pull/266) — ci(docs): require hub diagram rendering in the standards report
+#### [#267](https://github.com/bijux/bijux-std/pull/267) — fix(docs): cancel viewport history writes before cached departure
 
-Require the hub-owned rendered diagram gate in the shared contracts job, including dependency pull requests. Prepare pinned browser/build runtimes, retain diagram evidence, and fail the existing required standards report when the complete reader check fails.
+Cancel pending native viewport-history work before cross-document departure or browser-cache entry, and resume fresh work after trusted cached restoration or cancelled departure. Preserve same-document navigation and other readers' history state; bind the owned lifecycle source to the reproduced Material runtime and exercise its cancellation boundaries.
 
 
 ### Merged pull requests
+
+#### 2026-10-10T12:44:46Z — [#266](https://github.com/bijux/bijux-std/pull/266) — ci(docs): require hub diagram rendering in the standards report
+
+Require the hub-owned rendered diagram gate in the shared contracts job, including dependency pull requests. Prepare pinned browser/build runtimes, retain diagram evidence, and fail the existing required standards report when the complete reader check fails.
 
 #### 2026-10-10T12:11:53Z — [#265](https://github.com/bijux/bijux-std/pull/265) — build(github): promote setup-uv and rust-toolchain action pins
 
