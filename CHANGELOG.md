@@ -6,6 +6,8 @@ This file records notable repository-level changes for `bijux-std`.
 
 ### Unreleased
 
+Admit all fifteen preserved Proteomics public install surfaces to build, PyPI, and GHCR matrices with explicit runtime, library, and compatibility roles. Verify all sixteen owned package profiles, including development governance, and remove unsupported package documentation defaults while retaining repository documentation publication qualification.
+
 Request merge commits for reviewed safe dependency automation, preserving original ancestry under the admitted merge-only repository settings.
 
 Verify Python repository governance through its independently fetched, exact GitHub standards pin. Compare canonical projected workflow bytes without rendering, copying, or restoring product files.
