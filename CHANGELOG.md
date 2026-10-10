@@ -6,6 +6,10 @@ This file records notable repository-level changes for `bijux-std`.
 
 ### Pending review
 
+#### [#275](https://github.com/bijux/bijux-std/pull/275) — fix(publication): preserve ghcr build families and promote action pins
+
+Keep shared release build families intact when selecting individual GHCR publication packages. Map Core's public DAG crates to their shared DAG bundle and CLI to its own bundle; validate both matrix shapes and reject malformed configuration. Promote verified setup-node v7.1.0, download-artifact v8.0.2 and upload-artifact v7.0.2 pins through their canonical owners and generated projections.
+
 #### [#276](https://github.com/bijux/bijux-std/pull/276) — fix(docs): admit exact accepted standards before publication builds
 
 Fetch and admit the repository's immutable GitHub standards pin before documentation setup and build. Reject missing or malformed pins and fetched commit mismatches; pass explicit source authority to guarded build commands without dispatching publication.
