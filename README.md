@@ -48,6 +48,26 @@ or one-off automation here. Conversely, do not repair a shared standard
 independently in every consumer. Correct the canonical source, validate it, and
 then refresh consumers from the accepted commit.
 
+## Publication Control
+
+`bijux-iac` dispatches the applicable canonical publishers from protected `main`.
+Each consumer configures `BIJUX_PUBLICATION_ACTOR_ID` with the controller App's
+numeric bot identity. The publisher validates the original and triggering actors,
+the exact `accepted_commit`, and successful required-check producer evidence
+before admitting a job with publication credentials. Release publishers also
+require an existing `release_tag` that resolves to that accepted commit.
+
+The documentation publisher fetches the consumer's exact
+`.github/standards/bijux-std.sha` from the official GitHub repository into its
+`artifacts/` cache before resolving configuration or running build commands.
+It exports `BIJUX_STD_ROOT` and `BIJUX_STD_REF` so documentation tooling verifies
+the same immutable source that the consumer accepted.
+
+Product CI continues to build and verify applicable documentation automatically.
+Publication requires a separate authenticated manual dispatch. See the
+[publication contracts](shared/bijux-gh/README.md#manual-publication-controlled-by-iac)
+for the controller permissions and admission requirements.
+
 ## System Model
 
 ```mermaid
