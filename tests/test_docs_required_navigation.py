@@ -28,6 +28,39 @@ def gate():
 
 
 class RequiredNavigationTests(unittest.TestCase):
+    def test_hub_diagram_command_failure_reaches_required_report(self):
+        section = job('checks').split('      - name: Run matrix check\n', 1)[1].split('      - name:', 1)[0]
+        script = section.split('        run: |\n', 1)[1]
+        script = '\n'.join(line[10:] for line in script.splitlines()).replace('${{ matrix.check }}', 'contracts')
+        directory = ROOT / 'artifacts/contracts/hub-diagrams'
+        directory.mkdir(parents=True, exist_ok=True)
+        with tempfile.TemporaryDirectory(dir=directory) as fixture:
+            fixture = Path(fixture)
+            validator = fixture / '.bijux/shared/bijux-checks/scripts/validate-shared-contracts.sh'
+            validator.parent.mkdir(parents=True)
+            validator.write_text('#!/bin/bash\nexit 0\n')
+            validator.chmod(0o755)
+            make = fixture / 'make'
+            make.write_text('#!/bin/bash\ntest "$*" = "docs-reader-ci DOCS_READER_BROWSER_FLAGS=--with-deps" || exit 87\nexit "${READER_EXIT:-0}"\n')
+            make.chmod(0o755)
+            for reader_exit in ('0', '1', '2', '124'):
+                env = {**os.environ, 'GITHUB_REPOSITORY': 'bijux/bijux.github.io',
+                       'READER_EXIT': reader_exit, 'PATH': str(fixture) + os.pathsep + os.environ['PATH']}
+                completed = subprocess.run(['bash', '-e', '-c', script], cwd=fixture, env=env, capture_output=True, text=True)
+                self.assertEqual(completed.returncode, int(reader_exit), completed.stderr)
+                checks = 'success' if completed.returncode == 0 else 'failure'
+                report = self.run_gate('bijux/bijux.github.io', checks=checks, navigation='skipped')
+                self.assertEqual(report.returncode == 0, reader_exit == '0')
+
+    def test_hub_dependency_pull_requests_cannot_skip_reader_contracts(self):
+        for name in ('checks', 'report'):
+            condition = job(name).split('    if: ', 1)[1].split('\n', 1)[0]
+            self.assertIn("github.repository == 'bijux/bijux.github.io' ||", condition)
+        checks = job('checks')
+        self.assertIn("matrix.check == 'contracts' && (github.repository == 'bijux/bijux-std' || github.repository == 'bijux/bijux.github.io')", checks)
+        self.assertIn('node-version: \'24.21.0\'', checks)
+        self.assertIn('Retain hub diagram evidence', checks)
+
     def run_gate(self, repository, checks='success', navigation='success', catalogue=None, renderer=None):
         env = {**os.environ, 'GITHUB_REPOSITORY': repository,
                'GITHUB_RUN_ATTEMPT': '1', 'CHECK_RESULT': checks, 'NAVIGATION_RESULT': navigation,

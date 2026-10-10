@@ -6,12 +6,16 @@ This file records notable repository-level changes for `bijux-std`.
 
 ### Pending review
 
-#### [#265](https://github.com/bijux/bijux-std/pull/265) — build(github): promote setup-uv and rust-toolchain action pins
+#### [#266](https://github.com/bijux/bijux-std/pull/266) — ci(docs): require hub diagram rendering in the standards report
 
-Promote setup-uv v10.2.0 and the accepted rust-toolchain commit into shared publishers, manifest wrappers and standards gates. Regenerate source snapshots and checksum manifests so downstream repositories consume the dependency changes through canonical refresh.
+Require the hub-owned rendered diagram gate in the shared contracts job, including dependency pull requests. Prepare pinned browser/build runtimes, retain diagram evidence, and fail the existing required standards report when the complete reader check fails.
 
 
 ### Merged pull requests
+
+#### 2026-10-10T12:11:53Z — [#265](https://github.com/bijux/bijux-std/pull/265) — build(github): promote setup-uv and rust-toolchain action pins
+
+Promote setup-uv v10.2.0 and the accepted rust-toolchain commit into shared publishers, manifest wrappers and standards gates. Regenerate source snapshots and checksum manifests so downstream repositories consume the dependency changes through canonical refresh.
 
 #### 2026-10-10T11:51:08Z — [#264](https://github.com/bijux/bijux-std/pull/264) — fix(ci): recover attempts after queued job cancellation
 
