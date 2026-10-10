@@ -6,11 +6,16 @@ This file records notable repository-level changes for `bijux-std`.
 
 ### Pending review
 
-#### [#264](https://github.com/bijux/bijux-std/pull/264) — fix(ci): recover attempts after queued job cancellation
+#### [#265](https://github.com/bijux/bijux-std/pull/265) — build(github): promote setup-uv and rust-toolchain action pins
 
-Preserve canceled, unassigned jobs as verified nonexecution audit records, admit only newer actual executions, and refuse stale success or artifact ownership after an unsuperseded cancellation. Reconcile repeated attempts and copied cancellation projections without relaxing runner, step, check or source authority.
+Promote setup-uv v10.2.0 and the accepted rust-toolchain commit into shared publishers, manifest wrappers and standards gates. Regenerate source snapshots and checksum manifests so downstream repositories consume the dependency changes through canonical refresh.
+
 
 ### Merged pull requests
+
+#### 2026-10-10T11:51:08Z — [#264](https://github.com/bijux/bijux-std/pull/264) — fix(ci): recover attempts after queued job cancellation
+
+Preserve canceled, unassigned jobs as verified nonexecution audit records, admit only newer actual executions, and refuse stale success or artifact ownership after an unsuperseded cancellation. Reconcile repeated attempts and copied cancellation projections without relaxing runner, step, check or source authority.
 
 #### 2026-10-10T10:56:02Z — [#263](https://github.com/bijux/bijux-std/pull/263) — feat(github): verify source-owned workflow execution policy
 
