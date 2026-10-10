@@ -10,6 +10,10 @@ This file records notable repository-level changes for `bijux-std`.
 
 Keep shared release build families intact when selecting individual GHCR publication packages. Map Core's public DAG crates to their shared DAG bundle and CLI to its own bundle; validate both matrix shapes and reject malformed configuration.
 
+#### [#276](https://github.com/bijux/bijux-std/pull/276) — fix(docs): admit exact accepted standards before publication builds
+
+Fetch and admit the repository's immutable GitHub standards pin before documentation setup and build. Reject missing or malformed pins and fetched commit mismatches; pass explicit source authority to guarded build commands without dispatching publication.
+
 #### [#274](https://github.com/bijux/bijux-std/pull/274) — ci(genomics): admit source through format lint and dependency audit
 
 Run the Genomics canonical source admission through formatting, lint and dependency audit while its product suites are repaired. Preserve independent publication qualification and other repository test lanes.
