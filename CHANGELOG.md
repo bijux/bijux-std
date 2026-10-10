@@ -6,15 +6,15 @@ This file records notable repository-level changes for `bijux-std`.
 
 ### Pending review
 
-#### [#262](https://github.com/bijux/bijux-std/pull/262) — ci(docs): recover exact source-owned qualification attempts
-
-Admit retained fixtures and execution evidence through exact live API source and owner identity, preserve each actual workflow attempt, and qualify the full latest job union without relaxing coverage or whole-job limits. Keep ordinary first-attempt downloads and retain failed admission diagnostics.
-
 #### [#260](https://github.com/bijux/bijux-std/pull/260) — refactor(docs): separate publication validation responsibilities
 
 Give HTML parsing, destination authority, redirect graphs, stylesheet/SVG resources and sitemap reconciliation explicit module ownership while preserving the public qualification command and diagnostics.
 
 ### Merged pull requests
+
+#### 2026-10-10T10:21:56Z — [#262](https://github.com/bijux/bijux-std/pull/262) — ci(docs): recover exact source-owned qualification attempts
+
+Admit retained fixtures and execution evidence through exact live API source and owner identity, preserve each actual workflow attempt, and qualify the full latest job union without relaxing coverage or whole-job limits. Keep ordinary first-attempt downloads and retain failed admission diagnostics.
 
 #### 2026-10-10T00:34:46Z — [#259](https://github.com/bijux/bijux-std/pull/259) — feat(docs): govern shared stylesheet precedence and token ownership
 
