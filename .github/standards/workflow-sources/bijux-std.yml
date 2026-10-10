@@ -33,7 +33,7 @@ jobs:
 
       - name: Prepare diagram contract runtime
         if: ${{ matrix.check == 'contracts' && (github.repository == 'bijux/bijux-std' || github.repository == 'bijux/bijux.github.io') }}
-        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1
         with:
           node-version: '24.21.0'
 
@@ -315,7 +315,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Prepare admitted Node runtime
-        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1
         with:
           node-version: '24.21.0'
       - name: Install exact renderer control dependencies
@@ -351,7 +351,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Prepare admitted Node runtime
-        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1
         with:
           node-version: '24.21.0'
       - name: Build and identify strict browser fixtures once
@@ -410,12 +410,12 @@ jobs:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Prepare admitted Node runtime
-        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1
         with:
           node-version: '24.21.0'
       - name: Download this run's immutable fixtures
         if: ${{ needs.navigation-fixtures.outputs.fixture-attempt == github.run_attempt }}
-        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
           name: docs-navigation-fixtures-${{ github.sha }}-${{ github.run_attempt }}
           path: artifacts/bijux-docs
@@ -467,12 +467,12 @@ jobs:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Prepare admitted Node runtime
-        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1
         with:
           node-version: '24.21.0'
       - name: Download this run's immutable fixtures
         if: ${{ needs.navigation-fixtures.outputs.fixture-attempt == github.run_attempt }}
-        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
           name: docs-navigation-fixtures-${{ github.sha }}-${{ github.run_attempt }}
           path: artifacts/bijux-docs
@@ -526,12 +526,12 @@ jobs:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Prepare admitted Node runtime
-        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1
         with:
           node-version: '24.21.0'
       - name: Download this run's immutable fixtures
         if: ${{ needs.navigation-fixtures.outputs.fixture-attempt == github.run_attempt }}
-        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
           name: docs-navigation-fixtures-${{ github.sha }}-${{ github.run_attempt }}
           path: artifacts/bijux-docs
@@ -604,46 +604,46 @@ jobs:
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Download canonical inventories
         if: ${{ github.run_attempt == 1 }}
-        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
           name: docs-navigation-fixtures-${{ github.sha }}-${{ github.run_attempt }}
           path: artifacts/bijux-docs
       - name: Download every assigned browser receipt
         if: ${{ github.run_attempt == 1 }}
-        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
           pattern: docs-navigation-*-*-${{ github.sha }}-${{ github.run_attempt }}
           path: artifacts/bijux-docs/shards
           merge-multiple: true
       - name: Download exact cached native reader evidence
         if: ${{ github.run_attempt == 1 }}
-        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
           name: docs-persisted-native-reader-${{ github.sha }}-${{ github.run_attempt }}
           path: artifacts/bijux-docs/persisted-reader
       - name: Download exact renderer command evidence
         if: ${{ github.run_attempt == 1 }}
-        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
           name: docs-publication-commands-${{ github.sha }}-${{ github.run_attempt }}
           path: artifacts/bijux-docs/publication-commands
       - name: Download exact renderer unit evidence
         if: ${{ github.run_attempt == 1 }}
-        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
           pattern: docs-renderer-controls-*-${{ github.sha }}-${{ github.run_attempt }}
           path: artifacts/bijux-docs/renderer-controls
           merge-multiple: true
       - name: Download exact frontend fault witnesses
         if: ${{ github.run_attempt == 1 }}
-        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
           pattern: docs-frontend-faults-browser-*-${{ github.sha }}-${{ github.run_attempt }}
           path: artifacts/bijux-docs/frontend-faults
           merge-multiple: true
       - name: Download exact public artifact fault witnesses
         if: ${{ github.run_attempt == 1 }}
-        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
           name: docs-frontend-faults-public-${{ github.sha }}-${{ github.run_attempt }}
           path: artifacts/bijux-docs/frontend-faults/public

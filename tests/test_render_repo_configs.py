@@ -330,7 +330,7 @@ class RenderRepoConfigsTests(unittest.TestCase):
             "actions/checkout": "3d3c42e5aac5ba805825da76410c181273ba90b1",
             "actions/setup-python": "5fda3b95a4ea91299a34e894583c3862153e4b97",
             "astral-sh/setup-uv": "c18668ad3cf93ea998bef934396af7bb5c839dc7",
-            "actions/setup-node": "820762786026740c76f36085b0efc47a31fe5020",
+            "actions/setup-node": "949feb2413d6458794dcd2491c4babbbce0c15c1",
             "actions/setup-java": "03ad4de0992f5dab5e18fcb136590ce7c4a0ac95",
         }
 
