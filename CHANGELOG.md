@@ -6,6 +6,10 @@ This file records notable repository-level changes for `bijux-std`.
 
 ### Pending review
 
+#### [#265](https://github.com/bijux/bijux-std/pull/265) — build(github): promote setup-uv and rust-toolchain action pins
+
+Promote setup-uv v10.2.0 and the accepted rust-toolchain commit into shared publishers, manifest wrappers and standards gates. Regenerate source snapshots and checksum manifests so downstream repositories consume the dependency changes through canonical refresh.
+
 #### [#263](https://github.com/bijux/bijux-std/pull/263) — feat(github): verify source-owned workflow execution policy
 
 Capture canonical policy sources, admit repository events before preparation, guard manual publishers and dependency routing, and independently rederive every workflow projection through finite source-owned helpers and snapshots. Preserve default repository behavior and introduce no consumer activation.
