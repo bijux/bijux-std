@@ -158,6 +158,55 @@ class DocsSourceProjectionTests(unittest.TestCase):
             projection.apply(self.repo,self.shared)
         self.assertEqual(target.read_text(),'User-edited guide')
 
+    def legacy_readme_context(self):
+        pin = self.repo / '.github/standards/bijux-std.sha'
+        pin.parent.mkdir(parents=True)
+        pin.write_text('b' * 40 + '\n')
+        for source, destination in [('styles/README.md', 'styles/README.md'),
+                                    ('scripts/README.md', 'javascripts/shell/README.md')]:
+            target = self.repo / 'docs/assets' / destination
+            target.parent.mkdir(parents=True, exist_ok=True)
+            target.write_text('Prior accepted guide')
+            (self.shared / source).write_text('Current accepted guide')
+        self.commit()
+        pin.write_text('a' * 40 + '\n')
+        return {'mode': 'accepted-github', 'sha': 'a' * 40,
+                'origin': 'https://github.com/bijux/bijux-std.git', 'authority': 'controlled-authority'}
+
+    def prior_readme_bytes(self, context, sha, source):
+        if sha == 'b' * 40 and source in {'bijux-docs/styles/README.md', 'bijux-docs/scripts/README.md'}:
+            return b'Prior accepted guide'
+        self.assertEqual(sha, 'a' * 40)
+        return (self.shared.parent / source).read_bytes()
+
+    def test_changed_generated_readmes_retire_from_exact_committed_prior_source(self):
+        context = self.legacy_readme_context()
+        with mock.patch.object(projection, 'published_bytes', side_effect=self.prior_readme_bytes) as published:
+            projection.apply(self.repo, self.shared, context=context)
+        self.assertFalse((self.repo / 'docs/assets/styles/README.md').exists())
+        self.assertFalse((self.repo / 'docs/assets/javascripts/shell/README.md').exists())
+        self.assertIn(mock.call(context, 'b' * 40, 'bijux-docs/styles/README.md'), published.call_args_list)
+        self.assertIn(mock.call(context, 'b' * 40, 'bijux-docs/scripts/README.md'), published.call_args_list)
+
+    def test_authored_readme_still_blocks_every_projection_before_mutation(self):
+        context = self.legacy_readme_context()
+        target = self.repo / 'docs/assets/styles/README.md'
+        target.write_text('Authored guide')
+        before = self.snapshot()
+        with mock.patch.object(projection, 'published_bytes', side_effect=self.prior_readme_bytes), \
+                self.assertRaisesRegex(RuntimeError, 'Preserve modified author documentation'):
+            projection.apply(self.repo, self.shared, context=context)
+        self.assertEqual(self.snapshot(), before)
+
+    def test_local_mode_cannot_infer_prior_readme_ownership(self):
+        self.legacy_readme_context()
+        before = self.snapshot()
+        with mock.patch.object(projection, 'published_bytes') as published, \
+                self.assertRaisesRegex(RuntimeError, 'Preserve modified author documentation'):
+            projection.apply(self.repo, self.shared)
+        published.assert_not_called()
+        self.assertEqual(self.snapshot(), before)
+
     def test_pending_tracked_projected_work_preserves_all_files(self):
         projection.apply(self.repo,self.shared)
         self.commit()
