@@ -32,7 +32,7 @@ def load(name: str):
     dependencies = b''
     if name == 'workflow_collection':
         dependencies = b''.join(path.with_name(value + '.py').read_bytes()
-                                for value in ('workflow_lineage', 'workflow_artifacts', 'browser_partitions'))
+                                for value in ('workflow_lineage', 'workflow_artifacts', 'workflow_jobs', 'browser_partitions'))
     key = 'bijux_controller_' + hashlib.sha256(str(path.resolve()).encode() + data + dependencies).hexdigest()
     if key not in sys.modules:
         module = ModuleType(key)
@@ -54,7 +54,7 @@ def recovery() -> bool:
     return int(attempt) > 1
 
 
-def collect(stage: str):
+def collect(stage: str, *, caller=None):
     require(recovery(), 'Retained inputs require an owning-repository recovery execution')
     collection = load('workflow_collection')
     token = os.environ.get('GH_TOKEN')
@@ -74,7 +74,7 @@ def collect(stage: str):
         finally:
             os.close(parent)
     identity = collection.context_from_environment(api, head)
-    return collection.collect(api, identity, stage, ARTIFACTS, audit=retain)
+    return collection.collect(api, identity, stage, ARTIFACTS, audit=retain, caller=caller, reconcile=True)
 
 
 def producer_record(producer: dict) -> dict:
@@ -159,7 +159,7 @@ def verify_execution(collection, role: str, folder: Path) -> dict:
 
 
 def aggregate() -> None:
-    collection = collect('navigation')
+    collection = collect('navigation', caller='navigation')
     # Each controller still rederives its own native/config/runtime duties.
     # Source admission replaces stale dependency booleans, never those duties.
     load('frontend_faults').aggregate(collection=collection)

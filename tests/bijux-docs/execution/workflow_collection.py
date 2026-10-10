@@ -71,7 +71,7 @@ def checkout_state() -> dict:
     require(Path(git('rev-parse', '--show-toplevel')).resolve() == ROOT.resolve(), 'Actual Git root differs from execution source')
     require(not git('status', '--porcelain', '--untracked-files=no'), 'Tracked checkout is dirty')
     closure = [str(path.relative_to(ROOT)) for path in (Path(__file__), EXECUTION / 'workflow_lineage.py',
-               EXECUTION / 'workflow_artifacts.py', EXECUTION / 'browser_partitions.py', EXECUTION / 'browser_partitions.json')]
+               EXECUTION / 'workflow_artifacts.py', EXECUTION / 'workflow_jobs.py', EXECUTION / 'browser_partitions.py', EXECUTION / 'browser_partitions.json')]
     git('ls-files', '--error-unmatch', '--', *closure)
     return {'checkout_sha': git('rev-parse', 'HEAD'), 'source_tree': git('rev-parse', 'HEAD^{tree}')}
 
@@ -262,18 +262,24 @@ class Collection:
                 'planned_files': {name: hashlib.sha256(data).hexdigest() for name, data in self.plan().items()}}
 
 
-def collect(api, identity: dict, stage: str, output: Path, *, audit=None) -> Collection:
+def collect(api, identity: dict, stage: str, output: Path, *, audit=None, caller=None, reconcile=False) -> Collection:
     source, collection, status = None, None, "failed"
     try:
         require(stage in ('producer', 'navigation'), 'Unknown collection stage')
         require(identity.get('workflow_path') == '.github/workflows/bijux-std.yml',
                 'Collection requires the source-owned frontend workflow')
         roles = registry()
+        caller_name = None
+        if reconcile:
+            require((stage == 'navigation' and caller == 'navigation')
+                    or (stage == 'producer' and caller in roles and caller != 'producer'),
+                    'Exact source-owned collector caller is required')
+            caller_name = 'std / navigation' if caller == 'navigation' else roles[caller]['job_name']
         if stage == 'producer':
             roles = {'producer': roles['producer']}
         before = checkout_state()
         require(all(before[key] == identity[key] for key in before), 'Actual checkout differs from input source context')
-        source = LINEAGE.observe_source(api, identity)
+        source = LINEAGE.observe_source(api, identity, reconcile=True, caller=caller_name) if reconcile else LINEAGE.observe_source(api, identity)
         specs = {role: {key: spec[key] for key in ('job_name', 'artifact_prefix', 'upload_step')} for role, spec in roles.items()}
         inputs = source.admit(specs, workers=8)
         collection = Collection(source, inputs, roles, _created=_CREATED)

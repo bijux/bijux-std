@@ -153,7 +153,8 @@ class RecoveryProducerOrderTests(unittest.TestCase):
             collection = SimpleNamespace(producer=member)
             original_plan = GATE.partition_plan
 
-            def collect(stage):
+            def collect(stage, *, caller):
+                self.assertTrue(caller.startswith('browser-'))
                 events.append('collect')
                 self.assertEqual(stage, 'producer')
                 self.assertFalse((root / 'inventories').exists())
@@ -199,7 +200,7 @@ class RecoveryProducerOrderTests(unittest.TestCase):
             GATE.run('navigation-destinations', 'firefox')
             self.assertEqual(observed.events[:5], ['collect', 'verify', 'partition', 'unpack', 'install'])
             self.assertEqual(observed.events[5:], ['native', 'record'])
-            observed.controllers.collect.assert_called_once_with('producer')
+            observed.controllers.collect.assert_called_once_with('producer', caller='browser-navigation-destinations-firefox')
 
     def test_first_attempt_verifies_downloaded_producer_without_api_collection(self):
         with self.execution(recovery=False) as observed:
@@ -248,8 +249,8 @@ class RecoveryProducerOrderTests(unittest.TestCase):
     def test_verified_materialization_still_requires_actual_partition_coverage(self):
         with self.execution() as observed:
             collect = observed.controllers.collect.side_effect
-            def incomplete(stage):
-                result = collect(stage)
+            def incomplete(stage, *, caller):
+                result = collect(stage, caller=caller)
                 path = observed.root / 'inventories/navigation-destinations.json'
                 inventory = json.loads(path.read_text())
                 inventory['cases'].pop()

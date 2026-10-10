@@ -194,7 +194,7 @@ def job_identity(row: dict) -> tuple:
     return tuple(row.get(key) for key in ('id', 'name', 'run_id', 'run_attempt', 'head_sha'))
 
 
-def observe(api, identity: dict) -> dict:
+def observe(api, identity: dict, *, execution_observer=None) -> dict:
     """Capture run, checkout, workflow, complete latest/history and artifact metadata."""
     required = {'run_id', 'attempt', 'head', 'checkout_sha', 'source_tree', 'workflow_id', 'workflow_path', 'head_branch'}
     require(isinstance(identity, dict) and set(identity) == required, 'Exact workflow identity is required')
@@ -220,8 +220,9 @@ def observe(api, identity: dict) -> dict:
         parents = commits['checkout_sha'].get('parents')
         require(isinstance(parents, list) and len(parents) == 2 and parents[1].get('sha') == identity['head'],
                 'Checkout is not the candidate preview merge')
-    latest = pages(api.json, run_path + '/jobs?filter=latest', 'jobs')
-    history = pages(api.json, run_path + '/jobs?filter=all', 'jobs')
+    executions = execution_observer(api, identity) if execution_observer is not None else None
+    latest = executions['latest'] if executions is not None else pages(api.json, run_path + '/jobs?filter=latest', 'jobs')
+    history = executions['history'] if executions is not None else pages(api.json, run_path + '/jobs?filter=all', 'jobs')
     artifacts = pages(api.json, run_path + '/artifacts', 'artifacts')
     require(len({row.get('name') for row in latest['jobs']}) == len(latest['jobs']), 'Duplicate latest job name')
     histories = {row['id']: row for row in history['jobs']}
@@ -239,7 +240,8 @@ def observe(api, identity: dict) -> dict:
             'Latest inventory omits a history owner')
     require(len({row.get('name') for row in artifacts['artifacts']}) == len(artifacts['artifacts']), 'Duplicate artifact name')
     return {'identity': dict(identity), 'run': run, 'workflow': workflow, 'commits': commits,
-            'latest': latest, 'history': history, 'artifacts': artifacts}
+            'latest': latest, 'history': history, 'artifacts': artifacts,
+            **({'execution_reconciliation': executions['execution_reconciliation']} if executions is not None else {})}
 
 
 def select(api, observation: dict, roles: dict, *, now: datetime | None = None) -> dict:
