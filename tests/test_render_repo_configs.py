@@ -40,6 +40,27 @@ SPEC.loader.exec_module(MODULE)
 
 
 class RenderRepoConfigsTests(unittest.TestCase):
+
+    def test_required_product_aggregates_run_on_dependency_prs_and_fail_closed(self):
+        import subprocess
+        manifest = json.loads(MANIFEST_PATH.read_text())
+        for name in ["bijux-canon", "bijux-proteomics", "bijux-pollenomics"]:
+            with self.subTest(repository=name):
+                prepared = MODULE.prepare_repo_files(name, manifest)
+                workflow = MODULE.WORKFLOW_EXECUTION.parse_workflow(prepared[".github/workflows/verify.yml"], "verify")
+                self.assertNotIn("paths", workflow["on"]["pull_request"])
+                gate = workflow["jobs"]["verification_ready"]
+                self.assertEqual(gate["if"], "${{ always() }}")
+                for job in workflow["jobs"].values():
+                    self.assertNotIn("dependabot", job.get("if", ""))
+                command = gate["steps"][0]["run"]
+                healthy = {key: "success" for key in gate["steps"][0]["env"]}
+                for dependency in healthy:
+                    for outcome in ["success", "failure", "cancelled", "skipped"]:
+                        result = subprocess.run(["bash", "-c", command], env={**healthy, dependency: outcome}, capture_output=True)
+                        self.assertEqual(result.returncode == 0, outcome == "success")
+
+
     def test_pure_preparation_has_no_destination_selection_or_mutation(self) -> None:
         manifest = json.loads(MANIFEST_PATH.read_text())
         before = copy.deepcopy(manifest)
