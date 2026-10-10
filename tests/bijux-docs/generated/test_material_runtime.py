@@ -72,6 +72,45 @@ class MaterialRuntimeTests(unittest.TestCase):
         self.assertIn(focused.encode(), output)
         self.assertIn(record['output_sha256'], asset)
 
+    def test_native_viewport_history_has_one_owned_lifecycle_boundary(self):
+        admitted = json.loads((OWNED / 'admission.json').read_text())
+        upstream = (self.templates / admitted['bundle']).read_text()
+        asset, output, record, _ = runtime.compile_runtime(self.templates, self.version)
+        self.assertEqual(upstream.count(runtime.VIEWPORT_HISTORY_BOUNDARY), 1)
+        self.assertNotIn(runtime.VIEWPORT_HISTORY_BOUNDARY.encode(), output)
+        self.assertIn(runtime.VIEWPORT_HISTORY_REPLACEMENT.encode(), output)
+        self.assertEqual(record['viewport_history_sha256'], hashlib.sha256((OWNED / 'viewport-history.js').read_bytes()).hexdigest())
+        self.assertIn(b'history.replaceState(c,""),history.pushState(null,"",a)', output)
+        self.assertIn(record['output_sha256'], asset)
+        runtime.validate_generated_javascript(output)
+
+    def test_native_viewport_history_drift_refuses_output(self):
+        templates = self.copied_templates()
+        owned = self.root / 'viewport-history-owned'
+        shutil.copytree(OWNED, owned)
+        admitted = json.loads((owned / 'admission.json').read_text())
+        bundle = templates / admitted['bundle']
+        original = bundle.read_text()
+        for changed in (original.replace(runtime.VIEWPORT_HISTORY_BOUNDARY, ''), original + runtime.VIEWPORT_HISTORY_BOUNDARY):
+            with self.subTest(occurrences=changed.count(runtime.VIEWPORT_HISTORY_BOUNDARY)):
+                bundle.write_text(changed)
+                (owned / 'admission.json').write_text(json.dumps(dict(admitted, bundle_sha256=hashlib.sha256(bundle.read_bytes()).hexdigest())))
+                with mock.patch.object(runtime, 'OWNED', owned), self.assertRaisesRegex(ValueError, 'viewport history boundary must occur exactly once'):
+                    runtime.generate(self.root / 'output', templates, self.version)
+                self.assertFalse((self.root / 'output').exists())
+
+    def test_malformed_viewport_history_preserves_existing_generated_output(self):
+        shared = self.root / 'shared'
+        runtime.generate(shared, self.templates, self.version)
+        before = {str(path.relative_to(shared)): path.read_bytes() for path in shared.rglob('*') if path.is_file()}
+        owned = self.root / 'viewport-history-owned'
+        shutil.copytree(OWNED, owned)
+        helper = owned / 'viewport-history.js'
+        helper.write_bytes(helper.read_bytes() + b'\n(() => {')
+        with mock.patch.object(runtime, 'OWNED', owned), self.assertRaisesRegex(ValueError, 'rejected by admitted JavaScript parser'):
+            runtime.generate(shared, self.templates, self.version)
+        self.assertEqual(before, {str(path.relative_to(shared)): path.read_bytes() for path in shared.rglob('*') if path.is_file()})
+
     def test_character_shortcut_boundary_rejects_missing_or_duplicate_reviewed_source(self):
         templates = self.copied_templates()
         owned = self.root / 'character-shortcut-owned'
