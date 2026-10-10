@@ -357,22 +357,31 @@ def verify(output: Path, current_source: dict | None = None, workflow: dict | No
     return verify_groups(output, current_source, workflow)
 
 
-def verify_groups(output: Path, current_source: dict | None = None, workflow: dict | None = None) -> dict:
+def verify_groups(output: Path, current_source: dict | None = None, workflow: dict | None = None,
+                  workflows: dict[str, dict] | None = None) -> dict:
     if (not output.is_dir() or output.is_symlink()
             or {path.name for path in output.iterdir()} != set(GROUPS)
             or any(not (output / group).is_dir() or (output / group).is_symlink() for group in GROUPS)):
         raise ValueError('Renderer group evidence is missing, duplicated or unexpected')
     source = current_source if current_source is not None else HELPERS.source_identity()
     identity = workflow if workflow is not None else HELPERS.workflow_identity()
-    receipts = {group: verify_receipt(output / group, source, identity, group) for group in GROUPS}
+    if workflows is not None and (not isinstance(workflows, dict) or set(workflows) != set(GROUPS)
+            or any(not isinstance(value, dict) or set(value) != {'workflow_run_id', 'workflow_attempt'}
+                   or not all(isinstance(item, str) and re.fullmatch(r'[1-9][0-9]*', item) for item in value.values())
+                   for value in workflows.values())):
+        raise ValueError('Every source-owned renderer group requires its exact admitted workflow identity')
+    receipts = {group: verify_receipt(output / group, source, workflows[group] if workflows is not None else identity, group) for group in GROUPS}
     python_ids = [case['id'] for receipt in receipts.values() for case in receipt['python_cases']]
     if sorted(python_ids) != expected_python_ids() or len(python_ids) != len(set(python_ids)):
         raise ValueError('Renderer group union does not execute every Python source case exactly once')
     if sum(receipt['node_executed'] for receipt in receipts.values()) != NODE_TEST_COUNT:
         raise ValueError('Renderer group union omitted native Node execution')
-    return {'schema': 2, 'status': 'passed', 'verification_only': True, 'publication_approval': False,
+    result = {'schema': 2, 'status': 'passed', 'verification_only': True, 'publication_approval': False,
             'source_before': source, 'source_after': source, 'workflow': identity, 'groups': receipts,
             'python_executed': len(python_ids), 'node_executed': NODE_TEST_COUNT}
+    if workflows is not None:
+        result['input_workflows'] = workflows
+    return result
 
 
 def run(python: Path, node: Path, output: Path, group: str | None = None) -> None:
