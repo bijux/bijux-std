@@ -260,6 +260,22 @@ for (const [scheme, expectedScheme] of [["light", "default"], ["dark", "slate"]]
       assertText(text);
       observations.push({ name: selector, ...text });
     }
+    const footerCascade = await page.locator(".md-footer__inner.bijux-footer-nav").evaluate(nav => {
+      const surface = getComputedStyle(nav);
+      const margins = [...nav.querySelectorAll(".md-footer__link--prev, .md-footer__link--next")].map(link => {
+        const style = getComputedStyle(link);
+        return { direction: link.classList.contains("md-footer__link--prev") ? "previous" : "next",
+          values: [style.marginTop, style.marginRight, style.marginBottom, style.marginLeft] };
+      });
+      return { display: surface.display, backgroundColor: surface.backgroundColor,
+        backgroundImage: surface.backgroundImage, margins };
+    });
+    await info.attach("footer-cascade.json", { body: Buffer.from(JSON.stringify(footerCascade, null, 2)), contentType: "application/json" });
+    expect(footerCascade.display).toBe("grid");
+    expect(footerCascade.backgroundColor).toBe("rgba(0, 0, 0, 0)");
+    expect(footerCascade.backgroundImage).toBe("none");
+    expect(footerCascade.margins.length).toBeGreaterThanOrEqual(1);
+    for (const link of footerCascade.margins) expect(link.values).toEqual(["0px", "0px", "0px", "0px"]);
     await info.attach("visible-reader-footer.png", { body: await page.screenshot(), contentType: "image/png" });
     const previous = page.getByRole("link", { name: "Previous: Leaf destination", exact: true });
     await expect(previous.locator(".md-footer__direction")).toBeVisible();

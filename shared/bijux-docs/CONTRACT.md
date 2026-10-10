@@ -280,6 +280,125 @@ The shared asset inventory and versions are authoritative in the baseline and
 compiler provenance, rather than repeated vendor URLs in this document.
 
 
+## Stylesheet declaration ownership
+
+Material's admitted `base.html` loads its main stylesheet, palette stylesheet
+when configured, and then `extra_css` in effective configuration order. The
+canonical `styles/extra.css` imports tokens, theme, layout, header, navigation,
+content, components, utilities and responsive adaptations in that order.
+Consumer additions retain their declared position around the canonical asset;
+an authored root list replaces the inherited list. Additional consumer styles
+do not acquire ownership of private shell display, drawer or hidden states.
+
+The source-owned `import_graph` admits `extra.css` as its ordered entry, using
+the canonical unconditional local `url("./domain.css")` spelling for the nine
+listed domain sheets. Those sheets are leaves. The guard records every entry
+edge and the entry/domain source digests, then refuses any parsed import in a
+domain sheet before qualifying declarations. This includes local, remote,
+conditional, duplicate and cyclic edges: an imported sheet could otherwise
+hide priorities or resources outside the inventory. No undeclared destination
+is read or fetched. Case, escaped keywords and comment boundaries cannot open
+a domain leaf; import text in comments or quoted declarations remains inert.
+Selected entry/domain files must remain regular owned files without linked
+path components. A future nested graph needs a separate finite ownership
+decision; unsupported policy modes cannot silently grant traversal.
+
+This boundary concerns the canonical shared graph. It does not scan arbitrary
+additional files or ban declared consumer `extra_css`. Consumer extensions and
+their effective load order, resources and competing states retain their own
+authored qualification duties.
+
+The admitted Material and shared rules use an unlayered cascade. The policy's
+`layer_strategy` binds that choice to `bijux-std` with its precedence rationale;
+it is not an allowance for arbitrary named layers. Shared domain styles may
+not introduce named or anonymous `@layer` blocks, ordering statements or nested
+layer rules. Moving the existing component sheet into a layer makes its normal
+footer grid lose to Material's unlayered flex declaration, even when shared CSS
+loads later. A layered strategy therefore requires a separate architecture
+decision covering Material, shared and consumer precedence, with native
+evidence; editing the policy to an unsupported mode cannot silently enable it.
+
+[`config/cascade-contract.json`](config/cascade-contract.json) records the exact
+shared declaration exceptions. Each priority exception identifies its file,
+conditional ancestry, selector list, property and value, with owner, reason and
+necessity status. Duplicate fallback exceptions additionally preserve value
+order. Existing `vh` followed by `dvh` declarations retain engines without
+dynamic viewport units; this is not permission for arbitrary repeated properties.
+
+| Existing exception | Intent and remaining evidence |
+| --- | --- |
+| Dark diagram paint in `01-theme.css` | Integrates with emitted Mermaid SVG rules. Static source inventory does not qualify every diagram class's contrast or prove every priority necessary. |
+| Footer grid, transparent surface and directional margins in `06-components.css` | Use normal declarations. The canonical shared stylesheet follows Material: `.md-footer__inner.bijux-footer-nav` ties the admitted `.md-footer__inner:not([hidden])` specificity and wins by source order; scoped previous/next margins outrank Material's directional rules. Computed footer controls preserve grid, transparent paint and zero directional margins in the existing light/dark reader journeys. Removing the shared grid declaration exposes Material flex. These rules require the canonical load order and do not grant consumers ownership of private shell display. |
+| Hidden and accessible-name geometry in `07-utilities.css` | Preserve the accepted unconditional hidden-state rule, its `until-found` distinction and offscreen label geometry. The policy cannot waive `display:none!important`. |
+| Conditional navigation presentation in `08-responsive.css` | Retain one exposed presentation and native fallback under the admitted viewport/readiness conditions. Cross-rule competition remains a rendered behavior duty. |
+| Reduced-motion duration/count in `08-responsive.css` | Reader preference takes precedence over component animation declarations. Native platform and assistive evaluation remains separate. |
+
+The declaration guard parses actual source using the already pinned Stylis
+parser from the diagram toolchain. It verifies installed diagram manifest/lock
+and parser source provenance before import; it does not install dependencies.
+An existing qualified build may be selected explicitly:
+
+```sh
+BIJUX_DIAGRAM_DEPENDENCIES=artifacts/website-security/dependencies/build \
+  node shared/bijux-docs/tooling/quality/styles/cascade.mjs
+python3 -m unittest discover -s tests -p test_docs_cascade_contract.py -v
+```
+
+The second command uses the same environment selection when it is exported.
+Diagnostics include parsed declaration source-end line/column, selector,
+conditional ancestry, property and conflicting values. Unknown priorities,
+unreviewed same-block duplicates, stale exception records, missing imported
+styles and changed parser ownership fail. Case, comments and escaped priority
+identifiers cannot bypass the guard; quoted text is not interpreted as priority.
+Layer diagnostics retain file, conditional ancestry, parsed rule value and
+source-end location. Case and escaped layer keywords are recognized on parsed
+at-rules; layer text inside comments or quoted declarations remains inert.
+
+[`config/style-tokens.json`](config/style-tokens.json) records the existing
+`--bijux-*` vocabulary. Each name has a concrete purpose, description, consumer
+override boundary and exact CSS definition bindings: file, conditional ancestry,
+selectors, value, role and reason. The guard derives declarations and reference
+uses from the admitted parser; it does not invent missing type, spacing or motion
+tokens. Current bindings cover root defaults, Material palette selectors,
+responsive shell measure and the light focus indicator on saturated shell
+surfaces. Unknown definitions, unreviewed value/scope changes, repeated or stale
+bindings, unsupported purposes and expanded owner/override permissions fail.
+
+Consumer content may consume the inventory. A theme extension must preserve
+content/surface/shadow meanings and qualify its relevant contrast and interaction
+states. Shell measures permit qualified content growth, rather than private
+drawer/header replacement. Shared shell focus paint retains its scoped owner;
+an exception requires explicit keyboard evidence. The guard qualifies shared
+definition scopes, not arbitrary consumer overrides or their human approval.
+
+Parsed value functions identify case-sensitive references, including escaped
+identifiers and nested fallbacks. An unknown name in the reserved Bijux family
+requires a nonempty explicit fallback; every nested fallback reference is also
+checked. Such a fallback permits an optional consumer extension without adding
+an unreviewed shared definition. Empty fallback text cannot rescue an unknown
+name. Quoted/commented reference text and quoted URL payloads remain inert.
+Malformed arguments and more than 64 nested component groups or 1,024 references
+per value fail. Definition cycles, including self-reference with fallback, are
+refused within an exact conditional/selector scope; this does not model all
+native inheritance or overlapping selector combinations.
+
+Material's `--md-*` variables remain external CSS/runtime ownership. The registry
+binds its runtime examples to the admitted runtime provenance and actual literal
+tooltip/indicator setters. Shared palette declarations adapt selected colors;
+merely consumed properties such as `--md-header-height` with its `3rem` fallback
+are not claimed as shared CSS definitions. Other consumer variable namespaces
+retain their authored ownership. These are unregistered CSS strings: reference
+integrity and meaningful source purposes do not prove consuming value grammar,
+native inheritance, theme/forced-color contrast or arbitrary override safety.
+
+This is a bounded ordered import graph, unlayered strategy and declaration
+policy, not a general CSS validity or selector specificity checker. It does
+not certify computed Material/shared/consumer precedence, authored consumer
+import/resource graphs, complete token purposes/override scopes, competing state rules,
+responsive media/attribute agreement, or light/dark/forced-color behavior.
+Those source, rendered, consumer, manual and live duties retain their own
+verification; a source guard must not weaken existing hidden/focus tests.
+
 ## Reader history and optional scroll tracking
 
 The shared baseline preserves native authored fragment destinations and browser
