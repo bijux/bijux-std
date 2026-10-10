@@ -148,6 +148,113 @@ class PhysicalWorkflowTests(unittest.TestCase):
         s=self.observe();self.assertTrue(s.observation['execution_reconciliation']['unresolved'])
         with self.assertRaises(ValueError):s.verify_jobs([self.browser['name']])
 
+    def cancel_before_assignment(self, row):
+        row.update(status='completed', conclusion='cancelled', steps=[],
+                   runner_id=0, runner_name='')
+        self.responses[self.prefix+'check-runs/'+str(row['id'])]=self.check(row)
+
+    def test_cancelled_unassigned_history_allows_new_actual_caller(self):
+        self.cancel_before_assignment(self.old_browser)
+        self.activate()
+        before=copy.deepcopy(self.responses)
+        s=self.observe(self.browser['name'])
+        reconciliation=s.observation['execution_reconciliation']
+        self.assertEqual(reconciliation['nonexecutions'][0]['row'],self.old_browser)
+        self.assertEqual(reconciliation['nonexecutions'][0]['check'],self.check(self.old_browser))
+        self.assertEqual(reconciliation['physical_rows'],2)
+        self.assertFalse(reconciliation['unresolved'])
+        self.assertEqual(s.verify_jobs([self.browser['name']])[0]['id'],22)
+        self.assertEqual(self.responses,before)
+
+    def test_new_unassigned_cancellation_cannot_reuse_old_success(self):
+        self.cancel_before_assignment(self.browser)
+        s=self.observe()
+        self.assertEqual(s.observation['execution_reconciliation']['unresolved'][-1]['row'],self.browser)
+        with self.assertRaises(ValueError):s.verify_jobs([self.browser['name']])
+
+    def test_cancelled_projection_retains_original_nonexecution(self):
+        self.cancel_before_assignment(self.old_browser)
+        alias={**copy.deepcopy(self.old_browser),'id':102,'run_attempt':2,
+               'created_at':'2026-01-01T00:02:05Z',
+               'check_run_url':'https://api.github.com/'+self.prefix+'check-runs/102'}
+        frame=self.responses[self.runpath+'/attempts/2/jobs?per_page=100&page=1']
+        frame['jobs'].append(alias);frame['total_count']+=1
+        self.responses[self.prefix+'actions/jobs/102']=alias
+        s=self.observe()
+        reconciliation=s.observation['execution_reconciliation']
+        self.assertEqual(reconciliation['aliases'][-1]['original_job_id'],12)
+        self.assertEqual(len(reconciliation['nonexecutions']),1)
+        self.assertFalse(reconciliation['unresolved'])
+
+    def test_repeated_rerun_after_unassigned_cancellation_keeps_actual_attempts(self):
+        self.cancel_before_assignment(self.old_browser)
+        self.identity['attempt']=3
+        run={**self.runs[1],'run_attempt':3,'run_started_at':'2026-01-01T00:04:00Z'}
+        self.responses[self.runpath]=run
+        self.responses[self.runpath+'/attempts/3']=run
+        row=self.job(32,3,self.browser['name'],'2026-01-01T00:04:01Z','2026-01-01T00:04:41Z')
+        self.responses[self.runpath+'/attempts/3/jobs?per_page=100&page=1']={'total_count':1,'jobs':[row]}
+        self.responses[self.prefix+'actions/jobs/32']=row
+        self.responses[self.prefix+'check-runs/32']=self.check(row)
+        s=self.observe()
+        self.assertEqual(s.verify_jobs([row['name']])[0]['run_attempt'],3)
+        self.assertEqual(s.observation['execution_reconciliation']['nonexecutions'][0]['row']['run_attempt'],1)
+        self.assertEqual([r['id'] for r in s.observation['history']['jobs']],[11,22,32])
+
+    def test_unassigned_cancellation_without_any_execution_remains_unresolved(self):
+        row=self.job(30,1,'std / never started','2026-01-01T00:00:04Z','2026-01-01T00:01:44Z')
+        frame=self.responses[self.runpath+'/attempts/1/jobs?per_page=100&page=1']
+        frame['jobs'].append(row);frame['total_count']+=1
+        self.responses[self.prefix+'actions/jobs/30']=row
+        self.cancel_before_assignment(row)
+        s=self.observe()
+        self.assertEqual(s.observation['execution_reconciliation']['unresolved'][-1]['row'],row)
+        with self.assertRaises(ValueError):s.verify_jobs([row['name']])
+
+    def test_unassigned_cancellation_timestamps_remain_attempt_bound(self):
+        self.cancel_before_assignment(self.old_browser)
+        for key,value in [('created_at','2025-12-31T23:59:59Z'),
+                          ('started_at','2026-01-01T00:01:01Z'),
+                          ('completed_at','2026-01-01T00:02:00Z')]:
+            old=copy.deepcopy(self.old_browser)
+            self.old_browser[key]=value
+            self.responses[self.prefix+'check-runs/12']=self.check(self.old_browser)
+            with self.subTest(key=key),self.assertRaises(ValueError):self.observe()
+            self.old_browser.clear();self.old_browser.update(old)
+        self.responses[self.prefix+'check-runs/12']=self.check(self.old_browser)
+
+    def test_unassigned_cancellation_cannot_authorize_artifact_download(self):
+        row=self.job(30,2,self.producer['name'],'2026-01-01T00:02:04Z','2026-01-01T00:02:44Z')
+        frame=self.responses[self.runpath+'/attempts/2/jobs?per_page=100&page=1']
+        frame['jobs'].append(row);frame['total_count']+=1
+        self.responses[self.prefix+'actions/jobs/30']=row
+        self.cancel_before_assignment(row)
+        s=self.observe()
+        with self.assertRaises(ValueError):s.admit(self.roles,now=datetime(2026,1,2,tzinfo=timezone.utc))
+        self.assertFalse(any(isinstance(c,tuple) for c in self.api.calls))
+
+    def test_unassigned_cancellation_still_requires_live_job_and_check_authority(self):
+        self.cancel_before_assignment(self.old_browser)
+        for endpoint,key,value in [(self.prefix+'actions/jobs/12','runner_name','foreign'),
+                                   (self.prefix+'check-runs/12','app',{'id':1,'slug':'github-actions'}),
+                                   (self.prefix+'check-runs/12','conclusion','success'),
+                                   (self.prefix+'check-runs/12','completed_at','2026-01-01T00:01:01Z')]:
+            old=copy.deepcopy(self.responses[endpoint])
+            self.responses[endpoint]={**old,key:value}
+            with self.subTest(endpoint=endpoint,key=key),self.assertRaises(ValueError):self.observe()
+            self.responses[endpoint]=old
+
+    def test_runner_or_steps_cannot_be_hidden_as_unassigned_cancellation(self):
+        self.cancel_before_assignment(self.old_browser)
+        for key,value in [('runner_id',False),('runner_id',999),('runner_name','owned'),
+                          ('steps',[{'number':1}]),('steps',None),('conclusion','success')]:
+            old=copy.deepcopy(self.old_browser)
+            self.old_browser[key]=value
+            self.responses[self.prefix+'check-runs/12']=self.check(self.old_browser)
+            with self.subTest(key=key,value=value),self.assertRaises(ValueError):self.observe()
+            self.old_browser.clear();self.old_browser.update(old)
+        self.responses[self.prefix+'check-runs/12']=self.check(self.old_browser)
+
     def test_projection_step_runner_source_and_time_drift_refuse(self):
         for key,value in [('runner_id',999),('steps',[]),('head_sha','f'*40),('completed_at','2026-01-01T00:02:30Z')]:
             old=copy.deepcopy(self.copy)

@@ -10,15 +10,20 @@ This file records notable repository-level changes for `bijux-std`.
 
 Promote setup-uv v10.2.0 and the accepted rust-toolchain commit into shared publishers, manifest wrappers and standards gates. Regenerate source snapshots and checksum manifests so downstream repositories consume the dependency changes through canonical refresh.
 
-#### [#263](https://github.com/bijux/bijux-std/pull/263) — feat(github): verify source-owned workflow execution policy
+
+### Merged pull requests
+
+#### 2026-10-10T11:51:08Z — [#264](https://github.com/bijux/bijux-std/pull/264) — fix(ci): recover attempts after queued job cancellation
+
+Preserve canceled, unassigned jobs as verified nonexecution audit records, admit only newer actual executions, and refuse stale success or artifact ownership after an unsuperseded cancellation. Reconcile repeated attempts and copied cancellation projections without relaxing runner, step, check or source authority.
+
+#### 2026-10-10T10:56:02Z — [#263](https://github.com/bijux/bijux-std/pull/263) — feat(github): verify source-owned workflow execution policy
 
 Capture canonical policy sources, admit repository events before preparation, guard manual publishers and dependency routing, and independently rederive every workflow projection through finite source-owned helpers and snapshots. Preserve default repository behavior and introduce no consumer activation.
 
-#### [#260](https://github.com/bijux/bijux-std/pull/260) — refactor(docs): separate publication validation responsibilities
+#### 2026-10-10T10:55:57Z — [#260](https://github.com/bijux/bijux-std/pull/260) — refactor(docs): separate publication validation responsibilities
 
 Give HTML parsing, destination authority, redirect graphs, stylesheet/SVG resources and sitemap reconciliation explicit module ownership while preserving the public qualification command and diagnostics.
-
-### Merged pull requests
 
 #### 2026-10-10T10:21:56Z — [#262](https://github.com/bijux/bijux-std/pull/262) — ci(docs): recover exact source-owned qualification attempts
 

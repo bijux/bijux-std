@@ -109,7 +109,7 @@ def capture(api, identity, pages, *, fetch=None, caller=None):
         frames = list(pool.map(attempt_frame, range(1, identity['attempt'] + 1)))
     starts = [timestamp(frame['run'].get('run_started_at')) for frame in frames]
     require(all(a < b for a, b in zip(starts, starts[1:])), 'Attempt execution windows overlap')
-    physical_rows, aliases, reservations, unresolved = [], [], [], []
+    physical_rows, aliases, reservations, unresolved, nonexecutions = [], [], [], [], []
     by_id = {}
     for index, frame in enumerate(frames):
         for row in frame['inventory']['jobs']:
@@ -122,10 +122,23 @@ def capture(api, identity, pages, *, fetch=None, caller=None):
                     and not row.get('runner_id') and not row.get('runner_name') and row.get('completed_at') is None):
                 reservations.append((row, frame))
             elif row.get('status') == 'completed' and timestamp(row.get('completed_at')) < starts[index]:
-                matches = [original for original in physical_rows if original['run_attempt'] < row['run_attempt']
+                originals = physical_rows + [item['row'] for item in nonexecutions]
+                matches = [original for original in originals if original['run_attempt'] < row['run_attempt']
                            and fingerprint(original) == fingerprint(row)]
                 require(len(matches) == 1, 'Copied execution has no unique original physical owner')
                 aliases.append({'projection': copy.deepcopy(row), 'original_job_id': matches[0]['id']})
+            elif (row.get('status') == 'completed' and row.get('conclusion') == 'cancelled'
+                    and type(row.get('runner_id')) is int and row['runner_id'] == 0
+                    and row.get('runner_name') == '' and row.get('steps') == []):
+                # GitHub gives queue cancellations timestamps without assigning
+                # a runner. Retain that terminal observation, never a producer.
+                created, started, ended = (timestamp(row.get(key)) for key in
+                                           ('created_at', 'started_at', 'completed_at'))
+                require(starts[index] <= created <= started <= ended
+                        and (index + 1 == len(starts) or ended < starts[index + 1]),
+                        'Unassigned cancellation is outside its attempt window')
+                nonexecutions.append({'row': copy.deepcopy(row),
+                    'reason': 'cancelled before runner assignment'})
             elif row.get('status') == 'in_progress' and row.get('name') != caller:
                 unresolved.append({'row': copy.deepcopy(row), 'reason': 'unclaimed active execution'})
             else:
@@ -155,6 +168,13 @@ def capture(api, identity, pages, *, fetch=None, caller=None):
     # Every canonical original, including a carried owner, is positively checked.
     with ThreadPoolExecutor(max_workers=8) as pool:
         checks.update(pool.map(verify, physical_rows))
+        def verify_nonexecution(item):
+            row = item['row']
+            require(fetch('repos/' + api.repository + '/actions/jobs/' + str(row['id'])) == row,
+                    'Live unassigned cancellation differs from attempt frame')
+            return {**item, 'check': check(fetch, row, api.repository,
+                                          frames[row['run_attempt'] - 1]['run'])}
+        nonexecutions = list(pool.map(verify_nonexecution, nonexecutions))
         def projection(alias):
             row = alias['projection']
             require(fetch('repos/' + api.repository + '/actions/jobs/' + str(row['id'])) == row,
@@ -173,6 +193,13 @@ def capture(api, identity, pages, *, fetch=None, caller=None):
                               'physical_job_id': matches[0]['id']})
         else:
             unresolved.append({'row': copy.deepcopy(row), 'check': reservation_check, 'reason': 'unresolved reservation'})
+    # A cancellation may be superseded only by a newer actual execution. A
+    # carried older success must not satisfy a role canceled without running.
+    for item in nonexecutions:
+        row = item['row']
+        if not any(actual['name'] == row['name'] and actual['run_attempt'] > row['run_attempt']
+                   for actual in selected):
+            unresolved.append(copy.deepcopy(item))
     require(caller is None or len([row for row in selected if row['name'] == caller
                                   and row['run_attempt'] == identity['attempt'] and row['status'] == 'in_progress']) == 1,
             'Source-owned active caller is missing or ambiguous')
@@ -180,6 +207,7 @@ def capture(api, identity, pages, *, fetch=None, caller=None):
     return {'latest': {'total_count': len(selected), 'jobs': copy.deepcopy(selected)},
             'history': {'total_count': len(physical_rows), 'jobs': copy.deepcopy(physical_rows)},
             'execution_reconciliation': {'frames': frames, 'aliases': aliases, 'reservations': relations,
+                'nonexecutions': nonexecutions,
                 'unresolved': unresolved, 'checks': checks, 'caller': caller,
                 'raw_rows': sum(frame['inventory']['total_count'] for frame in frames),
                 'physical_rows': len(physical_rows), 'physical_names': len(selected)}}
