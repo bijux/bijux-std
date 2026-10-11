@@ -6,6 +6,8 @@ This file records notable repository-level changes for `bijux-std`.
 
 ### Unreleased
 
+Install the unchanged Genomics audit-tool versions from checksum-verified release binaries, reject source-build fallback, and verify both executable versions before auditing.
+
 Promote only the three admitted setup-node, upload-artifact, and download-artifact references for Masterclass through its accepted execution-policy authority. Admit every prior managed byte against its previous official authority before promotion, preserving the fixed runtime baseline and existing human documentation events and payloads.
 
 Admit Genomics sccache v0.0.3 with the existing Node 24 runtime contract through canonical CI and verification wrappers.
