@@ -41,6 +41,41 @@ SPEC.loader.exec_module(MODULE)
 
 class RenderRepoConfigsTests(unittest.TestCase):
 
+    def test_pollenomics_source_admission_retains_every_package_and_security_gate(self):
+        manifest = json.loads(MANIFEST_PATH.read_text())
+        prepared = MODULE.prepare_repo_files("bijux-pollenomics", manifest)
+        policy = MODULE.WORKFLOW_EXECUTION
+        ci = policy.parse_workflow(prepared[".github/workflows/ci.yml"], "pollenomics ci")
+        verify = policy.parse_workflow(prepared[".github/workflows/verify.yml"], "pollenomics verify")
+        self.assertEqual(set(ci["jobs"]), {"checks"})
+        inputs = ci["on"]["workflow_call"]["inputs"]
+        self.assertNotIn("test_python_versions", inputs)
+        self.assertNotIn("post_test_command", inputs)
+        self.assertEqual(json.loads(inputs["check_targets"]["default"]), ["lint", "security"])
+        self.assertEqual(json.loads(inputs["api_toolchain_targets"]["default"]), [])
+        package = verify["jobs"]["package"]
+        self.assertEqual(package["uses"], "./.github/workflows/ci.yml")
+        rows = package["strategy"]["matrix"]["include"]
+        self.assertEqual(len(rows), 4)
+        self.assertEqual({row["package_slug"] for row in rows}, {
+            "bijux-pollenomics", "pollenomics", "bijux-pollenomics-dev", "bijux-pollenomics-lra",
+        })
+        for row in rows:
+            self.assertEqual(row["package_dir"], f"packages/{row['package_slug']}")
+            self.assertEqual(json.loads(row["check_targets"]), ["lint", "security"])
+            self.assertEqual(json.loads(row["api_toolchain_targets"]), [])
+        checks = ci["jobs"]["checks"]
+        self.assertNotIn("continue-on-error", checks)
+        command = next(step["run"] for step in checks["steps"]
+                       if step.get("name") == "Run ${{ matrix.target }}")
+        self.assertIn("${{ matrix.target }}", command)
+        self.assertEqual(set(verify["jobs"]["verification_ready"]["needs"]), {"repository", "package"})
+        self.assertEqual(verify["jobs"]["verification_ready"]["if"], "${{ always() }}")
+        repository = MODULE.find_repo_config(manifest, "bijux-pollenomics")
+        publishers = repository["workflow_execution_policy"]["publication_entrypoints"]
+        self.assertEqual(set(publishers), {"deploy-docs", "release-github", "release-ghcr", "release-pypi"})
+        self.assertTrue(all(entry["mode"] == "manual-only" for entry in publishers.values()))
+
     def test_required_product_aggregates_run_on_dependency_prs_and_fail_closed(self):
         import subprocess
         manifest = json.loads(MANIFEST_PATH.read_text())
