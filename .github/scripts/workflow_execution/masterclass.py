@@ -1,4 +1,4 @@
-"""Bounded dependency-notice promotion preserving Masterclass's accepted runtime."""
+"""Promote governance and documentation while preserving the program runtime."""
 from __future__ import annotations
 
 import copy
@@ -127,12 +127,19 @@ def accepted_baseline(source_root: Path, target: Path) -> Path:
 
 
 def expected_masterclass(source_root: Path, baseline: Path, target: Path, policy_sha: str) -> tuple[dict, set]:
-    """Compose only the owned governance boundary; every runtime byte keeps its baseline."""
+    """Advance only governance and docs; complementary programs keep their baseline."""
     _, baseline_renderer = owning_scripts(baseline)
     original, absent = baseline_renderer.WORKFLOW_EXECUTION.verification.expected_projection(baseline, target, REPOSITORY)
     prepared = copy.deepcopy(original)
     _, renderer = owning_scripts(source_root)
     manifest = json.loads(read_owned(baseline, '.github/standards/repo-config.manifest.json'))
+    current_manifest = json.loads(read_owned(source_root, '.github/standards/repo-config.manifest.json'))
+    current_entries = {repo['name']: repo for repo in current_manifest['repositories']}
+    for repo in manifest['repositories']:
+        current = current_entries[repo['name']]
+        repo.setdefault('workflow_execution_policy', {}).setdefault('publication_entrypoints', {})['deploy-docs'] = copy.deepcopy(
+            current['workflow_execution_policy']['publication_entrypoints']['deploy-docs'])
+        repo['workflow_allowlist'] = sorted(set(repo['workflow_allowlist']) | {'deploy-docs'})
     entry = next(repo for repo in manifest['repositories'] if repo['name'] == REPOSITORY)
     entry.setdefault('workflow_execution_policy', {}).update(POLICY)
     if 'dependency-notice' not in entry['workflow_allowlist']:
@@ -152,6 +159,8 @@ def expected_masterclass(source_root: Path, baseline: Path, target: Path, policy
         if not relative.startswith('.github/workflows/') or body is None:
             continue
         identity = relative.rsplit('/', 1)[-1].removesuffix('.yml')
+        if identity == 'deploy-docs':
+            continue
         if identity == 'automerge-pr':
             prepared[relative] = read_owned(source_root, '.github/workflows/automerge-pr.yml')
             continue
@@ -171,6 +180,17 @@ def expected_masterclass(source_root: Path, baseline: Path, target: Path, policy
         parse_workflow(read_owned(source_root, notice_inventory['source']), 'dependency-notice'),
         preserve_scalar_types=True,
     ).encode()
+    current_projection, _ = renderer.WORKFLOW_EXECUTION.verification.expected_projection(source_root, target, REPOSITORY)
+    for relative in ('.github/workflows/deploy-docs.yml', '.bijux/shared/bijux-gh/workflows/deploy-docs.yml',
+                     '.bijux/shared/bijux-gh/scripts/publication_admission.py'):
+        prepared[relative] = current_projection[relative]
+    docs_root = source_root / 'shared/bijux-docs'
+    for path in sorted(docs_root.rglob('*')):
+        if path.is_dir():
+            continue
+        relative = path.relative_to(source_root).as_posix()
+        prepared['.bijux/' + relative] = read_owned(source_root, relative)
+    prepared['.github/standards/bijux-docs.sha'] = (policy_sha + '\n').encode()
     authority = {'schema': 1, 'repository': REPOSITORY, 'baseline_sha': BASELINE_SHA, 'execution_policy_sha': policy_sha}
     prepared[AUTHORITY_PATH] = (json.dumps(authority, indent=2, sort_keys=True) + '\n').encode()
     snapshots = '.github/standards/workflow-sources/'
@@ -228,7 +248,7 @@ def admit_previous_projection(source_root: Path, target: Path) -> Path:
 
 
 def promote_masterclass(source_root: Path, target: Path, policy_sha: str) -> dict:
-    """Promote the accepted bot policy without advancing the accepted product baseline."""
+    """Promote accepted governance and docs without advancing the program baseline."""
     source_root, target = source_root.resolve(), target.resolve()
     if target.name != REPOSITORY or source_root == target or not source_root.is_relative_to(target / 'artifacts'):
         raise ValueError('Masterclass policy source must use its owning artifact cache')
@@ -283,9 +303,11 @@ def promote_masterclass(source_root: Path, target: Path, policy_sha: str) -> dic
     sync.refresh_shared_checksums(target)
     checksum = target / '.github/bijux-std-shared.sha256'
     rows = [line.split() for line in checksum.read_text().splitlines()]
-    if not any(len(row) == 2 and row[1] == AUTHORITY_PATH for row in rows):
-        with checksum.open('a') as output:
-            output.write(hashlib.sha256(expected[AUTHORITY_PATH]).hexdigest() + '  ' + AUTHORITY_PATH + '\n')
+    covered = {row[1] for row in rows if len(row) == 2}
+    with checksum.open('a') as output:
+        for relative, body in sorted(expected.items()):
+            if body is not None and relative not in covered:
+                output.write(hashlib.sha256(body).hexdigest() + '  ' + relative + '\n')
     sync.verify_shared_checksums(target)
     proof = verify_masterclass(source_root, target)
     return {'repository': REPOSITORY, 'changed_paths': sorted(changed), 'authorities': proof['execution_authorities']}
