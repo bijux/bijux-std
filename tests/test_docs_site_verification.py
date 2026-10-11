@@ -70,6 +70,11 @@ class DocsSiteVerificationTests(unittest.TestCase):
         sha=self.git(upstream,'rev-parse','HEAD').stdout.strip()
         fetched=self.base/'fetched'
         self.git(self.base,'clone','-q',str(upstream),str(fetched))
+        pin=self.repo/'.github/standards/bijux-docs.sha'
+        pin.parent.mkdir(parents=True,exist_ok=True)
+        pin.write_text(sha+'\n')
+        self.git(self.repo,'add','.github/standards/bijux-docs.sha')
+        self.git(self.repo,'commit','-qm','test(docs): bind exact publication authority')
         return dict(BIJUX_STD_LOCAL_VERIFY='0',BIJUX_STD_ALLOW_LOCAL_SOURCE='1',
                     BIJUX_STD_ROOT=str(fetched),BIJUX_STD_REF=sha,BIJUX_STD_GIT_URL=str(upstream))
 

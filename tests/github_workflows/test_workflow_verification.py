@@ -11,19 +11,20 @@ from .policy_fixtures import MODULE, ROOT, source_fixture, projection_fixture, b
 
 
 class CanonicalWorkflowVerificationTests(unittest.TestCase):
-    def test_publisher_free_foundation_admits_callers_without_reformatting_canonical_workflows(self):
+    def test_hub_routed_foundation_admits_canonical_manual_workflow_only(self):
         with tempfile.TemporaryDirectory() as workspace:
             source, owned = source_fixture(workspace)
             manifest_path = source / '.github/standards/repo-config.manifest.json'
             manifest = json.loads(manifest_path.read_text())
             foundation = next(entry for entry in manifest['repositories'] if entry['name'] == 'bijux-iac')
-            foundation['workflow_execution_policy'] = {'schema': 1, 'publication_entrypoints': {}}
+            docs = foundation['workflow_execution_policy']['publication_entrypoints']['deploy-docs']
+            self.assertEqual(docs['destination'], {'repository': 'bijux.github.io', 'path': '/infrastructure/'})
             manifest_path.write_text(json.dumps(manifest, indent=2) + '\n')
             refresh_snapshots(source, owned)
             target = Path(workspace) / 'projected-foundation'
             expected = projection_fixture(source, owned, target, repository='bijux-iac')
-            self.assertEqual(expected['.github/workflows/bijux-std.yml'],
-                             (source / '.github/workflows/bijux-std.yml').read_bytes())
+            self.assertEqual(expected['.github/workflows/deploy-docs.yml'],
+                             (source / '.github/workflows/deploy-docs.yml').read_bytes())
             path = target / '.github/workflows/shipping.yml'
             path.write_text('on: push\njobs:\n  ship:\n    runs-on: ubuntu-latest\n    steps:\n      - run: cargo publish\n')
             before = byte_tree(target)
