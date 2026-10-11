@@ -15,7 +15,7 @@ test("bounded navigation gate requires exactly 126 cases across all engine profi
 });
 test("phone dialog gate cannot inherit desktop modal assertions through project merging", () => {
   assert.deepEqual(drawer.projects.map(project => project.name), ["chromium-phone", "firefox-phone", "webkit-phone"]);
-  assert(drawer.projects.every(project => project.use.viewport.width === 390 && project.metadata.required_case_count === 3));
+  assert(drawer.projects.every(project => project.use.viewport.width === 390 && project.metadata.required_case_count === 6));
 });
 test("live gate retains its own case contract across all engine profiles", () => {
   assert.deepEqual(live.projects.map(project => project.name), expected);
