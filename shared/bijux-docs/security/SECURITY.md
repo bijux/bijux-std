@@ -59,6 +59,11 @@ the official GitHub origin into `artifacts/`. The consumed shared documentation
 must match that fetched tree; ignored extra standard inputs cannot inherit its
 commit identity. Local-source bypasses and candidate-only receipts cannot publish.
 
+The shared publication builder runs the canonical site verifier before admission.
+It verifies source authority before and after route/search checks on the exact
+selected artifact, retaining the independently fetched standard identity in the
+verification receipt. A completed render alone cannot substitute for these checks.
+
 The source-derived reconstruction framework is optional. Its source-owned profile
 registry admits retained Darwin environments for verification only and exact
 source-owned Linux publication environments described in [runtime/README.md](runtime/README.md).
