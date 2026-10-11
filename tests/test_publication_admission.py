@@ -57,6 +57,15 @@ class PublicationAdmissionTests(unittest.TestCase):
         self.assertEqual(receipt["verification_commit"], HEAD)
         self.assertIn("policy / pr approval", receipt["required_commit_checks"])
 
+    def test_routed_foundations_cannot_publish_an_independent_site(self):
+        for repository in ("bijux/bijux-std", "bijux/bijux-iac"):
+            environment = {**self.environment(), "PUBLICATION_REPOSITORY": repository,
+                           "PUBLICATION_WORKFLOW": "deploy-docs", "PUBLICATION_TAG": ""}
+            with self.subTest(repository=repository), patch.object(MODULE, "api") as reader:
+                with self.assertRaisesRegex(ValueError, "controller destination"):
+                    MODULE.admit(environment)
+                reader.assert_not_called()
+
     def test_unauthorized_and_automatic_requests_fail_before_api_calls(self):
         for changes in [{"PUBLICATION_EVENT": "push"}, {"PUBLICATION_ACTOR_ID": "456"},
                         {"PUBLICATION_TRIGGERING_ACTOR": "human-rerunner"},
