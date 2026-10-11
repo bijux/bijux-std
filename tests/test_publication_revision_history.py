@@ -1,7 +1,6 @@
 """Preserve reviewed revision callbacks and require actual publication history."""
 import importlib.util
 from pathlib import Path
-import subprocess
 import sys
 import tempfile
 import types
@@ -51,7 +50,9 @@ class RevisionHistory(unittest.TestCase):
         if args == ('rev-parse', 'HEAD'):
             return 'c' * 40
         if args[0] == 'ls-files':
-            return 'docs/index.md'
+            return '100644 ' + 'a' * 40 + ' 0\tdocs/index.md\0'
+        if args[0] == 'ls-tree':
+            return '100644 blob ' + 'a' * 40 + '\tdocs/index.md\0'
         return 'c' * 40 + ':1700000000:'
 
     def test_reviewed_versions_preserve_source_and_authored_configuration(self):
@@ -92,20 +93,21 @@ class RevisionHistory(unittest.TestCase):
     def test_publication_requires_each_tracked_source_and_history(self):
         receipt = capabilities.revision_history(self.config, self.owner, publication=True)
         self.assertTrue(receipt['publication_history_verified'])
-        self.git.assert_any_call(self.owner, 'ls-files', '--error-unmatch', 'docs/index.md')
-        self.git.assert_any_call(self.owner, 'log', '-1', '--format=%H', 'HEAD', '--', 'docs/index.md')
+        self.git.assert_any_call(self.owner, 'ls-files', '--stage', '-z')
+        self.git.assert_any_call(self.owner, 'ls-tree', '-r', '-z', '--full-tree', 'c' * 40)
+        self.assertFalse(any(call.args[1:3] == ('log', '-1') for call in self.git.call_args_list))
 
     def test_untracked_publication_page_cannot_use_build_date_fallback(self):
         def missing(root, *args):
             if args[0] == 'ls-files':
-                raise subprocess.CalledProcessError(1, ['git', *args])
+                return ''
             return self.history(root, *args)
         self.git.side_effect = missing
-        self.assertRaises(subprocess.CalledProcessError, capabilities.revision_history, self.config, self.owner, publication=True)
+        self.assertRaisesRegex(capabilities.CapabilityError, 'exact committed', capabilities.revision_history, self.config, self.owner, publication=True)
 
     def test_tracked_page_without_history_cannot_use_build_date_fallback(self):
         def missing(root, *args):
-            if args[:2] == ('log', '-1'):
+            if args[0] == 'ls-tree':
                 return ''
             return self.history(root, *args)
         self.git.side_effect = missing
