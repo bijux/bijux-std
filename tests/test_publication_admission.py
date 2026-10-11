@@ -156,6 +156,88 @@ class PublicationAdmissionTests(unittest.TestCase):
                 with self.assertRaises(ValueError):
                     MODULE.associated_pulls("bijux/bijux-canon", COMMIT)
 
+    def test_public_source_admission_preserves_exact_foundation_checks_without_token_reads(self):
+        env = {**self.environment(), "PUBLICATION_REPOSITORY": "bijux/bijux-std",
+               "PUBLICATION_WORKFLOW": "deploy-docs", "PUBLICATION_TAG": ""}
+        pull = copy.deepcopy(self.pull())
+        for branch in ('base', 'head'):
+            pull[branch]['repo']['full_name'] = 'bijux/bijux-std'
+        def reader(path):
+            if path == 'repos/bijux/bijux-std':
+                return {'visibility': 'public'}
+            return pull if '/pulls/' in path else self.api(path)
+        for runs in (self.runs(), []):
+            with self.subTest(runs=runs), patch.object(MODULE, 'api') as credential_read, \
+                    patch.object(MODULE, 'public_api', side_effect=reader), \
+                    patch.object(MODULE, 'public_associated_pulls', return_value=[pull]), \
+                    patch.object(MODULE, 'public_check_runs', return_value=runs):
+                if runs:
+                    self.assertEqual(MODULE.admit(env, public_source=True)['verification_commit'], HEAD)
+                else:
+                    with self.assertRaisesRegex(ValueError, 'unhealthy'):
+                        MODULE.admit(env, public_source=True)
+                credential_read.assert_not_called()
+
+    def test_public_source_mode_cannot_admit_other_consumers_or_releases(self):
+        for change in ({}, {'PUBLICATION_REPOSITORY': 'bijux/bijux-std'},
+                       {'PUBLICATION_REPOSITORY': 'bijux/bijux.github.io', 'PUBLICATION_WORKFLOW': 'deploy-docs'}):
+            with self.subTest(change=change), patch.object(MODULE, 'public_api') as read:
+                with self.assertRaisesRegex(ValueError, 'restricted'):
+                    MODULE.admit({**self.environment(), **change}, public_source=True)
+                read.assert_not_called()
+
+    def test_public_pagination_collects_all_pages_without_authorization(self):
+        from io import BytesIO
+        path = f'repos/bijux/bijux-std/commits/{HEAD}/check-runs?per_page=100'
+        initial = 'https://api.github.com/' + path
+        class Response(BytesIO):
+            def __init__(self, url, data, link=''):
+                super().__init__(json.dumps(data).encode())
+                self.url, self.headers = url, {'Link': link}
+            def geturl(self):
+                return self.url
+        follow = initial + '&page=2'
+        with patch.object(MODULE, 'urlopen', side_effect=[
+                Response(initial, {'check_runs': [self.runs()[0]]}, f'<{follow}>; rel="next"'),
+                Response(follow, {'check_runs': self.runs()[1:]})]) as read:
+            self.assertEqual(MODULE.public_check_runs('bijux/bijux-std', HEAD), self.runs())
+        self.assertEqual(read.call_count, 2)
+        for call in read.call_args_list:
+            self.assertNotIn('Authorization', dict(call.args[0].header_items()))
+            self.assertEqual(call.args[0].get_header('X-github-api-version'), '2022-11-28')
+
+    def test_numeric_pagination_requires_the_previously_bound_repository_identity(self):
+        from io import BytesIO
+        initial = f'https://api.github.com/repos/bijux/bijux-std/commits/{HEAD}/check-runs?per_page=100'
+        class Response(BytesIO):
+            def __init__(self, url, data, link=''):
+                super().__init__(json.dumps(data).encode())
+                self.url, self.headers = url, {'Link': link}
+            def geturl(self):
+                return self.url
+        for identifier in (42, 43):
+            follow = f'https://api.github.com/repositories/{identifier}/commits/{HEAD}/check-runs?per_page=100&page=2'
+            with self.subTest(identifier=identifier), patch.dict(MODULE.PUBLIC_REPOSITORY_IDS, {}, clear=True), \
+                    patch.object(MODULE, 'urlopen', side_effect=[
+                        Response('https://api.github.com/repos/bijux/bijux-std', {'id': 42, 'full_name': 'bijux/bijux-std', 'visibility': 'public'}),
+                        Response(initial, {'check_runs': []}, f'<{follow}>; rel="next"'),
+                        Response(follow, {'check_runs': self.runs()})]) as read:
+                MODULE.public_api('repos/bijux/bijux-std')
+                if identifier == 42:
+                    self.assertEqual(MODULE.public_check_runs('bijux/bijux-std', HEAD), self.runs())
+                else:
+                    with self.assertRaisesRegex(ValueError, 'exact GitHub endpoint'):
+                        MODULE.public_check_runs('bijux/bijux-std', HEAD)
+                    self.assertEqual(read.call_count, 2)
+
+    def test_public_reads_refuse_foreign_endpoints_before_network(self):
+        for path in ('repos/bijux/bijux-core/commits/main', 'https://evil.invalid/', '../secrets',
+                     'users/another[bot]'):
+            with self.subTest(path=path), patch.object(MODULE, 'urlopen') as read:
+                with self.assertRaises(ValueError):
+                    MODULE.public_api(path)
+                read.assert_not_called()
+
 
 if __name__ == "__main__":
     unittest.main()
