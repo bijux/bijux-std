@@ -35,13 +35,13 @@ class MasterclassDependencyAuthorityTests(unittest.TestCase):
     def tearDownClass(cls):
         cls.directory.cleanup()
 
-    def test_product_docs_events_and_shared_runtime_keep_exact_historical_bytes(self):
+    def test_program_runtime_keeps_exact_historical_bytes_and_docs_use_current_source(self):
         _, old_renderer = MODULE.canonical_sources.owning_scripts(self.baseline)
         before, _ = old_renderer.WORKFLOW_EXECUTION.verification.expected_projection(self.baseline, self.target, 'bijux-masterclass')
         for path, body in before.items():
-            if path.startswith('.bijux/shared/'):
+            if path.startswith('.bijux/shared/') and not path.endswith(('deploy-docs.yml', 'publication_admission.py')):
                 self.assertEqual(self.expected[path], body, path)
-        for path in ['.github/workflows/bijux-std.yml', '.github/workflows/pr-approval-policy.yml', '.github/workflows/github-policy.yml', '.github/workflows/deploy-docs.yml']:
+        for path in ['.github/workflows/bijux-std.yml', '.github/workflows/pr-approval-policy.yml', '.github/workflows/github-policy.yml']:
             old = MODULE.parse_workflow(before[path], path)
             new = MODULE.parse_workflow(self.expected[path], path)
             old = MODULE.masterclass.project_action_pins(old, MODULE.masterclass.action_pins(ROOT))
@@ -60,6 +60,45 @@ class MasterclassDependencyAuthorityTests(unittest.TestCase):
                         self.assertEqual(actual, original)
                     else:
                         self.assertEqual(new_job.get(key), old_job.get(key), (path, identity, key))
+        current, _ = MODULE.verification.expected_projection(ROOT, self.target, 'bijux-masterclass')
+        self.assertEqual(self.expected['.github/workflows/deploy-docs.yml'], current['.github/workflows/deploy-docs.yml'])
+        for path in (ROOT / 'shared/bijux-docs').rglob('*'):
+            if path.is_file():
+                self.assertEqual(self.expected['.bijux/' + path.relative_to(ROOT).as_posix()], path.read_bytes())
+
+    def test_complete_github_tree_retains_baseline_and_finite_publication_overlays(self):
+        baseline = MODULE.masterclass.baseline_github_tree(self.baseline)
+        promoted = {'.bijux/shared/bijux-gh/workflows/deploy-docs.yml',
+                    '.bijux/shared/bijux-gh/scripts/publication_admission.py'}
+        for relative, body in baseline.items():
+            if relative not in promoted:
+                self.assertEqual(self.expected[relative], body, relative)
+        self.assertIn('.bijux/shared/bijux-gh/README.md', self.expected)
+        self.assertIn('.bijux/shared/bijux-gh/scripts/render-dependabot.sh', self.expected)
+
+    def test_unexpected_github_paths_are_rejected_without_replacing_them(self):
+        self.write_projection()
+        directory = self.target / '.bijux/shared/bijux-gh'
+        extra = directory / 'scripts/unreviewed.py'
+        extra.write_text('retained source outside either authority')
+        with patch.object(MODULE.masterclass, 'accepted_baseline', return_value=self.baseline):
+            with self.assertRaisesRegex(ValueError, 'complete Masterclass GitHub projection'):
+                MODULE.masterclass.verify_masterclass(ROOT, self.target)
+        self.assertEqual(extra.read_text(), 'retained source outside either authority')
+        extra.unlink()
+
+    def test_uncovered_baseline_byte_changes_and_link_aliases_fail_closed(self):
+        self.write_projection()
+        path = self.target / '.bijux/shared/bijux-gh/scripts/render-dependabot.sh'
+        original = path.read_bytes()
+        path.write_bytes(original + b'\n# changed baseline source\n')
+        with self.assertRaisesRegex(ValueError, 'complete Masterclass GitHub projection'):
+            MODULE.masterclass.verify_github_tree(self.target, self.expected)
+        path.write_bytes(original)
+        destination = path.with_suffix('.retained'); path.rename(destination); path.symlink_to(destination)
+        with self.assertRaisesRegex(ValueError, 'path aliases'):
+            MODULE.masterclass.verify_github_tree(self.target, self.expected)
+        path.unlink(); destination.rename(path)
 
     def test_composition_has_two_exact_authorities_and_no_runtime_source_advancement(self):
         authority = json.loads(self.expected[MODULE.masterclass.AUTHORITY_PATH])
@@ -68,14 +107,20 @@ class MasterclassDependencyAuthorityTests(unittest.TestCase):
         manifest = json.loads(self.expected['.github/standards/repo-config.manifest.json'])
         baseline_manifest = json.loads((self.baseline / '.github/standards/repo-config.manifest.json').read_text())
         for old, new in zip(baseline_manifest['repositories'], manifest['repositories']):
-            if old['name'] != 'bijux-masterclass':
-                self.assertEqual(old, new)
-            else:
-                for key in set(old) | set(new):
-                    if key not in {'workflow_execution_policy', 'workflow_allowlist'}:
-                        self.assertEqual(old.get(key), new.get(key), key)
+            for key in set(old) | set(new):
+                if key not in {'workflow_execution_policy', 'workflow_allowlist'}:
+                    self.assertEqual(old.get(key), new.get(key), key)
+            for key, value in old.get('workflow_execution_policy', {}).items():
+                if key != 'publication_entrypoints' and old['name'] != 'bijux-masterclass':
+                    self.assertEqual(new['workflow_execution_policy'][key], value)
+            for name, value in old.get('workflow_execution_policy', {}).get('publication_entrypoints', {}).items():
+                if name != 'deploy-docs':
+                    self.assertEqual(new['workflow_execution_policy']['publication_entrypoints'][name], value)
+            MODULE.documentation_destination(new)
+            if old['name'] == 'bijux-masterclass':
                 self.assertEqual(new['workflow_execution_policy']['main_verification'], 'existing-events')
         self.assertNotIn('.github/standards/bijux-std.sha', self.expected)
+        self.assertEqual(self.expected['.github/standards/bijux-docs.sha'], (self.sha + '\n').encode())
         self.assertNotIn('.bijux/shared/bijux-gh/workflows/dependency-notice.yml', self.expected)
 
     def write_projection(self):
@@ -111,7 +156,8 @@ class MasterclassDependencyAuthorityTests(unittest.TestCase):
             proof = MODULE.masterclass.verify_masterclass(ROOT, self.target)
             self.assertEqual(proof['execution_authorities']['execution_policy_sha'], self.sha)
             paths = ['.github/workflows/deploy-docs.yml', '.bijux/shared/bijux-gh/workflows/github-policy.yml',
-                     '.github/scripts/workflow_execution/schema.py', '.github/workflows/dependency-notice.yml']
+                     '.github/scripts/workflow_execution/schema.py', '.github/workflows/dependency-notice.yml',
+                     '.github/standards/bijux-docs.sha', '.bijux/shared/bijux-docs/security/build_identity.py']
             for relative in paths:
                 path = self.target / relative
                 original = path.read_bytes()
@@ -184,6 +230,14 @@ class MasterclassDependencyAuthorityTests(unittest.TestCase):
             artifact = self.target / 'artifacts/promotion-contract'
             artifact.mkdir(parents=True, exist_ok=True)
             source, owned = source_fixture(artifact)
+            import shutil
+            shutil.copytree(ROOT / 'shared/bijux-docs', source / 'shared/bijux-docs')
+            fixture_manifest = json.loads((source / '.github/standards/repo-config.manifest.json').read_text())
+            canonical = json.loads((ROOT / '.github/standards/repo-config.manifest.json').read_text())
+            fixture_manifest['repositories'] = canonical['repositories']
+            (source / '.github/standards/repo-config.manifest.json').write_text(json.dumps(fixture_manifest, indent=2) + '\n')
+            from .policy_fixtures import refresh_snapshots
+            refresh_snapshots(source, owned)
             new_sha = 'b' * 40
             original_owning = owned.masterclass.owning_scripts
             from types import SimpleNamespace
@@ -191,7 +245,8 @@ class MasterclassDependencyAuthorityTests(unittest.TestCase):
                 with patch.object(MODULE.masterclass, 'accepted_baseline', return_value=self.baseline):
                     return MODULE.masterclass.verify_masterclass(ROOT, target)
             previous_renderer = SimpleNamespace(WORKFLOW_EXECUTION=SimpleNamespace(
-                masterclass=SimpleNamespace(verify_masterclass=previous_verification)))
+                masterclass=SimpleNamespace(verify_masterclass=previous_verification,
+                    expected_masterclass=MODULE.masterclass.expected_masterclass)))
             def owning(root):
                 return (None, previous_renderer) if root == ROOT else original_owning(root)
             def git(root, *args):
@@ -232,6 +287,15 @@ class MasterclassDependencyAuthorityTests(unittest.TestCase):
                         owned.masterclass.promote_masterclass(source, self.target, new_sha)
                     self.assertEqual((self.target / owned.masterclass.AUTHORITY_PATH).read_bytes(), authority_before)
                     previous.side_effect = None
+                    extra = self.target / '.bijux/shared/bijux-gh/scripts/uncovered.py'
+                    extra.write_text('preserved source beyond the previous partial projection')
+                    with patch.object(previous_renderer.WORKFLOW_EXECUTION.masterclass,
+                                      'verify_masterclass', return_value={}):
+                        with self.assertRaisesRegex(ValueError, 'complete Masterclass GitHub projection'):
+                            owned.masterclass.promote_masterclass(source, self.target, new_sha)
+                    self.assertEqual(extra.read_text(), 'preserved source beyond the previous partial projection')
+                    self.assertEqual((self.target / owned.masterclass.AUTHORITY_PATH).read_bytes(), authority_before)
+                    extra.unlink()
                     previous.reset_mock()
                     result = owned.masterclass.promote_masterclass(source, self.target, new_sha)
                     previous.assert_called_once_with(source, self.target, self.sha)

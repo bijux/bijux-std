@@ -304,6 +304,9 @@ class DocsSourceProjectionTests(unittest.TestCase):
         upstream_git('add','shared')
         upstream_git('commit','-qm','test(std): publish fixture authority')
         sha = upstream_git('rev-parse','HEAD').stdout.strip()
+        pin = self.repo / '.github/standards/bijux-std.sha'
+        pin.parent.mkdir(parents=True, exist_ok=True)
+        pin.write_text(sha + '\n')
         authority = self.repo.parent/'authority'
         subprocess.run(['git','clone','-q',str(upstream),str(authority)],check=True,capture_output=True)
         (self.shared.parent/'bijux-makes-py/ci/docs.mk').write_text('Unauthorized local profile')
@@ -621,11 +624,44 @@ class DocsSourceProjectionTests(unittest.TestCase):
             shutil.copy2(ROOT/'shared/bijux-checks/scripts'/name,checks/name)
         self.authority()
         sha = self.authority_git('rev-parse','HEAD').stdout.strip()
+        pin = self.repo / '.github/standards/bijux-std.sha'
+        pin.parent.mkdir(parents=True, exist_ok=True)
+        pin.write_text(sha + '\n')
         authority = self.repo.parent/'fetched-local-authority'
         subprocess.run(['git','clone','-q',str(self.authority_root),str(authority)],check=True,capture_output=True)
         result = self.run_sync(BIJUX_STD_LOCAL_VERIFY='0',BIJUX_STD_ALLOW_LOCAL_SOURCE='1',BIJUX_STD_ROOT=str(authority),BIJUX_STD_REF=sha,BIJUX_STD_GIT_URL=str(self.authority_root))
         self.assertEqual(result.returncode,0,result.stderr)
         self.assertEqual(json.loads(self.ownership().read_text())['source'],{'mode':'local-verification','origin':None,'sha':None})
+
+    def test_dedicated_docs_pin_keeps_historical_asset_authority_separate(self):
+        standard = self.repo / '.github/standards/bijux-std.sha'
+        docs = standard.with_name('bijux-docs.sha')
+        standard.parent.mkdir(parents=True)
+        standard.write_text('a' * 40 + '\n')
+        self.commit()
+        docs.write_text('b' * 40 + '\n')
+        git = lambda root, *args: self.git(*args).stdout.strip()
+        self.assertEqual(projection.committed_prior_pin(self.repo, {'sha': 'b' * 40}, git), 'a' * 40)
+        self.commit()
+        docs.write_text('c' * 40 + '\n')
+        self.assertEqual(projection.committed_prior_pin(self.repo, {'sha': 'c' * 40}, git), 'b' * 40)
+        self.assertEqual(standard.read_text().strip(), 'a' * 40)
+        with self.assertRaisesRegex(RuntimeError, 'differs'):
+            projection.committed_prior_pin(self.repo, {'sha': 'a' * 40}, git)
+
+    def test_docs_source_override_or_missing_pointer_refuses_before_projection(self):
+        self.prepare_sync()
+        before = self.snapshot()
+        result = self.run_sync(BIJUX_STD_LOCAL_VERIFY='0', BIJUX_STD_ROOT=str(self.repo.parent / 'absent'), BIJUX_STD_REF='a' * 40)
+        self.assertIn('regular declared source pin', result.stderr)
+        self.assertEqual(self.snapshot(), before)
+        pin = self.repo / '.github/standards/bijux-docs.sha'
+        pin.parent.mkdir(parents=True)
+        pin.write_text('b' * 40 + '\n')
+        before = self.snapshot()
+        result = self.run_sync(BIJUX_STD_LOCAL_VERIFY='0', BIJUX_STD_ROOT=str(self.repo.parent / 'absent'), BIJUX_STD_REF='a' * 40)
+        self.assertIn('override differs', result.stderr)
+        self.assertEqual(self.snapshot(), before)
 
 
 if __name__ == '__main__':
