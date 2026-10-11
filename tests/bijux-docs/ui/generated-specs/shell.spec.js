@@ -520,19 +520,84 @@ test("deep documents have truthful current page state", async ({ page }) => {
     await expect(drawer(page).locator("a[aria-current='page']")).toBeVisible();
   }
 });
-test("resize and history preserve shell without uncaught errors", async ({ page }) => {
+test("resize and history preserve shell without uncaught errors", async ({ page, context }) => {
+  test.setTimeout(60_000);
+  const { observeLifecycle, shellState } = require("./shell/lifecycle");
+  await context.addInitScript(observeLifecycle);
+  await page.emulateMedia({ colorScheme: "light" });
   const errors = [];
-  page.on("pageerror", (error) => errors.push(error.message));
+  page.on("pageerror", error => errors.push(error.message));
   await ready(page, "/platform/");
-  for (const width of [1440, 390, 768, 1440]) {
-    await page.setViewportSize({ width, height: 900 });
-    await expect(page.locator("main")).toBeVisible();
+  // Persist the initial Auto choice through ordinary activation. A first load
+  // with no stored choice and a later load with Material's scoped record do
+  // not have identical preference inputs until the choice is explicit.
+  const initialTheme = page.locator("[data-bijux-theme-toggle]");
+  for (const mode of ["light", "dark", "auto"]) {
+    await initialTheme.click();
+    await expect(initialTheme).toHaveAttribute("data-bijux-theme-mode", mode);
   }
-  await page.locator("main a[href]").filter({ hasText: "Getting started" }).first().click();
-  await expect(page).toHaveURL(/\/platform\/start\/$/);
-  await page.goBack();
-  await expect(page).toHaveURL(/\/platform\/$/);
-  expect(errors).toEqual([]);
+  const original = await page.evaluateHandle(() => document);
+  const observations = [];
+  try {
+    for (let cycle = 0; cycle < 3; cycle++) for (const width of [1440, 390, 768, 1440]) {
+      await page.setViewportSize({ width, height: 900 });
+      await expect.poll(() => page.evaluate(() => document.documentElement.dataset.bijuxViewport)).toBe(
+        width < 768 ? "phone" : width < 1220 ? "normal" : "desktop");
+      // Keep theme inputs identical to an independent fresh load at this size.
+      const fresh = await context.newPage();
+      try {
+        await fresh.emulateMedia({ colorScheme: "light" });
+        await fresh.setViewportSize({ width, height: 900 });
+        await ready(fresh, "/platform/");
+        await expect.poll(() => shellState(page)).toEqual(await shellState(fresh));
+        const observed = await shellState(page);
+        expect(observed.checkboxCounts).toEqual([1, 1]);
+        expect(observed.navigationCount).toBe(1);
+        expect(observed.treeCount).toBe(1);
+        expect(await page.evaluate(() => window.bijuxLifecycleObservation().active)).toBeGreaterThan(5);
+        observations.push({ cycle, width, state: observed });
+      } finally { await fresh.close(); }
+      if (width < 1220) {
+        await page.evaluate(() => {
+          window.bijuxDrawerChanges = 0;
+          document.getElementById("__drawer").addEventListener("change", () => window.bijuxDrawerChanges++ , { once: true });
+        });
+        await openDrawer(page);
+        expect(await page.evaluate(() => window.bijuxDrawerChanges)).toBe(1);
+        await page.keyboard.press("Escape");
+        await expect(page.locator("#__drawer")).not.toBeChecked();
+        await expect(page.locator(".md-content")).toHaveJSProperty("inert", false);
+      }
+      const search = control(page, "search");
+      await search.click();
+      await expect(page.locator("#__search")).toBeChecked();
+      await page.keyboard.press("Escape");
+      await expect(page.locator("#__search")).not.toBeChecked();
+      const theme = page.locator("[data-bijux-theme-toggle]");
+      const before = await theme.getAttribute("data-bijux-theme-mode");
+      await theme.click();
+      await expect(theme).toHaveAttribute("data-bijux-theme-mode", { auto: "light", light: "dark", dark: "auto" }[before]);
+      expect(await page.evaluate(old => old === document, original)).toBe(true);
+    }
+    await page.locator("main a[href]").filter({ hasText: "Getting started" }).first().click();
+    await expect(page).toHaveURL(/\/platform\/start\/$/);
+    await expect(page.locator("main h1")).toContainText("Platform getting started");
+    expect(await page.evaluate(old => old === document, original)).toBe(true);
+    await page.goBack();
+    await expect(page).toHaveURL(/\/platform\/$/);
+    await expect.poll(() => page.evaluate(() => window.bijuxLifecycleObservation().aborted)).toBeGreaterThan(0);
+    const fresh = await context.newPage();
+    try {
+      await fresh.emulateMedia({ colorScheme: "light" });
+      await fresh.setViewportSize({ width: 1440, height: 900 });
+      await ready(fresh, "/platform/");
+      await expect.poll(() => shellState(page)).toEqual(await shellState(fresh));
+    } finally { await fresh.close(); }
+    expect(errors).toEqual([]);
+  } finally {
+    await original.dispose();
+    await test.info().attach("shell-lifecycle-equivalence", { body: Buffer.from(JSON.stringify(observations, null, 2)), contentType: "application/json" });
+  }
 });
 test("search initialization yields a real known-answer result", async ({ page }) => {
   await phone(page, "/bijux-core/");

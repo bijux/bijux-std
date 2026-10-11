@@ -6,11 +6,7 @@ This file records notable repository-level changes for `bijux-std`.
 
 ### Unreleased
 
-Install the unchanged Genomics audit-tool versions from checksum-verified release binaries, reject source-build fallback, and verify both executable versions before auditing.
-
-Promote only the three admitted setup-node, upload-artifact, and download-artifact references for Masterclass through its accepted execution-policy authority. Admit every prior managed byte against its previous official authority before promotion, preserving the fixed runtime baseline and existing human documentation events and payloads.
-
-Admit Genomics sccache v0.0.3 with the existing Node 24 runtime contract through canonical CI and verification wrappers.
+Keep complete drawer navigation inside admitted safe insets, qualify short and changing viewport heights, and verify shell lifecycle equivalence plus persistent automatic and explicit theme choices across real browser journeys.
 
 Admit all fifteen preserved Proteomics public install surfaces to build, PyPI, and GHCR matrices with explicit runtime, library, and compatibility roles. Verify all sixteen owned package profiles, including development governance, and remove unsupported package documentation defaults while retaining repository documentation publication qualification.
 
@@ -21,6 +17,10 @@ Verify Python repository governance through its independently fetched, exact Git
 Use the repository-owned OpenAPI package manifest and lock for strict sandbox installation, reject unreviewed dependency fallback, and invalidate installed tools when either reviewed input changes. Align API workflows with Node 24.21.0, setup-java v6.0.1, and the Redocly 2.58.1 configuration baseline.
 
 ### Merged pull requests
+
+#### 2026-10-11T11:48:37Z — [#283](https://github.com/bijux/bijux-std/pull/283) — build(ci): admit verified dependency tool runtimes
+
+Install Genomics audit tools from checksum-verified binaries without source-build fallback, verify both executable versions, and admit sccache v0.0.3 with its Node24 runtime contract. Promote only Masterclass's three admitted action references through its independently accepted execution-policy authority, preserving its fixed runtime baseline and existing human documentation behavior.
 
 #### 2026-10-10T22:49:23Z — [#277](https://github.com/bijux/bijux-std/pull/277) — docs(governance): explain publication admission and reconcile accepted history
 

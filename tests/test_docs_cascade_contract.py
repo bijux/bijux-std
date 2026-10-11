@@ -252,9 +252,10 @@ class CascadeContractTests(unittest.TestCase):
 
     def test_changed_and_reversed_viewport_fallbacks_are_not_generic_duplicate_exceptions(self):
         original = (DOCS / "styles/08-responsive.css").read_text()
-        pair = "max-height: calc(100vh - var(--md-header-height, 3rem));\n    max-height: calc(100dvh - var(--md-header-height, 3rem));"
+        inset_bound = " - var(--md-header-height, 3rem) - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px)"
+        pair = f"max-height: calc(100vh{inset_bound});\n    max-height: calc(100dvh{inset_bound});"
         for replacement in [pair.replace("100dvh", "90dvh"),
-                            "max-height: calc(100dvh - var(--md-header-height, 3rem));\n    max-height: calc(100vh - var(--md-header-height, 3rem));"]:
+                            f"max-height: calc(100dvh{inset_bound});\n    max-height: calc(100vh{inset_bound});"]:
             with self.subTest(replacement=replacement):
                 (self.styles / "08-responsive.css").write_text(original)
                 self.mutate("08-responsive.css", pair, replacement)
