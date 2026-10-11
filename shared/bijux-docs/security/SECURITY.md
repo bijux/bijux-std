@@ -71,7 +71,11 @@ source history and output still require independent producer reconstruction.
 Renderer observation reports never create admission by themselves.
 
 Reviewed producer adapters preserve actual redirects, revision-date configuration,
-registered callbacks and the two observed source asset/root icon recipes. Unknown
+registered callbacks and finite source asset, icon, domain and scientific-download
+recipes. Core's contract recipe binds five tracked JSON files to their exact public
+copies and admits only the reviewed documentation-confined source-link callback.
+Changed dependency bindings, callback helpers, output bytes or contract population
+are refused. Unknown
 plugins/hooks, shadow imports, replaced callbacks, unlisted physical inputs and
 mismatched bytecode fail. Generated catalog Markdown outside the tracked source
 requires its own generator/source attribution; a build-date fallback proves
