@@ -11,6 +11,8 @@ import unittest
 from pathlib import Path
 from unittest import mock
 
+from github_workflows.test_dependency_pr_admission import observed_condition
+
 
 SCRIPT_PATH = (
     Path(__file__).resolve().parents[1]
@@ -71,7 +73,8 @@ class RenderRepoConfigsTests(unittest.TestCase):
                        if step.get("name") == "Run ${{ matrix.target }}")
         self.assertIn("${{ matrix.target }}", command)
         self.assertEqual(set(verify["jobs"]["verification_ready"]["needs"]), {"repository", "package"})
-        self.assertEqual(verify["jobs"]["verification_ready"]["if"], "${{ always() }}")
+        self.assertTrue(observed_condition(verify["jobs"]["verification_ready"]["if"], "pull_request", "bijux"))
+        self.assertFalse(observed_condition(verify["jobs"]["verification_ready"]["if"], "pull_request", "dependabot[bot]"))
         repository = MODULE.find_repo_config(manifest, "bijux-pollenomics")
         publishers = repository["workflow_execution_policy"]["publication_entrypoints"]
         self.assertEqual(set(publishers), {"deploy-docs", "release-github", "release-ghcr", "release-pypi"})
@@ -134,7 +137,7 @@ class RenderRepoConfigsTests(unittest.TestCase):
                         "--dist-dir", str(artifacts / "dist"),
                     ])
 
-    def test_required_product_aggregates_run_on_dependency_prs_and_fail_closed(self):
+    def test_human_product_aggregates_exclude_bot_proposals_and_fail_closed(self):
         import subprocess
         manifest = json.loads(MANIFEST_PATH.read_text())
         for name in ["bijux-canon", "bijux-proteomics", "bijux-pollenomics"]:
@@ -143,9 +146,11 @@ class RenderRepoConfigsTests(unittest.TestCase):
                 workflow = MODULE.WORKFLOW_EXECUTION.parse_workflow(prepared[".github/workflows/verify.yml"], "verify")
                 self.assertNotIn("paths", workflow["on"]["pull_request"])
                 gate = workflow["jobs"]["verification_ready"]
-                self.assertEqual(gate["if"], "${{ always() }}")
+                self.assertTrue(observed_condition(gate["if"], "pull_request", "bijux"))
+                self.assertFalse(observed_condition(gate["if"], "pull_request", "dependabot[bot]"))
+                self.assertTrue(gate["name"].startswith(MODULE.WORKFLOW_EXECUTION.dependency_prs.UNVERIFIED_JOB_PREFIX))
                 for job in workflow["jobs"].values():
-                    self.assertNotIn("dependabot", job.get("if", ""))
+                    self.assertIn("github.event.pull_request.user.login != 'dependabot[bot]'", job["if"])
                 command = gate["steps"][0]["run"]
                 healthy = {key: "success" for key in gate["steps"][0]["env"]}
                 for dependency in healthy:
@@ -686,10 +691,14 @@ class RenderRepoConfigsTests(unittest.TestCase):
             [".bijux/**", ".github/**", "src/**"],
         )
 
-    def test_automerge_defers_to_required_checks_without_preflight_race(self) -> None:
+    def test_automerge_entrypoint_requires_manual_owner_consolidation(self) -> None:
         workflow = AUTOMERGE_WORKFLOW_PATH.read_text(encoding="utf-8")
 
-        self.assertIn("  enable:\n", workflow)
+        document = MODULE.WORKFLOW_EXECUTION.parse_workflow(workflow.encode(), "automerge")
+        self.assertEqual(set(document["on"]), {"workflow_dispatch"})
+        self.assertEqual(set(document["jobs"]), {"owner-consolidation"})
+        self.assertNotIn("pull_request:", workflow)
+        self.assertNotIn("enablePullRequestAutoMerge", workflow)
         self.assertNotIn("policy-gate", workflow)
         self.assertNotIn("check_workflow_prerequisites.py", workflow)
 

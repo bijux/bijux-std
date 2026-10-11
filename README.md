@@ -63,7 +63,9 @@ The documentation publisher fetches the consumer's exact
 It exports `BIJUX_STD_ROOT` and `BIJUX_STD_REF` so documentation tooling verifies
 the same immutable source that the consumer accepted.
 
-Product CI continues to build and verify applicable documentation automatically.
+Human product CI continues to build and verify applicable documentation.
+Documentation deployment requires manual dispatch; successful verification
+does not deploy a site.
 Publication requires a separate authenticated manual dispatch. See the
 [publication contracts](shared/bijux-gh/README.md#manual-publication-controlled-by-iac)
 for the controller permissions and admission requirements.
@@ -74,6 +76,32 @@ Its `verification-ready` aggregate certifies those retained source checks;
 it does not certify scientific results, product tests or publication readiness.
 Scientific verification remains owned by the product repository and available
 through explicit manual workflows.
+
+## Dependency Proposal Admission
+
+All governed repositories declare `dependency_pull_requests: notification-only`
+and `dependency_merge: owner-consolidation`. Dependabot proposals and the exact `github-actions[bot]` proposal branch
+`automation/dependency-lock-refresh` receive one read-only owner review notice. Product and governance jobs are excluded using
+the original PR author, even when a human reruns an event. Their distinct
+`unverified dependency /` names cannot satisfy required verification contexts.
+An owner consolidates supported dependency changes into a locally qualified
+human PR before normal merging. The former automatic merge workflow is a
+manual explanation of this policy and grants no merge authority.
+
+Eleven repositories declare `main_verification: accepted-pull-request`; their
+normal PR merge does not repeat the same complete verification on a main push.
+GitHub updates its dependency graph from supported manifests and lockfiles.
+Manual publication verifies the exact human PR that produced current main,
+its normal merge parents, and latest required Actions checks including owner
+approval. An older successful PR cannot authorize a different main revision.
+
+Masterclass declares `main_verification: existing-events`. Its bounded bot-policy
+promotion retains the accepted runtime pin and documentation/program execution
+bytes, while recording a separate exact accepted execution-policy SHA in
+`.github/standards/dependency-notification-source.json`. The source-owned
+Masterclass verifier admits only that fixed baseline composition. Its governance
+source selector reads the explicit policy authority; product and documentation
+jobs keep their existing payloads and events.
 
 ## System Model
 

@@ -7,6 +7,8 @@ import subprocess
 import tempfile
 import unittest
 
+from github_workflows.policy_fixtures import MODULE
+
 ROOT = Path(__file__).resolve().parents[1]
 WORKFLOW = ROOT / '.github/workflows/bijux-std.yml'
 
@@ -89,9 +91,10 @@ class RequiredNavigationTests(unittest.TestCase):
 
     def test_required_report_materializes_after_failed_prerequisites(self):
         report = job('report')
-        self.assertIn('name: std / report\n', report)
+        self.assertIn('name: ' + MODULE.dependency_prs.UNVERIFIED_JOB_PREFIX + 'std / report\n', report)
         self.assertIn('needs: [checks, navigation, catalogue-renderer, renderer-controls]', report)
-        self.assertIn('if: ${{ always() &&', report)
+        self.assertIn('always() &&', report)
+        self.assertIn("github.event.pull_request.user.login != 'dependabot[bot]'", report)
         self.assertIn('CHECK_RESULT: ${{ needs.checks.result }}', report)
         self.assertIn('NAVIGATION_RESULT: ${{ needs.navigation.result }}', report)
         self.assertLess(report.index('Require applicable source and rendered checks'), report.index('Run standards report'))
@@ -180,12 +183,13 @@ class RequiredNavigationTests(unittest.TestCase):
         self.assertIn('          path: artifacts/bijux-docs/frontend-faults/public\n', aggregate)
         self.assertIn('          name: docs-frontend-faults-public-${{ github.sha }}-${{ github.run_attempt }}\n', aggregate)
 
-    def test_every_shared_pull_request_author_receives_full_rendered_qualification(self):
+    def test_shared_human_pull_requests_keep_rendered_qualification(self):
         for name in ('navigation-fixtures', 'publication-commands', 'renderer-controls', 'navigation'):
             with self.subTest(job=name):
                 source = job(name)
                 self.assertIn("github.repository == 'bijux/bijux-std'", source)
-                self.assertNotIn('dependabot', source)
+                self.assertIn("github.event.pull_request.user.login != 'dependabot[bot]'", source)
+                self.assertIn(MODULE.dependency_prs.UNVERIFIED_JOB_PREFIX, source)
         aggregate = job('navigation')
         self.assertIn('needs: [navigation-fixtures, navigation-browsers, publication-commands, renderer-controls, frontend-browser-faults, frontend-public-faults, persisted-native-reader]', aggregate)
         for variable in ('FIXTURE_RESULT', 'BROWSER_RESULT', 'COMMAND_RESULT', 'RENDERER_RESULT', 'PERSISTED_RESULT'):
@@ -194,7 +198,7 @@ class RequiredNavigationTests(unittest.TestCase):
 
     def test_native_cached_reader_is_a_required_separate_capability_job(self):
         native = job('persisted-native-reader')
-        self.assertIn('name: std / persisted native reader / chromium', native)
+        self.assertIn('name: ' + MODULE.dependency_prs.UNVERIFIED_JOB_PREFIX + 'std / persisted native reader / chromium', native)
         self.assertIn('timeout-minutes: 3', native)
         self.assertIn('persisted_reader.py run', native)
         self.assertIn('include-hidden-files: true', native)

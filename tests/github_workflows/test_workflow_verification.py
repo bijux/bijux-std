@@ -7,7 +7,7 @@ import unittest
 from pathlib import Path
 from unittest import mock
 
-from .policy_fixtures import source_fixture, projection_fixture, byte_tree, refresh_snapshots
+from .policy_fixtures import MODULE, ROOT, source_fixture, projection_fixture, byte_tree, refresh_snapshots
 
 
 class CanonicalWorkflowVerificationTests(unittest.TestCase):
@@ -48,7 +48,8 @@ class CanonicalWorkflowVerificationTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as workspace:
             root, owned, manifest = self.owning_writer_fixture(workspace)
             inventory = manifest['workflow_inventory']['managed_workflows']
-            self.assertEqual(len(inventory), 10)
+            self.assertEqual({entry['id'] for entry in inventory}, {entry['id'] for entry in json.loads((ROOT / '.github/standards/workflow-inventory.json').read_text())['managed_workflows']})
+            self.assertIn('dependency-notice', {entry['id'] for entry in inventory})
             before = byte_tree(root)
             first = owned.verify_projection(root, root, 'bijux-std')
             self.assertEqual(first, owned.verify_projection(root, root, 'bijux-std'))
@@ -80,8 +81,13 @@ class CanonicalWorkflowVerificationTests(unittest.TestCase):
             relative = '.github/workflows/pr-approval-policy.yml'
             path = root / relative
             original = path.read_bytes()
-            self.assertIn(b'timeout-minutes: 10', original)
-            path.write_bytes(original.replace(b'timeout-minutes: 10', b'timeout-minutes: 11'))
+            document = owned.parse_workflow(original, relative)
+            self.assertEqual(len(document['jobs']), 1)
+            approval = next(iter(document['jobs'].values()))
+            self.assertEqual(approval['timeout-minutes'], 10)
+            approval['timeout-minutes'] = 11
+            _, renderer = owned.canonical_sources.owning_scripts(root)
+            path.write_text(renderer.render_yaml_document(document, preserve_scalar_types=True))
             before = byte_tree(root)
             with self.assertRaisesRegex(ValueError, 'noncanonical managed projection: ' + relative):
                 owned.verify_projection(root, root, 'bijux-std')
@@ -120,7 +126,12 @@ class CanonicalWorkflowVerificationTests(unittest.TestCase):
             target = Path(workspace) / 'projected-repository'
             projection_fixture(source, owned, target)
             path = target / '.github/workflows/automerge-pr.yml'
-            original = path.read_bytes();changed = original.replace(b'  enable:\n', b'  enable:\n    if: false\n', 1)
+            original = path.read_bytes()
+            document = owned.parse_workflow(original, str(path))
+            self.assertEqual(set(document['jobs']), {'owner-consolidation'})
+            document['jobs']['owner-consolidation']['if'] = '${{ false }}'
+            _, renderer = owned.canonical_sources.owning_scripts(source)
+            changed = renderer.render_yaml_document(document, preserve_scalar_types=True).encode()
             self.assertNotEqual(original, changed);path.write_bytes(changed)
             (target / '.github/bijux-std-shared.sha256').write_text(hashlib.sha256(changed).hexdigest()+'  .github/workflows/automerge-pr.yml\n')
             before = byte_tree(target)
