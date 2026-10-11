@@ -37,7 +37,7 @@
     "shared/bijux-checks/scripts/verify-accepted-source.sh": "beca0fe92a6165b4a67b81c6360b744df2dba4226302fc25999e096b72101da0",
     "shared/bijux-gh/required-status-checks.md": "de462a41e1b8ecf4ac5b6908a18b74cd33a55d6fa4b6daf64080dfc9e062a6b1",
     "shared/bijux-gh/rulesets/main-branch-protection.json": "a194664f7530191d4f0fb239ee5e58cf5fd9648a7ab013030e6d84c5f4bc9585",
-    "shared/bijux-gh/scripts/publication_admission.py": "394efd8afd6b2ceee7f04a0ebaa3533aa65c386f37cca93a55a80ba6e77005d2",
+    "shared/bijux-gh/scripts/publication_admission.py": "28e2716ee1f43d3211cede9fad4251044b12b643dc728e2038b69152841d4561",
     "shared/bijux-gh/workflows/codecov.yml": "0a70c2b53298218538de363fb6c2bfd05358a4a35aad0ed29eeaed8cc5eaf2c7",
     "shared/bijux-gh/workflows/dependency-notice.yml": "efce001e4d8da9d0695c6d898a3de56c7b0ed2c94877ff8b44cd962b55562645",
     "shared/bijux-gh/workflows/deploy-docs.yml": "e577230c3742c2be940619283ac47aa7bd1150362cc7bac42153c919215ac7a1",

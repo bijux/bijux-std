@@ -175,6 +175,11 @@ def admit(environment: dict[str, str], *, public_source: bool = False) -> dict:
     entry = next((repo for repo in manifest["repositories"] if "bijux/" + repo["name"] == repository), None)
     if entry is None or workflow not in entry.get("workflow_allowlist", []):
         raise ValueError("publisher is not an applicable repository capability")
+    deployment = entry.get("workflow_execution_policy", {}).get("publication_entrypoints", {}).get("deploy-docs", {})
+    destination = deployment.get("destination")
+    if (workflow == "deploy-docs" and not public_source and destination is not None
+            and destination.get("repository") != entry["name"]):
+        raise ValueError("routed documentation must publish through its declared controller destination")
     identity = reader(f"users/{actor}")
     if identity.get("type") != "Bot" or str(identity.get("id")) != trusted:
         raise ValueError("controller identity is not the configured App bot")
