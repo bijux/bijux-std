@@ -91,3 +91,54 @@ test("repeated instant journeys keep an explicit drawer opening through late Mat
     await expect(page).toHaveURL(/\/platform\/$/);
   }
 });
+
+const { reachableDrawer } = require("./drawer/viewport");
+test("complete branches, sites and close remain reachable in short phone and landscape viewports", async ({ page }, info) => {
+  test.setTimeout(60_000);
+  for (const viewport of [{ width: 320, height: 320 }, { width: 667, height: 320 }]) {
+    await page.setViewportSize(viewport);
+    await page.goto("/fixtures/long-registry/");
+    await open(page);
+    await reachableDrawer(page, info);
+  }
+});
+
+test("an open drawer follows actual layout and visual viewport height changes", async ({ page }, info) => {
+  test.setTimeout(60_000);
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto("/fixtures/long-registry/");
+  await open(page);
+  const original = await page.evaluateHandle(() => document);
+  try {
+    for (const height of [320, 600, 320]) {
+      await page.setViewportSize({ width: 390, height });
+      expect(await page.evaluate(before => before === document, original)).toBe(true);
+      await expect.poll(() => page.evaluate(() => Math.round(visualViewport.height))).toBe(height);
+      await expect(page.locator("#__drawer")).toBeChecked();
+      await reachableDrawer(page, info, undefined, false);
+    }
+    await page.keyboard.press("Escape");
+    await expect(control(page)).toBeFocused();
+  } finally { await original.dispose(); }
+});
+
+test("controlled nonzero safe insets retain complete drawer targets inside the usable viewport", async ({ page }, info) => {
+  test.setTimeout(60_000);
+  const insets = { top: 18, right: 12, bottom: 24, left: 12 };
+  // This is a declared CSS capability fixture. Desktop engines do not simulate
+  // physical hardware notches merely by changing their viewport dimensions.
+  await page.route("**/assets/styles/08-responsive.css", async route => {
+    const response = await route.fetch();
+    let css = await response.text();
+    for (const [edge, value] of Object.entries(insets))
+      css = css.replaceAll(`env(safe-area-inset-${edge}, 0px)`, `${value}px`);
+    await route.fulfill({ response, body: css });
+  });
+  await page.setViewportSize({ width: 320, height: 320 });
+  await page.goto("/fixtures/long-registry/");
+  // Native fixed obstructions make a missing inset adaptation a real failed
+  // hit-target oracle rather than an assertion about the fixture's CSS alone.
+  await page.addStyleTag({ content: `body::after { content:""; position:fixed; z-index:99999; inset:auto 0 0; height:${insets.bottom}px; background:black; }` });
+  await open(page);
+  await reachableDrawer(page, info, insets);
+});
