@@ -65,31 +65,47 @@ class RecipeControls(unittest.TestCase):
         self.assertIsNone(context.record["environment"]["SITE_URL"])
         self.assertEqual(context.record["documents"], 4)
 
-    def standalone_generator(self):
-        return (HERE.parent / "fixtures/standalone-course-generator/sync_series_docs.py").read_bytes()
+    def standalone_generators(self):
+        fixture = HERE.parent / "fixtures/standalone-course-generator"
+        return {name: (fixture / location).read_bytes() for name, location in (
+            ("scripts/sync_series_docs.py", "sync_series_docs.py"),
+            ("scripts/catalogue/files.py", "scripts/catalogue/files.py"),
+            ("scripts/docs_nav.py", "scripts/docs_nav.py"))}
+
+    def commit_standalone_generators(self):
+        for name, source in self.standalone_generators().items():
+            self.committed(name, source)
 
     def test_actual_standalone_entrypoint_preserves_native_catalogue_projection(self):
         previous = self.derive()
-        self.committed("scripts/sync_series_docs.py", self.standalone_generator())
+        self.commit_standalone_generators()
         current = self.derive()
         self.assertEqual(current.map, previous.map)
         self.assertEqual(current.plan.configuration.content, previous.plan.configuration.content)
         self.assertEqual(current.plan.output_bytes(), previous.plan.output_bytes())
-        self.assertEqual(current.record["generator"]["scripts/sync_series_docs.py"],
-                         "84221a438172349a5b7eb1291606045a3ab202636a3e0ad18d6f6a726c87940c")
+        for name, source in self.standalone_generators().items():
+            with self.subTest(name=name):
+                self.assertEqual(current.record["generator"][name], self.recipe.digest(source))
+                self.assertNotEqual(current.record["generator"][name], previous.record["generator"][name])
         self.assertNotEqual(current.record["source_inputs_sha256"], previous.record["source_inputs_sha256"])
 
     def test_standalone_entrypoint_nearby_bytes_remain_unreviewed(self):
-        self.committed("scripts/sync_series_docs.py", self.standalone_generator() + b"\n# foreign code\n")
-        with self.assertRaisesRegex(ValueError, "generator source differs"):
-            self.derive()
+        self.commit_standalone_generators()
+        for name, source in self.standalone_generators().items():
+            with self.subTest(name=name):
+                self.committed(name, source + b"\n# foreign code\n")
+                with self.assertRaisesRegex(ValueError, "generator source differs"):
+                    self.derive()
+                self.committed(name, source)
 
     def test_standalone_receipt_cannot_claim_legacy_generator(self):
-        self.committed("scripts/sync_series_docs.py", self.standalone_generator())
-        record = self.derive().record
-        record["generator"]["scripts/sync_series_docs.py"] = self.recipe.GENERATOR["scripts/sync_series_docs.py"]
-        with self.assertRaisesRegex(ValueError, "record differs"):
-            self.derive(expected=record)
+        self.commit_standalone_generators()
+        for name in self.standalone_generators():
+            with self.subTest(name=name):
+                record = self.derive().record
+                record["generator"][name] = self.recipe.GENERATOR[name]
+                with self.assertRaisesRegex(ValueError, "record differs"):
+                    self.derive(expected=record)
 
     def test_valid_native_cache_is_bound_to_captured_hook(self):
         import py_compile

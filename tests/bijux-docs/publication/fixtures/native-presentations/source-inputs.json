@@ -1,0 +1,46 @@
+[
+  {
+    "path": "docs/report/pollen-reconstruction/swedish-native-sequences/chronology-controls.json",
+    "fixture": "chronology-controls.json.gz"
+  },
+  {
+    "path": "docs/report/pollen-reconstruction/swedish-native-sequences/index.html",
+    "fixture": "index.html.gz"
+  },
+  {
+    "path": "docs/report/pollen-reconstruction/swedish-native-sequences/manifest.json",
+    "fixture": "manifest.json.gz"
+  },
+  {
+    "path": "docs/report/pollen-reconstruction/swedish-native-sequences/map-summary.geojson",
+    "fixture": "map-summary.geojson.gz"
+  },
+  {
+    "path": "docs/report/pollen-reconstruction/swedish-native-sequences/observations.json",
+    "fixture": "observations.json.gz"
+  },
+  {
+    "path": "docs/report/pollen-reconstruction/swedish-native-sequences/samples.json",
+    "fixture": "samples.json.gz"
+  },
+  {
+    "path": "docs/report/pollen-reconstruction/swedish-native-sequences/sites.json",
+    "fixture": "sites.json.gz"
+  },
+  {
+    "path": "docs/report/regions/nordic/nordic_map.html",
+    "fixture": "nordic_map.html.gz"
+  },
+  {
+    "path": "packages/bijux-pollenomics/src/bijux_pollenomics/reporting/map_document/assets/document.html",
+    "fixture": "document.html.gz"
+  },
+  {
+    "path": "packages/bijux-pollenomics/src/bijux_pollenomics/reporting/map_document/assets/source-record-export.js",
+    "fixture": "source-record-export.js.gz"
+  },
+  {
+    "path": "packages/bijux-pollenomics/src/bijux_pollenomics/reporting/map_document/assets/url-state.js",
+    "fixture": "url-state.js.gz"
+  }
+]

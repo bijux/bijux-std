@@ -5,6 +5,7 @@ import hashlib
 import importlib.util
 from pathlib import Path
 import shutil
+import subprocess
 import tempfile
 import types
 import unittest
@@ -21,6 +22,8 @@ def load(path, name):
 
 CAPABILITIES = load(ROOT / 'shared/bijux-docs/security/producer_capabilities.py',
                     'bijux_custom_domain_capabilities')
+PUBLICATION = load(ROOT / 'shared/bijux-docs/security/publication.py',
+                   'bijux_custom_domain_publication')
 FIXTURE = Path(__file__).parent / 'fixtures/custom-domain/configs/docs/publish_site_assets.py'
 
 
@@ -88,6 +91,88 @@ class CustomDomain(unittest.TestCase):
     def test_modified_source_is_refused(self):
         self.path.write_text(self.path.read_text() + '\n# another callback authority\n')
         self.reject()
+
+
+class NativeDomainAdmission(unittest.TestCase):
+    """Exercise real MkDocs configuration and the actual native copied output."""
+
+    def setUp(self):
+        CustomDomain.setUp(self)
+        self.owner = self.root / 'mkdocs.yml'
+        self.owner.write_text('site_name: Hub\nsite_url: https://bijux.io/\n'
+                              'docs_dir: docs\nplugins: []\n'
+                              'hooks: [configs/docs/publish_site_assets.py]\n')
+        subprocess.run(['git', 'init', '-q', str(self.root)], check=True)
+        subprocess.run(['git', '-C', str(self.root), 'add', 'mkdocs.yml', 'CNAME',
+                        'configs/docs/publish_site_assets.py', 'docs'], check=True)
+        subprocess.run(['git', '-C', str(self.root), '-c', 'user.name=Bijux',
+                        '-c', 'user.email=bijux@example.invalid', 'commit', '-qm',
+                        'test source-owned domain'], check=True)
+        self.owner_record = {'path': 'mkdocs.yml',
+                             'sha256': hashlib.sha256(self.owner.read_bytes()).hexdigest()}
+        self.site = Path(self.config.site_dir)
+        self.hook.on_post_build(self.config)
+        (self.site / 'index.html').write_text(
+            '<html><head><link rel="canonical" href="https://bijux.io/"></head><body>Hub</body></html>')
+
+    def manifest(self, *, owner=True):
+        return PUBLICATION.bundle_manifest(
+            self.root, 'artifacts/site', 'https://bijux.io/', 'a' * 40,
+            PUBLICATION.load_policy(), owner_config=self.owner_record if owner else None)
+
+    def test_native_copied_root_domain_has_source_owned_admission(self):
+        result = self.manifest()
+        copied = next(item for item in result['files'] if item['path'] == 'CNAME')
+        self.assertEqual(copied['sha256'], hashlib.sha256(b'bijux.io\n').hexdigest())
+
+    def test_unqualified_inventory_cannot_grant_domain_authority(self):
+        with self.assertRaisesRegex(PUBLICATION.AdmissionError, 'unadmitted-extension'):
+            self.manifest(owner=False)
+
+    def test_unrelated_extensionless_file_is_refused(self):
+        (self.site / 'OTHER').write_text('bijux.io\n')
+        with self.assertRaisesRegex(PUBLICATION.AdmissionError, 'unadmitted-extension'):
+            self.manifest()
+
+    def test_nested_domain_file_is_refused(self):
+        (self.site / 'nested').mkdir()
+        (self.site / 'nested/CNAME').write_text('bijux.io\n')
+        with self.assertRaisesRegex(PUBLICATION.AdmissionError, 'unadmitted-extension'):
+            self.manifest()
+
+    def test_changed_copied_domain_is_refused(self):
+        (self.site / 'CNAME').write_text('other.example\n')
+        with self.assertRaisesRegex(PUBLICATION.AdmissionError, 'public bytes differ'):
+            self.manifest()
+
+    def test_changed_domain_source_is_refused(self):
+        (self.root / 'CNAME').write_text('other.example\n')
+        with self.assertRaisesRegex(ValueError, 'production URL'):
+            self.manifest()
+
+    def test_untracked_domain_source_is_refused(self):
+        subprocess.run(['git', '-C', str(self.root), 'rm', '--cached', 'CNAME'], check=True,
+                       capture_output=True)
+        with self.assertRaises(ValueError):
+            self.manifest()
+
+    def test_missing_configured_callback_is_refused(self):
+        self.owner.write_text(self.owner.read_text().replace(
+            'hooks: [configs/docs/publish_site_assets.py]', 'hooks: []'))
+        self.owner_record['sha256'] = hashlib.sha256(self.owner.read_bytes()).hexdigest()
+        with self.assertRaisesRegex(PUBLICATION.AdmissionError, 'one reviewed'):
+            self.manifest()
+
+    def test_changed_owner_configuration_is_refused(self):
+        self.owner.write_text(self.owner.read_text() + '# changed owner\n')
+        with self.assertRaisesRegex(PUBLICATION.AdmissionError, 'owner configuration changed'):
+            self.manifest()
+
+    def test_modified_callback_cannot_self_admit_domain(self):
+        self.path.write_text(self.path.read_text() + '\n# unreviewed producer\n')
+        with self.assertRaisesRegex(ValueError, 'reviewed source recipe'):
+            self.manifest()
+
 
 
 if __name__ == '__main__':

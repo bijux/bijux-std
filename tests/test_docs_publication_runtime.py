@@ -186,6 +186,35 @@ class PublicationRuntime(unittest.TestCase):
             self.assertEqual(environment[key], value)
         self.assertTrue(verifier.kwargs["check"])
 
+    def test_interactive_admission_forwards_explicit_owner_and_exact_head(self):
+        with patch.object(builder.sys, "argv", ["publication_builder.py", "admit", "--site-dir",
+                "artifacts/docs/site", "--site-url", "https://bijux.io/bijux-pollenomics/",
+                "--interactive-report-owner", "configs/docs/maps/report-owner.json"]), \
+                patch.object(builder.subprocess, "check_output", return_value="a" * 40), \
+                patch.object(builder.subprocess, "run") as run, patch.dict(builder.os.environ, {}, clear=True):
+            self.assertEqual(builder.main(), 0)
+        verifier = run.call_args_list[0]
+        self.assertEqual(verifier.kwargs["env"]["BIJUX_DOCS_INTERACTIVE_REPORT_OWNER"], "configs/docs/maps/report-owner.json")
+        self.assertEqual(verifier.kwargs["env"]["BIJUX_DOCS_READER_SOURCE_SHA"], "a" * 40)
+        self.assertEqual(verifier.kwargs["env"]["DOCS_SOURCE_IDENTITY"], builder.SOURCE)
+
+    def test_admission_cannot_inherit_an_owner_from_ambient_environment(self):
+        with self.admission(), patch.object(builder.subprocess, "check_output", return_value="a" * 40), \
+                patch.object(builder.subprocess, "run") as run, patch.dict(builder.os.environ,
+                {"BIJUX_DOCS_INTERACTIVE_REPORT_OWNER": "output-receipt.json", "BIJUX_DOCS_READER_SOURCE_SHA": "b" * 40}, clear=True):
+            self.assertEqual(builder.main(), 0)
+        self.assertNotIn("BIJUX_DOCS_INTERACTIVE_REPORT_OWNER", run.call_args_list[0].kwargs["env"])
+        self.assertNotIn("BIJUX_DOCS_READER_SOURCE_SHA", run.call_args_list[0].kwargs["env"])
+
+    def test_mixed_owner_admission_refuses_before_any_artifact_verification(self):
+        with patch.object(builder.sys, "argv", ["publication_builder.py", "admit", "--site-dir",
+                "artifacts/docs/site", "--site-url", "https://bijux.io/bijux-pollenomics/",
+                "--interactive-report-owner", "interactive.json", "--reader-owner", "passive.json"]), \
+                patch.object(builder.subprocess, "check_output", return_value="a" * 40), \
+                patch.object(builder.subprocess, "run") as run, patch.dict(builder.os.environ, {}, clear=True):
+            self.assertEqual(builder.main(), 1)
+        run.assert_not_called()
+
     def test_failed_source_artifact_verification_never_reaches_publisher(self):
         with self.admission(), patch.object(builder.subprocess, "check_output", return_value="a" * 40), \
                 patch.object(builder.subprocess, "run", side_effect=subprocess.CalledProcessError(1, "verifier")) as run, \
