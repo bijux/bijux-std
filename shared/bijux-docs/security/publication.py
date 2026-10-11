@@ -522,10 +522,7 @@ def qualified_redirects(canonical: Path, build: dict, csp: dict, site: Path, sit
             current = configured[current["destination"]]
         destination = current["destination"]
         identity_module().regular(site, destination)
-        url = current["url"]
-        require(not urlsplit(url).scheme and not urlsplit(url).netloc and not url.startswith("/")
-                and "\\" not in unquote(url) and not any(part in {".", ".."} for part in unquote(url).split("/")),
-                "Redirect receipt: target escaped product base")
+        url = processor.destination_url(current["url"], destination)
         canonical_url = site_url + quote(unquote(url), safe="/-._~")
         target = canonical_url + ("#" + quote(unquote(fragment), safe="-._~:") if fragment else "")
         require(record.get("destination") == destination and record.get("canonical") == canonical_url and record.get("target") == target,

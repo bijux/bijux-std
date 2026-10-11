@@ -99,6 +99,7 @@ class DocumentationRedirectTests(unittest.TestCase):
         self.assertTrue(all(path.read_bytes() == content for path, content in before.items()))
 
     def test_actual_csp_transaction_receipt_is_accepted_by_publication_redirect_guard(self):
+        self.config["plugins"][1]["redirects"]["redirect_maps"]["public/index.md"] = "index.md"
         overrides = self.root / "overrides/partials/javascripts"
         overrides.mkdir(parents=True)
         for name in ("base.html", "palette.html"):
@@ -115,7 +116,12 @@ class DocumentationRedirectTests(unittest.TestCase):
                 f'accepted=publication.qualified_redirects(Path({str(MODULE.parents[1])!r}),build,report,Path(configuration.site_dir),configuration.site_url)\n'
                 'print(json.dumps(accepted))')
         accepted = json.loads(self.identity_probe(body))
-        self.assertEqual(set(accepted), {"old/index.html", "nested/old/index.html"})
+        self.assertEqual(set(accepted), {"old/index.html", "nested/old/index.html", "public/index.html"})
+        report = json.loads((self.root / "artifacts/website-security/csp.json").read_text())
+        root = next(row for row in report["redirects"]["records"] if row["path"] == "public/index.html")
+        self.assertEqual(root["target"], self.config["site_url"])
+        self.assertEqual(root["canonical"], self.config["site_url"])
+        self.assertNotIn('/./', (self.site / 'public/index.html').read_text())
 
     def test_directory_routes_absolute_canonical_exact_script_and_idempotence(self):
         self.build()
