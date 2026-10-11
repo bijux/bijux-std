@@ -568,7 +568,7 @@ class RenderRepoConfigsTests(unittest.TestCase):
 
         sccache_action = (
             "mozilla/sccache-action@"
-            "7d986dd989559c6ecdb630a3fd2557667be217ad"
+            "fc920bf0ec8de6ee65d409111f7ec508035751ba"
         )
         for gate in ("fmt", "lint", "audit"):
             uses = {
