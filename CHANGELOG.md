@@ -6,6 +6,10 @@ This file records notable repository-level changes for `bijux-std`.
 
 ### Unreleased
 
+Promote only the three admitted setup-node, upload-artifact, and download-artifact references for Masterclass through its accepted execution-policy authority. Admit every prior managed byte against its previous official authority before promotion, preserving the fixed runtime baseline and existing human documentation events and payloads.
+
+Admit Genomics sccache v0.0.3 with the existing Node 24 runtime contract through canonical CI and verification wrappers.
+
 Admit all fifteen preserved Proteomics public install surfaces to build, PyPI, and GHCR matrices with explicit runtime, library, and compatibility roles. Verify all sixteen owned package profiles, including development governance, and remove unsupported package documentation defaults while retaining repository documentation publication qualification.
 
 Request merge commits for reviewed safe dependency automation, preserving original ancestry under the admitted merge-only repository settings.

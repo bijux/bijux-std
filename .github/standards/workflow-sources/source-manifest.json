@@ -21,7 +21,7 @@
     ".github/scripts/workflow_execution/canonical_sources.py": "af85c54b739fe8a21ece6c454fbe2a7ebd01ea3df727bac2d3fb2bef08f64339",
     ".github/scripts/workflow_execution/dependency_prs.py": "d5777ac09e6e16aa331d5c3d8c45689bb14dff80df046ba37ffd7a7cde10bb2a",
     ".github/scripts/workflow_execution/events.py": "7dca84056f081a4279d41a2ce1e1419d9db6bf5fc8e8f79a9cdfcde15d0ec968",
-    ".github/scripts/workflow_execution/masterclass.py": "3b87de2648d1495f21b5762c613bb6e90bed51485fb47f96f677831ced97b6e2",
+    ".github/scripts/workflow_execution/masterclass.py": "51f111a2af008cd7fd644dbaea37b1922ebc8bade162aef43e31d6508334786a",
     ".github/scripts/workflow_execution/publication.py": "9684990264a192cd13762f1a46c16ab4ce18abc135fd72440ea4ead474a5f6a4",
     ".github/scripts/workflow_execution/refs.py": "a45960789d4a6a6faea92bd811ad407eb8e9d4bef391e8fde01ae423915386db",
     ".github/scripts/workflow_execution/schema.py": "b97ccb3fabc8b3e6299c0944f3f7b4e65f8e43c7a7645c3e7e54c1e0dfa7db49",
