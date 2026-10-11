@@ -10,6 +10,7 @@ import importlib.util
 from pathlib import Path
 import tempfile
 import unittest
+import subprocess
 from unittest.mock import patch
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -165,6 +166,40 @@ class PublicationRuntime(unittest.TestCase):
     def test_unknown_builder_operation_cannot_select_another_executable(self):
         with self.assertRaises(ValueError):
             builder.arguments("arbitrary", argparse.Namespace(), "a" * 40)
+
+    def admission(self):
+        return patch.object(builder.sys, "argv", ["publication_builder.py", "admit", "--site-dir",
+            "artifacts/docs/site", "--site-url", "https://bijux.io/bijux-atlas/"])
+
+    def test_admission_verifies_exact_source_artifact_before_publisher(self):
+        with self.admission(), patch.object(builder.subprocess, "check_output", return_value="a" * 40), \
+                patch.object(builder.subprocess, "run") as run, patch.dict(builder.os.environ, {}, clear=True):
+            self.assertEqual(builder.main(), 0)
+        self.assertEqual(run.call_count, 2)
+        verifier, publisher = run.call_args_list
+        self.assertEqual(verifier.args[0], ["bash", str(SHARED / "tooling/scripts/verify_bijux_docs_site.sh")])
+        self.assertEqual(publisher.args[0][1:3], [str(SHARED / "security/publication.py"), "admit"])
+        environment = verifier.kwargs["env"]
+        for key, value in {"DOCS_PYTHON": builder.sys.executable, "DOCS_SITE_DIR": "artifacts/docs/site",
+                "DOCS_BUILD_SITE_URL": "https://bijux.io/bijux-atlas/", "DOCS_SOURCE_IDENTITY": builder.SOURCE,
+                "BIJUX_DOCS_SITE_REPORT": builder.EVIDENCE + "site-verification.json"}.items():
+            self.assertEqual(environment[key], value)
+        self.assertTrue(verifier.kwargs["check"])
+
+    def test_failed_source_artifact_verification_never_reaches_publisher(self):
+        with self.admission(), patch.object(builder.subprocess, "check_output", return_value="a" * 40), \
+                patch.object(builder.subprocess, "run", side_effect=subprocess.CalledProcessError(1, "verifier")) as run, \
+                patch.dict(builder.os.environ, {}, clear=True):
+            self.assertEqual(builder.main(), 1)
+        self.assertEqual(run.call_count, 1)
+        self.assertEqual(run.call_args.args[0][0], "bash")
+
+    def test_dispatched_source_mismatch_refuses_before_artifact_verification(self):
+        with self.admission(), patch.object(builder.subprocess, "check_output", return_value="a" * 40), \
+                patch.object(builder.subprocess, "run") as run, \
+                patch.dict(builder.os.environ, {"GITHUB_SHA": "b" * 40}, clear=True):
+            self.assertEqual(builder.main(), 1)
+        run.assert_not_called()
 
 
 if __name__ == "__main__":
