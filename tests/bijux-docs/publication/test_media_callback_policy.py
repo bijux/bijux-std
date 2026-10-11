@@ -144,8 +144,20 @@ class NativeMediaCallback(unittest.TestCase):
         native = minifier.on_post_page(self.output(), page=self.page, config=self.configuration)
         (site / 'index.html').write_text(native)
         report = policy.apply(site, ROOT / 'shared/bijux-docs', self.material_templates())
-        renderer = {'packages': {'mkdocs-material': '9.7.7', 'mkdocs-glightbox': '0.5.2'},
-                    'material_templates': copy.deepcopy(report['policy_inputs']['material_templates'])}
+        from mkdocs.config import load_config
+        (site / 'docs').mkdir()
+        (site / 'docs/index.md').write_text('# Native media receipt\n')
+        (site / 'mkdocs.yml').write_text(
+            'site_name: Native media\ntheme: {name: material}\nplugins: [glightbox]\n')
+        configuration = load_config(config_file=str(site / 'mkdocs.yml'))
+        identity_spec = importlib.util.spec_from_file_location(
+            'bijux_actual_media_identity', ROOT / 'shared/bijux-docs/security/build_identity.py')
+        identity = importlib.util.module_from_spec(identity_spec)
+        identity_spec.loader.exec_module(identity)
+        renderer = identity.renderer(configuration)
+        self.assertEqual(len(renderer['packages']), 7)
+        self.assertNotIn('mkdocs-glightbox', renderer['packages'])
+        self.assertEqual(renderer['plugins']['glightbox']['distributions'], {'mkdocs-glightbox': '0.5.2'})
         return site, renderer, report
 
     def test_native_media_and_minifier_pass_independent_source_reconstruction(self):
@@ -168,7 +180,16 @@ class NativeMediaCallback(unittest.TestCase):
         del changed['policy_inputs']['media_callback']
         with self.assertRaisesRegex(authority.AuthorityError, 'media fingerprint'):
             authority.verify_ordinary(site, ROOT / 'shared/bijux-docs', renderer, changed)
-        renderer['packages']['mkdocs-glightbox'] = '0.5.3'
+        for field, value in [('distributions', {'mkdocs-glightbox': '0.5.3'}),
+                             ('distributions', {'mkdocs-glightbox': '0.5.2', 'foreign': '1.0'}),
+                             ('module', 'foreign.plugin'),
+                             ('source', {'name': 'plugin.py', 'sha256': '0' * 64})]:
+            changed_renderer = copy.deepcopy(renderer)
+            changed_renderer['plugins']['glightbox'][field] = value
+            with self.subTest(field=field), self.assertRaisesRegex(authority.AuthorityError, 'media renderer'):
+                authority.verify_ordinary(site, ROOT / 'shared/bijux-docs', changed_renderer, report)
+        renderer['plugins'].pop('glightbox')
+        renderer['packages']['mkdocs-glightbox'] = '0.5.2'
         with self.assertRaisesRegex(authority.AuthorityError, 'media renderer'):
             authority.verify_ordinary(site, ROOT / 'shared/bijux-docs', renderer, report)
 
