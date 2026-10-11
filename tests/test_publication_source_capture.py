@@ -57,11 +57,15 @@ class PublicationSourceCapture(unittest.TestCase):
   (self.root/'docs/guide.md').write_text('# Changed\n')
   with self.assertRaisesRegex(ValueError,'publication source is dirty'):
    authority.files(self.root,source=True,publication_source=True)
- def test_committed_source_symlink_is_rejected(self):
+ def test_committed_renderer_symlink_remains_rejected(self):
   guide=self.root/'docs/guide.md';guide.unlink();guide.symlink_to('../mkdocs.yml')
   self.git('add','docs/guide.md');self.commit()
-  with self.assertRaisesRegex(ValueError,'symlink tracked source'):
-   authority.files(self.root,source=True,publication_source=True)
+  self.assertEqual(authority.files(self.root,source=True,publication_source=True)['docs/guide.md'],b'../mkdocs.yml')
+  spec=importlib.util.spec_from_file_location('bijux_link_renderer_inputs',ROOT/'shared/bijux-docs/security/build_identity.py')
+  identity=importlib.util.module_from_spec(spec);spec.loader.exec_module(identity)
+  config=SimpleNamespace(docs_dir=self.root/'docs',theme={},hooks={})
+  with self.assertRaisesRegex(ValueError,'symlink'):
+   identity.source_inputs(config,self.root,publication_scope=True)
  def test_ignored_actual_renderer_input_is_still_rejected(self):
   (self.root/'docs/private.ignored.md').write_text('# Not accepted source\n')
   authority.files(self.root,source=True,publication_source=True)
