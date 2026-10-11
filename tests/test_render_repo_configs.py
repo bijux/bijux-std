@@ -4,6 +4,7 @@ import copy
 import importlib.util
 import json
 import os
+import subprocess
 import sys
 import tempfile
 import unittest
@@ -75,6 +76,63 @@ class RenderRepoConfigsTests(unittest.TestCase):
         publishers = repository["workflow_execution_policy"]["publication_entrypoints"]
         self.assertEqual(set(publishers), {"deploy-docs", "release-github", "release-ghcr", "release-pypi"})
         self.assertTrue(all(entry["mode"] == "manual-only" for entry in publishers.values()))
+
+    def test_pollenomics_rendered_release_hook_requires_checked_tag_version(self):
+        manifest = json.loads(MANIFEST_PATH.read_text())
+        prepared = MODULE.prepare_repo_files("bijux-pollenomics", manifest)
+        release_env = prepared[".github/release.env"].decode()
+        key = "BIJUX_RELEASE_ARTIFACT_VERIFICATION_COMMAND"
+        repository = MODULE.find_repo_config(manifest, "bijux-pollenomics")
+        command = next(entry["value"] for entry in repository["release_env"] if entry["key"] == key)
+        self.assertIn("publication_guard", command)
+        self.assertIn('--dist-dir "${DIST_DIR}"', command)
+        self.assertIn('test "${resolved_version}" = "${RELEASE_TAG#v}"', command)
+        self.assertNotIn("--allow-prerelease", command)
+        self.assertNotIn("|| true", command)
+        scenarios = [
+            ("matching", "v0.2.0", "0.2.0", 0, 0),
+            ("mismatch", "v0.3.0", "0.2.0", 0, 1),
+            ("empty-tag", "", "0.2.0", 0, 1),
+            ("validator-failure", "v0.2.0", "0.2.0", 37, 37),
+            ("missing-interpreter", "v0.2.0", "0.2.0", 0, 1),
+        ]
+        for name, tag, version, checker_status, expected in scenarios:
+            with self.subTest(scenario=name), tempfile.TemporaryDirectory() as directory:
+                fixture = Path(directory)
+                artifacts = fixture / "artifacts"
+                interpreter = artifacts / "venv/bin/python"
+                interpreter.parent.mkdir(parents=True)
+                marker = artifacts / "checker-arguments.json"
+                if name != "missing-interpreter":
+                    interpreter.write_text(
+                        f"#!{sys.executable}\n"
+                        "import json, os, sys\n"
+                        "from pathlib import Path\n"
+                        "Path(os.environ['ARGUMENTS']).write_text(json.dumps(sys.argv[1:]))\n"
+                        f"print({version!r}, flush=True)\n"
+                        f"sys.exit({checker_status})\n"
+                    )
+                    interpreter.chmod(0o755)
+                environment_file = fixture / "release.env"
+                environment_file.write_text(release_env)
+                env = {
+                    **os.environ, "RELEASE_TAG": tag, "ARTIFACTS_DIR": str(artifacts),
+                    "GITHUB_WORKSPACE": str(fixture), "PACKAGE_DIR": "packages/pollenomics",
+                    "PACKAGE_SLUG": "pollenomics", "DIST_DIR": str(artifacts / "dist"),
+                    "ARGUMENTS": str(marker),
+                }
+                result = subprocess.run(
+                    ["bash", "-eu", "-c", 'source "$1"; eval "$BIJUX_RELEASE_ARTIFACT_VERIFICATION_COMMAND"', "release-hook", str(environment_file)],
+                    cwd=fixture, env=env, capture_output=True, text=True,
+                )
+                self.assertEqual(result.returncode, expected, result.stdout + result.stderr)
+                self.assertEqual(marker.exists(), name not in {"empty-tag", "missing-interpreter"})
+                if marker.exists():
+                    self.assertEqual(json.loads(marker.read_text()), [
+                        "-m", "bijux_pollenomics_dev.release.publication_guard", "--pyproject",
+                        "packages/pollenomics/pyproject.toml", "--package-name", "pollenomics",
+                        "--dist-dir", str(artifacts / "dist"),
+                    ])
 
     def test_required_product_aggregates_run_on_dependency_prs_and_fail_closed(self):
         import subprocess
