@@ -52,3 +52,28 @@ test("Firefox cannot hide an exposed wrong validator or admit a non-document con
     assert.throws(() => admitReadingResponse({ ...conditional(), navigation, requestHeaders: {} }, expected, prior, "firefox"));
   assert.throws(() => admitReadingResponse({ ...conditional(), requestHeaders: {} }, expected, { ...prior, modified: "invalid" }, "firefox"));
 });
+
+
+test("Chromium revalidated body retains exact ownership when both representation headers are hidden", () => {
+  const prior = admitReadingResponse(representation(), expected);
+  const cached = { ...representation(), navigation: true, headers: {}, requestHeaders: { "if-modified-since": modified } };
+  assert.deepEqual(admitReadingResponse(cached, expected, prior, "chromium"),
+    { ...prior, transportStatus: 200, validatorEvidence: "chromium-revalidated-body" });
+});
+test("Chromium cached body cannot bypass prior, validator, document, engine, bytes or partial headers", () => {
+  const prior = admitReadingResponse(representation(), expected);
+  const cached = { ...representation(), navigation: true, headers: {}, requestHeaders: { "if-modified-since": modified } };
+  for (const earlier of [undefined, { ...prior, url: url + "other" }, { ...prior, bodyHash: hash("other") }, { ...prior, modified: "invalid" }])
+    assert.throws(() => admitReadingResponse(cached, expected, earlier, "chromium"));
+  for (const changed of [
+    { ...cached, requestHeaders: {} },
+    { ...cached, requestHeaders: { "if-modified-since": "wrong" } },
+    { ...cached, navigation: false },
+    { ...cached, body: Buffer.from("other page") },
+    { ...cached, headers: { "content-type": "text/html" } },
+    { ...cached, headers: { "last-modified": modified } },
+    { ...cached, headers: { "content-type": "text/plain", "last-modified": modified } },
+  ]) assert.throws(() => admitReadingResponse(changed, expected, prior, "chromium"));
+  for (const engine of ["firefox", "webkit", undefined])
+    assert.throws(() => admitReadingResponse(cached, expected, prior, engine));
+});

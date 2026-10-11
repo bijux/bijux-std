@@ -6,9 +6,22 @@ const hash = bytes => createHash("sha256").update(bytes).digest("hex");
 function admitReadingResponse(response, expectedHash, prior, browserName) {
   assert.match(expectedHash, /^[a-f0-9]{64}$/);
   if (response.status === 200) {
-    assert.equal(response.headers["content-type"]?.split(";")[0], "text/html");
     assert.equal(hash(response.body), expectedHash, "The actual response is the owned fixture representation");
     const modified = response.headers["last-modified"];
+    if (response.headers["content-type"] === undefined && modified === undefined) {
+      // Chromium exposes a revalidated cached body as 200 with the wire 304
+      // headers. Exact returned bytes and the exposed native validator bind it
+      // to the already observed representation, never to a headerless first load.
+      assert.equal(browserName, "chromium");
+      assert.ok(prior);
+      assert.equal(prior.url, response.url);
+      assert.equal(prior.bodyHash, expectedHash);
+      assert.ok(Number.isFinite(Date.parse(prior.modified)));
+      assert.equal(response.navigation, true);
+      assert.equal(response.requestHeaders["if-modified-since"], prior.modified);
+      return { ...prior, transportStatus: 200, validatorEvidence: "chromium-revalidated-body" };
+    }
+    assert.equal(response.headers["content-type"]?.split(";")[0], "text/html");
     assert.equal(typeof modified, "string");
     assert.ok(Number.isFinite(Date.parse(modified)), "A real cache validator accompanies the representation");
     return { url: response.url, bodyHash: expectedHash, modified, transportStatus: 200 };
