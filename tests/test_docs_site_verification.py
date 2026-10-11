@@ -18,6 +18,10 @@ PROJECTOR=SHARED/'tooling/scripts/project_bijux_docs.py'
 spec=importlib.util.spec_from_file_location('bijux_site_projection',PROJECTOR)
 projector=importlib.util.module_from_spec(spec)
 spec.loader.exec_module(projector)
+builder_spec=importlib.util.spec_from_file_location('bijux_site_publication_builder',
+    SHARED/'tooling/security/publication_builder.py')
+builder=importlib.util.module_from_spec(builder_spec)
+builder_spec.loader.exec_module(builder)
 
 
 class DocsSiteVerificationTests(unittest.TestCase):
@@ -119,6 +123,18 @@ class DocsSiteVerificationTests(unittest.TestCase):
         self.assertNotEqual(result.returncode,0)
         self.assertIn('Preserve authored changes to previously generated destination: docs/overrides/partials/nav.html',result.stderr)
         self.assertEqual(json.loads(self.report.read_text())['failure_stage'],'source_projection')
+
+    def test_builder_source_refusal_preserves_artifact_and_never_creates_manifest(self):
+        command=[sys.executable,str(self.shared/'tooling/security/publication_builder.py'),'admit',
+            '--site-dir','artifacts/docs/site','--site-url',self.url]
+        (self.repo/'docs/overrides/partials/nav.html').write_text('Unaccepted projected source')
+        environment={**self.env,'GITHUB_SHA':self.git(self.repo,'rev-parse','HEAD').stdout.strip()}
+        result=subprocess.run(command,cwd=self.repo,env=environment,capture_output=True,text=True)
+        self.assertNotEqual(result.returncode,0)
+        self.assertIn('Preserve authored changes to previously generated destination',result.stderr)
+        self.assertEqual(json.loads(self.report.read_text())['failure_stage'],'source_projection')
+        self.assertFalse((self.repo/'artifacts/website-security/publication.json').exists())
+        self.assertTrue((self.site/'index.html').is_file())
 
     def test_clean_locally_fetched_source_is_not_reported_as_github_acceptance(self):
         result=self.verify(**self.authority())

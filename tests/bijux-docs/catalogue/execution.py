@@ -17,7 +17,7 @@ import unittest
 
 ROOT = Path(__file__).resolve().parents[3]
 HERE = Path(__file__).resolve().parent
-COUNTS = {'test_recipe_sources': 29, 'test_source_checkpoint': 8,
+COUNTS = {'test_recipe_sources': 32, 'test_source_checkpoint': 8,
           'test_native_sources': 12, 'test_renderer_authority': 7, 'test_entrypoints': 2}
 GROUPS = {'source': ('test_recipe_sources', 'test_source_checkpoint'),
           'renderer': ('test_native_sources', 'test_renderer_authority'),

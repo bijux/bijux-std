@@ -6,6 +6,8 @@ This file records notable repository-level changes for `bijux-std`.
 
 ### Unreleased
 
+Qualify native documentation publication adapters: admit Core's confined five-contract hook, run independent source/artifact verification before shared admission, reconstruct the exact installed Glightbox callback authority and preserve Masterclass's reviewed program-document generator identity.
+
 Keep complete drawer navigation inside admitted safe insets, qualify short and changing viewport heights, and verify shell lifecycle equivalence plus persistent automatic and explicit theme choices across real browser journeys.
 
 Admit all fifteen preserved Proteomics public install surfaces to build, PyPI, and GHCR matrices with explicit runtime, library, and compatibility roles. Verify all sixteen owned package profiles, including development governance, and remove unsupported package documentation defaults while retaining repository documentation publication qualification.
