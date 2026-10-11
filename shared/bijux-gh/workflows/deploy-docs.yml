@@ -62,7 +62,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          accepted_ref="$(cat .github/standards/bijux-std.sha)"
+          accepted_ref="$(cat .github/standards/bijux-docs.sha)"
           if [[ "${#accepted_ref}" != 40 || "$accepted_ref" == *[!0-9a-f]* ]]; then
             echo "Documentation standards require a full lowercase commit SHA" >&2
             exit 1
