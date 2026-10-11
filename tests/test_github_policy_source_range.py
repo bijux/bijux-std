@@ -10,6 +10,8 @@ import sys
 import tempfile
 import unittest
 
+from github_workflows.policy_fixtures import MODULE
+
 ROOT = Path(__file__).resolve().parents[1]
 WORKFLOWS = ('.github/workflows/github-policy.yml', 'shared/bijux-gh/workflows/github-policy.yml')
 
@@ -68,10 +70,12 @@ class PullRequestSourceRangeTests(unittest.TestCase):
 
     @staticmethod
     def gather_script(workflow):
-        text = (ROOT / workflow).read_text()
-        step = text.split('      - name: Gather changed files\n', 1)[1].split('      - name:', 1)[0]
-        body = step.split('        run: |\n', 1)[1]
-        script = '\n'.join(line[10:] for line in body.splitlines()) + '\n'
+        document = MODULE.parse_workflow((ROOT / workflow).read_bytes(), workflow)
+        steps = document['jobs']['policy']['steps']
+        selected = [step for step in steps if step.get('name') == 'Gather changed files']
+        if len(selected) != 1 or not isinstance(selected[0].get('run'), str):
+            raise ValueError('Actual workflow requires one source range command')
+        script = selected[0]['run']
         return re.sub(r'\$\{\{\s*([^}]+)\}\}', lambda match: 'pull_request' if match.group(1).strip() == 'github.event_name' else '', script)
 
     def gather(self, workflow, base=None, head=None):

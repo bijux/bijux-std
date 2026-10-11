@@ -17,8 +17,8 @@ permissions:
 
 jobs:
   history-renderer:
-    name: std / history renderer observation
-    if: ${{ github.repository == 'bijux/bijux-std' }}
+    name: ${{ (github.event.pull_request.user.login == 'dependabot[bot]' || (github.event.pull_request.user.login == 'github-actions[bot]' && github.event.pull_request.head.ref == 'automation/dependency-lock-refresh')) && 'unverified dependency / ' || '' }}std / history renderer observation
+    if: ${{ ((github.event_name != 'pull_request' && github.event_name != 'pull_request_target' && github.event_name != 'pull_request_review') || (github.event.pull_request.user.login != 'dependabot[bot]' && (github.event.pull_request.user.login != 'github-actions[bot]' || github.event.pull_request.head.ref != 'automation/dependency-lock-refresh'))) && (github.repository == 'bijux/bijux-std') }}
     runs-on: ubuntu-24.04
     timeout-minutes: 3
     steps:

@@ -66,13 +66,16 @@ class SyncGithubStandardsTests(unittest.TestCase):
             for path in (destination / ".github/workflows").glob("*.yml"):
                 actual = MODULE.WORKFLOW_EXECUTION.parse_workflow(path.read_bytes(), path.name)
                 events = actual["on"]
+                if path.name == "dependency-notice.yml":
+                    self.assertEqual(set(actual["jobs"]), {"notice"})
+                    continue
                 if set(events if isinstance(events, (dict, list)) else [events]) & {"pull_request", "pull_request_target", "pull_request_review"}:
                     for identity, job in actual["jobs"].items():
                         self.assertIn("dependabot[bot]", job["if"])
                         self.assertIn("pull_request_review", job["if"])
                         self.assertIn("pull_request_target", job["if"])
                         qualified.append((path.name, identity))
-            self.assertIn(("automerge-pr.yml", "enable"), qualified)
+            self.assertNotIn(("automerge-pr.yml", "enable"), qualified)
             self.assertIn(("github-policy.yml", "policy"), qualified)
             self.assertIn(("pr-approval-policy.yml", "pr-approval"), qualified)
             self.assertIn(("labeler.yml", "label"), qualified)

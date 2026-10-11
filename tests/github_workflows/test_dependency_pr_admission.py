@@ -8,11 +8,11 @@ from .policy_fixtures import MODULE
 POLICY = {"schema": 1, "dependency_pull_requests": "skip-managed-jobs"}
 
 
-def observed_condition(condition, event, author, actor="human", successful=True):
+def observed_condition(condition, event, author, actor="human", successful=True, branch="feature"):
     # This bounded expression fixture observes only strings/booleans used by these controls.
     expression = condition.removeprefix("${{").removesuffix("}}").strip()
     for variable, value in {"github.event_name": event, "github.event.pull_request.user.login": author,
-                            "github.actor": actor, "needs.build.result": "success" if successful else "failure"}.items():
+                            "github.actor": actor, "github.event.pull_request.head.ref": branch, "needs.build.result": "success" if successful else "failure"}.items():
         expression = expression.replace(variable, repr(value))
     expression = expression.replace("always()", "True").replace("success()", repr(successful))
     expression = expression.replace("&&", " and ").replace("||", " or ")
