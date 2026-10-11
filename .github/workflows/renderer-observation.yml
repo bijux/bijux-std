@@ -110,6 +110,16 @@ jobs:
           python shared/bijux-docs/tooling/security/install_publication_renderer.py \
             --recipe "$PUBLICATION_RECIPE" --python "$(command -v python)" \
             2>&1 | tee artifacts/docs/publication/qualification.log
+      - name: Verify finite native media and source-owned callback boundaries
+        if: ${{ matrix.recipe == 'history-media' }}
+        shell: bash
+        env:
+          PYTHONDONTWRITEBYTECODE: '1'
+        run: |
+          set -euo pipefail
+          artifacts/docs/publication/python/bin/python -m unittest discover \
+            -s tests/bijux-docs/publication -p 'test_*.py' -v \
+            2>&1 | tee artifacts/docs/publication/capability-controls.log
       - name: Retain actual qualification and failed diagnostics
         if: always()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
@@ -117,6 +127,7 @@ jobs:
           name: publication-renderer-${{ matrix.recipe }}-${{ github.sha }}-${{ github.run_attempt }}
           path: |
             artifacts/docs/publication/qualification.log
+            artifacts/docs/publication/capability-controls.log
             artifacts/docs/publication/python-admission.json
             artifacts/docs/publication/python-wheels/receipt.json
           if-no-files-found: error
