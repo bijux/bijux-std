@@ -6,7 +6,7 @@ This file records notable repository-level changes for `bijux-std`.
 
 ### Unreleased
 
-Qualify the preserved Pollenomics atlas and native sequence presentations through finite original source, script, bootstrap and resource identities. Retain the default report budgets, forward explicit report ownership through independent publication admission, bind root redirects to the declared site base, and preserve the reviewed standalone Masterclass catalogue generators.
+Qualify the preserved Pollenomics atlas and native sequence presentations through finite original source, script, bootstrap and resource identities. Retain the default report budgets, forward explicit report ownership through independent publication admission, bind root redirects to the declared site base, and preserve the reviewed standalone Masterclass catalogue generators. Reconstruct media authority from the real configured plugin distribution and physical source fingerprint, preserving the seven baseline renderer package fields.
 
 Qualify native documentation publication adapters: admit Core's confined five-contract hook, run independent source/artifact verification before shared admission, reconstruct the exact installed Glightbox callback authority and preserve Masterclass's reviewed program-document generator identity.
 
