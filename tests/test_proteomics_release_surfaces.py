@@ -62,7 +62,9 @@ class ProteomicsReleaseSurfacesTests(unittest.TestCase):
             if "check_targets" not in inputs:
                 continue
             defaults = json.loads(inputs["check_targets"]["default"])
-            self.assertEqual(defaults, ["quality", "security", "api", "build", "sbom"])
+            expected = (["lint", "security"] if repository["name"] == "bijux-pollenomics"
+                        else ["quality", "security", "api", "build", "sbom"])
+            self.assertEqual(defaults, expected)
             for job in wrappers.get("verify", {}).get("jobs", {}).values():
                 fallback = job.get("with", {}).get("check_targets", "")
                 if fallback:

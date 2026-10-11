@@ -68,6 +68,13 @@ Publication requires a separate authenticated manual dispatch. See the
 [publication contracts](shared/bijux-gh/README.md#manual-publication-controlled-by-iac)
 for the controller permissions and admission requirements.
 
+Pollenomics automatic source admission runs formatting checks, strict lint and
+security auditing for its runtime, compatibility, development and LRA packages.
+Its `verification-ready` aggregate certifies those retained source checks;
+it does not certify scientific results, product tests or publication readiness.
+Scientific verification remains owned by the product repository and available
+through explicit manual workflows.
+
 ## System Model
 
 ```mermaid
