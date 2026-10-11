@@ -1,6 +1,9 @@
 "use strict";
 const { expect } = require("@playwright/test");
 const { settle } = require("../contrast-targets/measurement");
+const fs = require("node:fs"), path = require("node:path");
+const { admitReadingResponse, hash } = require("./destination-response.cjs");
+const representations = new WeakMap();
 
 async function reachableDrawer(page, info, insets = { top: 0, right: 0, bottom: 0, left: 0 }, navigate = true) {
   const nav = page.locator("#bijux-navigation");
@@ -72,12 +75,23 @@ async function reachableDrawer(page, info, insets = { top: 0, right: 0, bottom: 
   for (let action = 0; action < expected.length * 2 && !await endpoint.evaluate(node => node === document.activeElement); action++)
     await page.keyboard.press(key);
   await expect(endpoint).toBeFocused();
-  const response = page.waitForResponse(response => response.url() === new URL("/reading/", info.project.use.baseURL).href);
+  const destination = new URL("/reading/", info.project.use.baseURL).href;
+  const response = page.waitForResponse(response => response.url() === destination);
   await page.keyboard.press("Enter");
-  expect((await response).status()).toBe(200);
-  await expect(page).toHaveURL(/\/reading\/$/);
+  const actual = await response;
+  const generated = path.resolve(process.env.BIJUX_GENERATED_ROOT || "artifacts/bijux-docs/generated");
+  const expectedHash = hash(fs.readFileSync(path.join(generated, "site/reading/index.html")));
+  const requestHeaders = await actual.request().allHeaders();
+  const headers = await actual.allHeaders();
+  const admitted = admitReadingResponse({ url: actual.url(), status: actual.status(), headers, requestHeaders,
+    navigation: actual.request().isNavigationRequest() && actual.request().resourceType() === "document",
+    body: actual.status() === 200 ? await actual.body() : undefined }, expectedHash, representations.get(page), info.project.use.browserName);
+  await expect(page).toHaveURL(destination);
   await expect(page.locator("main h1")).toHaveText(/^Rich reading reference(?:¶)?$/);
   await expect(page.locator("#__drawer")).not.toBeChecked();
   await expect(page).toHaveTitle("Reading reference - Bijux");
+  representations.set(page, admitted);
+  await info.attach("drawer-destination-response", { body: Buffer.from(JSON.stringify({ ...admitted,
+    requestValidator: requestHeaders["if-modified-since"] || null }, null, 2)), contentType: "application/json" });
 }
 module.exports = { reachableDrawer };
