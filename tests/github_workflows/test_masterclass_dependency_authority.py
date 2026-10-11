@@ -66,6 +66,40 @@ class MasterclassDependencyAuthorityTests(unittest.TestCase):
             if path.is_file():
                 self.assertEqual(self.expected['.bijux/' + path.relative_to(ROOT).as_posix()], path.read_bytes())
 
+    def test_complete_github_tree_retains_baseline_and_finite_publication_overlays(self):
+        baseline = MODULE.masterclass.baseline_github_tree(self.baseline)
+        promoted = {'.bijux/shared/bijux-gh/workflows/deploy-docs.yml',
+                    '.bijux/shared/bijux-gh/scripts/publication_admission.py'}
+        for relative, body in baseline.items():
+            if relative not in promoted:
+                self.assertEqual(self.expected[relative], body, relative)
+        self.assertIn('.bijux/shared/bijux-gh/README.md', self.expected)
+        self.assertIn('.bijux/shared/bijux-gh/scripts/render-dependabot.sh', self.expected)
+
+    def test_unexpected_github_paths_are_rejected_without_replacing_them(self):
+        self.write_projection()
+        directory = self.target / '.bijux/shared/bijux-gh'
+        extra = directory / 'scripts/unreviewed.py'
+        extra.write_text('retained source outside either authority')
+        with patch.object(MODULE.masterclass, 'accepted_baseline', return_value=self.baseline):
+            with self.assertRaisesRegex(ValueError, 'complete Masterclass GitHub projection'):
+                MODULE.masterclass.verify_masterclass(ROOT, self.target)
+        self.assertEqual(extra.read_text(), 'retained source outside either authority')
+        extra.unlink()
+
+    def test_uncovered_baseline_byte_changes_and_link_aliases_fail_closed(self):
+        self.write_projection()
+        path = self.target / '.bijux/shared/bijux-gh/scripts/render-dependabot.sh'
+        original = path.read_bytes()
+        path.write_bytes(original + b'\n# changed baseline source\n')
+        with self.assertRaisesRegex(ValueError, 'complete Masterclass GitHub projection'):
+            MODULE.masterclass.verify_github_tree(self.target, self.expected)
+        path.write_bytes(original)
+        destination = path.with_suffix('.retained'); path.rename(destination); path.symlink_to(destination)
+        with self.assertRaisesRegex(ValueError, 'path aliases'):
+            MODULE.masterclass.verify_github_tree(self.target, self.expected)
+        path.unlink(); destination.rename(path)
+
     def test_composition_has_two_exact_authorities_and_no_runtime_source_advancement(self):
         authority = json.loads(self.expected[MODULE.masterclass.AUTHORITY_PATH])
         self.assertEqual(authority, {'schema': 1, 'repository': 'bijux-masterclass',
@@ -211,7 +245,8 @@ class MasterclassDependencyAuthorityTests(unittest.TestCase):
                 with patch.object(MODULE.masterclass, 'accepted_baseline', return_value=self.baseline):
                     return MODULE.masterclass.verify_masterclass(ROOT, target)
             previous_renderer = SimpleNamespace(WORKFLOW_EXECUTION=SimpleNamespace(
-                masterclass=SimpleNamespace(verify_masterclass=previous_verification)))
+                masterclass=SimpleNamespace(verify_masterclass=previous_verification,
+                    expected_masterclass=MODULE.masterclass.expected_masterclass)))
             def owning(root):
                 return (None, previous_renderer) if root == ROOT else original_owning(root)
             def git(root, *args):
@@ -252,6 +287,15 @@ class MasterclassDependencyAuthorityTests(unittest.TestCase):
                         owned.masterclass.promote_masterclass(source, self.target, new_sha)
                     self.assertEqual((self.target / owned.masterclass.AUTHORITY_PATH).read_bytes(), authority_before)
                     previous.side_effect = None
+                    extra = self.target / '.bijux/shared/bijux-gh/scripts/uncovered.py'
+                    extra.write_text('preserved source beyond the previous partial projection')
+                    with patch.object(previous_renderer.WORKFLOW_EXECUTION.masterclass,
+                                      'verify_masterclass', return_value={}):
+                        with self.assertRaisesRegex(ValueError, 'complete Masterclass GitHub projection'):
+                            owned.masterclass.promote_masterclass(source, self.target, new_sha)
+                    self.assertEqual(extra.read_text(), 'preserved source beyond the previous partial projection')
+                    self.assertEqual((self.target / owned.masterclass.AUTHORITY_PATH).read_bytes(), authority_before)
+                    extra.unlink()
                     previous.reset_mock()
                     result = owned.masterclass.promote_masterclass(source, self.target, new_sha)
                     previous.assert_called_once_with(source, self.target, self.sha)

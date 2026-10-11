@@ -126,11 +126,55 @@ def accepted_baseline(source_root: Path, target: Path) -> Path:
     return cache
 
 
+GITHUB_SOURCE = 'shared/bijux-gh'
+GITHUB_DESTINATION = '.bijux/shared/bijux-gh/'
+
+
+def baseline_github_tree(baseline: Path) -> dict[str, bytes]:
+    """Own the complete retained GitHub tree, including non-workflow inputs."""
+    directory = baseline / GITHUB_SOURCE
+    if directory.is_symlink() or not directory.is_dir():
+        raise ValueError('Masterclass GitHub baseline requires its regular source directory')
+    prepared = {}
+    for path in sorted(directory.rglob('*')):
+        if path.is_symlink():
+            raise ValueError('Masterclass GitHub baseline cannot contain path aliases')
+        if path.is_dir():
+            continue
+        if not path.is_file():
+            raise ValueError('Masterclass GitHub baseline requires regular files')
+        relative = path.relative_to(baseline).as_posix()
+        prepared['.bijux/' + relative] = read_owned(baseline, relative)
+    return prepared
+
+
+def verify_github_tree(target: Path, expected: dict[str, bytes]) -> None:
+    """Reject uncovered GitHub paths before a projection can replace any bytes."""
+    wanted = {path: body for path, body in expected.items() if path.startswith(GITHUB_DESTINATION)}
+    directory = target / GITHUB_DESTINATION
+    if directory.is_symlink() or not directory.is_dir():
+        raise ValueError('Masterclass GitHub projection requires its regular source directory')
+    actual = {}
+    for path in sorted(directory.rglob('*')):
+        if path.is_symlink():
+            raise ValueError('Masterclass GitHub projection cannot contain path aliases')
+        if path.is_dir():
+            continue
+        if not path.is_file():
+            raise ValueError('Masterclass GitHub projection requires regular files')
+        relative = path.relative_to(target).as_posix()
+        actual[relative] = read_owned(target, relative)
+    if actual != wanted:
+        differences = sorted(path for path in set(actual) | set(wanted) if actual.get(path) != wanted.get(path))
+        raise ValueError('noncanonical complete Masterclass GitHub projection: ' + ', '.join(differences))
+
+
 def expected_masterclass(source_root: Path, baseline: Path, target: Path, policy_sha: str) -> tuple[dict, set]:
     """Advance only governance and docs; complementary programs keep their baseline."""
     _, baseline_renderer = owning_scripts(baseline)
     original, absent = baseline_renderer.WORKFLOW_EXECUTION.verification.expected_projection(baseline, target, REPOSITORY)
     prepared = copy.deepcopy(original)
+    prepared.update(baseline_github_tree(baseline))
     _, renderer = owning_scripts(source_root)
     manifest = json.loads(read_owned(baseline, '.github/standards/repo-config.manifest.json'))
     current_manifest = json.loads(read_owned(source_root, '.github/standards/repo-config.manifest.json'))
@@ -208,6 +252,7 @@ def verify_masterclass(source_root: Path, target: Path) -> dict:
     authority = read_authority(target)
     baseline = accepted_baseline(source_root, target)
     expected, absent = expected_masterclass(source_root, baseline, target, authority['execution_policy_sha'])
+    verify_github_tree(target, expected)
     failures, verified = [], {}
     checksum_rows = [line.split() for line in read_owned(target, '.github/bijux-std-shared.sha256').decode().splitlines()]
     for relative in [AUTHORITY_PATH, '.github/scripts/workflow_execution/masterclass.py', '.github/workflows/dependency-notice.yml']:
@@ -277,6 +322,16 @@ def promote_masterclass(source_root: Path, target: Path, policy_sha: str) -> dic
             verify_masterclass(source_root, target)
             return {'repository': REPOSITORY, 'changed_paths': [], 'authorities': authority}
         previous = admit_previous_projection(source_root, target)
+    github_preimage = baseline_github_tree(baseline)
+    if previous is None:
+        previous_expected = baseline_expected
+    else:
+        _, previous_renderer = owning_scripts(previous)
+        previous_expected, _ = previous_renderer.WORKFLOW_EXECUTION.masterclass.expected_masterclass(
+            previous, baseline, target, authority['execution_policy_sha'])
+    github_preimage.update({path: body for path, body in previous_expected.items()
+                           if path.startswith(GITHUB_DESTINATION) and body is not None})
+    verify_github_tree(target, github_preimage)
     for relative, body in (() if previous is not None else baseline_expected.items()):
         if body is not None and read_owned(target, relative) != body:
             raise ValueError('Masterclass baseline drift before bounded promotion: ' + relative)
