@@ -30,8 +30,8 @@ class CatalogueExecution(unittest.TestCase):
 
     def test_groups_cover_all_maintained_cases_exactly_once(self):
         complete = [case for group in gate.GROUPS for case in gate.expected(group)]
-        self.assertEqual(len(complete), 58)
-        self.assertEqual(len(set(complete)), 58)
+        self.assertEqual(len(complete), 61)
+        self.assertEqual(len(set(complete)), 61)
 
     def test_missing_executed_case_is_rejected(self):
         self.receipt['executed_ids'].pop()

@@ -128,7 +128,8 @@ class DocsSiteVerificationTests(unittest.TestCase):
         command=[sys.executable,str(self.shared/'tooling/security/publication_builder.py'),'admit',
             '--site-dir','artifacts/docs/site','--site-url',self.url]
         (self.repo/'docs/overrides/partials/nav.html').write_text('Unaccepted projected source')
-        result=subprocess.run(command,cwd=self.repo,env=self.env,capture_output=True,text=True)
+        environment={**self.env,'GITHUB_SHA':self.git(self.repo,'rev-parse','HEAD').stdout.strip()}
+        result=subprocess.run(command,cwd=self.repo,env=environment,capture_output=True,text=True)
         self.assertNotEqual(result.returncode,0)
         self.assertIn('Preserve authored changes to previously generated destination',result.stderr)
         self.assertEqual(json.loads(self.report.read_text())['failure_stage'],'source_projection')
