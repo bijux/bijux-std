@@ -568,7 +568,7 @@ class RenderRepoConfigsTests(unittest.TestCase):
 
         sccache_action = (
             "mozilla/sccache-action@"
-            "7d986dd989559c6ecdb630a3fd2557667be217ad"
+            "fc920bf0ec8de6ee65d409111f7ec508035751ba"
         )
         for gate in ("fmt", "lint", "audit"):
             uses = {
@@ -577,6 +577,38 @@ class RenderRepoConfigsTests(unittest.TestCase):
                 if step.get("uses")
             }
             self.assertIn(sccache_action, uses)
+
+    def test_genomics_audit_tools_require_verified_pinned_binaries(self) -> None:
+        manifest = json.loads(MANIFEST_PATH.read_text(encoding="utf-8"))
+        repo = MODULE.find_repo_config(manifest, "bijux-genomics")
+        wrapper = MODULE.prepare_workflow_wrappers(repo, repo["workflow_execution_policy"])["ci"]
+        steps = wrapper["jobs"]["audit"]["steps"]
+        install = next(step for step in steps if step["name"] == "Install Rust audit tools")
+        self.assertEqual(install["uses"], "taiki-e/install-action@ab6895351a88b908e96a4697860d4ffea5e57dbe")
+        self.assertEqual(install["with"], {
+            "tool": "cargo-deny@${{ env.CARGO_DENY_VERSION }},cargo-audit@${{ env.CARGO_AUDIT_VERSION }}",
+            "checksum": "true", "fallback": "none",
+        })
+        verify = next(step for step in steps if step["name"] == "Verify Rust audit tool versions")
+        self.assertLess(steps.index(install), steps.index(verify))
+        audit = next(step for step in steps if step.get("run") == "make audit")
+        self.assertLess(steps.index(verify), steps.index(audit))
+        self.assertNotIn("continue-on-error", install)
+        for deny, audit_version, exit_status, expected in [
+            ("0.18.3", "0.22.0", 0, 0), ("0.18.4", "0.22.0", 0, 1),
+            ("0.18.3", "0.22.1", 0, 1), ("0.18.3", "missing", 0, 127),
+            ("0.18.3", "0.22.0", 3, 3),
+        ]:
+            with self.subTest(deny=deny, audit=audit_version), tempfile.TemporaryDirectory(dir=MANIFEST_PATH.parents[2] / "artifacts") as directory:
+                root = Path(directory)
+                (root / "cargo-deny").write_text(f"#!/bin/sh\nprintf 'cargo-deny {deny}\\n'\n")
+                (root / "cargo-deny").chmod(0o755)
+                if audit_version != "missing":
+                    (root / "cargo-audit").write_text(f"#!/bin/sh\nprintf 'cargo-audit {audit_version}\\n'\nexit {exit_status}\n")
+                    (root / "cargo-audit").chmod(0o755)
+                env = dict(os.environ, PATH=directory, CARGO_DENY_VERSION="0.18.3", CARGO_AUDIT_VERSION="0.22.0")
+                result = subprocess.run(["/bin/bash", "-c", verify["run"]], env=env, text=True, capture_output=True)
+                self.assertEqual(result.returncode, expected, result.stderr)
 
     def test_repository_checkout_variable_normalizes_repository_name(self) -> None:
         self.assertEqual(
