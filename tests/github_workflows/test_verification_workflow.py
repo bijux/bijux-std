@@ -26,14 +26,14 @@ class CanonicalVerificationWorkflowTests(unittest.TestCase):
         self.assertIn('${PR_BASE_SHA}...${PR_HEAD_SHA}', gather['run'])
         self.assertIn('complete checkout history', gather['run'])
 
-    def test_parser_provision_is_pinned_conditional_and_actual_runtime_checked(self):
+    def test_parser_provision_is_pinned_unconditional_and_actual_runtime_checked(self):
         steps = self.workflow()['jobs']['policy']['steps']
         setup = next(s for s in steps if s.get('name')=='Provision selected workflow parser')
         self.assertEqual(setup['uses'], 'ruby/setup-ruby@e81a8fa391b11a595c1b7ed84177cc0fe02faf83')
         self.assertEqual(setup['with']['ruby-version'], '3.3.12')
-        self.assertEqual(setup['if'], "steps.workflow_source.outputs.requires_parser == 'true'")
+        self.assertNotIn('if', setup)
         check = next(s for s in steps if s.get('name')=='Admit selected workflow parser runtime')
-        self.assertEqual(check['if'], setup['if'])
+        self.assertNotIn('if', check)
         self.assertIn('RUBY_VERSION == "3.3.12"', check['run'])
         self.assertIn('YAML.respond_to?(:parse_stream)', check['run'])
         verify = next(s for s in steps if s.get('name')=='Verify canonical managed workflow projection')

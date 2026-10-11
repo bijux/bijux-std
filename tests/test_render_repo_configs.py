@@ -367,7 +367,45 @@ class RenderRepoConfigsTests(unittest.TestCase):
                         self.assertEqual(len(runtime.split(".")), 3, "API tooling requires an immutable Node version")
                         self.assertGreaterEqual(tuple(int(part) for part in runtime.split(".")), minimum)
                         admitted_repositories.add(repository["name"])
-        self.assertEqual(admitted_repositories, {"bijux-pollenomics", "bijux-proteomics", "bijux-phylogenetics"})
+        self.assertEqual(admitted_repositories, {"bijux-canon", "bijux-pollenomics", "bijux-proteomics", "bijux-phylogenetics"})
+
+    def test_canon_rendered_package_calls_execute_the_admitted_current_toolchain(self) -> None:
+        manifest = json.loads(MANIFEST_PATH.read_text())
+        rendered = MODULE.prepare_repo_files("bijux-canon", manifest)
+        policy = MODULE.WORKFLOW_EXECUTION
+        verify = policy.parse_workflow(rendered[".github/workflows/verify.yml"], "canon verify")
+        ci = policy.parse_workflow(rendered[".github/workflows/ci.yml"], "canon ci")
+        self.assertEqual(set(ci["jobs"]), {"tests", "checks", "lint"})
+        self.assertTrue(all("uses" not in job for job in ci["jobs"].values()),
+                        "historical remote workflows bypass current toolchain admission")
+        package = verify["jobs"]["package"]
+        self.assertEqual(package["uses"], "./.github/workflows/ci.yml")
+        self.assertEqual(len(package["strategy"]["matrix"]["include"]), 6)
+        python_tests = verify["jobs"]["supported_python"]
+        self.assertEqual(len(python_tests["strategy"]["matrix"]["package_slug"]), 12)
+        checks = ci["jobs"]["checks"]["steps"]
+        node = next(step for step in checks if step.get("uses", "").startswith("actions/setup-node@"))
+        java = next(step for step in checks if step.get("uses", "").startswith("actions/setup-java@"))
+        self.assertEqual(node["with"]["node-version"], "24.21.0")
+        self.assertEqual(java["uses"], "actions/setup-java@de7274f081f381c8f8158605e0321c36c376e2e6")
+        self.assertEqual(node["if"], "${{ contains(fromJson(inputs.api_toolchain_targets), matrix.target) }}")
+        install = next(step for step in checks if step.get("name") == "Install package toolchain")
+        run = next(step for step in checks if step.get("name") == "Run ${{ matrix.target }}")
+        self.assertLess(checks.index(node), checks.index(install))
+        self.assertLess(checks.index(java), checks.index(install))
+        self.assertLess(checks.index(install), checks.index(run))
+        self.assertIn('${{ inputs.package_dir }}', run["run"])
+        self.assertIn('${{ matrix.target }}', run["run"])
+        for row in package["strategy"]["matrix"]["include"]:
+            with self.subTest(package=row["package_slug"]):
+                defaults = ci["on"]["workflow_call"]["inputs"]
+                targets = json.loads(row.get("check_targets", defaults["check_targets"]["default"]))
+                self.assertNotIn("docs", targets, "leaf documentation has no executable recipe")
+                if "api" in targets:
+                    api_targets = json.loads(row.get("api_toolchain_targets", defaults["api_toolchain_targets"]["default"]))
+                    self.assertIn("api", api_targets)
+                    if "openapi-drift" in targets:
+                        self.assertIn("openapi-drift", api_targets)
 
     def test_rust_repositories_expose_foundational_ci_gates(self) -> None:
         manifest = json.loads(MANIFEST_PATH.read_text(encoding="utf-8"))
