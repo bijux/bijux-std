@@ -166,6 +166,105 @@ class MasterclassDependencyAuthorityTests(unittest.TestCase):
                     MODULE.masterclass.verify_masterclass(ROOT, self.target)
                 path.write_bytes(original)
 
+    def retained_docs_projection(self):
+        docs_source = self.fixture / 'accepted-documentation'
+        directory = docs_source / 'shared/bijux-docs'
+        directory.mkdir(parents=True, exist_ok=True)
+        (directory / 'reader.js').write_text('exact independently accepted renderer')
+        expected, _ = MODULE.masterclass.expected_masterclass(
+            ROOT, self.baseline, self.target, self.sha,
+            documentation_root=docs_source, documentation_sha='c' * 40)
+        self.write_projection()
+        import shutil
+        shutil.rmtree(self.target / '.bijux/shared/bijux-docs')
+        for relative, body in expected.items():
+            if body is not None:
+                path = self.target / relative
+                path.parent.mkdir(parents=True, exist_ok=True)
+                path.write_bytes(body)
+        (self.target / '.github/bijux-std-shared.sha256').write_text(''.join(
+            hashlib.sha256(body).hexdigest() + '  ' + relative + '\n'
+            for relative, body in sorted(expected.items()) if body is not None))
+        subprocess.run(['git', '-C', str(self.target), 'init', '--quiet'], check=True)
+        subprocess.run(['git', '-C', str(self.target), 'add', MODULE.masterclass.DOCS_PIN_PATH], check=True)
+        return docs_source, expected
+
+    def test_retained_docs_keep_independent_pin_bytes_and_execution_authority(self):
+        docs_source, expected = self.retained_docs_projection()
+        with patch.object(MODULE.masterclass, 'accepted_baseline', return_value=self.baseline), \
+                patch.object(MODULE.masterclass, 'accepted_policy', return_value=docs_source) as accepted:
+            proof = MODULE.masterclass.verify_masterclass(ROOT, self.target)
+        self.assertEqual(proof['execution_authorities']['execution_policy_sha'], self.sha)
+        self.assertEqual(expected[MODULE.masterclass.DOCS_PIN_PATH], ('c' * 40 + '\n').encode())
+        self.assertEqual(accepted.call_count, 2)
+        accepted.assert_called_with(ROOT, self.target, 'c' * 40)
+        self.assertEqual(expected['.bijux/shared/bijux-docs/reader.js'], b'exact independently accepted renderer')
+
+    def test_retained_docs_unaccepted_source_and_untracked_pin_refuse(self):
+        self.retained_docs_projection()
+        with patch.object(MODULE.masterclass, 'accepted_policy', side_effect=ValueError('unaccepted docs')):
+            with self.assertRaisesRegex(ValueError, 'unaccepted docs'):
+                MODULE.masterclass.documentation_authority(ROOT, self.target, self.sha)
+        subprocess.run(['git', '-C', str(self.target), 'rm', '--cached', MODULE.masterclass.DOCS_PIN_PATH], check=True, capture_output=True)
+        with self.assertRaises(subprocess.CalledProcessError):
+            MODULE.masterclass.documentation_authority(ROOT, self.target, self.sha)
+        subprocess.run(['git', '-C', str(self.target), 'add', MODULE.masterclass.DOCS_PIN_PATH], check=True)
+
+    def test_retained_docs_rebound_bytes_extra_paths_and_symlinks_refuse(self):
+        docs_source, expected = self.retained_docs_projection()
+        directory = self.target / '.bijux/shared/bijux-docs'
+        owned = directory / 'reader.js'
+        original = owned.read_bytes()
+        for mutation in ['changed', 'extra', 'link', 'fifo']:
+            with self.subTest(mutation=mutation):
+                extra = directory / 'unadmitted.js'
+                if mutation == 'changed': owned.write_bytes(original + b' changed')
+                elif mutation == 'extra': extra.write_bytes(original)
+                elif mutation == 'link': owned.unlink(); owned.symlink_to(docs_source / 'shared/bijux-docs/reader.js')
+                else:
+                    import os
+                    os.mkfifo(extra)
+                with self.assertRaises(ValueError):
+                    MODULE.masterclass.verify_documentation_tree(self.target, expected)
+                if mutation in {'extra', 'fifo'}: extra.unlink()
+                elif mutation == 'link': owned.unlink(); owned.write_bytes(original)
+                else: owned.write_bytes(original)
+
+    def test_retained_docs_physical_source_mutation_at_exit_refuses(self):
+        docs_source, _ = self.retained_docs_projection()
+        path = docs_source / 'shared/bijux-docs/reader.js'
+        calls = []
+        def accepted(*args):
+            calls.append(args)
+            if len(calls) == 2: path.write_text('changed accepted source during verification')
+            return docs_source
+        with patch.object(MODULE.masterclass, 'accepted_baseline', return_value=self.baseline), \
+                patch.object(MODULE.masterclass, 'accepted_policy', side_effect=accepted):
+            with self.assertRaisesRegex(ValueError, 'source authority changed'):
+                MODULE.masterclass.verify_masterclass(ROOT, self.target)
+        self.assertEqual(len(calls), 2)
+
+    def test_retained_docs_pin_mutation_during_projection_refuses(self):
+        docs_source, _ = self.retained_docs_projection()
+        original = MODULE.masterclass.verify_github_tree
+        def mutate_pin(target, expected):
+            original(target, expected)
+            (target / MODULE.masterclass.DOCS_PIN_PATH).write_text('d' * 40 + '\n')
+        with patch.object(MODULE.masterclass, 'accepted_baseline', return_value=self.baseline), \
+                patch.object(MODULE.masterclass, 'accepted_policy', return_value=docs_source), \
+                patch.object(MODULE.masterclass, 'verify_github_tree', side_effect=mutate_pin):
+            with self.assertRaisesRegex(ValueError, 'documentation authority changed'):
+                MODULE.masterclass.verify_masterclass(ROOT, self.target)
+
+    def test_retained_docs_require_complete_finite_authority_pair(self):
+        for kwargs in [{'documentation_root': ROOT}, {'documentation_sha': 'c' * 40},
+                       {'documentation_root': ROOT, 'documentation_sha': 'main'}]:
+            with self.subTest(kwargs=kwargs), self.assertRaises(ValueError):
+                MODULE.masterclass.expected_masterclass(ROOT, self.baseline, self.target, self.sha, **kwargs)
+        for value in [1, 'true', None]:
+            with self.subTest(value=value), self.assertRaisesRegex(ValueError, 'explicit boolean'):
+                MODULE.masterclass.promote_masterclass(ROOT, self.target, self.sha, keep_documentation=value)
+
     def test_finite_action_promotion_preserves_every_other_field(self):
         document = {'on': {'push': {'branches': ['main']}}, 'jobs': {'docs': {
             'steps': [{'uses': 'actions/setup-node@' + 'b' * 40, 'with': {'node-version': '20'}},
@@ -258,6 +357,8 @@ class MasterclassDependencyAuthorityTests(unittest.TestCase):
                     return 'https://github.com/bijux/bijux-std.git'
                 if args == ('status', '--porcelain', '--untracked-files=all'):
                     return ''
+                if args == ('ls-files', '--error-unmatch', owned.masterclass.DOCS_PIN_PATH):
+                    return owned.masterclass.DOCS_PIN_PATH
                 raise AssertionError(args)
             import shutil
             original_run = subprocess.run
@@ -304,5 +405,17 @@ class MasterclassDependencyAuthorityTests(unittest.TestCase):
                     second = owned.masterclass.promote_masterclass(source, self.target, new_sha)
                     self.assertEqual(second['changed_paths'], [])
                     self.assertEqual(previous.call_count, 1)
+                    self.write_projection()
+                    previous.reset_mock()
+                    reader = source / 'shared/bijux-docs/README.md'
+                    reader.write_bytes(reader.read_bytes() + b'\nchanged next-source documentation\n')
+                    original_reader = (ROOT / 'shared/bijux-docs/README.md').read_bytes()
+                    kept = owned.masterclass.promote_masterclass(source, self.target, new_sha, keep_documentation=True)
+                    self.assertEqual(kept['authorities']['execution_policy_sha'], new_sha)
+                    self.assertEqual((self.target / owned.masterclass.DOCS_PIN_PATH).read_text().strip(), self.sha)
+                    self.assertEqual((self.target / '.bijux/shared/bijux-docs/README.md').read_bytes(), original_reader)
+                    self.assertEqual((self.target / '.github/standards/bijux-std.sha').read_text().strip(), owned.masterclass.BASELINE_SHA)
+                    self.assertGreaterEqual(previous.call_count, 3)
+                    self.assertEqual(owned.masterclass.promote_masterclass(source, self.target, new_sha, keep_documentation=True)['changed_paths'], [])
             finally:
                 shutil.rmtree(artifact)

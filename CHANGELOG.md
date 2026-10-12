@@ -6,6 +6,12 @@ This file records notable repository-level changes for `bijux-std`.
 
 ### Unreleased
 
+Allow the complete manual documentation build, admission and independent verification to run within a 60-minute build job. Keep the 10-minute Pages deployment budget and strict frontend job limits unchanged. See [#292](https://github.com/bijux/bijux-std/pull/292).
+
+Allow explicit governance-only standards adoption to retain independently accepted documentation bytes and their exact source pin. Masterclass keeps its complementary program runtime baseline while refreshing the manual publisher. Verify the paired component sources before and after the complete retained documentation checks. See [#292](https://github.com/bijux/bijux-std/pull/292).
+
+Batch bounded directory-digest invocations while preserving the existing sorted file identities, Perl hash output and failure behavior. Avoid per-file process startup during complete component verification. See [#292](https://github.com/bijux/bijux-std/pull/292).
+
 Admit the exact Pollenomics HTTPS checkout origin with or without `.git` for its retained native presentations. Preserve finite source, resource and document allowances and reject other repository identities or URL decorations.
 
 Keep Material repository-link new-tab indications within the desktop header using the existing compact visible icon and accessible warning text. Preserve authored target, relationship and ARIA changes through shell lifecycle restoration. See [#290](https://github.com/bijux/bijux-std/pull/290).
