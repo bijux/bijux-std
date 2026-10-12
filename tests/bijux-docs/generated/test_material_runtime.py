@@ -72,6 +72,33 @@ class MaterialRuntimeTests(unittest.TestCase):
         self.assertIn(focused.encode(), output)
         self.assertIn(record['output_sha256'], asset)
 
+    def test_native_clipboard_results_are_bound_to_scoped_truthful_feedback(self):
+        asset, output, record, _ = runtime.compile_runtime(self.templates, self.version)
+        upstream = (self.templates / record['upstream_bundle']).read_text()
+        for boundary, replacement in runtime.CLIPBOARD_BOUNDARIES.values():
+            self.assertEqual(upstream.count(boundary), 1)
+            self.assertNotIn(boundary.encode(), output)
+            self.assertIn(replacement.encode(), output)
+        self.assertIn(b'm(()=>Me("clipboard.copied"))', output)
+        self.assertEqual(record['clipboard_sha256'], hashlib.sha256((OWNED / 'clipboard-feedback.js').read_bytes()).hexdigest())
+        runtime.validate_generated_javascript(output)
+
+    def test_native_clipboard_missing_or_duplicate_boundary_refuses_output(self):
+        templates = self.copied_templates()
+        owned = self.root / 'clipboard-owned'
+        shutil.copytree(OWNED, owned)
+        admitted = json.loads((owned / 'admission.json').read_text())
+        bundle = templates / admitted['bundle']
+        original = bundle.read_text()
+        for name, (boundary, _) in runtime.CLIPBOARD_BOUNDARIES.items():
+            for changed in (original.replace(boundary, ''), original + boundary):
+                with self.subTest(boundary=name, occurrences=changed.count(boundary)):
+                    bundle.write_text(changed)
+                    (owned / 'admission.json').write_text(json.dumps(dict(admitted, bundle_sha256=hashlib.sha256(bundle.read_bytes()).hexdigest())))
+                    with mock.patch.object(runtime, 'OWNED', owned), self.assertRaisesRegex(ValueError, 'clipboard .* boundary must occur exactly once'):
+                        runtime.generate(self.root / 'output', templates, self.version)
+                    self.assertFalse((self.root / 'output').exists())
+
     def test_native_viewport_history_has_one_owned_lifecycle_boundary(self):
         admitted = json.loads((OWNED / 'admission.json').read_text())
         upstream = (self.templates / admitted['bundle']).read_text()

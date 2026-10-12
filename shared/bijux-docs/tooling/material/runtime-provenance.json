@@ -22,6 +22,26 @@
     "replacement": "function Ei(e,t){let r=window.bijuxSearchWorker.channel(e,T);",
     "occurrences": 1
   },
+  "clipboard_owned_source": "tooling/material/clipboard-feedback.js",
+  "clipboard_sha256": "11c2c99b45350c7c190d9d27b5be2f42ced8f59b2775c38a3b489acf478ba213",
+  "clipboard_boundaries": {
+    "temporary_selection": {
+      "original": "return u(\"copy\"),D.remove(),N",
+      "replacement": "var B=u(\"copy\");return D.remove(),B?N:\"\"",
+      "occurrences": 1
+    },
+    "element_selection": {
+      "original": "(D=f()(C),u(\"copy\")),D",
+      "replacement": "(D=f()(C),u(\"copy\")||(D=\"\")),D",
+      "occurrences": 1
+    },
+    "native_subscription": {
+      "original": ".on(\"success\",r=>t.next(r))",
+      "replacement": ".on(\"success\",r=>{__bijuxClipboardClear(r.trigger);t.next(r)}).on(\"error\",r=>e.next(__bijuxClipboardFailure(r)))",
+      "occurrences": 1
+    }
+  },
+  "clipboard_behavior": "False or thrown native copy commands emit native error, preserve trigger focus and select readable source for manual copy with an accessible status. A successful retry removes failure feedback and retains native success rendering. Helpers remain scoped to the admitted IIFE.",
   "palette_preference_boundary": {
     "original": "let a=matchMedia(\"(prefers-color-scheme: light)\")",
     "replacement": "let a=typeof matchMedia===\"function\"?matchMedia(\"(prefers-color-scheme: light)\"):{matches:true}",
@@ -71,8 +91,8 @@
     "occurrences": 1,
     "helper_scope": "unique admitted native runtime IIFE"
   },
-  "output_asset": "assets/javascripts/material-search.a4006b80a9756b597ac592bd22433823f6d942fd28b166dac0896dfff0c12385.js",
-  "output_sha256": "a4006b80a9756b597ac592bd22433823f6d942fd28b166dac0896dfff0c12385",
+  "output_asset": "assets/javascripts/material-search.276df314ce6f8caef505d97be62d859022c7f5314a2411702d19775b093a2f83.js",
+  "output_sha256": "276df314ce6f8caef505d97be62d859022c7f5314a2411702d19775b093a2f83",
   "syntax_validation": {
     "parser": "Node.js vm.Script",
     "required_version": "v24.21.0",

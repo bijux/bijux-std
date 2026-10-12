@@ -227,3 +227,15 @@ Characters remain literal text in a focused query or authored editable field.
 Named Search controls retain ordinary Tab/Space activation, and native query
 and result keyboard subscriptions, Escape and browser modifier defaults are
 unchanged. Missing or duplicate upstream shortcut boundaries fail before output.
+
+## Native clipboard feedback
+
+The admitted ClipboardJS copy paths now require the copy command's actual boolean
+success before emitting success. False returns and caught command exceptions use
+its native error event. The scoped `clipboard-feedback.js` controller retains the
+copy button's focus, selects its original readable code when available and adds
+an accessible status explaining the browser's manual Copy alternative. A later
+successful ordinary activation removes the failure status and uses Material's
+unchanged native success toast. No clipboard API replacement or global error
+interception is installed. The compiler admits each copy path and the native
+subscription exactly once; missing or duplicate boundaries refuse emission.

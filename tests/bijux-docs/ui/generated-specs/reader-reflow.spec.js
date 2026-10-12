@@ -217,6 +217,38 @@ async function ordinaryKeyboard(page, kind) {
   return { tabs, initial, last, endContent };
 }
 
+async function nativeClipboardRecovery(page) {
+  const button = page.locator('button[data-md-type="copy"]').first();
+  await expect(button).toBeVisible();
+  const target = await button.getAttribute("data-clipboard-target");
+  const original = await page.locator(target).textContent();
+  const states = [];
+  for (const model of ["false", "throw", "actual", "false", "actual"]) {
+    await page.evaluate(model => { window.bijuxClipboardModel = model; }, model);
+    const callsBefore = await page.evaluate(() => window.bijuxClipboardCalls.length);
+    await button.focus();
+    await page.keyboard.press("Space");
+    await expect.poll(() => page.evaluate(() => window.bijuxClipboardCalls.length)).toBe(callsBefore + 1);
+    await expect.poll(() => page.evaluate(() => window.bijuxClipboardCalls.at(-1)?.model)).toBe(model);
+    await expect(button).toBeFocused();
+    const status = page.getByRole("status").filter({ hasText: "Copy failed." });
+    if (model === "actual") {
+      expect(await page.evaluate(() => window.bijuxClipboardCalls.at(-1).returned), "The actual browser command confirms successful retry").toBe(true);
+      await expect(status).toHaveCount(0);
+      await expect(page.locator(".md-dialog")).toContainText("Copied to clipboard");
+    } else {
+      await expect(status).toBeVisible();
+      await expect(status).toHaveText("Copy failed. Code selected; use your browser's Copy command.");
+      await expect(status).toHaveAttribute("aria-live", "polite");
+      expect(await page.evaluate(() => window.getSelection().getRangeAt(0).cloneContents().textContent)).toBe(original);
+      await expect(page.locator(".md-dialog")).not.toContainText("Copied to clipboard");
+    }
+    expect(await page.locator(target).textContent()).toBe(original);
+    states.push(await page.evaluate(() => ({ call: window.bijuxClipboardCalls.at(-1), focused: document.activeElement?.getAttribute("data-md-type"), status: document.querySelector(".md-code__copy-status")?.textContent || null, nativeToast: document.querySelector(".md-dialog")?.textContent })));
+  }
+  return states;
+}
+
 for (const profile of [
   "phone",
   "text-spacing",
@@ -236,6 +268,23 @@ for (const profile of [
       const context = await browser.newContext({
         viewport: { width: profile === "desktop" ? 1920 : 320, height: 900 },
         javaScriptEnabled: profile !== "no-js",
+      });
+      const qualifiesClipboard = kind === "code" && ["phone", "desktop"].includes(profile);
+      if (qualifiesClipboard) await context.addInitScript(() => {
+        const actual = Document.prototype.execCommand;
+        window.bijuxClipboardCalls = [];
+        window.bijuxClipboardModel = "false";
+        Document.prototype.execCommand = function (command, ...args) {
+          if (command !== "copy") return actual.call(this, command, ...args);
+          const model = window.bijuxClipboardModel;
+          if (model === "throw") {
+            window.bijuxClipboardCalls.push({ model, thrown: "NotAllowedError" });
+            throw new DOMException("Declared clipboard exception model", "NotAllowedError");
+          }
+          const returned = model === "false" ? false : actual.call(this, command, ...args);
+          window.bijuxClipboardCalls.push({ model, returned });
+          return returned;
+        };
       });
       const page = await context.newPage(),
         errors = [],
@@ -279,6 +328,7 @@ for (const profile of [
           );
         const before = await sourceOracle(page, kind);
         evidence.source_before = before;
+        if (qualifiesClipboard) evidence.native_clipboard_recovery = await nativeClipboardRecovery(page);
         if (profile === "text-spacing") {
           const size = await page.evaluate(() =>
             parseFloat(getComputedStyle(document.documentElement).fontSize),
