@@ -154,6 +154,62 @@ class StandaloneReaderTests(unittest.TestCase):
         self.assertEqual(set(routes["standalone_readers"]), {"report/map.html"})
         self.assertTrue(result["verification_only"])
 
+    def nested_index_reader(self):
+        c = self.case
+        output = "report/pollen-reconstruction/swedish-native-sequences/index.html"
+        original = (c.site / "report/map.html").read_bytes()
+        (c.site / "report/map.html").unlink()
+        c.write_output(output, original)
+        c.owner["reports"][0]["output"] = output
+        c.owner["parents"][0]["reports"] = [output]
+        c.parent_html = c.parent_html.replace("../report/map.html", "../" + output)
+        c.write_output("reader/index.html", c.parent_html)
+        c.write_source("docs/reader.md", "# Reader\n\n<iframe src=\"../" + output + "\" title=\"Owned records\"></iframe>")
+        c.owner["parents"][0]["built_html_sha256"] = fixtures.digest(c.parent_html.encode())
+        c.owner["parents"][0]["source"] = c.input_record("docs/reader.md")
+        self.purpose["readers"][0]["output"] = output
+        c.write_source("docs/report/readers.json", json.dumps(self.purpose))
+        c.git("add", "docs/reader.md", "docs/report/readers.json")
+        c.git("-c", "commit.gpgsign=false", "commit", "--quiet", "-m",
+              "fixture: own nested index reader route")
+        c.source_sha = c.git("rev-parse", "HEAD").strip()
+        c.owner["reader_purpose"] = c.input_record("docs/report/readers.json")
+        c.save_owner()
+        return output, original
+
+    def test_nested_index_report_canonical_sitemap_and_reconstruction_agree(self):
+        c = self.case
+        output, original = self.nested_index_reader()
+        report, build = c.complete()
+        c.verify(report, build)
+        public_url = fixtures.BASE + output[:-10]
+        final = (c.site / output).read_text()
+        self.assertIn('rel="canonical" href="' + public_url + '"', final)
+        sitemap = (c.site / "sitemap.xml").read_text()
+        self.assertIn("<loc>" + public_url + "</loc>", sitemap)
+        self.assertNotIn(public_url + "index.html", sitemap)
+        self.assertEqual(gzip.decompress((c.site / "sitemap.xml.gz").read_bytes()),
+                         (c.site / "sitemap.xml").read_bytes())
+        routes = qualify(c.site, fixtures.BASE, [], embedded_evidence=self.evidence(report, build))
+        self.assertEqual(routes["errors"], [])
+        import importlib
+        reader = importlib.import_module(c.integration.__package__ + ".reader")
+        restored = reader.restore(final, output, self.purpose["readers"][0])
+        self.assertEqual(restored.split("<body>", 1)[1], original.decode().split("<body>", 1)[1])
+        self.assertEqual((c.site / "report/records.js").read_bytes(), c.resource)
+        parent = next(r for r in report["embedded"]["records"] if r["kind"] == "owned-parent-frame")
+        self.assertEqual(parent["capability"]["frame_uris"], [fixtures.BASE + output])
+
+    def test_nested_index_report_cannot_rehash_a_file_canonical_into_authority(self):
+        c = self.case
+        output, _ = self.nested_index_reader()
+        report, build = c.complete()
+        record = next(r for r in report["embedded"]["records"] if r["kind"] == "owned-report")
+        record["canonical"] = fixtures.BASE + output
+        build["bundle_sha256"] = c.identity()
+        with self.assertRaisesRegex(ValueError, "independently reviewed source"):
+            c.verify(report, build)
+
     def test_native_documentation_filenames_preserve_exact_reader_destinations(self):
         c = self.case
         import importlib

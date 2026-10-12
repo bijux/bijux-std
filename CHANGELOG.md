@@ -6,6 +6,8 @@ This file records notable repository-level changes for `bijux-std`.
 
 ### Unreleased
 
+Identify source-owned terminal index reports by their public directory canonicals and sitemap entries. Independently reconstruct those identities while preserving authored frame request paths, report bodies and scientific resources.
+
 Bind native documentation build dates to the selected commit's timestamp in source, build and independent producer admission. Preserve complete sitemap comparison across midnight and reject conflicting ambient or forged clock authority.
 
 Permit existing Bijux workflow badge images through the namespace-confined documentation image policy. Preserve executable, frame and API restrictions and independently reject broadened image policies.
