@@ -349,7 +349,7 @@ test("product extension link changes preserve new intent and disposable annotati
   });
   await expect(repository.locator("[data-bijux-link-indication]")).toHaveCount(0);
   await expect(repository).toHaveAttribute("rel", "author nofollow");
-  await expect(repository).toHaveAccessibleName("Authored repository context");
+  await expect(repository).toHaveAttribute("aria-label", "Authored repository context");
   await repository.evaluate((link) => { link.target = "_blank"; });
   await expect(repository).toHaveAttribute("rel", "author nofollow noopener");
   await compactRepositoryWarning(page);
