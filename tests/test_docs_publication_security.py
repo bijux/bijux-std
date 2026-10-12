@@ -346,7 +346,7 @@ class QualifiedPublicationTests(unittest.TestCase):
         policy = "; ".join(["default-src 'self'", "base-uri 'self'", "object-src 'none'", "form-action 'self'",
                             "script-src 'self'", "script-src-attr 'none'", "style-src 'self' 'unsafe-inline'",
                             "font-src 'self'", "connect-src 'self'", "worker-src 'self' blob:",
-                            "img-src 'self' data: https://img.shields.io https://raw.githubusercontent.com",
+                            "img-src 'self' data: https://img.shields.io https://raw.githubusercontent.com https://github.com/bijux/",
                             "media-src 'self'", "frame-src 'none'", "manifest-src 'self'"])
         (self.site / "index.html").write_text(self.html.replace("<head>", '<head><meta charset="utf-8"><meta http-equiv="Content-Security-Policy" content="' + policy + '">'))
         _, bundle = publication.public_bundle_identity(self.site)
@@ -567,6 +567,8 @@ class QualifiedPublicationTests(unittest.TestCase):
         original = (self.site / "index.html").read_text()
         for content in (original.replace("script-src 'self'", "script-src 'self' 'unsafe-eval'"),
                         original.replace("default-src 'self'", "default-src *"),
+                        original.replace("https://github.com/bijux/", "https://github.com"),
+                        original.replace("https://github.com/bijux/", "https://github.com/another-owner/"),
                         original.replace("<head>", '<head><script src="assets/main.js"></script>'),
                         original.replace("<head>", '<head><base href="https://remote.example/">'),
                         original.replace("<head>", '<head><link rel="prefetch" href="https://remote.example/">')):

@@ -374,7 +374,7 @@ def applied_csp(policy: str, admitted_hashes: set[str], capability: dict | None 
                 "form-action": ["'self'"], "script-src-attr": ["'none'"],
                 "style-src": ["'self'", "'unsafe-inline'"], "font-src": ["'self'"],
                 "connect-src": ["'self'"], "worker-src": ["'self'", "blob:"],
-                "img-src": ["'self'", "data:", "https://img.shields.io", "https://raw.githubusercontent.com"],
+                "img-src": ["'self'", "data:", "https://img.shields.io", "https://raw.githubusercontent.com", "https://github.com/bijux/"],
                 "media-src": ["'self'"], "frame-src": ["'none'"], "manifest-src": ["'self'"]}
     if capability is not None:
         expected["frame-src"] = capability["frame_uris"] or ["'none'"]
