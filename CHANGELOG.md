@@ -6,6 +6,8 @@ This file records notable repository-level changes for `bijux-std`.
 
 ### Unreleased
 
+Admit a finite Pollenomics report projection that removes declared internal path metadata from generated public JSON, preserves immutable scientific receipts and numeric tokens, and independently binds native output bytes to reviewed source, import bindings and fresh input hashes.
+
 Parse native publication references once after each HTML page has matched the independent source build byte for byte. Preserve complete native configuration, executable, worker and index checks, fresh renderer admission, and source and output mutation refusals.
 
 Allow the complete manual documentation build, admission and independent verification to run within a 60-minute build job. Keep the 10-minute Pages deployment budget and strict frontend job limits unchanged. See [#292](https://github.com/bijux/bijux-std/pull/292).

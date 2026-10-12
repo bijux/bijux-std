@@ -1,10 +1,50 @@
 from pathlib import Path
 import importlib.util,tempfile,unittest
 import subprocess
+import hashlib,json
 from types import SimpleNamespace
 from unittest.mock import patch
 ROOT=Path(__file__).resolve().parents[1]
 spec=importlib.util.spec_from_file_location('bijux_source_capture',ROOT/'shared/bijux-docs/security/producer_authority.py');authority=importlib.util.module_from_spec(spec);spec.loader.exec_module(authority)
+
+class PublicReportProjection(unittest.TestCase):
+ """Synthetic lexical controls complement separate real native qualification."""
+ def setUp(self):
+  self.projector=authority.module(ROOT/'shared/bijux-docs/security/report_provenance.py')
+  self.raw=b'{"path":"/Users/owner/private/report.py","number":1.2300000000000000000001e-35,"large":9007199254740993,"array":[false,null,"ordinary"]}\n'
+  self.row={'source_sha256':hashlib.sha256(self.raw).hexdigest(),'fields':[{'pointer':'/path','value_sha256':hashlib.sha256(b'/Users/owner/private/report.py').hexdigest(),'kind':'retained-source-path-display','display':'retained-source/report.py'}],'public_sha256':''}
+  expected=self.raw.decode().replace('"/Users/owner/private/report.py"','"retained-source/report.py"')
+  note={'schema':1,'source_receipt_sha256':self.row['source_sha256'],'display_fields':self.row['fields'],'display_semantics':self.projector.SEMANTICS}
+  self.expected=(expected[:-2]+',\n  "_public_provenance": '+json.dumps(note,ensure_ascii=False,sort_keys=True,allow_nan=False)+'\n}\n').encode()
+  self.row['public_sha256']=hashlib.sha256(self.expected).hexdigest()
+ def test_exact_output_preserves_numeric_lexemes_and_other_values(self):
+  self.assertEqual(self.projector.project(self.raw,self.row),self.expected)
+  self.assertIn(b'1.2300000000000000000001e-35',self.expected)
+  self.assertIn(b'9007199254740993',self.expected)
+  self.assertIn(b'[false,null,"ordinary"]',self.expected)
+ def test_changed_raw_receipt_refuses_before_projection(self):
+  with self.assertRaisesRegex(ValueError,'physical raw receipt'):
+   self.projector.project(self.raw.replace(b'false',b'true'),self.row)
+ def test_changed_public_digest_cannot_authorize_output(self):
+  self.row['public_sha256']='0'*64
+  with self.assertRaisesRegex(ValueError,'independent public bytes'):
+   self.projector.project(self.raw,self.row)
+ def test_duplicate_pointer_refuses(self):
+  self.row['fields'].append(dict(self.row['fields'][0]))
+  with self.assertRaisesRegex(ValueError,'unique declared string'):
+   self.projector.project(self.raw,self.row)
+ def test_unmapped_internal_string_refuses(self):
+  self.raw=self.raw.replace(b'ordinary',b'/home/owner/private')
+  self.row['source_sha256']=hashlib.sha256(self.raw).hexdigest()
+  with self.assertRaisesRegex(ValueError,'unmapped internal path'):
+   self.projector.project(self.raw,self.row)
+ def test_nonfinite_and_duplicate_json_keys_refuse(self):
+  for value in ('{"x":NaN}','{"x":1,"x":2}'):
+   with self.subTest(value=value),self.assertRaises(ValueError):self.projector.spans(value)
+ def test_pointer_escaping_does_not_change_string_identity(self):
+  fields=self.projector.spans('{"a/b":{"~name":["one",1]}}')
+  self.assertEqual(set(fields),{'/a~1b/~0name/0'})
+  self.assertEqual(fields['/a~1b/~0name/0'][0],'one')
 
 class SourceCapture(unittest.TestCase):
  def setUp(self):
