@@ -33,6 +33,8 @@ def load(name: str):
     if name == 'workflow_collection':
         dependencies = b''.join(path.with_name(value + '.py').read_bytes()
                                 for value in ('workflow_lineage', 'workflow_artifacts', 'workflow_jobs', 'browser_partitions'))
+        dependencies += b''.join((path.parent / value).read_bytes() for value in
+                                 ('browser_partitions.json', 'browser_ownership/batches.py', 'browser_ownership/registry.json'))
     key = 'bijux_controller_' + hashlib.sha256(str(path.resolve()).encode() + data + dependencies).hexdigest()
     if key not in sys.modules:
         module = ModuleType(key)
@@ -128,9 +130,16 @@ def record_execution(folder: Path, role: str, producer: dict) -> dict | None:
     require(isinstance(role, str) and re.fullmatch(r'[a-z][a-z0-9-]*', role) is not None,
             'Canonical controller role is required')
     roles = load('workflow_collection').registry()
-    require(role in roles and (role.startswith('browser-') or role.startswith('fault-') and role != 'fault-public'
-                              or role == 'persisted'), 'Unknown native controller role')
-    spec = roles[role]
+    if role.startswith('browser-'):
+        group, engine = role.removeprefix('browser-').rsplit('-', 1)
+        owners = [spec for key, spec in roles.items() if key.startswith('browser-')
+                  and group in spec['groups'] and engine == spec['engine']]
+        require(len(owners) == 1, 'Unknown native controller role')
+        spec = {**owners[0], 'subtree': group + '-' + engine}
+    else:
+        require(role in roles and (role.startswith('fault-') and role != 'fault-public'
+                                  or role == 'persisted'), 'Unknown native controller role')
+        spec = roles[role]
     owner = ARTIFACTS / spec['destination']
     if spec['subtree'] is not None:
         owner /= spec['subtree']
@@ -165,9 +174,14 @@ def record_execution(folder: Path, role: str, producer: dict) -> dict | None:
 def verify_execution(collection, role: str, folder: Path) -> dict:
     require_collection(collection)
     data = (folder / 'execution.json').read_bytes()
-    collection.inputs[role].verify_file(collection.execution_name(role), data)
+    group = None
+    admitted_role = role
+    if role.startswith('browser-'):
+        group, engine = role.removeprefix('browser-').rsplit('-', 1)
+        admitted_role = collection.browser_role(group, engine)
+    collection.inputs[admitted_role].verify_file(collection.execution_name(admitted_role, group), data)
     record = json.loads(data)
-    collection.verify_execution(role, record)
+    collection.verify_execution(admitted_role, record, group)
     hashes = file_hashes(folder)
     hashes.pop('execution.json', None)
     require(record['files_sha256'] == hashes, 'Materialized execution body differs from admitted input')

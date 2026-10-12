@@ -216,6 +216,7 @@ def registry_digests(registry_path: Path) -> dict[str, str]:
     for name in ('publication_gate.py', 'costs/__init__.py', 'costs/observations.py',
                  'input_planning/__init__.py', 'input_planning/ownership.py', 'input_planning/source.py',
                  'input_planning/qualification.py', 'input_planning/cli.py',
+                 'browser_ownership/__init__.py', 'browser_ownership/batches.py', 'browser_ownership/registry.json',
                  'runtime_transport/__init__.py', 'runtime_transport/identity.py', 'runtime_transport/archive.py'):
         digests[name] = hashlib.sha256((registry_path.parent / name).read_bytes()).hexdigest()
     for name in ('playwright.persisted-reader-history.config.js', 'ui/generated-specs/persisted-reader-history.spec.js'):
@@ -264,7 +265,7 @@ def main() -> int:
             raw = args.output.parent / 'source-observation.json'
             raw.write_text(json.dumps(observation.observation, indent=2) + '\n')
             try:
-                receipt = qualify_latest(observation, groups=registry['GROUPS'], engines=registry['ENGINES'],
+                receipt = qualify_latest(observation, groups=registry['BATCHES'], engines=registry['ENGINES'],
                                          run_id=args.run_id, attempt=args.attempt, head=args.workflow_head)
                 require(collection.checkout_state() == {key: context[key] for key in ('checkout_sha', 'source_tree')},
                         'Actual source changed during budget observation')
@@ -273,7 +274,7 @@ def main() -> int:
             (args.output.parent / 'jobs-selected.json').write_text(json.dumps(receipt['selected_jobs'], indent=2) + '\n')
             receipt['input_sha256'] = hashlib.sha256(raw.read_bytes()).hexdigest()
         else:
-            receipt = qualify(json.loads(args.jobs_json.read_text()), groups=registry['GROUPS'], engines=registry['ENGINES'],
+            receipt = qualify(json.loads(args.jobs_json.read_text()), groups=registry['BATCHES'], engines=registry['ENGINES'],
                               run_id=args.run_id, attempt=args.attempt, head=args.workflow_head)
             receipt['input_sha256'] = hashlib.sha256(args.jobs_json.read_bytes()).hexdigest()
         receipt['registry_sha256'] = hashlib.sha256(registry_path.read_bytes()).hexdigest()

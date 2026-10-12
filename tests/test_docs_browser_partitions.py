@@ -59,13 +59,14 @@ class BrowserPartitionTests(unittest.TestCase):
     def test_workflow_jobs_match_registry_and_keep_budget(self) -> None:
         workflow = (ROOT / '.github/workflows/bijux-std.yml').read_text()
         job = workflow.split('  navigation-browsers:', 1)[1].split('\n  navigation:', 1)[0]
-        groups = re.search(r'group: \[([^\]]+)\]', job).group(1).split(', ')
+        batches = re.search(r'batch: \[([^\]]+)\]', job).group(1).split(', ')
         engines = re.search(r'engine: \[([^\]]+)\]', job).group(1).split(', ')
-        self.assertEqual(groups, list(PARTITIONS.GROUPS))
+        self.assertEqual(batches, list(GATE.BATCHES))
+        self.assertEqual(sorted(group for members in GATE.BATCHES.values() for group in members), sorted(PARTITIONS.GROUPS))
         self.assertEqual(engines, list(PARTITIONS.ENGINES))
         self.assertIn('timeout-minutes: 3', job)
         self.assertIn('fail-fast: false', job)
-        self.assertEqual(len(groups) * len(engines), 81)
+        self.assertEqual(len(batches) * len(engines), 54)
 
     def test_contrast_profiles_preserve_all_thirty_nine_canonical_cases(self) -> None:
         data = inventories()

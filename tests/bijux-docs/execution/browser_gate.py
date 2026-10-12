@@ -23,6 +23,11 @@ PARTITIONS_SPEC = importlib.util.spec_from_file_location('browser_partitions', P
 PARTITIONS = importlib.util.module_from_spec(PARTITIONS_SPEC)
 PARTITIONS_SPEC.loader.exec_module(PARTITIONS)
 GROUPS, ENGINES, SUITES = PARTITIONS.GROUPS, PARTITIONS.ENGINES, PARTITIONS.SUITES
+_BATCH_SOURCE = TESTS / 'execution/browser_ownership/batches.py'
+OWNERSHIP = ModuleType('bijux_browser_physical_ownership')
+OWNERSHIP.__file__ = str(_BATCH_SOURCE)
+exec(compile(_BATCH_SOURCE.read_bytes(), str(_BATCH_SOURCE), 'exec'), OWNERSHIP.__dict__)
+BATCHES = OWNERSHIP.registry(GROUPS)
 PERSISTED_SUITE = "persisted-reader-history"
 _COST_SOURCE = TESTS / 'execution/costs/observations.py'
 COSTS = ModuleType('bijux_browser_operation_costs')
@@ -99,6 +104,7 @@ def prepare() -> None:
         'workflow_run_id': os.environ.get('GITHUB_RUN_ID'),
         'workflow_attempt': os.environ.get('GITHUB_RUN_ATTEMPT'),
         'partition_registry_sha256': hashlib.sha256(PARTITIONS.REGISTRY_PATH.read_bytes()).hexdigest(),
+        'batch_registry_sha256': hashlib.sha256(OWNERSHIP.REGISTRY_PATH.read_bytes()).hexdigest(),
         'artifact_digests': {str(path.relative_to(ARTIFACTS)): hashlib.sha256(path.read_bytes()).hexdigest() for path in paths},
     })
 
@@ -122,6 +128,8 @@ def verify_producer_envelope(admission=None) -> dict:
         raise ValueError('Producer workflow/candidate identity mismatch')
     if receipt.get('partition_registry_sha256') != hashlib.sha256(PARTITIONS.REGISTRY_PATH.read_bytes()).hexdigest():
         raise ValueError('Producer browser partition registry mismatch')
+    if receipt.get('batch_registry_sha256') != hashlib.sha256(OWNERSHIP.REGISTRY_PATH.read_bytes()).hexdigest():
+        raise ValueError('Producer physical browser batch registry mismatch')
     paths = ['browser-fixtures.tar.gz', 'browser-packages.tar.gz', 'browser-packages.json', 'renderer-source-observation.json'] + [f'inventories/{suite}.json' for suite in (*SUITES, PERSISTED_SUITE)]
     if set(receipt.get('artifact_digests', {})) != set(paths):
         raise ValueError('Producer evidence inventory mismatch')
@@ -192,32 +200,36 @@ def install_browser_runtime() -> None:
     print('Browser package transport: ' + json.dumps(decision, sort_keys=True))
 
 
-def run(group: str, engine: str) -> None:
+def run(batch: str, engine: str) -> None:
     if any(name in os.environ for name in ('BIJUX_UI_BROWSER_ENGINE', 'BIJUX_UI_PROJECTS', 'BIJUX_UI_PROFILE')):
         raise ValueError('Browser execution selection must come from its assigned group/engine')
-    if group not in GROUPS or engine not in ENGINES:
+    if batch not in BATCHES or engine not in ENGINES:
         raise ValueError('Unknown assigned browser group or engine')
     controllers = workflow_controllers()
-    collection = controllers.collect('producer', caller='browser-' + group + '-' + engine) if controllers.retained_producer() else None
+    collection = controllers.collect('producer', caller='browser-' + batch + '-' + engine) if controllers.retained_producer() else None
     producer = verify_producer_envelope(collection.producer if collection is not None else None)
     # Cold recovery must admit and verify inventories before deriving their ownership.
     assignments = partition_plan()
     unpack()
     install_browser_runtime()
     failed = []
-    for suite in GROUPS[group]:
-        output = ARTIFACTS / 'shards' / f'{group}-{engine}' / suite
-        output.mkdir(parents=True, exist_ok=True)
-        env = environment(suite, output)
-        env.update(PARTITIONS.selection(group, suite, engine))
-        if not assignments[(f'{group}-{engine}', suite)]:
-            raise ValueError('Browser partition must execute cases')
-        result = subprocess.run([playwright(), 'test', '--config', str(TESTS / f'playwright.{suite}.config.js')], cwd=ROOT, env=env)
-        if result.returncode:
-            failed.append(suite)
+    for group in BATCHES[batch]:
+        group_failed = False
+        for suite in GROUPS[group]:
+            output = ARTIFACTS / 'shards' / f'{group}-{engine}' / suite
+            output.mkdir(parents=True, exist_ok=True)
+            env = environment(suite, output)
+            env.update(PARTITIONS.selection(group, suite, engine))
+            if not assignments[(f'{group}-{engine}', suite)]:
+                raise ValueError('Browser partition must execute cases')
+            result = subprocess.run([playwright(), 'test', '--config', str(TESTS / f'playwright.{suite}.config.js')], cwd=ROOT, env=env)
+            if result.returncode:
+                failed.append(group + '/' + suite)
+                group_failed = True
+        if not group_failed:
+            controllers.record_execution(ARTIFACTS / 'shards' / f'{group}-{engine}', f'browser-{group}-{engine}', producer)
     if failed:
         raise ValueError('Browser qualification failed: ' + ', '.join(failed))
-    controllers.record_execution(ARTIFACTS / 'shards' / f'{group}-{engine}', f'browser-{group}-{engine}', producer)
 
 
 def aggregate(collection=None) -> None:
@@ -307,16 +319,16 @@ def load_module(path: Path, name: str):
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('operation', choices=('prepare', 'run', 'aggregate'))
-    parser.add_argument('--group', choices=GROUPS)
+    parser.add_argument('--batch', choices=BATCHES)
     parser.add_argument('--engine', choices=ENGINES)
     args = parser.parse_args()
-    if args.operation == 'run' and (not args.group or not args.engine):
+    if args.operation == 'run' and (not args.batch or not args.engine):
         parser.error('Browser execution requires an assigned group and engine')
     try:
         if args.operation == 'prepare':
             prepare()
         elif args.operation == 'run':
-            run(args.group, args.engine)
+            run(args.batch, args.engine)
         else:
             aggregate()
     except (ValueError, OSError, subprocess.CalledProcessError) as error:

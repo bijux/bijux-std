@@ -29,6 +29,9 @@ def registry() -> dict:
     partitions = ModuleType('bijux_collection_partitions')
     partitions.__file__ = str(EXECUTION / 'browser_partitions.py')
     exec(compile(Path(partitions.__file__).read_bytes(), partitions.__file__, 'exec'), partitions.__dict__)
+    batches = ModuleType('bijux_collection_browser_batches')
+    batches.__file__ = str(EXECUTION / 'browser_ownership/batches.py')
+    exec(compile(Path(batches.__file__).read_bytes(), batches.__file__, 'exec'), batches.__dict__)
     tree = ast.parse((EXECUTION / 'renderer_controls.py').read_bytes())
     declarations = [node.value for node in tree.body if isinstance(node, ast.Assign)
                     and any(isinstance(target, ast.Name) and target.id == 'GROUPS' for target in node.targets)]
@@ -43,11 +46,12 @@ def registry() -> dict:
                        'destination': destination, 'subtree': subtree}
     add('producer', 'std / navigation fixtures', 'docs-navigation-fixtures',
         'Retain source-bound fixtures and canonical case inventory', '')
-    for group in partitions.GROUPS:
+    for batch, groups in batches.registry(partitions.GROUPS).items():
         for engine in partitions.ENGINES:
-            owner = group + '-' + engine
-            add('browser-' + owner, f'std / navigation {group} / {engine}', 'docs-navigation-' + owner,
-                'Retain exact shard receipts and failure diagnostics', 'shards', owner)
+            owner = batch + '-' + engine
+            add('browser-' + owner, f'std / navigation {batch} / {engine}', 'docs-navigation-' + owner,
+                'Retain exact shard receipts and failure diagnostics', 'shards', groups[0] + '-' + engine if len(groups) == 1 else None)
+            roles['browser-' + owner].update(groups=list(groups), engine=engine)
     for group in renderers:
         add('renderer-' + group, 'std / renderer controls / ' + group, 'docs-renderer-controls-' + group,
             'Retain native unit events and physical runtime receipts', 'renderer-controls', group)
@@ -71,7 +75,8 @@ def checkout_state() -> dict:
     require(Path(git('rev-parse', '--show-toplevel')).resolve() == ROOT.resolve(), 'Actual Git root differs from execution source')
     require(not git('status', '--porcelain', '--untracked-files=no'), 'Tracked checkout is dirty')
     closure = [str(path.relative_to(ROOT)) for path in (Path(__file__), EXECUTION / 'workflow_lineage.py',
-               EXECUTION / 'workflow_artifacts.py', EXECUTION / 'workflow_jobs.py', EXECUTION / 'browser_partitions.py', EXECUTION / 'browser_partitions.json')]
+               EXECUTION / 'workflow_artifacts.py', EXECUTION / 'workflow_jobs.py', EXECUTION / 'browser_partitions.py', EXECUTION / 'browser_partitions.json',
+               EXECUTION / 'browser_ownership/batches.py', EXECUTION / 'browser_ownership/registry.json')]
     git('ls-files', '--error-unmatch', '--', *closure)
     return {'checkout_sha': git('rev-parse', 'HEAD'), 'source_tree': git('rev-parse', 'HEAD^{tree}')}
 
@@ -163,26 +168,38 @@ class Collection:
                 and job.get('conclusion') is None, 'Executor must be the actual current in-progress role')
         return _executor(self.identity, role, job)
 
-    def execution_name(self, role: str) -> str:
+    def browser_role(self, group: str, engine: str) -> str:
+        matches = [role for role, spec in self._roles.items() if role.startswith('browser-')
+                   and group in spec['groups'] and engine == spec['engine']]
+        require(len(matches) == 1, 'Missing or ambiguous admitted browser group owner')
+        return matches[0]
+
+    def execution_name(self, role: str, group=None) -> str:
         require(role in self._roles and role != 'producer', 'Unknown execution record owner')
+        spec = self._roles[role]
+        if role.startswith('browser-'):
+            group = group or (spec['groups'][0] if len(spec['groups']) == 1 else None)
+            require(group in spec['groups'], 'Exact canonical group is required for batch execution')
+            return group + '-' + spec['engine'] + '/execution.json'
         subtree = self._roles[role]['subtree']
         return (subtree + '/' if subtree else '') + 'execution.json'
 
-    def verify_execution(self, role: str, record: dict) -> None:
+    def verify_execution(self, role: str, record: dict, group=None) -> None:
         require(role in self.inputs and role != 'producer', 'Missing admitted execution owner')
         item = self.inputs[role]
-        name = self.execution_name(role)
+        name = self.execution_name(role, group)
         try:
             owned = decoded_record(item.read(name))
         except (json.JSONDecodeError, UnicodeDecodeError) as error:
             raise ValueError('Invalid owned execution record') from error
         require(isinstance(record, dict) and record == owned and set(record) == {'schema', 'executor', 'producer', 'files_sha256'}
                 and type(record['schema']) is int and record['schema'] == 1, 'Execution record differs from admitted member')
-        require(record['executor'] == _executor(self.identity, role, item._pin['owner_job']),
+        declared_role = 'browser-' + name.split('/')[0] if role.startswith('browser-') else role
+        require(record['executor'] == _executor(self.identity, declared_role, item._pin['owner_job']),
                 'Execution declaration differs from actual API owner')
         require(record['producer'] == producer_declaration(self.producer), 'Execution input does not bind admitted producer')
-        prefix = (self._roles[role]['subtree'] + '/') if self._roles[role]['subtree'] else ''
-        require(record['files_sha256'] == {path[len(prefix):]: digest for path, digest in item.files.items() if path != name},
+        prefix = name.rsplit('/', 1)[0] + '/' if role.startswith('browser-') else ((self._roles[role]['subtree'] + '/') if self._roles[role]['subtree'] else '')
+        require(record['files_sha256'] == {path[len(prefix):]: digest for path, digest in item.files.items() if path != name and path.startswith(prefix)},
                 'Execution record body inventory differs from admitted output')
 
     def plan(self) -> dict[str, bytes]:
@@ -196,6 +213,11 @@ class Collection:
         require(producer_required <= set(self.producer.files), 'Producer source-owned inventory is incomplete')
         for role, item in self.inputs.items():
             spec = self._roles[role]
+            if role.startswith('browser-'):
+                required = {self.execution_name(role, group) for group in spec['groups']}
+                require(required <= set(item.files), 'Missing canonical group execution declaration in browser batch')
+                for group in spec['groups']:
+                    self.verify_execution(role, decoded_record(item.read(self.execution_name(role, group))), group)
             for name in item.files:
                 path = PurePosixPath(name)
                 require(not path.is_absolute() and path.parts and all(part not in ('', '.', '..') for part in path.parts),
@@ -209,6 +231,9 @@ class Collection:
                             or (path.parts[0] in ('generated', 'contrast-generated') and len(path.parts) == 2
                                 and re.fullmatch(r'build-[a-z][a-z0-9-]*\.log', path.name)),
                             'Producer member lies outside source-owned namespaces')
+                elif role.startswith('browser-'):
+                    roots = {group + '-' + spec['engine'] for group in spec['groups']}
+                    require(path.parts[0] in roots and len(path.parts) > 1, 'Browser artifact crosses its batch group namespace')
                 elif spec['subtree']:
                     require(path.parts[0] == spec['subtree'] and len(path.parts) > 1, 'Artifact crosses another role namespace')
                 destination = str(PurePosixPath(spec['destination']) / path)
@@ -289,6 +314,11 @@ def collect(api, identity: dict, stage: str, output: Path, *, audit=None, caller
             for role in roles:
                 if role.startswith('browser-') or role == 'persisted' or (role.startswith('fault-') and role != 'fault-public'):
                     try:
+                        if role.startswith('browser-'):
+                            for group in roles[role]['groups']:
+                                record = decoded_record(inputs[role].read(collection.execution_name(role, group)))
+                                collection.verify_execution(role, record, group)
+                            continue
                         record = decoded_record(inputs[role].read(collection.execution_name(role)))
                     except (json.JSONDecodeError, UnicodeDecodeError) as error:
                         raise ValueError('Invalid execution record JSON') from error

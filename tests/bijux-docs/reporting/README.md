@@ -55,13 +55,16 @@ profile.
 Engine-only selections for other suites and unselected full configs are unchanged.
 The declared assignments live in `execution/browser_partitions.json`.
 
-Navigation owns three profile jobs and a separate drawer/preferences/repository
-job. Search scope and contrast each own three profile jobs. Contrast retains five
-phone cases and four compact/desktop cases per engine, including native palette
-input. The producer still collects each of
-the 21 canonical inventories once, preserving all 645 cases. Before execution,
-the runner proves each actual canonical project has exactly one job owner.
-Aggregation requires all 81 exact suite receipts from 72 engine jobs, verifies
+Navigation owns three profile groups and a separate drawer/preferences/repository
+group. Related groups share physical jobs according to
+`execution/browser_ownership/registry.json`; all 27 canonical groups remain
+independent receipts across Chromium, Firefox and WebKit. The 18 physical batches
+produce 54 engine jobs. Contrast retains five phone cases and four
+compact/desktop cases per engine, including native palette input. The producer
+collects each canonical suite inventory once, preserving every actual collected
+case ID. Before execution, the runner proves each actual canonical project has
+exactly one group and physical batch owner. Aggregation requires every exact
+suite receipt from the complete source-owned batch union, verifies
 each receipt's declared engine/profile ownership, and then checks the complete
 case/JUnit/source/bundle contract. A passed profile receipt establishes only its
 assigned coverage. Missing, overlapping, moved or nonterminal receipts fail the

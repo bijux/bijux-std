@@ -64,7 +64,7 @@ class WorkflowCollectionTests(unittest.TestCase):
         return COLLECTION.Collection(source, inputs, self.roles, _created=COLLECTION._CREATED)
 
     def add_browser(self, role=None):
-        role = role or next(role for role in COLLECTION.registry() if role.startswith('browser-'))
+        role = role or 'browser-navigation-phone-chromium'
         spec = COLLECTION.registry()[role]
         self.roles[role] = spec
         job = copy.deepcopy(self.job)
@@ -72,27 +72,35 @@ class WorkflowCollectionTests(unittest.TestCase):
         job['steps'][-1]['name'] = spec['upload_step']
         artifact = copy.deepcopy(self.artifact)
         artifact.update(id=55, name=spec['artifact_prefix'] + '-' + self.identity['checkout_sha'] + '-2')
-        prefix = spec['subtree'] + '/'
-        files = {prefix + 'qualification.json': b'{"native":"passed"}'}
-        record = {'schema': 1, 'executor': {'role': role, 'source_head': self.identity['checkout_sha'],
+        files = {}
+        records = []
+        for group in spec['groups']:
+            prefix = group + '-' + spec['engine'] + '/'
+            files[prefix + 'qualification.json'] = b'{"native":"passed"}'
+            record = {'schema': 1, 'executor': {'role': 'browser-' + prefix[:-1], 'source_head': self.identity['checkout_sha'],
                   'workflow_run_id': '123', 'workflow_attempt': '2'},
                   'producer': {**{key: self.envelope[key] for key in ('source_head', 'workflow_run_id', 'workflow_attempt', 'artifact_digests')},
                                'envelope_sha256': hashlib.sha256(self.producer_files['producer-envelope.json']).hexdigest()},
                   'files_sha256': {'qualification.json': hashlib.sha256(files[prefix + 'qualification.json']).hexdigest()}}
-        files[prefix + 'execution.json'] = json.dumps(record, sort_keys=True).encode()
+            files[prefix + 'execution.json'] = json.dumps(record, sort_keys=True).encode()
+            records.append(record)
         self.set_body(55, artifact, files)
         self.responses[self.paths['run'] + '/jobs?filter=latest&per_page=100&page=1'] = {'total_count': 2, 'jobs': [self.job, job]}
         self.responses[self.paths['run'] + '/jobs?filter=all&per_page=100&page=1'] = {'total_count': 2, 'jobs': [self.job, job]}
         self.responses[self.paths['run'] + '/artifacts?per_page=100&page=1'] = {'total_count': 2, 'artifacts': [self.artifact, artifact]}
         self.responses['repos/bijux/bijux-std/actions/jobs/44'] = job
         self.responses['repos/bijux/bijux-std/actions/artifacts/55'] = artifact
-        return role, job, artifact, files, record
+        return role, job, artifact, files, records[0]
 
     def test_registry_derives_exact_all_browser_renderer_and_fixed_roles(self):
         roles = COLLECTION.registry()
         source = (ROOT / '.github/workflows/bijux-std.yml').read_text()
         partitions = json.loads((ROOT / 'tests/bijux-docs/execution/browser_partitions.json').read_text())
-        expected = {'browser-' + group + '-' + engine for group in partitions['groups'] for engine in partitions['engines']}
+        batches = json.loads((ROOT / 'tests/bijux-docs/execution/browser_ownership/registry.json').read_bytes())['batches']
+        expected = {'browser-' + batch + '-' + engine for batch in batches for engine in partitions['engines']}
+        for engine in partitions['engines']:
+            groups = [group for role, spec in roles.items() if role.startswith('browser-') and spec['engine'] == engine for group in spec['groups']]
+            self.assertEqual(sorted(groups), sorted(partitions['groups']))
         self.assertEqual({role for role in roles if role.startswith('browser-')}, expected)
         renderers = load('collection_renderer_groups', ROOT / 'tests/bijux-docs/execution/renderer_controls.py')
         self.assertEqual({role for role in roles if role.startswith('renderer-')}, {'renderer-' + group for group in renderers.GROUPS})
@@ -169,7 +177,7 @@ class WorkflowCollectionTests(unittest.TestCase):
         collection._roles[role]['destination'] = ''
         collection.inputs[role]._files = {'producer-envelope.json': self.producer_files['producer-envelope.json']}
         collection.inputs[role]._hashes = {'producer-envelope.json': hashlib.sha256(self.producer_files['producer-envelope.json']).hexdigest()}
-        with self.assertRaisesRegex(ValueError, 'collision'): collection.plan()
+        with self.assertRaisesRegex(ValueError, 'collision|Missing canonical|namespace'): collection.plan()
 
     def test_missing_or_unowned_producer_inventory_refuses_complete_output_plan(self):
         for change in ('missing', 'extra'):
@@ -208,13 +216,16 @@ class WorkflowCollectionTests(unittest.TestCase):
             job['steps'][-1]['name'] = spec['upload_step']
             artifact = copy.deepcopy(self.artifact)
             artifact.update(id=200 + index, name=spec['artifact_prefix'] + '-' + self.identity['checkout_sha'] + '-2')
-            prefix = (spec['subtree'] + '/') if spec['subtree'] else ''
-            files = {prefix + 'native.json': b'{}'}
-            if role.startswith('browser-') or role == 'persisted' or (role.startswith('fault-') and role != 'fault-public'):
-                record = {'schema': 1, 'executor': {'role': role, 'source_head': self.identity['checkout_sha'],
+            prefixes = [group + '-' + spec['engine'] + '/' for group in spec['groups']] if role.startswith('browser-') else [(spec['subtree'] + '/') if spec['subtree'] else '']
+            files = {}
+            for prefix in prefixes:
+                files[prefix + 'native.json'] = b'{}'
+                if role.startswith('browser-') or role == 'persisted' or (role.startswith('fault-') and role != 'fault-public'):
+                    declared_role = 'browser-' + prefix[:-1] if role.startswith('browser-') else role
+                    record = {'schema': 1, 'executor': {'role': declared_role, 'source_head': self.identity['checkout_sha'],
                           'workflow_run_id': '123', 'workflow_attempt': '2'}, 'producer': producer,
                           'files_sha256': {'native.json': hashlib.sha256(b'{}').hexdigest()}}
-                files[prefix + 'execution.json'] = json.dumps(record).encode()
+                    files[prefix + 'execution.json'] = json.dumps(record).encode()
             self.set_body(artifact['id'], artifact, files)
             self.responses['repos/bijux/bijux-std/actions/jobs/' + str(job['id'])] = job
             self.responses['repos/bijux/bijux-std/actions/artifacts/' + str(artifact['id'])] = artifact
