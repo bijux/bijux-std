@@ -18,7 +18,7 @@ import unittest
 ROOT = Path(__file__).resolve().parents[3]
 HERE = Path(__file__).resolve().parent
 COUNTS = {'test_recipe_sources': 32, 'test_source_checkpoint': 8,
-          'test_native_sources': 12, 'test_renderer_authority': 7, 'test_input_identity': 6, 'test_entrypoints': 2}
+          'test_native_sources': 13, 'test_renderer_authority': 10, 'test_input_identity': 6, 'test_entrypoints': 2}
 GROUPS = {'source': ('test_recipe_sources', 'test_source_checkpoint', 'test_input_identity'),
           'renderer': ('test_native_sources', 'test_renderer_authority'),
           'typed-entrypoint': ('test_entrypoints.CatalogueEntrypoints.test_actual_typed_renderer_reconstructs_originals_without_publication_approval',),

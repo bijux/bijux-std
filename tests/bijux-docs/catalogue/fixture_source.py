@@ -35,6 +35,7 @@ def create_fixture(repository, root):
     site_url: !ENV [SITE_URL, https://bijux.io/bijux-masterclass/]
     repo_name: bijux/bijux-masterclass
     repo_url: https://github.com/bijux/bijux-masterclass
+    edit_uri: edit/main/docs/
     nav:
       - Home: index.md
       - Python: python-programming/index.md

@@ -30,8 +30,8 @@ class CatalogueExecution(unittest.TestCase):
 
     def test_groups_cover_all_maintained_cases_exactly_once(self):
         complete = [case for group in gate.GROUPS for case in gate.expected(group)]
-        self.assertEqual(len(complete), 67)
-        self.assertEqual(len(set(complete)), 67)
+        self.assertEqual(len(complete), 71)
+        self.assertEqual(len(set(complete)), 71)
 
     def test_prefix_input_identity_controls_are_mandatory(self):
         actual = [case for case in gate.expected('source')
