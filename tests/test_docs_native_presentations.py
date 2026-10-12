@@ -87,6 +87,36 @@ class NativePresentations(unittest.TestCase):
             with self.subTest(report=report['output']), self.assertRaisesRegex(ValueError, 'Pollenomics repository'):
                 native.document_budget(self.root, report, self.content(report), native.SITE)
 
+    def test_canonical_checkout_origin_spellings_admit_original_presentations(self):
+        for origin in ('https://github.com/bijux/bijux-pollenomics',
+                       'https://github.com/bijux/bijux-pollenomics.git',
+                       'git@github.com:bijux/bijux-pollenomics.git'):
+            subprocess.run(['git', '-C', str(self.root), 'remote', 'set-url',
+                            'origin', origin], check=True)
+            for report in (self.nordic, self.sequence):
+                with self.subTest(origin=origin, report=report['output']):
+                    native.document_budget(self.root, report, self.content(report), native.SITE)
+
+    def test_nearby_origins_cannot_borrow_original_presentations(self):
+        for origin in ('https://github.com/bijux/bijux-core',
+                       'https://github.com/another/bijux-pollenomics',
+                       'http://github.com/bijux/bijux-pollenomics',
+                       'https://github.com:443/bijux/bijux-pollenomics',
+                       'https://github.com/bijux/bijux-pollenomics?ref=main',
+                       'https://github.com/bijux/bijux-pollenomics.git#main',
+                       'https://user@github.com/bijux/bijux-pollenomics',
+                       'https://github.com/bijux/../bijux-pollenomics',
+                       'https://github.com/bijux/%62ijux-pollenomics',
+                       'https://github.com/bijux/bijux-pollenomics/',
+                       'git@github.com:another/bijux-pollenomics.git',
+                       'git@github.com:bijux/bijux-core.git'):
+            subprocess.run(['git', '-C', str(self.root), 'remote', 'set-url',
+                            'origin', origin], check=True)
+            for report in (self.nordic, self.sequence):
+                with self.subTest(origin=origin, report=report['output']), \
+                     self.assertRaisesRegex(ValueError, 'Pollenomics repository'):
+                    native.document_budget(self.root, report, self.content(report), native.SITE)
+
     def test_original_swedish_chart_has_an_exact_bootstrap_free_recipe(self):
         document = html.validate_report(self.content(self.sequence).decode(), self.sequence, native.SITE)
         native.document_budget(self.root, self.sequence, self.content(self.sequence), native.SITE)
