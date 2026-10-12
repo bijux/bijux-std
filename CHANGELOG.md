@@ -6,6 +6,8 @@ This file records notable repository-level changes for `bijux-std`.
 
 ### Unreleased
 
+Keep Material repository-link new-tab indications within the desktop header using the existing compact visible icon and accessible warning text. Preserve authored target, relationship and ARIA changes through shell lifecycle restoration. See [#290](https://github.com/bijux/bijux-std/pull/290).
+
 Record catalogue source and custom-theme fingerprints with the same component-ordered physical tree identity used by independent admission. Preserve committed-byte ownership and reject missing, changed or extra inputs, including prefix-file/directory siblings. See [#290](https://github.com/bijux/bijux-std/pull/290).
 
 Identify source-owned terminal index reports by their public directory canonicals and sitemap entries. Independently reconstruct those identities while preserving authored frame request paths, report bodies and scientific resources.
