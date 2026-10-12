@@ -86,7 +86,12 @@ def check(fetch, row, repository, frame):
     return result
 
 
-def capture(api, identity, pages, *, fetch=None, caller=None, names=None):
+def completed_frame_key(repository, identity, attempt):
+    return (repository, identity['run_id'], attempt, identity['head'],
+            identity['workflow_id'], identity['workflow_path'], identity['head_branch'])
+
+
+def capture(api, identity, pages, *, fetch=None, caller=None, names=None, _completed_frames=None):
     """Complete bounded attempt frames, canonical executions and untouched aliases."""
     require(type(identity['attempt']) is int and 1 <= identity['attempt'] <= MAX_ATTEMPTS, 'Physical attempt capture exceeds finite bound')
     require(caller is None or isinstance(caller, str) and caller.startswith('std / '), 'Caller must be a source-owned workflow role')
@@ -101,7 +106,14 @@ def capture(api, identity, pages, *, fetch=None, caller=None, names=None):
     run_path = 'repos/' + api.repository + '/actions/runs/' + str(identity['run_id'])
     def attempt_frame(attempt):
         endpoint = run_path + '/attempts/' + str(attempt)
-        run = api.json(endpoint)
+        retained = (_completed_frames or {}).get(completed_frame_key(api.repository, identity, attempt))
+        if retained is not None:
+            require(attempt < identity['attempt'] and retained.get('attempt') == attempt
+                    and retained.get('run', {}).get('status') == 'completed',
+                    'Only completed prior attempt frames may be reused')
+            run = copy.deepcopy(retained['run'])
+        else:
+            run = api.json(endpoint)
         require(all(run.get(key) == identity[value] for key, value in
                     (('id', 'run_id'), ('head_sha', 'head'), ('workflow_id', 'workflow_id'),
                      ('path', 'workflow_path'), ('head_branch', 'head_branch')))
@@ -110,7 +122,8 @@ def capture(api, identity, pages, *, fetch=None, caller=None, names=None):
                 and run.get('head_repository', {}).get('full_name') == api.repository
                 and type(run.get('check_suite_id')) is int and run['check_suite_id'] > 0,
                 'Attempt source identity differs')
-        inventory = pages(api.json, endpoint + '/jobs', 'jobs')
+        inventory = (copy.deepcopy(retained['inventory']) if retained is not None
+                     else pages(api.json, endpoint + '/jobs', 'jobs'))
         return {'attempt': attempt, 'run': run, 'inventory': inventory}
     with ThreadPoolExecutor(max_workers=min(8, identity['attempt'])) as pool:
         frames = list(pool.map(attempt_frame, range(1, identity['attempt'] + 1)))

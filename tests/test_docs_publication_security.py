@@ -346,7 +346,7 @@ class QualifiedPublicationTests(unittest.TestCase):
         policy = "; ".join(["default-src 'self'", "base-uri 'self'", "object-src 'none'", "form-action 'self'",
                             "script-src 'self'", "script-src-attr 'none'", "style-src 'self' 'unsafe-inline'",
                             "font-src 'self'", "connect-src 'self'", "worker-src 'self' blob:",
-                            "img-src 'self' data: https://img.shields.io https://raw.githubusercontent.com",
+                            "img-src 'self' data: https://img.shields.io https://raw.githubusercontent.com https://github.com/bijux/",
                             "media-src 'self'", "frame-src 'none'", "manifest-src 'self'"])
         (self.site / "index.html").write_text(self.html.replace("<head>", '<head><meta charset="utf-8"><meta http-equiv="Content-Security-Policy" content="' + policy + '">'))
         _, bundle = publication.public_bundle_identity(self.site)
@@ -359,6 +359,7 @@ class QualifiedPublicationTests(unittest.TestCase):
                                 "renderer_inputs": [{"path": "docs", "sha256": identity.tree_identity(self.root / "docs")}],
                                 "processor_sha256": hashlib.sha256((SECURITY / "build_identity.py").read_bytes()).hexdigest(),
                                 "source_checkpoint": self.source, "source_checkpoint_sha256": identity.json_digest(self.source),
+                                "render_epoch": self.source['render_epoch'],
                                 "renderer": {"python": "3.11.0", "implementation": "cpython", "plugins": {},
                                              "material_templates": [{"path": "partials/javascripts/fixture.html", "sha256": "f" * 64}],
                                              "packages": {name: "9.7.7" if name == "mkdocs-material" else "fixture" for name in
@@ -567,6 +568,8 @@ class QualifiedPublicationTests(unittest.TestCase):
         original = (self.site / "index.html").read_text()
         for content in (original.replace("script-src 'self'", "script-src 'self' 'unsafe-eval'"),
                         original.replace("default-src 'self'", "default-src *"),
+                        original.replace("https://github.com/bijux/", "https://github.com"),
+                        original.replace("https://github.com/bijux/", "https://github.com/another-owner/"),
                         original.replace("<head>", '<head><script src="assets/main.js"></script>'),
                         original.replace("<head>", '<head><base href="https://remote.example/">'),
                         original.replace("<head>", '<head><link rel="prefetch" href="https://remote.example/">')):
@@ -577,6 +580,24 @@ class QualifiedPublicationTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "CSP receipt"):
                 self.qualified()
         (self.site / "index.html").write_text(original)
+
+    def test_missing_or_forged_source_clock_cannot_launder_matching_receipts(self):
+        original = copy.deepcopy(self.source['render_epoch'])
+        for replacement in (None, original | {'seconds': original['seconds'] + 86400},
+                            original | {'source_sha': '0' * 40},
+                            original | {'seconds': float(original['seconds'])}):
+            with self.subTest(replacement=replacement):
+                self.source['render_epoch'] = replacement
+                self.records['build']['source_checkpoint_sha256'] = identity.json_digest(self.source)
+                self.records['build']['render_epoch'] = replacement
+                with self.assertRaisesRegex(ValueError, 'Render clock'):
+                    self.qualified()
+        self.source['render_epoch'] = original
+
+    def test_build_clock_cannot_diverge_from_bound_source_clock(self):
+        self.records['build']['render_epoch'] = self.source['render_epoch'] | {'seconds': self.source['render_epoch']['seconds'] + 1}
+        with self.assertRaisesRegex(ValueError, 'Render clock'):
+            self.qualified()
 
 
 

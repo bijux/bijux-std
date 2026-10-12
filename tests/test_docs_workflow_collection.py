@@ -227,7 +227,7 @@ class WorkflowCollectionTests(unittest.TestCase):
             self.assertEqual({pointer['owner_attempt'] for pointer in collection.export_record()['admission']['inputs'].values()}, {2})
             self.assertEqual(len([call for call in self.api.calls if isinstance(call, str) and '/actions/jobs/' in call]), len(jobs))
             self.assertEqual(len([call for call in self.api.calls if isinstance(call, str) and '/actions/artifacts/' in call]), len(artifacts))
-            self.assertEqual(sum('/actions/runs/' in call for call in self.api.calls if isinstance(call, str)), 12)
+            self.assertEqual(sum('/actions/runs/' in call for call in self.api.calls if isinstance(call, str)), 8)
 
     def test_dirty_wrong_root_or_untracked_source_closure_cannot_consume_git_authority(self):
         # Compile the exact function independently of this class's controlled

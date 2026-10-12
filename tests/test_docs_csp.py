@@ -30,6 +30,15 @@ class StaticPolicyTests(unittest.TestCase):
                           "manifest-src 'self'", "worker-src 'self' blob:"):
             self.assertIn(directive, html)
 
+    def test_workflow_badge_images_are_confined_to_bijux_namespace(self):
+        html, _ = csp.qualify_html(self.html(), {"window.bijuxTrusted = true;"}, "")
+        policy = html.split('http-equiv="Content-Security-Policy" content="', 1)[1].split('"', 1)[0]
+        directives = {part.split()[0]: part.split()[1:] for part in policy.split("; ")}
+        self.assertIn("https://github.com/bijux/", directives["img-src"])
+        self.assertNotIn("https://github.com", directives["img-src"])
+        for name in ("script-src", "connect-src", "frame-src"):
+            self.assertNotIn("https://github.com/bijux/", directives[name])
+
     def test_arbitrary_inline_code_cannot_launder_its_hash(self):
         with self.assertRaisesRegex(csp.PolicyError, "lacks exact"):
             csp.qualify_html(self.html("window.unreviewed = true;"), {"window.bijuxTrusted = true;"}, "")

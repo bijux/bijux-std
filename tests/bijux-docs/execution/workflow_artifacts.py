@@ -88,26 +88,34 @@ class GitHubAPI:
             require(parsed.netloc == 'api.github.com', 'Credentials are confined to GitHub API origin')
             headers['Authorization'] = 'Bearer ' + self._token
         request = Request(url, headers=headers, method='GET')
-        try:
-            response = self._opener.open(request, timeout=self.remaining())
-        except HTTPError as error:
-            if error.code in (301, 302, 303, 307, 308):
-                location = error.headers.get('Location')
+        for recovery in range(3):
+            try:
+                response = self._opener.open(request, timeout=self.remaining())
+                break
+            except HTTPError as error:
+                # Only transient authenticated GET failures may recover; the
+                # same absolute admission deadline covers every request.
+                if authenticated and error.code in (502, 503, 504) and recovery < 2:
+                    error.close()
+                    self.remaining()
+                    continue
+                if error.code in (301, 302, 303, 307, 308):
+                    location = error.headers.get('Location')
+                    error.close()
+                    return error.code, {'Location': location}, b''
+                # Provider error bodies/URLs may contain credentials or signed query strings.
+                code = error.code
+                origin = 'GitHub API' if authenticated else 'artifact CDN'
+                details = []
+                for name in ('X-RateLimit-Remaining', 'X-RateLimit-Reset', 'Retry-After'):
+                    value = error.headers.get(name)
+                    if isinstance(value, str) and value.isdecimal() and len(value) <= 20:
+                        details.append(name.lower() + '=' + value)
                 error.close()
-                return error.code, {'Location': location}, b''
-            # Provider error bodies/URLs may contain credentials or signed query strings.
-            code = error.code
-            origin = 'GitHub API' if authenticated else 'artifact CDN'
-            details = []
-            for name in ('X-RateLimit-Remaining', 'X-RateLimit-Reset', 'Retry-After'):
-                value = error.headers.get(name)
-                if isinstance(value, str) and value.isdecimal() and len(value) <= 20:
-                    details.append(name.lower() + '=' + value)
-            error.close()
-            suffix = ' (' + ', '.join(details) + ')' if details else ''
-            raise ValueError(origin + ' transport failed with HTTP ' + str(code) + suffix) from None
-        except (URLError, OSError):
-            raise ValueError('GitHub transport could not complete') from None
+                suffix = ' (' + ', '.join(details) + ')' if details else ''
+                raise ValueError(origin + ' transport failed with HTTP ' + str(code) + suffix) from None
+            except (URLError, OSError):
+                raise ValueError('GitHub transport could not complete') from None
         with response:
             require(response.status == 200, 'Unexpected transport status')
             length = response.headers.get('Content-Length')
