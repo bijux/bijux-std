@@ -6,6 +6,8 @@ This file records notable repository-level changes for `bijux-std`.
 
 ### Unreleased
 
+Record catalogue source and custom-theme fingerprints with the same component-ordered physical tree identity used by independent admission. Preserve committed-byte ownership and reject missing, changed or extra inputs, including prefix-file/directory siblings. See [#290](https://github.com/bijux/bijux-std/pull/290).
+
 Identify source-owned terminal index reports by their public directory canonicals and sitemap entries. Independently reconstruct those identities while preserving authored frame request paths, report bodies and scientific resources.
 
 Bind native documentation build dates to the selected commit's timestamp in source, build and independent producer admission. Preserve complete sitemap comparison across midnight and reject conflicting ambient or forged clock authority.
