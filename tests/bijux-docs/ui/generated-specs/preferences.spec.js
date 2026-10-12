@@ -39,10 +39,12 @@ for (const denial of ["getter", "read", "write"]) {
   test(`independent storage ${denial} denial retains instant and cross-site reading`, async ({ page }, info) => {
     await page.emulateMedia({ colorScheme: "light" });
     await page.addInitScript(mode => {
-      const observations = window.bijuxStorageDenialObservations = { getter: 0, read: 0, write: 0 };
+      const observations = window.bijuxStorageDenialObservations = { getter: 0, read: 0, write: 0, errors: [] };
+      window.bijuxStorageDenialErrorName = "SecurityError";
       const reject = kind => () => {
         observations[kind] += 1;
-        throw new DOMException("Storage denied", "SecurityError");
+        observations.errors.push(window.bijuxStorageDenialErrorName);
+        throw new DOMException("Storage denied", window.bijuxStorageDenialErrorName);
       };
       if (mode === "getter") Object.defineProperty(window, "localStorage", { configurable: true, get: reject("getter") });
       if (mode === "read") Object.defineProperty(Storage.prototype, "getItem", { configurable: true, value: reject("read") });
@@ -82,6 +84,22 @@ for (const denial of ["getter", "read", "write"]) {
       await openDrawer(page);
       await page.keyboard.press("Escape");
       await expect(page.locator("#__drawer")).not.toBeChecked();
+      if (denial === "write") {
+        // A writable getter/read path with exhausted storage is distinct from denial.
+        await page.evaluate(() => { window.bijuxStorageDenialErrorName = "QuotaExceededError"; });
+        await choose(page, "dark");
+        await expect(page.locator("body")).toHaveAttribute("data-md-color-scheme", "slate");
+        await expect.poll(() => page.evaluate(() => window.bijuxStorageDenialObservations.errors.includes("QuotaExceededError"))).toBe(true);
+        expect(await page.evaluate(() => localStorage.getItem("bijux:theme")), "Quota failure does not claim durable persistence").toBeNull();
+        await record("quota-exhausted session theme");
+        await page.reload();
+        await expect(page.locator("[data-bijux-theme-toggle]")).toHaveAttribute("data-bijux-theme-mode", "auto");
+        await expect(page.locator("body")).toHaveAttribute("data-md-color-scheme", "default");
+        await openDrawer(page);
+        await page.keyboard.press("Escape");
+        await expect(control(page, "drawer")).toBeFocused();
+        await record("quota failure reload has no persisted choice");
+      }
     } finally {
       await info.attach("independent-storage-denial-observations", {
         body: Buffer.from(JSON.stringify({ denial, observations }, null, 2)), contentType: "application/json",
