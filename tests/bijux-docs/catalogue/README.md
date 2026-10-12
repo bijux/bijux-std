@@ -27,7 +27,7 @@ entrypoint and actual consumer reconstruction receipts remain separate evidence.
 
 
 The required catalogue CI jobs use an independent hash-locked CPython 3.14.4
-verification environment. They cover 37 source/checkpoint, 19 native/renderer,
+verification environment. They cover 46 source/checkpoint/input-identity, 19 native/renderer,
 and two complete renderer-entrypoint cases in four bounded groups. The normal
 32-package browser renderer and retained historical recipes stay independent.
 

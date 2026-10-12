@@ -54,6 +54,33 @@ async function controlledOutside(context) {
   );
 }
 
+async function compactRepositoryWarning(page) {
+  const originalViewport = page.viewportSize();
+  await page.setViewportSize({ width: 1440, height: 900 });
+  const repository = page.locator(".md-header__source a.md-source");
+  await expect(repository).toBeVisible();
+  const warning = repository.locator('[data-bijux-link-indication="new-tab"]');
+  await expect(warning).toHaveCount(1);
+  await expect(warning.locator(".md-visually-hidden")).toHaveText(" (opens in new tab)");
+  await expect(warning.locator('[aria-hidden="true"]')).toHaveText(" ↗");
+  const authoredName = await repository.getAttribute("aria-label");
+  if (authoredName) {
+    await expect(repository).toHaveAccessibleName(authoredName);
+    await expect(repository).toHaveAccessibleDescription(/opens in new tab/);
+  } else {
+    await expect(repository).toHaveAccessibleName(/opens in new tab/);
+  }
+  await page.evaluate(() => document.fonts.ready);
+  const geometry = await warning.evaluate((node) => ({
+    right: node.querySelector('[aria-hidden="true"]').getBoundingClientRect().right,
+    viewport: innerWidth,
+    document: document.documentElement.scrollWidth,
+  }));
+  expect(geometry.right).toBeLessThanOrEqual(geometry.viewport);
+  expect(geometry.document).toBeLessThanOrEqual(geometry.viewport);
+  await page.setViewportSize(originalViewport);
+}
+
 test("authored target, download, relation and description remain distinct", async ({
   page,
 }) => {
@@ -105,6 +132,20 @@ test("authored target, download, relation and description remain distinct", asyn
       .locator("#link-mail, #link-phone, #link-internal, #link-hash")
       .locator("[data-bijux-link-indication]"),
   ).toHaveCount(0);
+  const repository = page.locator(".md-header__source a.md-source");
+  await expect(repository).not.toHaveAttribute("target");
+  await expect(repository.locator("[data-bijux-link-indication]")).toHaveCount(0);
+  const repositoryIntent = await repository.evaluate((link) => ({
+    relation: link.getAttribute("rel"),
+    description: link.getAttribute("aria-describedby"),
+  }));
+  await repository.evaluate((link) => { link.target = "_blank"; });
+  await compactRepositoryWarning(page);
+  await repository.evaluate((link) => { link.removeAttribute("target"); });
+  await expect(repository.locator("[data-bijux-link-indication]")).toHaveCount(0);
+  await expect(repository).not.toHaveAttribute("target");
+  expect(await repository.getAttribute("rel")).toBe(repositoryIntent.relation);
+  expect(await repository.getAttribute("aria-describedby")).toBe(repositoryIntent.description);
   for (const authored of footerNewTabLinks) {
     const link = page.locator(".bijux-footer-strip__links").getByRole("link", {
       name: authored.name,
@@ -300,6 +341,18 @@ test("product extension link changes preserve new intent and disposable annotati
   expect(
     await page.evaluate(() => window.retainedExtensionLink.getAttribute("rel")),
   ).toBe("author noreferrer");
+  const repository = page.locator(".md-header__source a.md-source");
+  await repository.evaluate((link) => {
+    link.target = "_self";
+    link.rel = "author nofollow";
+    link.setAttribute("aria-label", "Authored repository context");
+  });
+  await expect(repository.locator("[data-bijux-link-indication]")).toHaveCount(0);
+  await expect(repository).toHaveAttribute("rel", "author nofollow");
+  await expect(repository).toHaveAttribute("aria-label", "Authored repository context");
+  await repository.evaluate((link) => { link.target = "_blank"; });
+  await expect(repository).toHaveAttribute("rel", "author nofollow noopener");
+  await compactRepositoryWarning(page);
 });
 
 test("exact historical authored producer demonstrates blanket target and relation loss", async ({

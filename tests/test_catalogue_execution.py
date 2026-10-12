@@ -30,8 +30,26 @@ class CatalogueExecution(unittest.TestCase):
 
     def test_groups_cover_all_maintained_cases_exactly_once(self):
         complete = [case for group in gate.GROUPS for case in gate.expected(group)]
-        self.assertEqual(len(complete), 61)
-        self.assertEqual(len(set(complete)), 61)
+        self.assertEqual(len(complete), 67)
+        self.assertEqual(len(set(complete)), 67)
+
+    def test_prefix_input_identity_controls_are_mandatory(self):
+        actual = [case for case in gate.expected('source')
+                  if case.startswith('test_input_identity.InputIdentity.')]
+        self.assertEqual(len(actual), 6)
+        receipt = copy.deepcopy(self.receipt)
+        receipt['executed_ids'] = [case for case in receipt['executed_ids'] if case not in actual]
+        with self.assertRaises(ValueError):
+            self.check(receipt)
+
+    def test_stale_maintained_input_count_is_rejected(self):
+        count = gate.COUNTS['test_input_identity']
+        try:
+            gate.COUNTS['test_input_identity'] = count - 1
+            with self.assertRaisesRegex(ValueError, 'maintained case inventory differs'):
+                gate.expected('source')
+        finally:
+            gate.COUNTS['test_input_identity'] = count
 
     def test_missing_executed_case_is_rejected(self):
         self.receipt['executed_ids'].pop()
