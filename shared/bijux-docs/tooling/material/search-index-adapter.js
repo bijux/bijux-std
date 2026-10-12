@@ -42,7 +42,9 @@
     const site = new URL("../", indexURL);
     for (const doc of index.docs) {
       if (!doc || typeof doc.location !== "string" || typeof doc.title !== "string" || typeof doc.text !== "string") return false;
+      if (doc.tags !== undefined && (!Array.isArray(doc.tags) || doc.tags.length > 50000 || !doc.tags.every(tag => typeof tag === "string"))) return false;
       characters += doc.location.length + doc.title.length + doc.text.length;
+      if (doc.tags) characters += doc.tags.length + doc.tags.reduce((total, tag) => total + tag.length, 0);
       if (characters > 40 * 1024 * 1024) return false;
       let target;
       try { target = new URL(doc.location, site); } catch (_) { return false; }
@@ -112,7 +114,7 @@
             try { index = JSON.parse(xhr.responseText); } catch (_) { unavailable("invalid-index"); return; }
             if (!admitted(index, indexURL)) { unavailable("invalid-index"); return; }
             try {
-              index = { ...index, docs: index.docs.map(doc => ({ ...doc, title: inertMarkup(doc.title), text: inertMarkup(doc.text) })) };
+              index = { ...index, docs: index.docs.map(doc => ({ ...doc, title: inertMarkup(doc.title), text: inertMarkup(doc.text), ...(doc.tags !== undefined ? { tags: doc.tags.map(inertMarkup) } : {}) })) };
             } catch (_) { unavailable("invalid-index"); return; }
             if (Date.now() - startedAt >= totalDeadline) { unavailable("timeout"); return; }
             settled = true; cached = true;

@@ -29,13 +29,16 @@ rejects the whole corpus with `invalid-index`; ordinary Retry can admit correcte
 source data. Relative locations, queries and encoded fragments retain their
 original strings for native result links.
 
-Title and snippet markup is parsed in detached template contents before native
+Title, snippet and optional tag-label markup is parsed in detached template contents before native
 worker setup. Only explicit presentational HTML elements remain, with every
 attribute removed. Resource, executable, template and foreign-namespace subtrees
 are discarded; other HTML elements unwrap their readable children. Comments are
 removed and each field is limited to 100,000 parsed elements. Parser failure
 refuses the corpus rather than passing unexamined markup into native rendering.
 Native scoring, highlighting and safe presentational text remain native-owned.
+Optional tags must be an array of strings with at most 50,000 labels; label
+characters and array entries count toward the existing total character budget.
+Malformed tags refuse the whole corpus with the same truthful Retry behavior.
 
 The shared outer Observable stays alive after index failure. Both native
 subscribers receive the same admitted data after ordinary retry. The error path

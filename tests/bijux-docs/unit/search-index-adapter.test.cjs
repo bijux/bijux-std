@@ -52,3 +52,10 @@ test('same-site relative absolute anchor and query locations preserve exact nati
 test('missing inert parser for markup is a truthful retriable index refusal',()=>{
  const f=fixture(),s=start(f),unsafe=index();unsafe.docs[0].text='<p>Author text</p>';f.requests[0].resolve(unsafe);assert.equal(f.window.bijuxSearchIndex.state.reason,'invalid-index');assert.deepEqual(f.values,[]);assert.deepEqual(f.errors,[]);f.retry();f.requests[1].resolve(index());assert.equal(f.values.length,1);s.unsubscribe();
 });
+
+test('malformed optional tags and oversized tag arrays reject the whole corpus before native delivery and allow corrected Retry',()=>{
+ for(const tags of ['tag',null,[42],[["tag"]],{},Array(50001).fill('')]){
+  const f=fixture(),s=start(f),bad=index();bad.docs[0].tags=tags;f.requests[0].resolve(bad);assert.equal(f.window.bijuxSearchIndex.state.reason,'invalid-index');assert.deepEqual(f.values,[]);assert.deepEqual(f.errors,[]);assert.equal(f.timers.size,0);
+  f.retry();const valid=index();valid.docs[0].tags=['ordinary tag','second & label'];f.requests[1].resolve(valid);assert.deepEqual(f.values,[valid]);s.unsubscribe();
+ }
+});
