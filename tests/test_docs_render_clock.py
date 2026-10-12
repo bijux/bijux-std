@@ -75,6 +75,15 @@ class CommittedRenderClockTests(unittest.TestCase):
                 self.assertFalse(IDENTITY.render_epoch_matches(malformed, expected))
         self.assertTrue(IDENTITY.render_epoch_matches(expected, expected))
 
+    def test_clock_exit_refuses_a_changed_source_revision_and_restores_environment(self):
+        with mock.patch.dict(os.environ, {}, clear=True):
+            with self.assertRaisesRegex(ValueError, 'differs from HEAD'):
+                with IDENTITY.publication_clock(self.root, self.sha):
+                    subprocess.run(['git', '-C', str(self.root), '-c', 'user.name=Fixture',
+                                    '-c', 'user.email=fixture@example.invalid', 'commit', '--allow-empty',
+                                    '-qm', 'another revision'], check=True)
+            self.assertNotIn('SOURCE_DATE_EPOCH', os.environ)
+
 
 if __name__ == '__main__':
     unittest.main()

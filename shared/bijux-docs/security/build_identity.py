@@ -90,6 +90,8 @@ def publication_clock(root: Path, source_sha: str):
         yield epoch
         require(os.environ.get("SOURCE_DATE_EPOCH") == expected,
                 "Render clock: native rendering changed the committed epoch")
+        require(source_render_epoch(root, source_sha) == epoch,
+                "Render clock: committed source changed during rendering")
     finally:
         if previous is None:
             os.environ.pop("SOURCE_DATE_EPOCH", None)

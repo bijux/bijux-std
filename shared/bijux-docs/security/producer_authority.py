@@ -206,11 +206,11 @@ class PreparedProducer:
         require(actual==self.capabilities,'Producer: callback/source/history changed after reconstruction')
 
 
-def render(configuration, *, catalogue=False, source_root=None):
+def render(configuration, *, catalogue=False, source_root=None, source_sha=None):
     """Use native public lifecycle for source-backed catalogue event ownership."""
     if source_root is not None:
         identity = module(Path(__file__).with_name('build_identity.py'))
-        source_sha = identity.git(source_root, 'rev-parse', 'HEAD')
+        require(isinstance(source_sha, str), 'Producer: captured source SHA required for native render clock')
         with identity.publication_clock(source_root, source_sha):
             return render(configuration, catalogue=catalogue)
     from mkdocs.commands.build import build
@@ -254,7 +254,7 @@ def report_source(root, config_name, shared, configuration, *, source_recipe=Non
 
 
 def prepare(root: Path, config_name: str, shared: Path, templates: Path, output: Path, site_dir: Path,
-            *, publication_scope=False, source_recipe=None, reader_owner=None, interactive_report_owner=None):
+            *, publication_scope=False, source_recipe=None, reader_owner=None, interactive_report_owner=None, source_sha=None):
     """Run only under the trusted renderer, with owner-selected config and frozen source.
 
     Production callers must independently verify the clean source checkpoint before
@@ -304,7 +304,8 @@ def prepare(root: Path, config_name: str, shared: Path, templates: Path, output:
                           'site_dir': output.relative_to(root).as_posix(),
                           'selected_site_dir': site_dir.relative_to(root).as_posix()}
     configuration.site_dir = str(output)
-    render(configuration, catalogue=catalogue is not None, source_root=root if publication_scope else None)
+    render(configuration, catalogue=catalogue is not None, source_root=root if publication_scope else None,
+           source_sha=source_sha if publication_scope else None)
     capabilities.verify_outputs(output,capability_inputs)
     redirects=module(shared/'security/redirects.py')
     plan=redirects.normalize_redirects(configuration,output,configuration.site_url,write=False,source_root=root if catalogue else None)
@@ -479,7 +480,7 @@ def verify_publication(root: Path, site: Path, shared: Path, build_receipt: dict
     with tempfile.TemporaryDirectory(dir=parent) as scratch:
         prepared = prepare(root, record['configuration']['path'] if record else checkpoint['config']['path'], shared, Path(material.__file__).parent/'templates', Path(scratch)/'site', site, publication_scope=True, source_recipe=source_recipe,
                            reader_owner=Path(csp_receipt["embedded"]["descriptor_path"]).relative_to(root).as_posix() if csp_receipt.get("embedded") and interactive_owner is None else None,
-                           interactive_report_owner=interactive_owner)
+                           interactive_report_owner=interactive_owner, source_sha=checkpoint['repository_source']['sha'])
         require(prepared.config_sha == build_receipt['resolved_config_sha256'], 'Producer: resolved config differs from independent actual renderer')
         report = verify(site, prepared, build_receipt['renderer'], csp_receipt, checkpoint['site_url'], completed_build=build_receipt, checkpoint=checkpoint)
         identity.verify_source(root, checkpoint)
