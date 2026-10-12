@@ -6,6 +6,8 @@ This file records notable repository-level changes for `bijux-std`.
 
 ### Unreleased
 
+Parse native publication references once after each HTML page has matched the independent source build byte for byte. Preserve complete native configuration, executable, worker and index checks, fresh renderer admission, and source and output mutation refusals.
+
 Allow the complete manual documentation build, admission and independent verification to run within a 60-minute build job. Keep the 10-minute Pages deployment budget and strict frontend job limits unchanged. See [#292](https://github.com/bijux/bijux-std/pull/292).
 
 Allow explicit governance-only standards adoption to retain independently accepted documentation bytes and their exact source pin. Masterclass keeps its complementary program runtime baseline while refreshing the manual publisher. Verify the paired component sources before and after the complete retained documentation checks. See [#292](https://github.com/bijux/bijux-std/pull/292).
