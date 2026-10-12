@@ -4,6 +4,7 @@ const path = require("node:path");
 const { test, expect } = require("@playwright/test");
 const measure = require("./contrast-targets/measurement");
 const focusBoundary = require("./contrast-targets/focus-boundary");
+const gradient = require("./contrast-targets/gradient");
 
 test.beforeEach(async ({ browser }, info) => {
   info.annotations.push({ type: "browser-version", description: browser.version() });
@@ -302,7 +303,9 @@ for (const [scheme, expectedScheme] of [["light", "default"], ["dark", "slate"]]
     await expect(page.locator(".md-search-result__link:visible").first()).toBeVisible({ timeout: 12_000 });
     const compatibility = info.project.name.endsWith("-phone")
       ? await compatibilityControls(page, browserName, info, { scheme }) : null;
-    await receipt(info, { scheme: expectedScheme, observations, compatibility, errors, browserName });
+    const gradientSamples = info.project.name.endsWith("-desktop")
+      ? await gradient.qualify(page, expectedScheme) : null;
+    await receipt(info, { scheme: expectedScheme, observations, compatibility, gradientSamples, errors, browserName });
     expect(errors).toEqual([]);
   });
 }
