@@ -41,6 +41,7 @@ def pins():
             re.findall(r'^([A-Za-z0-9_.-]+)==([^\s]+)', LOCK.read_text(), re.M)}
 
 
+@helpers.COSTS.measured('runtime_inventory')
 def runtime():
     actual = {re.sub(r'[-_.]+', '-', distribution.metadata['Name']).lower(): distribution.version
               for distribution in importlib.metadata.distributions()}

@@ -11,6 +11,7 @@ from pathlib import Path
 import shutil
 import subprocess
 import xml.etree.ElementTree as ET
+from types import ModuleType
 
 ROOT = Path(__file__).resolve().parents[3]
 TESTS = ROOT / 'tests/bijux-docs'
@@ -21,6 +22,10 @@ PARTITIONS = importlib.util.module_from_spec(PARTITIONS_SPEC)
 PARTITIONS_SPEC.loader.exec_module(PARTITIONS)
 GROUPS, ENGINES, SUITES = PARTITIONS.GROUPS, PARTITIONS.ENGINES, PARTITIONS.SUITES
 PERSISTED_SUITE = "persisted-reader-history"
+_COST_SOURCE = TESTS / 'execution/costs/observations.py'
+COSTS = ModuleType('bijux_browser_operation_costs')
+COSTS.__file__ = str(_COST_SOURCE)
+exec(compile(_COST_SOURCE.read_bytes(), str(_COST_SOURCE), 'exec'), COSTS.__dict__)
 
 
 def partition_plan() -> dict:
@@ -29,6 +34,7 @@ def partition_plan() -> dict:
 
 
 
+@COSTS.measured('receipt_write')
 def write_json(path: Path, data: dict) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(data, indent=2) + '\n')
@@ -137,7 +143,8 @@ def install_browser_runtime() -> None:
     else:
         link.symlink_to(runtime / 'node_modules', target_is_directory=True)
     env = dict(os.environ, NPM_CONFIG_CACHE=str(ARTIFACTS / 'npm-cache'))
-    subprocess.run(['npm', '--prefix', str(runtime), 'ci'], cwd=ROOT, env=env, check=True)
+    COSTS.measured('npm_installation')(subprocess.run)(
+        ['npm', '--prefix', str(runtime), 'ci'], cwd=ROOT, env=env, check=True)
 
 
 def run(group: str, engine: str) -> None:

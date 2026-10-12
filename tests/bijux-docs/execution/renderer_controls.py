@@ -240,6 +240,7 @@ def validate_runtime(runtime: dict) -> None:
         raise ValueError('Renderer Node installed package-lock identity is missing')
 
 
+@HELPERS.COSTS.measured('runtime_inventory')
 def runtime_identity(node: Path) -> dict:
     profiles = load('renderer_control_profiles', ROOT / 'shared/bijux-docs/security/renderer_profiles.py')
     return {'python': HELPERS.runtime_identity(), 'physical_python': profiles.environment_snapshot(),

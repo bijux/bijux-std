@@ -9,7 +9,7 @@ import json
 from pathlib import Path
 import re
 
-BASELINE_JOBS = {'std / standard', 'std / contracts', 'std / report'}
+BASELINE_JOBS = {'std / standard', 'std / contracts', 'std / report', 'std / input plan'}
 
 
 def require(condition: bool, message: str) -> None:
@@ -213,10 +213,16 @@ def qualify_latest(observation, *, groups: dict, engines: tuple | list,
 def registry_digests(registry_path: Path) -> dict[str, str]:
     names = ('browser_gate.py', 'browser_partitions.py', 'browser_partitions.json', 'renderer_controls.py', 'node_events.cjs', 'persisted_reader.py', 'workflow_artifacts.py', 'workflow_jobs.py', 'workflow_lineage.py', 'workflow_collection.py', 'workflow_controllers.py')
     digests = {name: hashlib.sha256(registry_path.with_name(name).read_bytes()).hexdigest() for name in names}
+    for name in ('publication_gate.py', 'costs/__init__.py', 'costs/observations.py',
+                 'input_planning/__init__.py', 'input_planning/ownership.py', 'input_planning/source.py',
+                 'input_planning/qualification.py', 'input_planning/cli.py'):
+        digests[name] = hashlib.sha256((registry_path.parent / name).read_bytes()).hexdigest()
     for name in ('playwright.persisted-reader-history.config.js', 'ui/generated-specs/persisted-reader-history.spec.js'):
         digests[name] = hashlib.sha256((registry_path.parent.parent / name).read_bytes()).hexdigest()
     catalogue = registry_path.parent.parent / 'catalogue/execution.py'
     digests['catalogue/execution.py'] = hashlib.sha256(catalogue.read_bytes()).hexdigest()
+    for name in ('reporting/identity.js', 'reporting/inventory-reporter.js', 'generated/strict-reporter.js'):
+        digests[name] = hashlib.sha256((registry_path.parent.parent / name).read_bytes()).hexdigest()
     return digests
 
 

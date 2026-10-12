@@ -2,7 +2,30 @@
 const fs = require("node:fs"), path = require("node:path"), crypto = require("node:crypto"), cp = require("node:child_process");
 const root = path.resolve(__dirname, "../../..");
 const digest = bytes => crypto.createHash("sha256").update(bytes).digest("hex");
-function sourceIdentity() {
+function operationCost(operation, procedure) {
+  if (!["source_inventory", "receipt_write"].includes(operation)) throw new Error("Unknown native operation clock");
+  const started = process.hrtime.bigint();
+  let status = "failed";
+  try { const result = procedure(); status = "complete"; return result; }
+  finally {
+    const owner = process.env.BIJUX_COST_OWNER || "local-source-observation";
+    if (!/^[a-zA-Z0-9][a-zA-Z0-9-]{0,200}$/.test(owner)) throw new Error("Operation cost owner must be a bounded execution role");
+    const elapsed = Number(process.hrtime.bigint() - started) / 1e9;
+    const record = { schema: 1, operation, seconds: elapsed, wall_seconds: elapsed, nested_seconds: 0, status, owner,
+      workflow_run_id: process.env.GITHUB_RUN_ID || null, workflow_attempt: process.env.GITHUB_RUN_ATTEMPT || null,
+      workflow_checkout: process.env.GITHUB_SHA || null, pid: process.pid,
+      scope: "Cost observation only; not source, runtime or execution authority." };
+    const directory = path.join(root, "artifacts/bijux-docs/cost-observations");
+    fs.mkdirSync(directory, { recursive: true });
+    const output = path.join(directory, `${owner}.jsonl`);
+    if (fs.existsSync(output) && fs.lstatSync(output).isSymbolicLink()) throw new Error("Operation journal cannot use a linked output");
+    const body = JSON.stringify(record);
+    fs.appendFileSync(output, body + "\n");
+    process.stderr.write("Bijux operation cost: " + body + "\n");
+  }
+}
+function sourceIdentity() { return operationCost("source_inventory", sourceInventory); }
+function sourceInventory() {
   let head = null, files;
   try {
     const owner = cp.execFileSync("git", ["rev-parse", "--show-toplevel"], { cwd: root, encoding: "utf8" }).trim();
@@ -61,4 +84,4 @@ function fixtureIdentity(options) {
     configurations_sha256, source_files_sha256: digest(JSON.stringify(manifest.source_files)), site_files_sha256: digest(JSON.stringify(manifest.site_files)) };
 }
 function cases(suite) { return suite.allTests().map(test => ({ id: test.id, project: test.parent.project().name, title: test.titlePath().slice(3).join(" › "), file: path.relative(root, test.location.file), line: test.location.line })); }
-module.exports = { digest, sourceIdentity, fixtureIdentity, configurationIdentity, cases };
+module.exports = { digest, sourceIdentity, fixtureIdentity, configurationIdentity, cases, operationCost };

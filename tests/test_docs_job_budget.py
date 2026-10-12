@@ -191,12 +191,27 @@ class FrontendJobBudgetTests(unittest.TestCase):
             (catalogue / 'execution.py').write_text("GROUPS = {'source': ('test_source',)}\n")
             for name in ('browser_gate.py', 'browser_partitions.py', 'browser_partitions.json', 'renderer_controls.py', 'node_events.cjs', 'persisted_reader.py', 'workflow_artifacts.py', 'workflow_jobs.py', 'workflow_lineage.py', 'workflow_collection.py', 'workflow_controllers.py'):
                 (root / name).write_text(name)
+            dependencies = ('publication_gate.py', 'costs/__init__.py', 'costs/observations.py',
+                'input_planning/__init__.py', 'input_planning/ownership.py', 'input_planning/source.py',
+                'input_planning/qualification.py', 'input_planning/cli.py')
+            for name in dependencies:
+                path = root / name
+                path.parent.mkdir(parents=True, exist_ok=True)
+                path.write_text(name)
+            (owner / 'reporting').mkdir()
+            (owner / 'reporting/identity.js').write_text('native source identity')
+            (owner / 'reporting/inventory-reporter.js').write_text('native inventory receipt')
+            (owner / 'generated').mkdir()
+            (owner / 'generated/strict-reporter.js').write_text('native browser receipt')
             for name in ('playwright.persisted-reader-history.config.js', 'ui/generated-specs/persisted-reader-history.spec.js'):
                 path = owner / name
                 path.parent.mkdir(parents=True, exist_ok=True)
                 path.write_text(name)
             before = BUDGET.registry_digests(root / 'browser_gate.py')
-            self.assertEqual(set(before), {'browser_gate.py', 'browser_partitions.py', 'browser_partitions.json', 'renderer_controls.py', 'node_events.cjs', 'persisted_reader.py', 'workflow_artifacts.py', 'workflow_jobs.py', 'workflow_lineage.py', 'workflow_collection.py', 'workflow_controllers.py', 'playwright.persisted-reader-history.config.js', 'ui/generated-specs/persisted-reader-history.spec.js', 'catalogue/execution.py'})
+            self.assertEqual(set(before), {'browser_gate.py', 'browser_partitions.py', 'browser_partitions.json', 'renderer_controls.py', 'node_events.cjs', 'persisted_reader.py', 'workflow_artifacts.py', 'workflow_jobs.py', 'workflow_lineage.py', 'workflow_collection.py', 'workflow_controllers.py', 'playwright.persisted-reader-history.config.js', 'ui/generated-specs/persisted-reader-history.spec.js', 'catalogue/execution.py', 'reporting/identity.js', 'reporting/inventory-reporter.js', 'generated/strict-reporter.js'} | set(dependencies))
+            for name in dependencies:
+                (root / name).write_text('changed owned observation or planning source')
+                self.assertNotEqual(before[name], BUDGET.registry_digests(root / 'browser_gate.py')[name])
             (root / 'browser_partitions.json').write_text('changed declaration')
             after = BUDGET.registry_digests(root / 'browser_gate.py')
             self.assertNotEqual(before['browser_partitions.json'], after['browser_partitions.json'])
