@@ -23,6 +23,20 @@ eight-second no-byte-progress bound, response admission and current-attempt chec
 original index request is never subscribed because its `shareReplay(1)` retains
 the underlying transport after downstream unsubscribe.
 
+Result locations must resolve to the index endpoint's exact site base, origin
+and HTTP scheme without credentials. A single unsafe or out-of-site destination
+rejects the whole corpus with `invalid-index`; ordinary Retry can admit corrected
+source data. Relative locations, queries and encoded fragments retain their
+original strings for native result links.
+
+Title and snippet markup is parsed in detached template contents before native
+worker setup. Only explicit presentational HTML elements remain, with every
+attribute removed. Resource, executable, template and foreign-namespace subtrees
+are discarded; other HTML elements unwrap their readable children. Comments are
+removed and each field is limited to 100,000 parsed elements. Parser failure
+refuses the corpus rather than passing unexamined markup into native rendering.
+Native scoring, highlighting and safe presentational text remain native-owned.
+
 The shared outer Observable stays alive after index failure. Both native
 subscribers receive the same admitted data after ordinary retry. The error path
 announces availability without emitting fabricated empty data or terminating

@@ -10,10 +10,76 @@ async function result(page) {
   await nativeAnswer(page);
 }
 
+test("generated hostile index records remain inert in the actual native search renderer", async ({ page }, info) => {
+  const token = "bijuxhostilesink", requests = [], corpora = [], observations = [];
+  let unsafeLocation = null;
+  page.on("request", request => {
+    if (new URL(request.url()).origin !== new URL(info.project.use.baseURL).origin) requests.push(request.url());
+  });
+  await page.addInitScript(() => { window.bijuxSearchAttack = 0; });
+  await page.route("**/search/search_index.json", async route => {
+    const response = await route.fetch(), index = await response.json();
+    const intended = index.docs.find(doc => doc.location.includes("reading/"));
+    expect(intended, "Hostile records derive from the generated reader's actual index schema").toBeTruthy();
+    index.docs = [{ ...intended,
+      title: `<span onclick='window.bijuxSearchAttack++'>${token} intended title</span><img src='https://hostile.invalid/image' onerror='window.bijuxSearchAttack++'>`,
+      text: `<p>${token} inert reader text <code>intended_code</code></p><svg onload='window.bijuxSearchAttack++'><foreignObject><p>foreign content</p></foreignObject></svg><math><mtext><img src=x onerror='window.bijuxSearchAttack++'></mtext></math><template><img src=x onerror='window.bijuxSearchAttack++'></template><script>window.bijuxSearchAttack++</script><iframe src='https://hostile.invalid/frame'></iframe>`,
+    }];
+    if (unsafeLocation) index.docs.push({ ...intended, location: unsafeLocation, title: `${token} unsafe destination`, text: token });
+    corpora.push(index);
+    await route.fulfill({ response, json: index });
+  });
+  const opener = page.locator(".md-header__button[for='__search']"), results = page.locator(".md-search-result");
+  const open = async () => {
+    await phone(page, "/fixtures/native-header/");
+    await opener.click();
+    await expect(query(page)).toBeFocused();
+    await page.keyboard.insertText(token);
+  };
+  const inertAnswer = async () => {
+    const answer = page.locator(".md-search-result__link:visible").filter({ hasText: "inert reader text" });
+    await expect(answer).toBeVisible({ timeout: 12_000 });
+    await expect(results.locator("img, svg, math, template, script, iframe, [onclick], [onerror], [onload]")).toHaveCount(0);
+    const state = await results.evaluate(node => ({ html: node.innerHTML, attack: window.bijuxSearchAttack,
+      links: [...node.querySelectorAll("a[href]")].map(link => ({ href: link.href, authored: link.getAttribute("href"), text: link.textContent })) }));
+    expect(state.attack).toBe(0);
+    expect(state.links.every(link => !/^(?:javascript|data|vbscript):/i.test(link.authored))).toBe(true);
+    expect(state.links.some(link => link.text.includes("unsafe destination"))).toBe(false);
+    await expect(answer.locator("mark").first()).toHaveText(token);
+    await expect(answer.locator("code")).toHaveText("intended_code");
+    observations.push(state);
+    return answer;
+  };
+  try {
+    await open();
+    const answer = await inertAnswer();
+    await answer.click();
+    await expect(page).toHaveURL(/\/reading\/(?:\?.*)?$/);
+    await expect(page.locator("main h1")).toHaveText(/^Rich reading reference/);
+    for (const location of ["javascript:window.bijuxSearchAttack++", "data:text/html,<script>parent.bijuxSearchAttack++</script>", "https://hostile.invalid/external", "/bijux-atlas/"]) {
+      unsafeLocation = location;
+      await open();
+      await expect(page.locator(".bijux-search-recovery [role='status']")).toContainText("Search is unavailable", { timeout: 12_000 });
+      await expect(page.locator(".md-search-result__link:visible")).toHaveCount(0);
+      expect(await page.evaluate(() => window.bijuxSearchAttack)).toBe(0);
+      unsafeLocation = null;
+      const retry = page.getByRole("button", { name: "Retry search", exact: true });
+      for (let attempt = 0; attempt < 12 && !await retry.evaluate(node => node === document.activeElement); attempt++) await page.keyboard.press("Tab");
+      await expect(retry).toBeFocused();
+      await page.keyboard.press("Enter");
+      await inertAnswer();
+    }
+    expect(requests).toEqual([]);
+  } finally {
+    await info.attach("hostile-native-search-sink", { body: Buffer.from(JSON.stringify({ corpora, observations, requests, source: "Actual generated index plus source-authored hostile records; shipped native worker and result renderer", refusal: "Whole unsafe corpus with truthful keyboard Retry; no silent record filtering" }, null, 2)), contentType: "application/json" });
+  }
+});
+
 test("paste-like text insertion produces results and reset clears query", async ({ page }, info) => {
   await search(page);
   await page.keyboard.insertText("resilient navigation");
   await result(page);
+  await info.attach("native-search-ranking-and-highlight", { body: Buffer.from(JSON.stringify(await page.locator(".md-search-result__article").evaluateAll(nodes => nodes.map(node => ({ score: node.dataset.mdScore, title: node.querySelector("h1,h2")?.innerHTML, text: node.textContent, href: node.closest("a")?.getAttribute("href") }))), null, 2)), contentType: "application/json" });
   await page.locator("button[type='reset']").click();
   await expect(query(page)).toHaveValue("");
   await expect(page.locator(".md-search-result__meta")).toBeInViewport();
