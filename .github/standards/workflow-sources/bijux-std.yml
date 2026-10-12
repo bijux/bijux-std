@@ -456,6 +456,8 @@ jobs:
           path: |
             artifacts/bijux-docs/browser-fixtures.tar.gz
             artifacts/bijux-docs/browser-fixtures.sha256
+            artifacts/bijux-docs/browser-packages.tar.gz
+            artifacts/bijux-docs/browser-packages.json
             artifacts/bijux-docs/producer-envelope.json
             artifacts/bijux-docs/inventories
             artifacts/bijux-docs/renderer-source-observation.json

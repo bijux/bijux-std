@@ -106,7 +106,7 @@ class FixtureTransferTests(unittest.TestCase):
         with tempfile.TemporaryDirectory(dir=ROOT / 'artifacts') as directory:
             root = Path(directory)
             observation = {'source': {'sha': 'a' * 40}, 'verification_only': True, 'admission_created': False}
-            paths = ['browser-fixtures.tar.gz', 'renderer-source-observation.json'] + [f'inventories/{suite}.json' for suite in (*GATE.SUITES, GATE.PERSISTED_SUITE)]
+            paths = ['browser-fixtures.tar.gz', 'browser-packages.tar.gz', 'browser-packages.json', 'renderer-source-observation.json'] + [f'inventories/{suite}.json' for suite in (*GATE.SUITES, GATE.PERSISTED_SUITE)]
             for name in paths:
                 path = root / name
                 path.parent.mkdir(parents=True, exist_ok=True)

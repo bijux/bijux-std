@@ -215,7 +215,8 @@ def registry_digests(registry_path: Path) -> dict[str, str]:
     digests = {name: hashlib.sha256(registry_path.with_name(name).read_bytes()).hexdigest() for name in names}
     for name in ('publication_gate.py', 'costs/__init__.py', 'costs/observations.py',
                  'input_planning/__init__.py', 'input_planning/ownership.py', 'input_planning/source.py',
-                 'input_planning/qualification.py', 'input_planning/cli.py'):
+                 'input_planning/qualification.py', 'input_planning/cli.py',
+                 'runtime_transport/__init__.py', 'runtime_transport/identity.py', 'runtime_transport/archive.py'):
         digests[name] = hashlib.sha256((registry_path.parent / name).read_bytes()).hexdigest()
     for name in ('playwright.persisted-reader-history.config.js', 'ui/generated-specs/persisted-reader-history.spec.js'):
         digests[name] = hashlib.sha256((registry_path.parent.parent / name).read_bytes()).hexdigest()

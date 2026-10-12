@@ -111,7 +111,7 @@ def producer_declaration(producer) -> dict:
     digests = envelope.get('artifact_digests')
     partitions = json.loads((EXECUTION / 'browser_partitions.json').read_text())
     suites = {entry['suite'] for entries in partitions['groups'].values() for entry in entries} | {'persisted-reader-history'}
-    expected = {f'inventories/{suite}.json' for suite in suites} | {'browser-fixtures.tar.gz', 'renderer-source-observation.json'}
+    expected = {f'inventories/{suite}.json' for suite in suites} | {'browser-fixtures.tar.gz', 'browser-packages.tar.gz', 'browser-packages.json', 'renderer-source-observation.json'}
     require(isinstance(digests, dict) and set(digests) == expected, 'Producer envelope requires exact member digests')
     for name, digest in digests.items():
         require(producer.files.get(name) == digest, 'Producer envelope member differs from admitted body')
@@ -192,7 +192,7 @@ class Collection:
         suites = {entry['suite'] for entries in partitions['groups'].values() for entry in entries} | {'persisted-reader-history'}
         inventory_members = {f'inventories/{suite}{suffix}' for suite in suites for suffix in ('.json', '.json.contract.json')}
         producer_required = inventory_members | {'producer-envelope.json', 'renderer-source-observation.json',
-                                                'browser-fixtures.tar.gz', 'browser-fixtures.sha256'}
+                                                'browser-fixtures.tar.gz', 'browser-fixtures.sha256', 'browser-packages.tar.gz', 'browser-packages.json'}
         require(producer_required <= set(self.producer.files), 'Producer source-owned inventory is incomplete')
         for role, item in self.inputs.items():
             spec = self._roles[role]
@@ -204,7 +204,7 @@ class Collection:
                     # Producer is the sole root owner; consumer copies never
                     # acquire authority by colliding with it.
                     require(name in ('producer-envelope.json', 'renderer-source-observation.json',
-                                     'browser-fixtures.tar.gz', 'browser-fixtures.sha256')
+                                     'browser-fixtures.tar.gz', 'browser-fixtures.sha256', 'browser-packages.tar.gz', 'browser-packages.json')
                             or name in inventory_members
                             or (path.parts[0] in ('generated', 'contrast-generated') and len(path.parts) == 2
                                 and re.fullmatch(r'build-[a-z][a-z0-9-]*\.log', path.name)),

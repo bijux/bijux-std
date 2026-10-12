@@ -36,6 +36,7 @@ class WorkflowCollectionTests(unittest.TestCase):
         self.producer_files = {f'inventories/{suite}{suffix}': b'{}' for suite in suites
                                for suffix in ('.json', '.json.contract.json')}
         self.producer_files.update({'browser-fixtures.tar.gz': b'archive', 'browser-fixtures.sha256': b'hash\n',
+                                    'browser-packages.tar.gz': b'packages', 'browser-packages.json': b'{}',
                                     'renderer-source-observation.json': b'{}'})
         self.envelope = {'source_head': self.identity['checkout_sha'], 'workflow_run_id': '123', 'workflow_attempt': '2',
                          'artifact_digests': {name: hashlib.sha256(data).hexdigest() for name, data in self.producer_files.items()

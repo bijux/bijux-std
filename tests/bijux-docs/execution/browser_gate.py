@@ -10,6 +10,8 @@ import os
 from pathlib import Path
 import shutil
 import subprocess
+import tempfile
+import time
 import xml.etree.ElementTree as ET
 from types import ModuleType
 
@@ -64,6 +66,14 @@ def fixture_transport():
     return module
 
 
+def runtime_transport():
+    path = TESTS / 'execution/runtime_transport/archive.py'
+    module = ModuleType('bijux_installed_runtime_transport')
+    module.__file__ = str(path)
+    exec(compile(path.read_bytes(), str(path), 'exec'), module.__dict__)
+    return module
+
+
 def prepare() -> None:
     if any(name in os.environ for name in ('BIJUX_UI_BROWSER_ENGINE', 'BIJUX_UI_PROJECTS', 'BIJUX_UI_PROFILE')):
         raise ValueError('Canonical inventory must not select projects')
@@ -77,7 +87,13 @@ def prepare() -> None:
     receipt = fixture_transport().pack(ARTIFACTS, fixture_roots(), archive)
     print('Fixture transport: ' + json.dumps(receipt, sort_keys=True))
     (ARTIFACTS / 'browser-fixtures.sha256').write_text(hashlib.sha256(archive.read_bytes()).hexdigest() + '\n')
-    paths = [archive, ARTIFACTS / 'renderer-source-observation.json'] + [inventory / f'{suite}.json' for suite in (*SUITES, PERSISTED_SUITE)]
+    runtime_archive = ARTIFACTS / 'browser-packages.tar.gz'
+    started = time.monotonic()
+    runtime_receipt = runtime_transport().pack(ARTIFACTS / 'node-runtime', TESTS, runtime_archive)
+    print('Browser package pack cost: ' + json.dumps({'seconds': time.monotonic() - started,
+          'archive_bytes': runtime_receipt['archive_bytes'], 'scope': 'Complete inventory and compression; cost only'}))
+    write_json(ARTIFACTS / 'browser-packages.json', runtime_receipt)
+    paths = [archive, runtime_archive, ARTIFACTS / 'browser-packages.json', ARTIFACTS / 'renderer-source-observation.json'] + [inventory / f'{suite}.json' for suite in (*SUITES, PERSISTED_SUITE)]
     write_json(ARTIFACTS / 'producer-envelope.json', {
         'source_head': subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=ROOT, text=True).strip(),
         'workflow_run_id': os.environ.get('GITHUB_RUN_ID'),
@@ -106,7 +122,7 @@ def verify_producer_envelope(admission=None) -> dict:
         raise ValueError('Producer workflow/candidate identity mismatch')
     if receipt.get('partition_registry_sha256') != hashlib.sha256(PARTITIONS.REGISTRY_PATH.read_bytes()).hexdigest():
         raise ValueError('Producer browser partition registry mismatch')
-    paths = ['browser-fixtures.tar.gz', 'renderer-source-observation.json'] + [f'inventories/{suite}.json' for suite in (*SUITES, PERSISTED_SUITE)]
+    paths = ['browser-fixtures.tar.gz', 'browser-packages.tar.gz', 'browser-packages.json', 'renderer-source-observation.json'] + [f'inventories/{suite}.json' for suite in (*SUITES, PERSISTED_SUITE)]
     if set(receipt.get('artifact_digests', {})) != set(paths):
         raise ValueError('Producer evidence inventory mismatch')
     for name in paths:
@@ -131,8 +147,34 @@ def unpack() -> None:
 
 def install_browser_runtime() -> None:
     runtime = ARTIFACTS / 'node-runtime'
+    decision = {'schema': 1, 'status': 'fresh_install', 'browser_execution_required': True}
+    archive, receipt = ARTIFACTS / 'browser-packages.tar.gz', ARTIFACTS / 'browser-packages.json'
+    # Only an empty destination is eligible. Existing local dependencies never
+    # become retained authority and are not removed by archive reconstruction.
+    if not runtime.exists() and not runtime.is_symlink() and archive.is_file() and receipt.is_file():
+        try:
+            transport = runtime_transport()
+            declaration = transport.IDENTITY.decoded(receipt.read_bytes())
+            # Validate and reconstruct in an owned sibling before installing a
+            # complete tree. Refused transports leave the destination untouched.
+            with tempfile.TemporaryDirectory(prefix='npm-transport-', dir=ARTIFACTS) as folder:
+                staged = Path(folder) / 'runtime'
+                started = time.monotonic()
+                transport.unpack(archive, declaration, TESTS, staged)
+                decision['verification_and_reconstruction_seconds'] = time.monotonic() - started
+                staged.rename(runtime)
+            decision.update(status='transported', archive_sha256=declaration['archive_sha256'],
+                            members_sha256=declaration['members_sha256'])
+        except (ValueError, OSError, EOFError, KeyError, TypeError, json.JSONDecodeError) as error:
+            decision['reason'] = str(error)
+    else:
+        decision['reason'] = 'Transport missing or runtime destination already exists'
+    if any(path.is_symlink() for path in (runtime, *runtime.parents)):
+        raise ValueError('Runtime destination has a symlink ancestor')
     runtime.mkdir(parents=True, exist_ok=True)
     for name in ('package.json', 'package-lock.json'):
+        if (runtime / name).is_symlink():
+            raise ValueError('Runtime dependency manifest is a symlink')
         shutil.copyfile(TESTS / name, runtime / name)
     link = TESTS / 'node_modules'
     if link.is_symlink():
@@ -142,9 +184,12 @@ def install_browser_runtime() -> None:
         raise ValueError('Preserve existing browser dependencies')
     else:
         link.symlink_to(runtime / 'node_modules', target_is_directory=True)
-    env = dict(os.environ, NPM_CONFIG_CACHE=str(ARTIFACTS / 'npm-cache'))
-    COSTS.measured('npm_installation')(subprocess.run)(
-        ['npm', '--prefix', str(runtime), 'ci'], cwd=ROOT, env=env, check=True)
+    if decision['status'] != 'transported':
+        env = dict(os.environ, NPM_CONFIG_CACHE=str(ARTIFACTS / 'npm-cache'))
+        COSTS.measured('npm_installation')(subprocess.run)(
+            ['npm', '--prefix', str(runtime), 'ci'], cwd=ROOT, env=env, check=True)
+    write_json(ARTIFACTS / 'runtime-transport.json', decision)
+    print('Browser package transport: ' + json.dumps(decision, sort_keys=True))
 
 
 def run(group: str, engine: str) -> None:

@@ -193,7 +193,8 @@ class FrontendJobBudgetTests(unittest.TestCase):
                 (root / name).write_text(name)
             dependencies = ('publication_gate.py', 'costs/__init__.py', 'costs/observations.py',
                 'input_planning/__init__.py', 'input_planning/ownership.py', 'input_planning/source.py',
-                'input_planning/qualification.py', 'input_planning/cli.py')
+                'input_planning/qualification.py', 'input_planning/cli.py',
+                 'runtime_transport/__init__.py', 'runtime_transport/identity.py', 'runtime_transport/archive.py')
             for name in dependencies:
                 path = root / name
                 path.parent.mkdir(parents=True, exist_ok=True)
