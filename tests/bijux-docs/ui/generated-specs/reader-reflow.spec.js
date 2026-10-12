@@ -388,6 +388,31 @@ for (const profile of [
             retained_document: true,
             kind: "ordinary footer destination and browser Back, genuine retained document",
           };
+          // The renderer already owns its native observer adapters. Remove the
+          // optional reader measurement APIs before the next actual document mount.
+          await page.evaluate(() => {
+            for (const name of ["ResizeObserver", "MutationObserver"])
+              Object.defineProperty(window, name, { configurable: true, value: undefined });
+          });
+          const optionalOld = await region(page, kind).elementHandle();
+          await page.locator(kind === "code" ? "a.md-footer__link--next" : "a.md-footer__link--prev").click();
+          await expect(page).toHaveURL(url => url.pathname === route(other, "phone"));
+          await expect(page.locator("article h1")).toHaveText(other === "code" ? /^Code boundary reference/ : /^Table boundary reference/);
+          expect(await page.evaluate(original => original === document, documentIdentity)).toBe(true);
+          expect(await optionalOld.evaluate(node => ({ connected: node.isConnected, role: node.getAttribute("role"), tabindex: node.getAttribute("tabindex") }))).toEqual({ connected: false, role: null, tabindex: null });
+          evidence.optional_observers = {
+            unavailable: await page.evaluate(() => ({ resize: typeof window.ResizeObserver, mutation: typeof window.MutationObserver })),
+            source: await sourceOracle(page, other),
+            geometry: await geometry(page),
+            keyboard: await ordinaryKeyboard(page, other),
+            scope: "Optional reader observer APIs unavailable at actual instant document mount; initial renderer prerequisites are retained",
+          };
+          expect(evidence.optional_observers.unavailable).toEqual({ resize: "undefined", mutation: "undefined" });
+          await page.goBack();
+          await expect(page).toHaveURL(url => url.pathname === route(kind, "phone"));
+          expect(await sourceOracle(page, kind)).toEqual(before);
+          evidence.optional_observers.return_keyboard = await ordinaryKeyboard(page, kind);
+          await optionalOld.dispose();
         }
         expect(errors).toEqual([]);
         expect(missing).toEqual([]);
