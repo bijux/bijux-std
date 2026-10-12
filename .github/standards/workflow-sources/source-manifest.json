@@ -22,7 +22,7 @@
     ".github/scripts/workflow_execution/dependency_prs.py": "d5777ac09e6e16aa331d5c3d8c45689bb14dff80df046ba37ffd7a7cde10bb2a",
     ".github/scripts/workflow_execution/docs_routing.py": "079215c07133737bf18b68549054d38aa1c786fc961192a4c4861967a945799d",
     ".github/scripts/workflow_execution/events.py": "7dca84056f081a4279d41a2ce1e1419d9db6bf5fc8e8f79a9cdfcde15d0ec968",
-    ".github/scripts/workflow_execution/masterclass.py": "51419b19661487f6e64ac1be31f525bd01addc99112268cb746f904f074b718d",
+    ".github/scripts/workflow_execution/masterclass.py": "e56a700dbc7fb9edc553b67f0d5ff7ff287ad5ca70ce66eb9137ae62b74115f7",
     ".github/scripts/workflow_execution/publication.py": "9684990264a192cd13762f1a46c16ab4ce18abc135fd72440ea4ead474a5f6a4",
     ".github/scripts/workflow_execution/refs.py": "a45960789d4a6a6faea92bd811ad407eb8e9d4bef391e8fde01ae423915386db",
     ".github/scripts/workflow_execution/schema.py": "15e2f68e75ff60c8c61b1013155fc51e676a2ca896fb2fe4f0fe447d839634d4",
