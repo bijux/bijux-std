@@ -79,6 +79,13 @@ def compile_runtime(templates: Path, installed_version: str) -> tuple[str, bytes
     worker_adapter = (OWNED / 'search-worker-adapter.js').read_bytes()
     # The original map describes upstream offsets. Never claim it maps modified bytes.
     modified = without_global_character_shortcuts(original).replace(needle, REPLACEMENT).replace(worker_needle, WORKER_REPLACEMENT)
+    palette_needle = 'let a=matchMedia("(prefers-color-scheme: light)")'
+    palette_replacement = 'let a=typeof matchMedia==="function"?matchMedia("(prefers-color-scheme: light)"):{matches:true}'
+    if original.count(palette_needle) != 1:
+        raise ValueError('Native palette preference boundary must occur exactly once')
+    # Initial renderer media adapters remain required; a later Auto request can
+    # use the shared light fallback if the optional preference API disappears.
+    modified = modified.replace(palette_needle, palette_replacement)
     renderer_needle = 'href:`${s}`,class:"md-search-result__link",tabIndex:-1'
     renderer_replacement = 'href:`${s}`,target:__bijuxSearchCapabilityTarget(s),class:"md-search-result__link",tabIndex:-1'
     opening = '"use strict";(()=>{'
@@ -117,6 +124,7 @@ def compile_runtime(templates: Path, installed_version: str) -> tuple[str, bytes
         'upstream_worker': admitted['worker'], 'upstream_worker_sha256': admitted['worker_sha256'],
         'boundary': {'original': needle, 'replacement': REPLACEMENT, 'occurrences': 1},
         'worker_boundary': {'original': worker_needle, 'replacement': WORKER_REPLACEMENT, 'occurrences': 1},
+        'palette_preference_boundary': {'original': palette_needle, 'replacement': palette_replacement, 'occurrences': 1, 'fallback': 'Light for a subsequent Auto request when matchMedia is unavailable; initial native renderer media adapters remain required.'},
         'global_character_shortcuts': {'original': GLOBAL_CHARACTER_SHORTCUTS, 'replacement': ';', 'occurrences': 1, 'disabled_keys': ['/', 'f', 's'], 'retained': 'Focused native query/result keyboard subscriptions and browser modifier defaults.'},
         'fragment_restoration_owned_source': 'tooling/material/fragment-restoration.js',
         'fragment_restoration_sha256': sha256(fragment_scroll),

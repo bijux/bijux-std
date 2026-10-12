@@ -22,6 +22,12 @@
     "replacement": "function Ei(e,t){let r=window.bijuxSearchWorker.channel(e,T);",
     "occurrences": 1
   },
+  "palette_preference_boundary": {
+    "original": "let a=matchMedia(\"(prefers-color-scheme: light)\")",
+    "replacement": "let a=typeof matchMedia===\"function\"?matchMedia(\"(prefers-color-scheme: light)\"):{matches:true}",
+    "occurrences": 1,
+    "fallback": "Light for a subsequent Auto request when matchMedia is unavailable; initial native renderer media adapters remain required."
+  },
   "global_character_shortcuts": {
     "original": ",r.pipe(g(({mode:c})=>c===\"global\")).subscribe(c=>{switch(c.type){case\"f\":case\"s\":case\"/\":i.focus(),i.select(),c.claim();break}});",
     "replacement": ";",
@@ -65,8 +71,8 @@
     "occurrences": 1,
     "helper_scope": "unique admitted native runtime IIFE"
   },
-  "output_asset": "assets/javascripts/material-search.4b099ef8b0fc29069e50781122ce83e6c955ec2a46b6537b06c856d746c6727b.js",
-  "output_sha256": "4b099ef8b0fc29069e50781122ce83e6c955ec2a46b6537b06c856d746c6727b",
+  "output_asset": "assets/javascripts/material-search.e2b1bda412445aa601fbbbe4c7d71a68d9d592d7bb235d719f2012b005caa277.js",
+  "output_sha256": "e2b1bda412445aa601fbbbe4c7d71a68d9d592d7bb235d719f2012b005caa277",
   "syntax_validation": {
     "parser": "Node.js vm.Script",
     "required_version": "v24.21.0",

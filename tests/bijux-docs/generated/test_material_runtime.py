@@ -265,6 +265,26 @@ class MaterialRuntimeTests(unittest.TestCase):
             'new ResizeObserver(e=>e.forEach(t=>cn.next(t)))',
             '__bijuxElementResizeObserver', 'Native resize delivery')
 
+    def test_native_palette_preference_guard_preserves_exact_owned_context(self):
+        _, output, record, _ = runtime.compile_runtime(self.templates, self.version)
+        boundary = record['palette_preference_boundary']
+        self.assertEqual(boundary['occurrences'], 1)
+        self.assertEqual(output.decode().count(boundary['replacement']), 1)
+        self.assertNotIn(boundary['original'], output.decode())
+        templates = self.copied_templates()
+        owned = self.root / 'palette-owned'
+        shutil.copytree(OWNED, owned)
+        admission = json.loads((owned / 'admission.json').read_text())
+        bundle = templates / admission['bundle']
+        original = bundle.read_text()
+        for changed in (original.replace(boundary['original'], ''), original + boundary['original']):
+            with self.subTest(palette_boundary=changed.count(boundary['original'])):
+                bundle.write_text(changed)
+                (owned / 'admission.json').write_text(json.dumps(dict(admission, bundle_sha256=hashlib.sha256(bundle.read_bytes()).hexdigest())))
+                with mock.patch.object(runtime, 'OWNED', owned), self.assertRaisesRegex(ValueError, 'Native palette preference boundary must occur exactly once'):
+                    runtime.generate(self.root / 'shared', templates, self.version)
+                self.assertFalse((self.root / 'shared').exists())
+
     def test_altered_upstream_license_rejects_before_output(self):
         owned = self.root / 'owned'
         shutil.copytree(OWNED, owned)
