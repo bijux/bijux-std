@@ -6,6 +6,8 @@ This file records notable repository-level changes for `bijux-std`.
 
 ### Unreleased
 
+Bind native documentation build dates to the selected commit's timestamp in source, build and independent producer admission. Preserve complete sitemap comparison across midnight and reject conflicting ambient or forged clock authority.
+
 Permit existing Bijux workflow badge images through the namespace-confined documentation image policy. Preserve executable, frame and API restrictions and independently reject broadened image policies.
 
 Qualify the preserved Pollenomics atlas and native sequence presentations through finite original source, script, bootstrap and resource identities. Retain the default report budgets, forward explicit report ownership through independent publication admission, bind root redirects to the declared site base, and preserve the reviewed standalone Masterclass catalogue generators. Reconstruct media authority from the real configured plugin distribution and physical source fingerprint, preserving the seven baseline renderer package fields.

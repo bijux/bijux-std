@@ -657,6 +657,9 @@ def qualified_manifest(repo_root: Path, site_dir: str, site_url: str, source_sha
             "build receipt: completed publication renderer identity required")
     require(build.get("source_checkpoint") == source and build.get("source_checkpoint_sha256") == identity.json_digest(source),
             "build receipt: another source checkpoint")
+    require(identity.render_epoch_matches(build.get("render_epoch"), source["render_epoch"]) and
+            source["render_epoch"] == identity.source_render_epoch(root, source_sha),
+            "Render clock: build/source epoch differs")
     require(build.get("processor_sha256") == hashlib.sha256(Path(__file__).with_name("build_identity.py").read_bytes()).hexdigest(),
             "build receipt: identity processor differs from accepted source")
     require(build.get("derivation") == source.get("derivation"),

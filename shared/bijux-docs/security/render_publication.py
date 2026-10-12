@@ -86,7 +86,7 @@ def build_artifact(root: Path, config_name: str, site_name: str, *, site_url='',
         previous_strict=configuration.strict
         configuration.strict=strict
         try:
-            producer.render(configuration,catalogue=catalogue is not None)
+            producer.render(configuration,catalogue=catalogue is not None,source_root=root if checkpoint is not None else None)
         finally:
             configuration.strict=previous_strict
         configuration=(catalogue.configuration(site) if catalogue else
