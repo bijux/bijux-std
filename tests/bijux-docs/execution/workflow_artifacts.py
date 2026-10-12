@@ -141,7 +141,7 @@ class GitHubAPI:
             data = b''.join(chunks)
             return response.status, dict(response.headers), data
 
-    def json(self, endpoint: str) -> dict:
+    def _json(self, endpoint: str, expected_type):
         require(isinstance(endpoint, str) and endpoint.startswith('repos/' + self.repository + '/')
                 and not any(part in ('', '.', '..') for part in endpoint.split('?')[0].split('/'))
                 and '#' not in endpoint and '\\' not in endpoint, 'API endpoint is outside the repository')
@@ -157,8 +157,15 @@ class GitHubAPI:
             result = json.loads(data, object_pairs_hook=unique)
         except (UnicodeDecodeError, json.JSONDecodeError) as error:
             raise ValueError('Invalid API JSON') from error
-        require(isinstance(result, dict), 'API response must be an object')
+        require(isinstance(result, expected_type), 'API response must be an object' if expected_type is dict else 'API response must be an array')
         return result
+
+    def json(self, endpoint: str) -> dict:
+        return self._json(endpoint, dict)
+
+    def json_array(self, endpoint: str) -> list:
+        """Read repository-owned array endpoints with the same transport limits."""
+        return self._json(endpoint, list)
 
     def archive(self, artifact_id: int) -> bytes:
         require(positive(artifact_id), 'Actual artifact ID is required')
@@ -209,7 +216,7 @@ def job_identity(row: dict) -> tuple:
     return tuple(row.get(key) for key in ('id', 'name', 'run_id', 'run_attempt', 'head_sha'))
 
 
-def observe(api, identity: dict, *, execution_observer=None) -> dict:
+def observe(api, identity: dict, *, execution_observer=None, checkout_authority=None) -> dict:
     """Capture run, checkout, workflow, complete latest/history and artifact metadata."""
     required = {'run_id', 'attempt', 'head', 'checkout_sha', 'source_tree', 'workflow_id', 'workflow_path', 'head_branch'}
     require(isinstance(identity, dict) and set(identity) == required, 'Exact workflow identity is required')
@@ -229,8 +236,16 @@ def observe(api, identity: dict, *, execution_observer=None) -> dict:
     require(workflow.get('id') == identity['workflow_id'] and workflow.get('path') == identity['workflow_path'],
             'Workflow owner mismatch')
     commits = {name: api.json(prefix + 'git/commits/' + identity[name]) for name in ('head', 'checkout_sha')}
-    require(all(commit.get('sha') == identity[name] and commit.get('tree', {}).get('sha') == identity['source_tree']
-                for name, commit in commits.items()), 'Checkout source tree mismatch')
+    if checkout_authority is None:
+        require(all(commit.get('sha') == identity[name] and commit.get('tree', {}).get('sha') == identity['source_tree']
+                    for name, commit in commits.items()), 'Checkout source tree mismatch')
+    else:
+        import inspect
+        require(type(checkout_authority).__name__ == 'AcceptedCheckout'
+                and Path(inspect.getfile(type(checkout_authority))).resolve()
+                == Path(__file__).parent / 'proof_continuity/authority.py',
+                'Accepted checkout must come from the live source-owned merged-PR boundary')
+        checkout_authority.verify(identity, commits)
     if identity['checkout_sha'] != identity['head']:
         parents = commits['checkout_sha'].get('parents')
         require(isinstance(parents, list) and len(parents) == 2 and parents[1].get('sha') == identity['head'],

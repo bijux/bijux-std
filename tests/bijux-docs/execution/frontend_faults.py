@@ -211,19 +211,25 @@ def public(python: Path):
           'verification_only': True, 'publication_admission': False, 'commands': commands, 'files': hashes(folder)})
 
 
-def aggregate(collection=None):
+def qualify(collection=None, *, original_source=None, output=None, workflows=None):
     if collection is not None:
         load(TESTS / 'execution/workflow_controllers.py', 'fault_workflow_controllers').require_collection(collection)
-    current = source()
+    current = source() if original_source is None else original_source
+    output = OUT if output is None else output
+    if workflows is not None and set(workflows) != {*ENGINES, 'public'}:
+        raise ValueError('Every fault owner requires its original workflow identity')
     inventories, clean, fault = [], [], []
     for owner in (*ENGINES, 'public'):
-        folder = OUT / owner
+        folder = output / owner
         receipt = json.loads((folder / 'receipt.json').read_text())
-        identity = collection.inputs['fault-public' if owner == 'public' else 'fault-' + owner].workflow_identity() if collection is not None else {
+        identity = workflows[owner] if workflows is not None else collection.inputs['fault-public' if owner == 'public' else 'fault-' + owner].workflow_identity() if collection is not None else {
             'workflow_run_id': os.environ.get('GITHUB_RUN_ID'), 'workflow_attempt': os.environ.get('GITHUB_RUN_ATTEMPT')}
         if receipt['source'] != current or receipt['status'] != 'passed' or any(receipt[key] != value for key, value in identity.items()):
             raise ValueError('Current source/run fault receipt is required: ' + owner)
         for name, expected in receipt['files'].items():
+            relative = Path(name)
+            if relative.is_absolute() or '..' in relative.parts or (folder / name).is_symlink():
+                raise ValueError('Fault member must belong to its admitted owner')
             if hashlib.sha256((folder / name).read_bytes()).hexdigest() != expected:
                 raise ValueError('Fault artifact digest changed: ' + owner + '/' + name)
         if owner == 'public':
@@ -241,7 +247,10 @@ def aggregate(collection=None):
             report = json.loads((folder / mode / 'qualification.json').read_text())
             if report['source_identity'] != current:
                 raise ValueError('Fault report does not bind current source')
-            report['junit']['path'] = str(folder / mode / report['junit']['path'])
+            junit = Path(report['junit']['path'])
+            if junit.is_absolute() or '..' in junit.parts or (folder / mode / junit).is_symlink():
+                raise ValueError('Fault JUnit must belong to its admitted owner')
+            report['junit']['path'] = str(folder / mode / junit)
             reports.append(report)
         validate_pair(*reports)
         clean.append(reports[0]); fault.append(reports[1])
@@ -255,10 +264,14 @@ def aggregate(collection=None):
         rejection = str(error)
     else:
         raise ValueError('Canonical aggregator accepted actual failed fault reports')
-    write(OUT / 'qualification.json', {'schema': 1, 'status': 'passed', 'source': current,
+    return {'schema': 1, 'status': 'passed', 'source': current,
           'clean_browser_cases': positive['executed_cases'], 'fault_browser_cases': 12,
           'intentional_browser_failures': 9, 'aggregate_rejection': rejection,
-          'public_controls': 5, 'publication_admission': False})
+          'public_controls': 5, 'publication_admission': False}
+
+
+def aggregate(collection=None):
+    write(OUT / 'qualification.json', qualify(collection))
 
 
 def main():

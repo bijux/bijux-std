@@ -213,7 +213,9 @@ def qualify_latest(observation, *, groups: dict, engines: tuple | list,
 def registry_digests(registry_path: Path) -> dict[str, str]:
     names = ('browser_gate.py', 'browser_partitions.py', 'browser_partitions.json', 'renderer_controls.py', 'node_events.cjs', 'persisted_reader.py', 'workflow_artifacts.py', 'workflow_jobs.py', 'workflow_lineage.py', 'workflow_collection.py', 'workflow_controllers.py')
     digests = {name: hashlib.sha256(registry_path.with_name(name).read_bytes()).hexdigest() for name in names}
-    for name in ('publication_gate.py', 'costs/__init__.py', 'costs/observations.py',
+    for name in ('publication_gate.py', 'frontend_faults.py', 'proof_continuity/__init__.py',
+                 'proof_continuity/modules.py', 'proof_continuity/source.py', 'proof_continuity/authority.py',
+                 'proof_continuity/native.py', 'proof_continuity/gate.py', 'costs/__init__.py', 'costs/observations.py',
                  'input_planning/__init__.py', 'input_planning/ownership.py', 'input_planning/source.py',
                  'input_planning/qualification.py', 'input_planning/cli.py',
                  'browser_ownership/__init__.py', 'browser_ownership/batches.py', 'browser_ownership/registry.json',

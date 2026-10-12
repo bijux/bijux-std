@@ -247,7 +247,7 @@ def runtime_identity(node: Path) -> dict:
             'node': node_identity(node)}
 
 
-def node_cases(path: Path, files: list[Path], expected_count: int | None = None) -> list[dict]:
+def node_cases(path: Path, files: list[Path], expected_count: int | None = None, original_source=None) -> list[dict]:
     expected_count = NODE_TEST_COUNT if expected_count is None else expected_count
     events = [json.loads(line) for line in path.read_text().splitlines()]
     summaries = [event['data'] for event in events if event['type'] == 'test:summary'
@@ -261,6 +261,11 @@ def node_cases(path: Path, files: list[Path], expected_count: int | None = None)
             or any(counts.get(name) != 0 for name in ('failed', 'cancelled', 'skipped', 'todo'))):
         raise ValueError('Incomplete or nonpassing native Node execution')
     expected_files = {str(path.resolve()) for path in files}
+    if original_source is not None:
+        import inspect
+        owner = Path(inspect.getfile(type(original_source))).resolve()
+        if type(original_source).__name__ != 'OriginalSource' or owner != Path(__file__).parent / 'proof_continuity/source.py':
+            raise ValueError('Original Node paths require authenticated Git source closure')
     records = []
     for event in events:
         if event['type'] not in ('test:pass', 'test:fail'):
@@ -268,11 +273,12 @@ def node_cases(path: Path, files: list[Path], expected_count: int | None = None)
         data = event['data']
         if (event['type'] != 'test:pass' or data.get('skip') or data.get('todo')
                 or data.get('details', {}).get('type') != 'test'
-                or data.get('file') not in expected_files or data.get('entryFile') != data['file']
+                or (original_source is None and data.get('file') not in expected_files) or data.get('entryFile') != data.get('file')
                 or type(data.get('line')) is not int or type(data.get('column')) is not int
                 or not isinstance(data.get('name'), str) or not data['name']):
             raise ValueError('Unowned, skipped or nonpassing Node case')
-        records.append({'id': [str(Path(data['file']).relative_to(ROOT)), data['line'], data['column'], data['name']],
+        relative = str(Path(data['file']).relative_to(ROOT)) if original_source is None else original_source.native_relative(data['file'], files)
+        records.append({'id': [relative, data['line'], data['column'], data['name']],
                         'status': 'passed', 'seconds': data['details']['duration_ms'] / 1000})
     ids = [json.dumps(row['id']) for row in records]
     if len(records) != expected_count or len(ids) != len(set(ids)):
@@ -319,7 +325,7 @@ def execute(output: Path, node: Path, group: str | None = None) -> dict:
 
 
 def verify_receipt(output: Path, current_source: dict | None = None, workflow: dict | None = None,
-                   group: str | None = None) -> dict:
+                   group: str | None = None, original_source=None) -> dict:
     receipt = json.loads((output / 'renderer-controls.json').read_text())
     source = current_source if current_source is not None else HELPERS.source_identity()
     identity = workflow if workflow is not None else HELPERS.workflow_identity()
@@ -337,7 +343,7 @@ def verify_receipt(output: Path, current_source: dict | None = None, workflow: d
     count = group_node_count(group)
     if not count and any((output / name).exists() for name in ('node-events.jsonl', 'node-stderr.log')):
         raise ValueError('Python-only renderer group cannot substitute unrelated Node execution')
-    node = node_cases(output / 'node-events.jsonl', node_files()) if count else []
+    node = node_cases(output / 'node-events.jsonl', node_files(), original_source=original_source) if count else []
     if receipt.get('node_cases') != node or receipt.get('node_executed') != count:
         raise ValueError('Renderer Node case accounting differs from its native events')
     before = receipt.get('runtime_before', {})
@@ -359,7 +365,7 @@ def verify(output: Path, current_source: dict | None = None, workflow: dict | No
 
 
 def verify_groups(output: Path, current_source: dict | None = None, workflow: dict | None = None,
-                  workflows: dict[str, dict] | None = None) -> dict:
+                  workflows: dict[str, dict] | None = None, original_source=None) -> dict:
     if (not output.is_dir() or output.is_symlink()
             or {path.name for path in output.iterdir()} != set(GROUPS)
             or any(not (output / group).is_dir() or (output / group).is_symlink() for group in GROUPS)):
@@ -371,7 +377,7 @@ def verify_groups(output: Path, current_source: dict | None = None, workflow: di
                    or not all(isinstance(item, str) and re.fullmatch(r'[1-9][0-9]*', item) for item in value.values())
                    for value in workflows.values())):
         raise ValueError('Every source-owned renderer group requires its exact admitted workflow identity')
-    receipts = {group: verify_receipt(output / group, source, workflows[group] if workflows is not None else identity, group) for group in GROUPS}
+    receipts = {group: verify_receipt(output / group, source, workflows[group] if workflows is not None else identity, group, original_source) for group in GROUPS}
     python_ids = [case['id'] for receipt in receipts.values() for case in receipt['python_cases']]
     if sorted(python_ids) != expected_python_ids() or len(python_ids) != len(set(python_ids)):
         raise ValueError('Renderer group union does not execute every Python source case exactly once')
