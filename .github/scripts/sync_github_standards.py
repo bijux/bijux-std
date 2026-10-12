@@ -91,6 +91,7 @@ BASE_FILE_MAPPINGS: list[tuple[str, str]] = [
     (".github/scripts/workflow_execution/source_authority.py", ".github/scripts/workflow_execution/source_authority.py"),
     (".github/scripts/workflow_execution/verification.py", ".github/scripts/workflow_execution/verification.py"),
     (".github/scripts/workflow_execution/masterclass.py", ".github/scripts/workflow_execution/masterclass.py"),
+    (".github/scripts/workflow_execution/retired_package_workflows.py", ".github/scripts/workflow_execution/retired_package_workflows.py"),
     (".github/scripts/build_repo_manifest.py", ".github/scripts/build_repo_manifest.py"),
     (".github/scripts/check_pinned_actions.py", ".github/scripts/check_pinned_actions.py"),
     (".github/scripts/check_protected_github_changes.py", ".github/scripts/check_protected_github_changes.py"),
@@ -316,6 +317,7 @@ def copy_repo_files(target_repo: str, repo_config: dict[str, Any], manifest: dic
     source_snapshots = WORKFLOW_EXECUTION.capture_sources(STD_REPO)
     prepared = prepare_runtime_workflows(repo_config, manifest)
     repo_dir = resolve_repository_checkout(target_repo)
+    retirement = WORKFLOW_EXECUTION.retired_package_workflows.plan_retirement(repo_dir, target_repo)
     legacy_helper = qualified_legacy_policy_helper(repo_dir)
     for relative, content in source_snapshots.items():
         path = repo_dir / relative
@@ -348,6 +350,8 @@ def copy_repo_files(target_repo: str, repo_config: dict[str, Any], manifest: dic
                 shutil.rmtree(path)
             else:
                 path.unlink()
+
+    WORKFLOW_EXECUTION.retired_package_workflows.apply_retirement(repo_dir, target_repo, retirement)
 
     if legacy_helper is not None:
         legacy_helper.unlink()
