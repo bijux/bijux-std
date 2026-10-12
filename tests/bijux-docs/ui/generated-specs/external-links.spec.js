@@ -132,7 +132,20 @@ test("authored target, download, relation and description remain distinct", asyn
       .locator("#link-mail, #link-phone, #link-internal, #link-hash")
       .locator("[data-bijux-link-indication]"),
   ).toHaveCount(0);
+  const repository = page.locator(".md-header__source a.md-source");
+  await expect(repository).not.toHaveAttribute("target");
+  await expect(repository.locator("[data-bijux-link-indication]")).toHaveCount(0);
+  const repositoryIntent = await repository.evaluate((link) => ({
+    relation: link.getAttribute("rel"),
+    description: link.getAttribute("aria-describedby"),
+  }));
+  await repository.evaluate((link) => { link.target = "_blank"; });
   await compactRepositoryWarning(page);
+  await repository.evaluate((link) => { link.removeAttribute("target"); });
+  await expect(repository.locator("[data-bijux-link-indication]")).toHaveCount(0);
+  await expect(repository).not.toHaveAttribute("target");
+  expect(await repository.getAttribute("rel")).toBe(repositoryIntent.relation);
+  expect(await repository.getAttribute("aria-describedby")).toBe(repositoryIntent.description);
   for (const authored of footerNewTabLinks) {
     const link = page.locator(".bijux-footer-strip__links").getByRole("link", {
       name: authored.name,
