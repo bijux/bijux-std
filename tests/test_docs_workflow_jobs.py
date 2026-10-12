@@ -96,6 +96,74 @@ class PhysicalWorkflowTests(unittest.TestCase):
         self.browser['steps'][0].update(status='in_progress',conclusion=None,completed_at=None)
         self.responses[self.prefix+'check-runs/22']=self.check(self.browser)
 
+    def test_completed_prior_frames_reuse_once_current_inventory_stays_live(self):
+        self.runs[0]['status'] = 'completed'
+        self.runs[1]['status'] = 'in_progress'
+        source = self.observe()
+        # Exported audit copies cannot mutate the retained API-created memo.
+        audit = source.export_record()
+        audit['observation']['execution_reconciliation']['frames'][0]['inventory']['jobs'][0]['id'] = 999
+        item = source.admit(self.roles, now=datetime(2026, 1, 2, tzinfo=timezone.utc))['producer']
+        self.assertEqual(item.pointer()['owner_job_id'], 11)
+        for suffix in ('', '/jobs?per_page=100&page=1'):
+            self.assertEqual(self.api.calls.count(self.runpath + '/attempts/1' + suffix), 1)
+            self.assertEqual(self.api.calls.count(self.runpath + '/attempts/2' + suffix), 3)
+        self.assertEqual(len(source.export_record()['refresh_observations']), 2)
+        # Standalone job observation still performs both live current fences.
+        source.verify_jobs([self.producer['name']])
+        self.assertEqual(self.api.calls.count(self.runpath + '/attempts/2/jobs?per_page=100&page=1'), 5)
+        self.assertEqual(self.api.calls.count(self.runpath + '/attempts/1/jobs?per_page=100&page=1'), 1)
+
+    def test_new_current_owner_during_metadata_refuses_before_archive_get(self):
+        self.runs[0]['status'] = 'completed'
+        source = self.observe()
+        original = self.api.json
+        def changed(endpoint):
+            data = original(endpoint)
+            if endpoint == self.prefix + 'actions/artifacts/33':
+                owner = self.job(23, 2, self.producer['name'], '2026-01-01T00:02:03Z', '2026-01-01T00:02:42Z')
+                frame = self.responses[self.runpath + '/attempts/2/jobs?per_page=100&page=1']
+                frame['jobs'].append(owner)
+                frame['total_count'] += 1
+                self.responses[self.prefix + 'actions/jobs/23'] = owner
+                self.responses[self.prefix + 'check-runs/23'] = self.check(owner)
+            return data
+        self.api.json = changed
+        with self.assertRaisesRegex(ValueError, 'latest execution changed'):
+            source.admit(self.roles, now=datetime(2026, 1, 2, tzinfo=timezone.utc))
+        self.assertFalse(any(isinstance(call, tuple) for call in self.api.calls))
+        self.assertEqual(source.export_record()['inputs'], {})
+
+    def test_new_current_owner_during_body_refuses_before_returning_capabilities(self):
+        self.runs[0]['status'] = 'completed'
+        source = self.observe()
+        original = self.api.archive
+        def changed(artifact_id):
+            data = original(artifact_id)
+            owner = self.job(23, 2, self.producer['name'], '2026-01-01T00:02:03Z', '2026-01-01T00:02:42Z')
+            frame = self.responses[self.runpath + '/attempts/2/jobs?per_page=100&page=1']
+            frame['jobs'].append(owner)
+            frame['total_count'] += 1
+            self.responses[self.prefix + 'actions/jobs/23'] = owner
+            self.responses[self.prefix + 'check-runs/23'] = self.check(owner)
+            return data
+        self.api.archive = changed
+        with self.assertRaisesRegex(ValueError, 'latest execution changed'):
+            source.admit(self.roles, now=datetime(2026, 1, 2, tzinfo=timezone.utc))
+        self.assertEqual(self.api.calls.count(('archive', 33)), 1)
+        self.assertEqual(source.export_record()['inputs'], {})
+        self.assertEqual(source._specs, {})
+
+    def test_current_frame_ambiguity_refused_even_with_completed_history_memo(self):
+        self.runs[0]['status'] = 'completed'
+        source = self.observe()
+        extra = self.job(23, 2, self.browser['name'], '2026-01-01T00:02:03Z', '2026-01-01T00:02:42Z')
+        frame = self.responses[self.runpath + '/attempts/2/jobs?per_page=100&page=1']
+        frame['jobs'].append(extra)
+        frame['total_count'] += 1
+        with self.assertRaisesRegex(ValueError, 'Multiple actual latest'):
+            source.refresh([self.producer['name']])
+
     def test_raw_projection_and_reservation_retained_new_failure_precedes_old_success(self):
         before=copy.deepcopy(self.responses);s=self.observe();o=s.observation
         self.assertEqual({r['name']:r['id'] for r in o['latest']['jobs']},{self.producer['name']:11,self.browser['name']:22})

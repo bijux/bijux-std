@@ -124,6 +124,14 @@ class SourceObservation:
         self._api, self._observed = api, copy.deepcopy(observed)
         self._cache, self._inputs, self._specs, self._refreshes = {}, {}, {}, []
         self._report_observations = []
+        # Only API-created, already reconciled historical frames enter this memo.
+        # Current inventories stay live at every admission fence.
+        self._completed_frames = {
+            JOBS.completed_frame_key(api.repository, self._observed["identity"], frame["attempt"]): copy.deepcopy(frame)
+            for frame in self._observed.get("execution_reconciliation", {}).get("frames", [])
+            if frame["attempt"] < self._observed["identity"]["attempt"]
+            and frame["run"].get("status") == "completed"
+        }
         self._lock = Lock()
 
     @property
@@ -171,7 +179,8 @@ class SourceObservation:
     def physical_capture(self, api, identity):
         return JOBS.capture(api, identity, ARTIFACTS.pages, fetch=self.json,
                             caller=self._observed['execution_reconciliation']['caller'],
-                            names=self._observed['execution_reconciliation'].get('checked_job_names'))
+                            names=self._observed['execution_reconciliation'].get('checked_job_names'),
+                            _completed_frames=self._completed_frames)
 
     def refresh(self, names) -> None:
         """One coherent current-source boundary for all needed owners, not one query per artifact."""
@@ -216,13 +225,10 @@ class SourceObservation:
                 'Source-owned latest execution changed since observation')
         frame['status'] = 'passed'
 
-    def verify_jobs(self, names, workers: int = 8) -> list[dict]:
-        """Return authoritative actual latest rows, preserving their individual attempts."""
-        names = self._names(names)
-        require(type(workers) is int and 1 <= workers <= 8, 'Owner verification concurrency must be between 1 and 8')
+    def _observe_owned_jobs(self, names, workers: int) -> list[dict]:
+        """Read exact physical owners without granting an input capability."""
         latest = {row['name']: row for row in self._observed['latest']['jobs']}
         require(all(name in latest for name in names), 'Missing source-owned latest execution')
-        self.refresh(names)
         def verify(name):
             expected = latest[name]
             endpoint = 'repos/' + self.repository + '/actions/jobs/' + str(expected['id'])
@@ -240,6 +246,16 @@ class SourceObservation:
             return observed
         with ThreadPoolExecutor(max_workers=min(workers, len(names))) as executor:
             records = list(executor.map(verify, names))
+        return records
+
+    def verify_jobs(self, names, workers: int = 8) -> list[dict]:
+        """Return authoritative actual latest rows, preserving their individual attempts."""
+        names = self._names(names)
+        require(type(workers) is int and 1 <= workers <= 8, 'Owner verification concurrency must be between 1 and 8')
+        require(all(name in {row['name'] for row in self._observed['latest']['jobs']} for name in names),
+                'Missing source-owned latest execution')
+        self.refresh(names)
+        records = self._observe_owned_jobs(names, workers)
         self.refresh(names)
         return records
 
@@ -257,7 +273,9 @@ class SourceObservation:
         require(len(set(owner_names)) == len(owner_names)
                 and not any(old_role != role and old_spec['job_name'] == spec['job_name']
                             for role, spec in roles.items() for old_role, old_spec in self._specs.items()), 'Duplicate source-owned input job')
-        jobs = {row['name']: row for row in self.verify_jobs(owner_names, workers)}
+        names = self._names(owner_names)
+        require(type(workers) is int and 1 <= workers <= 8, 'Owner verification concurrency must be between 1 and 8')
+        jobs = {row['name']: row for row in self._observe_owned_jobs(names, workers)}
         now = now or datetime.now(timezone.utc)
         require(now.tzinfo is not None, 'Input admission expiry timezone is required')
         # Fetch each exact needed artifact once in parallel before pure pin
@@ -277,6 +295,8 @@ class SourceObservation:
         require(len({pin['artifact']['id'] for pin in pins.values()}) == len(pins), 'Distinct input roles share an artifact ID')
         require(sum(pin['artifact']['size_in_bytes'] for pin in pins.values()) <= MAX_INPUT_ARCHIVE_BYTES,
                 'Admitted compressed input union exceeds byte limit')
+        # Pins and per-ID reads are passive observations. Confirm the complete
+        # current owner inventory immediately before transporting any bytes.
         self.refresh(owner_names)
         expanded = sum(len(data) for role, item in self._inputs.items() if role in roles for data in item._files.values())
         reservation_lock = Lock()

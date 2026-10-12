@@ -350,6 +350,54 @@ class WorkflowArtifactTransportTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, '^artifact CDN transport failed with HTTP 403'):
             api._read('https://owned.blob.core.windows.net/archive?sig=secret', authenticated=False, maximum=10)
 
+    def test_transient_api_get_recovers_at_most_twice_with_same_deadline(self):
+        for errors in ((502,), (503, 504), (502, 503, 504)):
+            with self.subTest(errors=errors):
+                now, calls, bodies = [0.0], [], []
+                class Opener:
+                    def open(self, request, timeout):
+                        calls.append((request, timeout))
+                        now[0] += 2
+                        if len(calls) <= len(errors):
+                            body = io.BytesIO(b'private-token'); bodies.append(body)
+                            raise HTTPError(request.full_url, errors[len(calls)-1], 'private-token', {}, body)
+                        response = io.BytesIO(b'{"id":1}'); response.status = 200; response.headers = {}
+                        return response
+                api = ARTIFACTS.GitHubAPI('bijux/bijux-std', 'private-token', opener=Opener(),
+                                          deadline_seconds=10, clock=lambda: now[0])
+                if len(errors) < 3:
+                    self.assertEqual(api.json('repos/bijux/bijux-std/actions/runs/123'), {'id':1})
+                else:
+                    with self.assertRaisesRegex(ValueError, '^GitHub API transport failed with HTTP 504$'):
+                        api.json('repos/bijux/bijux-std/actions/runs/123')
+                self.assertEqual([timeout for _, timeout in calls], [10, 8, 6][:len(calls)])
+                self.assertLessEqual(len(calls), 3)
+                self.assertTrue(all(body.closed for body in bodies))
+                self.assertTrue(all(request.method == 'GET' for request, _ in calls))
+                self.assertTrue(all(request.get_header('Authorization') == 'Bearer private-token' for request, _ in calls))
+
+    def test_recovery_cannot_extend_deadline_or_retry_cdn_policy_and_quota_errors(self):
+        for authenticated, code in ((False,502), (False,503), (False,504), (True,403), (True,429)):
+            with self.subTest(authenticated=authenticated,code=code):
+                calls = []
+                class Opener:
+                    def open(self, request, timeout):
+                        calls.append(request)
+                        raise HTTPError(request.full_url,code,'private-token',{},io.BytesIO(b'secret'))
+                api = ARTIFACTS.GitHubAPI('bijux/bijux-std','private-token',opener=Opener())
+                url = 'https://api.github.com/repos/bijux/bijux-std/actions/runs/123' if authenticated else 'https://owned.blob.core.windows.net/archive?sig=secret'
+                with self.assertRaises(ValueError): api._read(url,authenticated=authenticated,maximum=10)
+                self.assertEqual(len(calls),1)
+                if not authenticated: self.assertIsNone(calls[0].get_header('Authorization'))
+        now, calls = [0.0], []
+        class Expired:
+            def open(self, request, timeout):
+                calls.append(timeout); now[0]=10
+                raise HTTPError(request.full_url,502,'secret',{},io.BytesIO(b'secret'))
+        api=ARTIFACTS.GitHubAPI('bijux/bijux-std','private-token',opener=Expired(),deadline_seconds=10,clock=lambda:now[0])
+        with self.assertRaisesRegex(ValueError,'deadline expired'): api.json('repos/bijux/bijux-std/actions/runs/123')
+        self.assertEqual(calls,[10])
+
     def test_json_duplicate_keys_cross_repository_redirect_and_byte_limit_are_refused(self):
         class Opener:
             body = b'{"id":1,"id":2}'
