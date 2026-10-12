@@ -104,7 +104,7 @@ BASE_FILE_MAPPINGS: list[tuple[str, str]] = [
     (".github/standards/workflow-sources/bijux-std.yml", ".github/standards/workflow-sources/bijux-std.yml"),
     (".github/standards/workflow-sources/automerge-pr.yml", ".github/standards/workflow-sources/automerge-pr.yml"),
     (".github/standards/workflow-sources/source-manifest.json", ".github/standards/workflow-sources/source-manifest.json"),
-    (".github/workflows/bijux-std.yml", ".github/workflows/bijux-std.yml"),
+    (".github/standards/workflow-sources/bijux-std.yml", ".github/workflows/bijux-std.yml"),
     (".github/workflows/automerge-pr.yml", ".github/workflows/automerge-pr.yml"),
     (".github/bijux-std-shared.sha256", ".github/bijux-std-shared.sha256"),
 ]
@@ -254,7 +254,7 @@ def prepare_runtime_workflows(repo_config: dict[str, Any], manifest: dict[str, A
         projected = WORKFLOW_EXECUTION.project_publication_entrypoints(identity, projected, policy)
         projected = WORKFLOW_EXECUTION.project_dependency_pull_requests(identity, projected, policy)
         documents[destination] = projected
-        if name == "bijux-std" and source == ".github/workflows/bijux-std.yml" and projected == document:
+        if name == "bijux-std" and source == ".github/standards/workflow-sources/bijux-std.yml" and projected == document:
             # The owning workflow is authored source. Preserve its readable source
             # and comments only after structural admission proves projection identity.
             prepared[destination] = (STD_REPO / source).read_bytes()
