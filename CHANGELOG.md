@@ -6,9 +6,13 @@ This file records notable repository-level changes for `bijux-std`.
 
 ### Unreleased
 
-Admit a finite Pollenomics report projection that removes declared internal path metadata from generated public JSON, preserves immutable scientific receipts and numeric tokens, and independently binds native output bytes to reviewed source, import bindings and fresh input hashes.
+#### Pending review — [#293](https://github.com/bijux/bijux-std/pull/293) — feat(docs): harden native readers and reuse qualified verification
 
-Parse native publication references once after each HTML page has matched the independent source build byte for byte. Preserve complete native configuration, executable, worker and index checks, fresh renderer admission, and source and output mutation refusals.
+Retain automatic palette operation after preference API loss, deliver inert native search results and tag labels, and report clipboard failure with selectable code. Qualify storage denial, missing optional observers, reduced motion and reader contrast through existing native controls.
+
+Select verification from owned inputs and authenticate accepted original proof before reusing unchanged frontend coverage. Transport exact installed packages and combine related browser groups while preserving three engines, all group identities, strict current-source aggregates and complete fallback coverage. Record operation and whole-job costs without treating queue time as runner savings.
+
+Renew vulnerable GitPython and urllib3 publication recipes, adopt the authenticated setup-uv release and retire only Atlas’s reviewed unused package workflows. Bind Masterclass component identity and native catalogue source actions to real originals. Admit a finite Pollenomics public-report projection while preserving raw scientific receipts and numerical tokens. Parse native publication references once after independent byte-for-byte reconstruction.
 
 Allow the complete manual documentation build, admission and independent verification to run within a 60-minute build job. Keep the 10-minute Pages deployment budget and strict frontend job limits unchanged. See [#292](https://github.com/bijux/bijux-std/pull/292).
 
