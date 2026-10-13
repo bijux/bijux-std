@@ -334,11 +334,11 @@ class SourceObservation:
                            'Native cases, configuration, runtime, browser and publication checks remain separate mandatory duties.']}
 
 
-def observe_source(api, identity: dict, *, reconcile=False, caller=None, names=None) -> SourceObservation:
+def observe_source(api, identity: dict, *, reconcile=False, caller=None, names=None, checkout_authority=None) -> SourceObservation:
     """Only live owned source can issue original physical execution authority."""
     require(type(reconcile) is bool and (reconcile or caller is None and names is None), 'Caller/scope requires physical reconciliation')
     if not reconcile:
-        return SourceObservation(api, ARTIFACTS.observe(api, identity), _created=_CREATED)
+        return SourceObservation(api, ARTIFACTS.observe(api, identity, checkout_authority=checkout_authority), _created=_CREATED)
     cache, lock = {}, Lock()
     def fetch(endpoint):
         with lock:
@@ -351,7 +351,8 @@ def observe_source(api, identity: dict, *, reconcile=False, caller=None, names=N
                 require(previous == value, 'Concurrent physical execution observations differ')
         return value
     observed = ARTIFACTS.observe(api, identity, execution_observer=lambda transport, context:
-        JOBS.capture(transport, context, ARTIFACTS.pages, fetch=fetch, caller=caller, names=names))
+        JOBS.capture(transport, context, ARTIFACTS.pages, fetch=fetch, caller=caller, names=names),
+        checkout_authority=checkout_authority)
     result = SourceObservation(api, observed, _created=_CREATED)
     result._cache.update(cache)
     return result

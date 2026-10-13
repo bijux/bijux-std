@@ -1,0 +1,23 @@
+{
+  "schema": 1,
+  "batches": {
+    "navigation-links": ["navigation-destinations", "links"],
+    "navigation-phone": ["navigation-phone"],
+    "navigation-compact": ["navigation-compact"],
+    "navigation-desktop": ["navigation-desktop"],
+    "navigation-controls": ["navigation-controls"],
+    "search-modality": ["search", "search-shortcut-modality"],
+    "search-invoker": ["search-invoker"],
+    "reader-history": ["reader", "native-reader-history"],
+    "diagram-assurance": ["diagrams", "diagram-trust"],
+    "contrast-responsive": ["contrast-phone", "contrast-compact"],
+    "contrast-desktop": ["contrast-desktop"],
+    "history": ["history"],
+    "search-scope-responsive": ["search-scope-phone", "search-scope-compact"],
+    "search-scope-overflow": ["search-scope-desktop", "registry-overflow"],
+    "reader-accessibility": ["reader-accessibility", "accessibility-state", "semantics"],
+    "search-reflow-phone": ["search-reflow-phone"],
+    "search-reflow-tablet": ["search-reflow-tablet"],
+    "search-reflow-desktop": ["search-reflow-desktop"]
+  }
+}

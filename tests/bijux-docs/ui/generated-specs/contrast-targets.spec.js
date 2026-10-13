@@ -4,6 +4,7 @@ const path = require("node:path");
 const { test, expect } = require("@playwright/test");
 const measure = require("./contrast-targets/measurement");
 const focusBoundary = require("./contrast-targets/focus-boundary");
+const gradient = require("./contrast-targets/gradient");
 
 test.beforeEach(async ({ browser }, info) => {
   info.annotations.push({ type: "browser-version", description: browser.version() });
@@ -302,7 +303,9 @@ for (const [scheme, expectedScheme] of [["light", "default"], ["dark", "slate"]]
     await expect(page.locator(".md-search-result__link:visible").first()).toBeVisible({ timeout: 12_000 });
     const compatibility = info.project.name.endsWith("-phone")
       ? await compatibilityControls(page, browserName, info, { scheme }) : null;
-    await receipt(info, { scheme: expectedScheme, observations, compatibility, errors, browserName });
+    const gradientSamples = info.project.name.endsWith("-desktop")
+      ? await gradient.qualify(page, expectedScheme) : null;
+    await receipt(info, { scheme: expectedScheme, observations, compatibility, gradientSamples, errors, browserName });
     expect(errors).toEqual([]);
   });
 }
@@ -338,6 +341,43 @@ test("forced color focus preserves meaningful control and native target", async 
     ? await compatibilityControls(page, browserName, info, { forced: true }) : null;
   await receipt(info, { browserName, forced, focused, boundaries, compatibility,
     classification: browserName === "webkit" ? "source response only; native OS forced paint unqualified" : "browser emulated forced paint; physical OS/assistive validation remains open" });
+  await page.emulateMedia({ reducedMotion: "reduce", forcedColors: "none", colorScheme: "light" });
+  await page.goto("/");
+  await expect(page.locator("body")).toHaveAttribute("data-bijux-drawer-ready", "true");
+  const motionErrors = [];
+  page.on("pageerror", error => motionErrors.push(error.message));
+  const motion = await page.locator("html, header, [data-bijux-header-control], .md-sidebar--primary, .md-content").evaluateAll(nodes => nodes.map(node => {
+    const style = getComputedStyle(node);
+    return { tag: node.tagName, id: node.id, animation: style.animationDuration,
+      transition: style.transitionDuration, iterations: style.animationIterationCount, scroll: style.scrollBehavior };
+  }));
+  expect(await page.evaluate(() => matchMedia("(prefers-reduced-motion: reduce)").matches)).toBe(true);
+  for (const observed of motion) {
+    expect(observed.animation.split(",").every(value => parseFloat(value) <= 0.00001)).toBe(true);
+    expect(observed.transition.split(",").every(value => parseFloat(value) <= 0.00001)).toBe(true);
+    expect(observed.iterations.split(",").every(value => Number(value) === 1)).toBe(true);
+  }
+  expect(motion.find(node => node.tag === "HTML").scroll).toBe("auto");
+  if (await menu.isVisible()) {
+    await measure.tabTo(page, menu, browserName);
+    await page.keyboard.press("Enter");
+    await expect(page.locator("#__drawer")).toBeChecked();
+    await page.keyboard.press("Escape");
+    await expect(menu).toBeFocused();
+  }
+  const palette = page.locator("[data-bijux-theme-toggle]"), previousMode = await palette.getAttribute("data-bijux-theme-mode");
+  await palette.click();
+  await expect(palette).not.toHaveAttribute("data-bijux-theme-mode", previousMode);
+  await page.locator('[data-bijux-header-control="search-toggle"]').click();
+  const query = page.locator("[data-md-component='search-query']");
+  await expect(query).toBeFocused();
+  await page.keyboard.insertText("resilient navigation");
+  await expect(page.locator(".md-search-result__link:visible").first()).toBeVisible({ timeout: 12_000 });
+  await page.keyboard.press("Escape");
+  await expect(page.locator('[data-bijux-header-control="search-toggle"]')).toBeFocused();
+  expect(motionErrors).toEqual([]);
+  await info.attach("reduced-motion-operation", { body: Buffer.from(JSON.stringify({ motion, motionErrors,
+    input: "ordinary keyboard drawer activation/dismissal, palette click and native search query" }, null, 2)), contentType: "application/json" });
 });
 
 test("historical shared CSS exposes the repaired contrast regression", async ({ page }, info) => {

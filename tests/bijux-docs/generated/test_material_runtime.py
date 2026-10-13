@@ -72,6 +72,33 @@ class MaterialRuntimeTests(unittest.TestCase):
         self.assertIn(focused.encode(), output)
         self.assertIn(record['output_sha256'], asset)
 
+    def test_native_clipboard_results_are_bound_to_scoped_truthful_feedback(self):
+        asset, output, record, _ = runtime.compile_runtime(self.templates, self.version)
+        upstream = (self.templates / record['upstream_bundle']).read_text()
+        for boundary, replacement in runtime.CLIPBOARD_BOUNDARIES.values():
+            self.assertEqual(upstream.count(boundary), 1)
+            self.assertNotIn(boundary.encode(), output)
+            self.assertIn(replacement.encode(), output)
+        self.assertIn(b'm(()=>Me("clipboard.copied"))', output)
+        self.assertEqual(record['clipboard_sha256'], hashlib.sha256((OWNED / 'clipboard-feedback.js').read_bytes()).hexdigest())
+        runtime.validate_generated_javascript(output)
+
+    def test_native_clipboard_missing_or_duplicate_boundary_refuses_output(self):
+        templates = self.copied_templates()
+        owned = self.root / 'clipboard-owned'
+        shutil.copytree(OWNED, owned)
+        admitted = json.loads((owned / 'admission.json').read_text())
+        bundle = templates / admitted['bundle']
+        original = bundle.read_text()
+        for name, (boundary, _) in runtime.CLIPBOARD_BOUNDARIES.items():
+            for changed in (original.replace(boundary, ''), original + boundary):
+                with self.subTest(boundary=name, occurrences=changed.count(boundary)):
+                    bundle.write_text(changed)
+                    (owned / 'admission.json').write_text(json.dumps(dict(admitted, bundle_sha256=hashlib.sha256(bundle.read_bytes()).hexdigest())))
+                    with mock.patch.object(runtime, 'OWNED', owned), self.assertRaisesRegex(ValueError, 'clipboard .* boundary must occur exactly once'):
+                        runtime.generate(self.root / 'output', templates, self.version)
+                    self.assertFalse((self.root / 'output').exists())
+
     def test_native_viewport_history_has_one_owned_lifecycle_boundary(self):
         admitted = json.loads((OWNED / 'admission.json').read_text())
         upstream = (self.templates / admitted['bundle']).read_text()
@@ -161,6 +188,41 @@ class MaterialRuntimeTests(unittest.TestCase):
         runtime.generate(shared, self.templates, self.version)
         with mock.patch.object(runtime.subprocess, 'run', side_effect=AssertionError('check must compare exact prequalified output')):
             runtime.generate(shared, self.templates, self.version, check=True)
+
+    def test_generated_vocabulary_binds_changed_runtime_and_rejects_unowned_writers(self):
+        shared = self.root / 'shared'
+        record = runtime.generate(shared, self.templates, self.version)
+        vocabulary = json.loads((shared / 'config/style-tokens.json').read_bytes())
+        original = json.loads((runtime.SHARED / 'config/style-tokens.json').read_bytes())
+        expected = json.loads(json.dumps(original))
+        expected['external']['runtime_sha256'] = record['output_sha256']
+        self.assertEqual(vocabulary, expected)
+        runtime.generate(shared, self.templates, self.version, check=True)
+        vocabulary['external']['runtime_sha256'] = '0' * 64
+        (shared / 'config/style-tokens.json').write_text(json.dumps(vocabulary))
+        with self.assertRaisesRegex(ValueError, 'differs from exact admitted source'):
+            runtime.generate(shared, self.templates, self.version, check=True)
+
+        owned = self.root / 'changed-runtime-owned'
+        shutil.copytree(OWNED, owned)
+        adapter = owned / 'search-worker-adapter.js'
+        adapter.write_bytes(adapter.read_bytes() + b'\n/* owned runtime writer binding */\n')
+        changed = self.root / 'changed-shared'
+        with mock.patch.object(runtime, 'OWNED', owned):
+            changed_record = runtime.generate(changed, self.templates, self.version)
+            self.assertNotEqual(record['output_sha256'], changed_record['output_sha256'])
+            self.assertEqual(json.loads((changed / 'config/style-tokens.json').read_bytes())['external']['runtime_sha256'],
+                             changed_record['output_sha256'])
+            runtime.generate(changed, self.templates, self.version, check=True)
+
+        vocabulary_owner = self.root / 'vocabulary-owner'
+        (vocabulary_owner / 'config').mkdir(parents=True)
+        original['external']['runtime_examples'] = ['--md-invented-owner']
+        (vocabulary_owner / 'config/style-tokens.json').write_text(json.dumps(original))
+        before = {str(path.relative_to(changed)): path.read_bytes() for path in changed.rglob('*') if path.is_file()}
+        with mock.patch.object(runtime, 'SHARED', vocabulary_owner), self.assertRaisesRegex(ValueError, 'no admitted literal writer'):
+            runtime.generate(changed, self.templates, self.version)
+        self.assertEqual(before, {str(path.relative_to(changed)): path.read_bytes() for path in changed.rglob('*') if path.is_file()})
 
     def test_head_extension_changes_template_only_and_remains_optional_consumer_content(self):
         asset, output, record, template = runtime.compile_runtime(self.templates, self.version)
@@ -264,6 +326,26 @@ class MaterialRuntimeTests(unittest.TestCase):
         self.assert_owned_context_rejected(
             'new ResizeObserver(e=>e.forEach(t=>cn.next(t)))',
             '__bijuxElementResizeObserver', 'Native resize delivery')
+
+    def test_native_palette_preference_guard_preserves_exact_owned_context(self):
+        _, output, record, _ = runtime.compile_runtime(self.templates, self.version)
+        boundary = record['palette_preference_boundary']
+        self.assertEqual(boundary['occurrences'], 1)
+        self.assertEqual(output.decode().count(boundary['replacement']), 1)
+        self.assertNotIn(boundary['original'], output.decode())
+        templates = self.copied_templates()
+        owned = self.root / 'palette-owned'
+        shutil.copytree(OWNED, owned)
+        admission = json.loads((owned / 'admission.json').read_text())
+        bundle = templates / admission['bundle']
+        original = bundle.read_text()
+        for changed in (original.replace(boundary['original'], ''), original + boundary['original']):
+            with self.subTest(palette_boundary=changed.count(boundary['original'])):
+                bundle.write_text(changed)
+                (owned / 'admission.json').write_text(json.dumps(dict(admission, bundle_sha256=hashlib.sha256(bundle.read_bytes()).hexdigest())))
+                with mock.patch.object(runtime, 'OWNED', owned), self.assertRaisesRegex(ValueError, 'Native palette preference boundary must occur exactly once'):
+                    runtime.generate(self.root / 'shared', templates, self.version)
+                self.assertFalse((self.root / 'shared').exists())
 
     def test_altered_upstream_license_rejects_before_output(self):
         owned = self.root / 'owned'

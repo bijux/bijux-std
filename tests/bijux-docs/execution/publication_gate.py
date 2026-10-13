@@ -14,6 +14,7 @@ import subprocess
 import sys
 import time
 import unittest
+from types import ModuleType
 
 ROOT = Path(__file__).resolve().parents[3]
 COMMANDS = ROOT / 'tests/bijux-docs/generated/commands'
@@ -27,16 +28,23 @@ EXPECTED_IDS = tuple(sorted((
 )))
 UNSUPPORTED = 'Renderer profile: unsupported environment; retain actual hosted fingerprints and review a source-owned profile'
 
+_COST_SOURCE = Path(__file__).with_name('costs') / 'observations.py'
+COSTS = ModuleType('bijux_operation_costs')
+COSTS.__file__ = str(_COST_SOURCE)
+exec(compile(_COST_SOURCE.read_bytes(), str(_COST_SOURCE), 'exec'), COSTS.__dict__)
+
 
 def digest(path: Path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
+@COSTS.measured('receipt_write')
 def write_json(path: Path, value: dict) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(value, indent=2) + '\n')
 
 
+@COSTS.measured('source_inventory')
 def source_identity() -> dict:
     names = subprocess.check_output(['git', 'ls-files', '--cached', '--others', '--exclude-standard', '-z'], cwd=ROOT).decode().split('\0')
     files = {name: digest(ROOT / name) for name in sorted(set(filter(None, names)))}
@@ -52,6 +60,7 @@ def pins() -> dict:
     return dict(line.split('==', 1) for line in LOCK.read_text().splitlines() if line and not line.startswith('#'))
 
 
+@COSTS.measured('runtime_inventory')
 def runtime_identity() -> dict:
     versions = {name: importlib.metadata.version(name) for name in pins()}
     if versions != pins():

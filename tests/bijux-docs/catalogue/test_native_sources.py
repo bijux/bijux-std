@@ -122,6 +122,53 @@ class CatalogueNativeSourcesTests(unittest.TestCase):
         events = self.configuration.plugins.events['files']
         self.assertIs(events[0].__self__, self.configuration.plugins['bijux/catalogue-sources'])
 
+    def test_native_mixed_original_namespaces_keep_edit_view_body_and_history(self):
+        originals = {
+            'programs/course/course-book/lesson.md': b'# Course original\n',
+            'docs/reference.md': b'# Reference original\n',
+        }
+        for name, data in originals.items():
+            path = self.root / name
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_bytes(data)
+        self.git('add', *originals)
+        self.git('commit', '-qm', 'docs(catalogue): author mixed source namespaces',
+                 environment={'GIT_AUTHOR_DATE': '2020-01-02T03:04:05+00:00',
+                              'GIT_COMMITTER_DATE': '2021-02-03T04:05:06+00:00'})
+        documents = [adapter.OriginalDocument(name, route, projected) for name, route, projected in (
+            ('programs/course/course-book/lesson.md', 'course/index.md', b'# Course projection\n'),
+            ('docs/reference.md', 'reference/index.md', b'# Reference projection\n'))]
+        sources = adapter.CatalogueSources(self.root, originals, documents)
+        (self.root / 'empty-docs').mkdir()
+        configuration = load_config(config_file=io.BytesIO((
+            f'site_name: Mixed originals\ndocs_dir: {self.root}/empty-docs\n'
+            f'site_dir: {self.root}/mixed-site\n'
+            'repo_url: https://github.com/bijux/bijux-masterclass\n'
+            'edit_uri: edit/main/\ntheme:\n  name: material\n  features:\n'
+            '    - content.action.edit\n    - content.action.view\n'
+            'plugins:\n  - git-revision-date-localized:\n'
+            '      fallback_to_build_date: false\n      enable_parallel_processing: false\n'
+            'nav:\n  - Course: course/index.md\n  - Reference: reference/index.md\n'
+        ).encode()))
+        configuration.config_file_path = str(self.root / 'mkdocs.yml')
+        configuration.plugins['bijux/catalogue-sources'] = adapter.CatalogueSourcePlugin(sources)
+        configuration.plugins.on_startup(command='build', dirty=False)
+        build(configuration)
+        files = sources.files(Files([]), configuration)
+        for document in documents:
+            page = Page(None, files.get_file_from_path(document.route), configuration)
+            html = (self.root / 'mixed-site' / page.file.dest_uri).read_text()
+            self.assertEqual(page.file.edit_uri, document.source)
+            self.assertEqual(page.file.abs_src_path, str(self.root / document.source))
+            self.assertEqual(page.file.content_bytes, originals[document.source])
+            self.assertIn('href="https://github.com/bijux/bijux-masterclass/edit/main/' + document.source + '"', html)
+            self.assertIn('href="https://github.com/bijux/bijux-masterclass/raw/main/' + document.source + '"', html)
+            self.assertIn(document.content.decode().splitlines()[0][2:], html)
+            self.assertIn('2020', html)
+            self.assertEqual(configuration.plugins['git-revision-date-localized']._get_commit(page, False)[1],
+                             1577934245)
+            (ARTIFACTS / ('mixed-' + document.route.replace('/', '-').replace('.md', '.html'))).write_text(html)
+
     def test_assets_preserved_and_unattributed_documentation_rejected(self):
         asset = File('assets/identity.txt', str(self.root / 'docs'), self.configuration.site_dir, True)
         foreign = File('ignored.md', str(self.root / 'docs'), self.configuration.site_dir, True)

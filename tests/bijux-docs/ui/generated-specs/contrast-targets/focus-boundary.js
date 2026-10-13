@@ -1,6 +1,6 @@
 "use strict";
 const { contrast } = require("./color.cjs");
-const { settle } = require("./measurement");
+const { settle, pixels } = require("./measurement");
 
 function geometry(rectangle, width, offset, clips) {
   const values = [rectangle.x, rectangle.y, rectangle.width, rectangle.height, width, offset];
@@ -201,15 +201,7 @@ async function observe(page, control) {
   const boundary = geometry(observed.rectangle, observed.width, observed.offset, observed.clips);
   if (!boundary.contained) return { ...observed, settlement, boundary, paint: null };
   const screenshot = await page.screenshot({ scale: "css" });
-  const samples = await page.evaluate(async ({ data, points }) => {
-    const image = new Image(); image.src = `data:image/png;base64,${data}`; await image.decode();
-    const canvas = document.createElement("canvas"); canvas.width = image.width; canvas.height = image.height;
-    const context = canvas.getContext("2d"); context.drawImage(image, 0, 0);
-    return points.map(point => {
-      if (point.x < 0 || point.y < 0 || point.x >= canvas.width || point.y >= canvas.height) return null;
-      return Array.from(context.getImageData(Math.floor(point.x), Math.floor(point.y), 1, 1).data);
-    });
-  }, { data: screenshot.toString("base64"), points: [...boundary.ring, ...boundary.adjacent] });
+  const samples = pixels(screenshot, [...boundary.ring, ...boundary.adjacent]);
   return { ...observed, settlement, boundary, paint: paint(samples),
     method: "Ordinary keyboard focus; complete outline versus actual ancestor clips and unmodified adjacent screenshot paint" };
 }

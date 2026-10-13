@@ -106,13 +106,14 @@ class FixtureTransferTests(unittest.TestCase):
         with tempfile.TemporaryDirectory(dir=ROOT / 'artifacts') as directory:
             root = Path(directory)
             observation = {'source': {'sha': 'a' * 40}, 'verification_only': True, 'admission_created': False}
-            paths = ['browser-fixtures.tar.gz', 'renderer-source-observation.json'] + [f'inventories/{suite}.json' for suite in (*GATE.SUITES, GATE.PERSISTED_SUITE)]
+            paths = ['browser-fixtures.tar.gz', 'browser-packages.tar.gz', 'browser-packages.json', 'renderer-source-observation.json'] + [f'inventories/{suite}.json' for suite in (*GATE.SUITES, GATE.PERSISTED_SUITE)]
             for name in paths:
                 path = root / name
                 path.parent.mkdir(parents=True, exist_ok=True)
                 path.write_text(json.dumps(observation) if name == 'renderer-source-observation.json' else 'immutable artifact')
             receipt = {'source_head': 'a' * 40, 'workflow_run_id': None, 'workflow_attempt': None,
                        'partition_registry_sha256': hashlib.sha256(GATE.PARTITIONS.REGISTRY_PATH.read_bytes()).hexdigest(),
+                       'batch_registry_sha256': hashlib.sha256(GATE.OWNERSHIP.REGISTRY_PATH.read_bytes()).hexdigest(),
                        'artifact_digests': {name: hashlib.sha256((root / name).read_bytes()).hexdigest() for name in paths}}
             (root / 'producer-envelope.json').write_text(json.dumps(receipt))
             with patch.object(GATE, 'ARTIFACTS', root), patch.object(GATE.subprocess, 'check_output', return_value='a' * 40), patch.dict(GATE.os.environ, {}, clear=True):
@@ -179,6 +180,11 @@ class RecoveryProducerOrderTests(unittest.TestCase):
                 events.append('native')
                 return SimpleNamespace(returncode=0)
 
+            def install_runtime():
+                events.append('install')
+                (root / 'runtime-transport.json').write_text(json.dumps(
+                    {'schema': 1, 'status': 'fresh_install', 'browser_execution_required': True}))
+
             controllers = SimpleNamespace(retained_producer=lambda: recovery,
                 collect=Mock(side_effect=collect), record_execution=Mock(side_effect=lambda *a: events.append('record')))
             if not recovery:
@@ -189,7 +195,7 @@ class RecoveryProducerOrderTests(unittest.TestCase):
             verifier = stack.enter_context(patch.object(GATE, 'verify_producer_envelope', side_effect=verify))
             planner = stack.enter_context(patch.object(GATE, 'partition_plan', side_effect=plan))
             unpack = stack.enter_context(patch.object(GATE, 'unpack', side_effect=lambda: events.append('unpack')))
-            install = stack.enter_context(patch.object(GATE, 'install_browser_runtime', side_effect=lambda: events.append('install')))
+            install = stack.enter_context(patch.object(GATE, 'install_browser_runtime', side_effect=install_runtime))
             runner = stack.enter_context(patch.object(GATE.subprocess, 'run', side_effect=native))
             yield SimpleNamespace(root=root, events=events, controllers=controllers,
                 loader=loader, verifier=verifier, planner=planner, unpack=unpack, install=install, runner=runner)
@@ -197,22 +203,22 @@ class RecoveryProducerOrderTests(unittest.TestCase):
     def test_cold_recovery_materializes_verified_producer_before_actual_partition_reads(self):
         with self.execution() as observed:
             self.assertFalse((observed.root / 'inventories').exists())
-            GATE.run('navigation-destinations', 'firefox')
+            GATE.run('navigation-links', 'firefox')
             self.assertEqual(observed.events[:5], ['collect', 'verify', 'partition', 'unpack', 'install'])
-            self.assertEqual(observed.events[5:], ['native', 'record'])
-            observed.controllers.collect.assert_called_once_with('producer', caller='browser-navigation-destinations-firefox')
+            self.assertEqual(observed.events[5:], ['native', 'record', 'native', 'record'])
+            observed.controllers.collect.assert_called_once_with('producer', caller='browser-navigation-links-firefox')
 
     def test_first_attempt_verifies_downloaded_producer_without_api_collection(self):
         with self.execution(recovery=False) as observed:
-            GATE.run('navigation-destinations', 'chromium')
+            GATE.run('navigation-links', 'chromium')
             observed.controllers.collect.assert_not_called()
             self.assertEqual(observed.events[:4], ['verify', 'partition', 'unpack', 'install'])
-            self.assertEqual(observed.events[4:], ['native', 'record'])
+            self.assertEqual(observed.events[4:], ['native', 'record', 'native', 'record'])
 
     def test_admission_failure_prevents_inventory_reads_unpack_install_and_native_execution(self):
         with self.execution(collection_error='Controlled producer admission refused') as observed:
             with self.assertRaisesRegex(ValueError, 'producer admission refused'):
-                GATE.run('navigation-destinations', 'firefox')
+                GATE.run('navigation-links', 'firefox')
             self.assertEqual(observed.events, ['collect'])
             for operation in (observed.verifier, observed.planner, observed.unpack, observed.install, observed.runner):
                 operation.assert_not_called()
@@ -222,7 +228,7 @@ class RecoveryProducerOrderTests(unittest.TestCase):
     def test_producer_verification_failure_prevents_partition_and_native_execution(self):
         with self.execution(verification_error='Controlled producer digest refused') as observed:
             with self.assertRaisesRegex(ValueError, 'producer digest refused'):
-                GATE.run('navigation-destinations', 'webkit')
+                GATE.run('navigation-links', 'webkit')
             self.assertEqual(observed.events, ['collect', 'verify'])
             for operation in (observed.planner, observed.unpack, observed.install, observed.runner):
                 operation.assert_not_called()
@@ -241,7 +247,7 @@ class RecoveryProducerOrderTests(unittest.TestCase):
         for variable in ('BIJUX_UI_BROWSER_ENGINE', 'BIJUX_UI_PROJECTS', 'BIJUX_UI_PROFILE'):
             with self.subTest(variable=variable), self.execution() as observed:
                 with patch.dict(GATE.os.environ, {variable: 'external'}), self.assertRaisesRegex(ValueError, 'assigned group/engine'):
-                    GATE.run('navigation-destinations', 'firefox')
+                    GATE.run('navigation-links', 'firefox')
                 self.assertEqual(observed.events, [])
                 observed.loader.assert_not_called()
                 observed.runner.assert_not_called()
@@ -258,7 +264,7 @@ class RecoveryProducerOrderTests(unittest.TestCase):
                 return result
             observed.controllers.collect.side_effect = incomplete
             with self.assertRaisesRegex(ValueError, 'case/project mismatch|case count mismatch'):
-                GATE.run('navigation-destinations', 'firefox')
+                GATE.run('navigation-links', 'firefox')
             self.assertEqual(observed.events, ['collect', 'verify', 'partition'])
             observed.unpack.assert_not_called()
             observed.install.assert_not_called()

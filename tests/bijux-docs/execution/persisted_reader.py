@@ -116,7 +116,7 @@ def current_source_identity() -> dict:
     return {'head': head, 'tree_sha256': tree, 'files': hashes}
 
 
-def derive(output: Path, inventory_path: Path) -> dict:
+def derive(output: Path, inventory_path: Path, original_source=None) -> dict:
     inventory = json.loads(inventory_path.read_text())
     report_path = output / 'qualification.json'
     report = json.loads(report_path.read_text())
@@ -129,7 +129,8 @@ def derive(output: Path, inventory_path: Path) -> dict:
     report['junit']['path'] = str(output / junit)
     aggregate = load(TESTS / 'reporting/aggregate.py', 'persisted_browser_aggregation')
     qualified = aggregate.aggregate([inventory], [report])
-    require(qualified['source_identity'] == current_source_identity(), 'Cached evidence does not qualify the actual source tree')
+    expected_source = current_source_identity() if original_source is None else original_source
+    require(qualified['source_identity'] == expected_source, 'Cached evidence does not qualify the actual source tree')
     observations = [qualify_journey(result) for result in report['results']]
     require({item['project'] for item in observations} == set(PROJECTS), 'Missing dedicated viewport journey')
     inputs = {str(path.relative_to(output)): hashlib.sha256(path.read_bytes()).hexdigest()
@@ -143,9 +144,9 @@ def derive(output: Path, inventory_path: Path) -> dict:
             'limits': ['Chromium cached native journeys do not qualify Firefox/WebKit cache capability, physical devices or live production. Material may replace its serialized state marker.']}
 
 
-def verify(output: Path) -> dict:
+def verify(output: Path, *, original_source=None, inventory_path=None) -> dict:
     retained = json.loads((output / 'receipt.json').read_text())
-    current = derive(output, ARTIFACTS / 'inventories' / f'{SUITE}.json')
+    current = derive(output, inventory_path or ARTIFACTS / 'inventories' / f'{SUITE}.json', original_source)
     require(retained == current, 'Retained cached reader receipt differs from physical source-bound evidence')
     return current
 

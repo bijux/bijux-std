@@ -1,0 +1,347 @@
+"""Refuse altered npm bytes, package topology and platform identities before reuse."""
+import copy
+import gzip
+import io
+import json
+import os
+from pathlib import Path
+import tarfile
+import tempfile
+from types import ModuleType
+import unittest
+from unittest.mock import patch
+
+ROOT = Path(__file__).resolve().parents[1]
+
+
+def load(path, key):
+    module = ModuleType(key)
+    module.__file__ = str(path)
+    exec(compile(path.read_bytes(), str(path), 'exec'), module.__dict__)
+    return module
+
+
+ARCHIVE = load(ROOT / 'tests/bijux-docs/execution/runtime_transport/archive.py', 'bijux_runtime_transport_controls')
+GATE = load(ROOT / 'tests/bijux-docs/execution/browser_gate.py', 'bijux_runtime_gate_controls')
+CONTAINER = load(ROOT / 'tests/bijux-docs/execution/runtime_transport/container.py', 'bijux_runtime_container_controls')
+
+
+class RuntimeTransportTests(unittest.TestCase):
+    def setUp(self):
+        self.workspace = tempfile.TemporaryDirectory(dir=ROOT / 'artifacts')
+        self.addCleanup(self.workspace.cleanup)
+        self.root = Path(self.workspace.name)
+        self.source, self.runtime = self.root / 'source', self.root / 'runtime'
+        self.source.mkdir(); self.runtime.mkdir()
+        self.inputs = {'node_version': 'v24.21.0', 'node_sha256': 'a' * 64,
+                       'npm_version': '11.11.0', 'npm_tree_sha256': 'b' * 64,
+                       'npm_cli_sha256': 'c' * 64, 'platform': {'system': 'Linux', 'machine': 'x86_64'}}
+        package = {'name': 'owned-browser-suite', 'devDependencies': {'playwright': '1.58.2'}}
+        lock = {'lockfileVersion': 3, 'packages': {'': package, 'node_modules/playwright': {'version': '1.58.2'}}}
+        for name, value in [('package.json', package), ('package-lock.json', lock)]:
+            data = json.dumps(value).encode()
+            (self.source / name).write_bytes(data)
+            (self.runtime / name).write_bytes(data)
+        package_dir = self.runtime / 'node_modules/playwright'
+        package_dir.mkdir(parents=True)
+        (package_dir / 'package.json').write_text(json.dumps({'name': 'playwright', 'version': '1.58.2', 'bin': {'playwright': 'cli.js'}}))
+        (package_dir / 'cli.js').write_text('#!/usr/bin/env node\nconsole.log("native transport control")\n')
+        (package_dir / 'cli.js').chmod(0o755)
+        (package_dir / 'lib').mkdir()
+        (package_dir / 'lib/runtime.js').write_text('module.exports = "exact producer bytes";\n')
+        (self.runtime / 'node_modules/.bin').mkdir()
+        (self.runtime / 'node_modules/.bin/playwright').symlink_to('../playwright/cli.js')
+        self.archive = self.root / 'packages.tar.gz'
+        self.receipt = ARCHIVE.pack(self.runtime, self.source, self.archive, self.inputs)
+
+    def unpack(self, declaration=None, inputs=None, output=None):
+        return ARCHIVE.unpack(self.archive, declaration or self.receipt, self.source,
+                              output or self.root / 'consumer', inputs or self.inputs)
+
+    def mutate(self, change):
+        with tarfile.open(self.archive) as stream:
+            members = [(member.name, stream.extractfile(member).read(), member.type) for member in stream]
+        change(members)
+        with tarfile.open(self.archive, 'w:gz', format=tarfile.USTAR_FORMAT) as stream:
+            for name, body, kind in members:
+                member = tarfile.TarInfo(name)
+                member.type = kind
+                member.linkname = '../../outside' if kind != tarfile.REGTYPE else ''
+                member.size = len(body) if kind == tarfile.REGTYPE else 0
+                stream.addfile(member, io.BytesIO(body) if member.size else None)
+        self.receipt['archive_sha256'] = ARCHIVE.IDENTITY.digest(self.archive.read_bytes())
+
+    def test_exact_package_files_executable_modes_and_links_are_reconstructed_and_reobserved(self):
+        self.assertEqual(self.unpack(), self.receipt)
+        original = ARCHIVE.IDENTITY.inventory(self.runtime)
+        actual = ARCHIVE.IDENTITY.inventory(self.root / 'consumer')
+        self.assertEqual(actual, original)
+        self.assertEqual(os.readlink(self.root / 'consumer/node_modules/.bin/playwright'), '../playwright/cli.js')
+        second = self.root / 'second.tar.gz'
+        self.assertEqual(ARCHIVE.pack(self.runtime, self.source, second, self.inputs), self.receipt)
+        self.assertEqual(second.read_bytes(), self.archive.read_bytes())
+
+    def test_platform_node_npm_and_lock_change_each_refuses_before_output_creation(self):
+        for field in self.inputs:
+            changed = copy.deepcopy(self.inputs)
+            changed[field] = {'system': 'Darwin', 'machine': 'arm64'} if field == 'platform' else 'altered'
+            with self.subTest(field=field), self.assertRaisesRegex(ValueError, 'platform, toolchain or source lock'):
+                self.unpack(inputs=changed)
+            self.assertFalse((self.root / 'consumer').exists())
+        for field in ('release', 'libc', 'os_release_sha256', 'runner_os', 'runner_arch', 'image_os', 'image_version'):
+            changed = copy.deepcopy(self.inputs)
+            changed['platform'][field] = 'different physical platform'
+            with self.subTest(platform_field=field), self.assertRaisesRegex(ValueError, 'platform, toolchain or source lock'):
+                self.unpack(inputs=changed)
+            self.assertFalse((self.root / 'consumer').exists())
+        (self.source / 'package-lock.json').write_text('{"lockfileVersion":3,"packages":{}}')
+        with self.assertRaises(ValueError): self.unpack()
+        self.assertFalse((self.root / 'consumer').exists())
+
+    def test_changed_package_object_and_receipt_refuse(self):
+        self.mutate(lambda members: members.__setitem__(1, (members[1][0], b'forged bytes', tarfile.REGTYPE)))
+        with self.assertRaises(ValueError): self.unpack()
+        self.assertFalse((self.root / 'consumer').exists())
+        altered = {**self.receipt, 'members_sha256': 'f' * 64}
+        with self.assertRaises(ValueError): self.unpack(declaration=altered)
+
+    def test_mismatch_reports_known_changed_fields_and_redacts_arbitrary_values_before_output(self):
+        changed = copy.deepcopy(self.inputs)
+        changed['node_version'] = 'v24.22.0'
+        changed['platform'].update(release='6.17.0-1023-azure', image_version=None)
+        changed['npm_cli_sha256'] = '/private/runtime/token=never-report-this'
+        changed['credential'] = 'never-report-this-either'
+        with self.assertRaises(ARCHIVE.InputIdentityMismatch) as raised:
+            self.unpack(inputs=changed)
+        diagnosis = raised.exception.diagnosis
+        fields = {row['field']: row for row in diagnosis['differing_fields']}
+        self.assertEqual(fields['toolchain.node_version']['current']['value'], 'v24.22.0')
+        self.assertEqual(fields['toolchain.platform.release']['current']['value'], '6.17.0-1023-azure')
+        self.assertEqual(fields['toolchain.platform.image_version']['producer'], {'present': False})
+        self.assertEqual(fields['toolchain.platform.image_version']['current'], {'present': True, 'value': None})
+        self.assertIn('redacted_sha256', fields['toolchain.npm_cli_sha256']['current'])
+        serialized = json.dumps(diagnosis)
+        self.assertNotIn('/private', serialized); self.assertNotIn('never-report', serialized)
+        self.assertNotIn('credential', serialized)
+        self.assertLess(len(serialized), 10_000)
+        self.assertFalse((self.root / 'consumer').exists())
+        for value in ('v' + '1' * 512 + '.0.0', 'v24.21.0\nnever-report-control-text'):
+            changed = copy.deepcopy(self.inputs)
+            changed['node_version'] = value
+            with self.subTest(value_kind='oversized' if len(value) > 128 else 'control'), \
+                 self.assertRaises(ARCHIVE.InputIdentityMismatch) as raised:
+                self.unpack(inputs=changed)
+            row = raised.exception.diagnosis['differing_fields'][0]
+            self.assertIn('redacted_sha256', row['current'])
+            self.assertNotIn(value, json.dumps(raised.exception.diagnosis))
+            self.assertFalse((self.root / 'consumer').exists())
+        def forged_producer(members):
+            index = json.loads(members[0][1])
+            index['inputs']['toolchain']['node_version'] = 'v' + '1' * 512 + '.0.0'
+            index['inputs']['toolchain']['platform']['libc'] = ['glibc', '2' * 512]
+            index['inputs']['private'] = {'credential_path': '/private/never-report-producer-text'}
+            members[0] = ('index.json', json.dumps(index).encode(), tarfile.REGTYPE)
+        self.mutate(forged_producer)
+        with self.assertRaises(ARCHIVE.InputIdentityMismatch) as raised:
+            self.unpack()
+        diagnosis = raised.exception.diagnosis
+        fields = {row['field']: row for row in diagnosis['differing_fields']}
+        self.assertIn('redacted_sha256', fields['toolchain.node_version']['producer'])
+        self.assertIn('redacted_sha256', fields['toolchain.platform.libc']['producer'])
+        serialized = json.dumps(diagnosis)
+        self.assertNotIn('credential_path', serialized); self.assertNotIn('/private', serialized)
+        self.assertNotIn('never-report-producer-text', serialized)
+        self.assertLess(len(serialized), 10_000)
+        self.assertFalse((self.root / 'consumer').exists())
+
+    def test_archive_alias_links_duplicate_members_and_trailing_data_refuse(self):
+        original = self.archive.read_bytes()
+        declaration = copy.deepcopy(self.receipt)
+        controls = [lambda members: members.append(('../outside', b'owned', tarfile.REGTYPE)),
+                    lambda members: members.append(('objects/' + 'a' * 64, b'', tarfile.SYMTYPE)),
+                    lambda members: members.append(('objects/' + 'a' * 64, b'', tarfile.LNKTYPE)),
+                    lambda members: members.append(members[1])]
+        for change in controls:
+            self.archive.write_bytes(original); self.receipt = copy.deepcopy(declaration)
+            self.mutate(change)
+            with self.assertRaises(ValueError): self.unpack()
+            self.assertFalse((self.root / 'consumer').exists())
+        self.archive.write_bytes(original + gzip.compress(b'foreign trailing bytes'))
+        self.receipt['archive_sha256'] = ARCHIVE.IDENTITY.digest(self.archive.read_bytes())
+        with self.assertRaises(ValueError): self.unpack()
+
+    def test_installed_foreign_bin_link_version_missing_executable_and_hardlink_refuse(self):
+        link = self.runtime / 'node_modules/.bin/playwright'
+        link.unlink(); link.symlink_to('../../outside')
+        with self.assertRaisesRegex(ValueError, 'escapes'): ARCHIVE.pack(self.runtime, self.source, self.root / 'bad.tar.gz', self.inputs)
+        link.unlink(); link.symlink_to('../playwright/cli.js')
+        package = self.runtime / 'node_modules/playwright/package.json'
+        package.write_text('{"name":"playwright","version":"1.59.0"}')
+        with self.assertRaisesRegex(ValueError, 'version'): ARCHIVE.pack(self.runtime, self.source, self.root / 'bad.tar.gz', self.inputs)
+        package.write_text('{"name":"playwright","version":"1.58.2","bin":{"playwright":"cli.js"}}')
+        executable = self.runtime / 'node_modules/playwright/cli.js'
+        executable.chmod(0o644)
+        with self.assertRaisesRegex(ValueError, 'not executable'): ARCHIVE.pack(self.runtime, self.source, self.root / 'bad.tar.gz', self.inputs)
+        executable.chmod(0o755)
+        os.link(executable, self.runtime / 'node_modules/playwright/alias.js')
+        with self.assertRaisesRegex(ValueError, 'Hard-linked'): ARCHIVE.pack(self.runtime, self.source, self.root / 'bad.tar.gz', self.inputs)
+
+    def test_index_cannot_authorize_foreign_links_missing_parents_modes_or_excess_bytes(self):
+        original = self.archive.read_bytes()
+        declaration = copy.deepcopy(self.receipt)
+        controls = [lambda index: index['members']['node_modules/.bin/playwright'].update(target='../../outside'),
+                    lambda index: index['members'].pop('node_modules/playwright'),
+                    lambda index: index['members']['node_modules/playwright/cli.js'].update(mode=0o4755),
+                    lambda index: index['members']['node_modules/playwright/cli.js'].update(bytes=ARCHIVE.IDENTITY.MAX_FILE_BYTES + 1),
+                    lambda index: index['members'].__setitem__('../outside', {'kind': 'directory'}),
+                    lambda index: index['inputs'].update(lock_sha256='f' * 64)]
+        for change in controls:
+            self.archive.write_bytes(original); self.receipt = copy.deepcopy(declaration)
+            def mutate(members):
+                index = json.loads(members[0][1]); change(index)
+                members[0] = ('index.json', json.dumps(index).encode(), tarfile.REGTYPE)
+            self.mutate(mutate)
+            with self.assertRaises(ValueError): self.unpack()
+            self.assertFalse((self.root / 'consumer').exists())
+
+    def test_existing_destination_and_linked_ancestors_preserve_user_files(self):
+        output = self.root / 'consumer'; output.mkdir()
+        (output / 'authored').write_text('preserved')
+        with self.assertRaisesRegex(ValueError, 'Preserve'): self.unpack()
+        self.assertEqual((output / 'authored').read_text(), 'preserved')
+        alias = self.root / 'alias'; alias.symlink_to(output, target_is_directory=True)
+        with self.assertRaisesRegex(ValueError, 'Linked'): self.unpack(output=alias / 'nested')
+        self.assertFalse((output / 'nested').exists())
+
+    def gate(self, applicable=True, missing=False):
+        artifacts = self.root / ('gate-applicable' if applicable else 'gate-refused')
+        artifacts.mkdir()
+        if not missing:
+            (artifacts / 'browser-packages.tar.gz').write_bytes(self.archive.read_bytes())
+            (artifacts / 'browser-packages.json').write_text(json.dumps(self.receipt))
+        with patch.object(GATE, 'ARTIFACTS', artifacts), patch.object(GATE, 'TESTS', self.source), \
+             patch.object(GATE, 'runtime_transport', return_value=ARCHIVE), \
+             patch.object(ARCHIVE.IDENTITY, 'toolchain', return_value=self.inputs if applicable else {**self.inputs, 'node_sha256': 'altered'}), \
+             patch.object(GATE.COSTS, 'ROOT', self.root), patch.object(GATE.subprocess, 'run') as install:
+            GATE.install_browser_runtime()
+            decision = json.loads((artifacts / 'runtime-transport.json').read_text())
+        return artifacts, decision, install
+
+    def test_gate_uses_verified_tree_without_npm_install_and_keeps_execution_required(self):
+        artifacts, decision, install = self.gate()
+        install.assert_not_called()
+        self.assertEqual(decision['status'], 'transported')
+        self.assertIs(decision['browser_execution_required'], True)
+        self.assertTrue((artifacts / 'node-runtime/node_modules/.bin/playwright').is_file())
+
+    def test_inapplicable_and_missing_transport_perform_fresh_install(self):
+        for missing in (False, True):
+            if missing:
+                (self.source / 'node_modules').unlink()
+                # Each gate has its own artifacts owner.
+                (self.root / 'gate-refused').rename(self.root / 'retained-refusal')
+            artifacts, decision, install = self.gate(applicable=False, missing=missing)
+            self.assertEqual(decision['status'], 'fresh_install')
+            self.assertTrue(decision['reason'])
+            self.assertEqual(install.call_args.args[0], ['npm', '--prefix', str(artifacts / 'node-runtime'), 'ci'])
+            self.assertFalse((artifacts / 'node-runtime/node_modules').exists())
+
+    def test_refused_gate_retains_identical_diagnosis_in_assigned_group_without_authorizing_reuse(self):
+        artifacts, decision, install = self.gate(applicable=False)
+        self.assertEqual(decision['status'], 'fresh_install')
+        self.assertIs(decision['browser_execution_required'], True)
+        self.assertEqual(decision['input_mismatch']['differing_fields'][0]['field'], 'toolchain.node_sha256')
+        install.assert_called_once()
+        batch, engine = next(iter(GATE.BATCHES)), 'chromium'
+        with patch.object(GATE, 'ARTIFACTS', artifacts):
+            GATE.retain_runtime_transport(batch, engine)
+            target = artifacts / 'shards' / (GATE.BATCHES[batch][0] + '-' + engine) / 'runtime-transport.json'
+            self.assertEqual(target.read_bytes(), (artifacts / 'runtime-transport.json').read_bytes())
+            with self.assertRaisesRegex(ValueError, 'Preserve existing'):
+                GATE.retain_runtime_transport(batch, engine)
+            with self.assertRaisesRegex(ValueError, 'Unknown runtime observation owner'):
+                GATE.retain_runtime_transport('foreign', engine)
+            target.unlink()
+            authored = self.root / 'authored-observation'; authored.write_text('preserved')
+            target.symlink_to(authored)
+            with self.assertRaisesRegex(ValueError, 'contains a link'):
+                GATE.retain_runtime_transport(batch, engine)
+            self.assertEqual(authored.read_text(), 'preserved')
+        self.assertFalse((artifacts / 'node-runtime/node_modules').exists())
+
+    def test_container_preparation_uses_immutable_consumer_platform_and_real_readonly_toolchain(self):
+        parser = load(ROOT / '.github/scripts/workflow_execution/yaml_io.py', 'bijux_transport_workflow_parser')
+        workflow = parser.parse_workflow((ROOT / '.github/standards/workflow-sources/bijux-std.yml').read_bytes(), 'bijux-std')
+        for job in ('navigation-browsers', 'frontend-browser-faults', 'persisted-native-reader'):
+            self.assertEqual(workflow['jobs'][job]['container']['image'], CONTAINER.IMAGE)
+        fixture = workflow['jobs']['navigation-fixtures']
+        self.assertNotIn('container', fixture)
+        self.assertTrue(any('browser_gate.py prepare --package-container' in step.get('run', '') for step in fixture['steps']))
+        upload = next(step for step in workflow['jobs']['navigation-browsers']['steps']
+                      if step['name'] == 'Retain exact shard receipts and failure diagnostics')
+        self.assertEqual(upload['with']['path'].splitlines(),
+                         ['artifacts/bijux-docs/shards', 'artifacts/bijux-docs/shards/*/runtime-transport.json'])
+        node, npm = self.root / 'node', self.root / 'npm/bin/npm-cli.js'
+        node.write_bytes(b'actual admitted node binary')
+        npm.parent.mkdir(parents=True); npm.write_bytes(b'actual installed npm entrypoint')
+        costs = self.root / 'costs'; costs.mkdir()
+        output = self.root / 'prepared.tar.gz'
+        self.assertEqual(CONTAINER.FORWARDED_ENVIRONMENT,
+                         ('RUNNER_OS', 'RUNNER_ARCH', 'GITHUB_RUN_ID',
+                          'GITHUB_RUN_ATTEMPT', 'GITHUB_SHA', 'BIJUX_COST_OWNER'))
+        forwarded = {name: 'actual-' + name for name in CONTAINER.FORWARDED_ENVIRONMENT}
+        def execute(command, **options):
+            self.assertTrue(options['check'])
+            mounts = [command[index + 1] for index, value in enumerate(command) if value == '--mount']
+            for destination in ('/bijux/source', '/bijux/runtime', '/bijux-toolchain/node', '/bijux-toolchain/npm', '/bijux-toolchain/bin'):
+                self.assertTrue(any(f'dst={destination},readonly' in value for value in mounts))
+            self.assertIn(f'type=bind,src={node},dst=/bijux-toolchain/node,readonly', mounts)
+            self.assertIn(f'type=bind,src={npm.parent.parent},dst=/bijux-toolchain/npm,readonly', mounts)
+            for name, value in forwarded.items(): self.assertIn(name + '=' + value, command)
+            self.assertNotIn('ImageOS=ubuntu24', command)
+            self.assertNotIn('ImageVersion=20261004.327.1', command)
+            self.assertNotIn('GH_TOKEN', ' '.join(command))
+            self.assertIn('--read-only', command); self.assertIn('--network=none', command)
+            self.assertIn(CONTAINER.IMAGE, command)
+            location = next(value for value in mounts if 'dst=/bijux-package-output' in value)
+            owned = Path(location.split(',src=', 1)[1].split(',dst=', 1)[0])
+            (owned / 'browser-packages.tar.gz').write_bytes(self.archive.read_bytes())
+            (owned / 'browser-packages.json').write_text(json.dumps(self.receipt))
+        which = lambda name: str(node if name == 'node' else npm) if name != 'docker' else '/usr/bin/docker'
+        with patch.object(CONTAINER, 'archive_module', return_value=ARCHIVE), \
+             patch.object(CONTAINER.shutil, 'which', side_effect=which), \
+             patch.dict(os.environ, {**forwarded, 'ImageOS': 'ubuntu24',
+                                     'ImageVersion': '20261004.327.1', 'GH_TOKEN': 'never-forwarded'}, clear=True), \
+             patch.object(CONTAINER.subprocess, 'run', side_effect=execute):
+            self.assertEqual(CONTAINER.pack(self.runtime, ROOT / 'tests/bijux-docs', output), self.receipt)
+        self.assertEqual(output.read_bytes(), self.archive.read_bytes())
+
+    def test_container_preparation_refuses_missing_docker_foreign_source_and_failed_child_without_output(self):
+        output = self.root / 'prepared.tar.gz'
+        with patch.object(CONTAINER.shutil, 'which', return_value=None), patch.object(CONTAINER.subprocess, 'run') as child:
+            with self.assertRaisesRegex(ValueError, 'Docker is required'):
+                CONTAINER.pack(self.runtime, ROOT / 'tests/bijux-docs', output)
+            with self.assertRaisesRegex(ValueError, 'owning source'):
+                CONTAINER.pack(self.runtime, self.source, output)
+            child.assert_not_called()
+        self.assertFalse(output.exists())
+        output.write_bytes(b'preserve existing archive')
+        with self.assertRaisesRegex(ValueError, 'Preserve existing'):
+            CONTAINER.pack(self.runtime, ROOT / 'tests/bijux-docs', output)
+        self.assertEqual(output.read_bytes(), b'preserve existing archive')
+        output.unlink()
+        node, npm = self.root / 'node', self.root / 'npm/bin/npm-cli.js'
+        node.write_bytes(b'actual node'); npm.parent.mkdir(parents=True); npm.write_bytes(b'actual npm')
+        which = lambda name: str(node if name == 'node' else npm) if name != 'docker' else '/usr/bin/docker'
+        with patch.object(CONTAINER.shutil, 'which', side_effect=which), \
+             patch.object(CONTAINER.subprocess, 'run', side_effect=CONTAINER.subprocess.CalledProcessError(1, ['docker'])):
+            with self.assertRaises(CONTAINER.subprocess.CalledProcessError):
+                CONTAINER.pack(self.runtime, ROOT / 'tests/bijux-docs', output)
+        self.assertFalse(output.exists())
+        alias = self.root / 'linked-runtime'; alias.symlink_to(self.runtime, target_is_directory=True)
+        with self.assertRaisesRegex(ValueError, 'Linked installed'):
+            CONTAINER.pack(alias, ROOT / 'tests/bijux-docs', output)
+
+
+if __name__ == '__main__':
+    unittest.main()

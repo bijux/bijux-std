@@ -10,7 +10,10 @@ import os
 from pathlib import Path
 import shutil
 import subprocess
+import tempfile
+import time
 import xml.etree.ElementTree as ET
+from types import ModuleType
 
 ROOT = Path(__file__).resolve().parents[3]
 TESTS = ROOT / 'tests/bijux-docs'
@@ -20,7 +23,16 @@ PARTITIONS_SPEC = importlib.util.spec_from_file_location('browser_partitions', P
 PARTITIONS = importlib.util.module_from_spec(PARTITIONS_SPEC)
 PARTITIONS_SPEC.loader.exec_module(PARTITIONS)
 GROUPS, ENGINES, SUITES = PARTITIONS.GROUPS, PARTITIONS.ENGINES, PARTITIONS.SUITES
+_BATCH_SOURCE = TESTS / 'execution/browser_ownership/batches.py'
+OWNERSHIP = ModuleType('bijux_browser_physical_ownership')
+OWNERSHIP.__file__ = str(_BATCH_SOURCE)
+exec(compile(_BATCH_SOURCE.read_bytes(), str(_BATCH_SOURCE), 'exec'), OWNERSHIP.__dict__)
+BATCHES = OWNERSHIP.registry(GROUPS)
 PERSISTED_SUITE = "persisted-reader-history"
+_COST_SOURCE = TESTS / 'execution/costs/observations.py'
+COSTS = ModuleType('bijux_browser_operation_costs')
+COSTS.__file__ = str(_COST_SOURCE)
+exec(compile(_COST_SOURCE.read_bytes(), str(_COST_SOURCE), 'exec'), COSTS.__dict__)
 
 
 def partition_plan() -> dict:
@@ -29,6 +41,7 @@ def partition_plan() -> dict:
 
 
 
+@COSTS.measured('receipt_write')
 def write_json(path: Path, data: dict) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(data, indent=2) + '\n')
@@ -58,7 +71,15 @@ def fixture_transport():
     return module
 
 
-def prepare() -> None:
+def runtime_transport():
+    path = TESTS / 'execution/runtime_transport/archive.py'
+    module = ModuleType('bijux_installed_runtime_transport')
+    module.__file__ = str(path)
+    exec(compile(path.read_bytes(), str(path), 'exec'), module.__dict__)
+    return module
+
+
+def prepare(*, package_container=False) -> None:
     if any(name in os.environ for name in ('BIJUX_UI_BROWSER_ENGINE', 'BIJUX_UI_PROJECTS', 'BIJUX_UI_PROFILE')):
         raise ValueError('Canonical inventory must not select projects')
     inventory = ARTIFACTS / 'inventories'
@@ -71,12 +92,20 @@ def prepare() -> None:
     receipt = fixture_transport().pack(ARTIFACTS, fixture_roots(), archive)
     print('Fixture transport: ' + json.dumps(receipt, sort_keys=True))
     (ARTIFACTS / 'browser-fixtures.sha256').write_text(hashlib.sha256(archive.read_bytes()).hexdigest() + '\n')
-    paths = [archive, ARTIFACTS / 'renderer-source-observation.json'] + [inventory / f'{suite}.json' for suite in (*SUITES, PERSISTED_SUITE)]
+    runtime_archive = ARTIFACTS / 'browser-packages.tar.gz'
+    started = time.monotonic()
+    transport = load_module(TESTS / 'execution/runtime_transport/container.py', 'bijux_runtime_container') if package_container else runtime_transport()
+    runtime_receipt = transport.pack(ARTIFACTS / 'node-runtime', TESTS, runtime_archive)
+    print('Browser package pack cost: ' + json.dumps({'seconds': time.monotonic() - started,
+          'archive_bytes': runtime_receipt['archive_bytes'], 'scope': 'Complete inventory and compression; cost only'}))
+    write_json(ARTIFACTS / 'browser-packages.json', runtime_receipt)
+    paths = [archive, runtime_archive, ARTIFACTS / 'browser-packages.json', ARTIFACTS / 'renderer-source-observation.json'] + [inventory / f'{suite}.json' for suite in (*SUITES, PERSISTED_SUITE)]
     write_json(ARTIFACTS / 'producer-envelope.json', {
         'source_head': subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=ROOT, text=True).strip(),
         'workflow_run_id': os.environ.get('GITHUB_RUN_ID'),
         'workflow_attempt': os.environ.get('GITHUB_RUN_ATTEMPT'),
         'partition_registry_sha256': hashlib.sha256(PARTITIONS.REGISTRY_PATH.read_bytes()).hexdigest(),
+        'batch_registry_sha256': hashlib.sha256(OWNERSHIP.REGISTRY_PATH.read_bytes()).hexdigest(),
         'artifact_digests': {str(path.relative_to(ARTIFACTS)): hashlib.sha256(path.read_bytes()).hexdigest() for path in paths},
     })
 
@@ -100,7 +129,9 @@ def verify_producer_envelope(admission=None) -> dict:
         raise ValueError('Producer workflow/candidate identity mismatch')
     if receipt.get('partition_registry_sha256') != hashlib.sha256(PARTITIONS.REGISTRY_PATH.read_bytes()).hexdigest():
         raise ValueError('Producer browser partition registry mismatch')
-    paths = ['browser-fixtures.tar.gz', 'renderer-source-observation.json'] + [f'inventories/{suite}.json' for suite in (*SUITES, PERSISTED_SUITE)]
+    if receipt.get('batch_registry_sha256') != hashlib.sha256(OWNERSHIP.REGISTRY_PATH.read_bytes()).hexdigest():
+        raise ValueError('Producer physical browser batch registry mismatch')
+    paths = ['browser-fixtures.tar.gz', 'browser-packages.tar.gz', 'browser-packages.json', 'renderer-source-observation.json'] + [f'inventories/{suite}.json' for suite in (*SUITES, PERSISTED_SUITE)]
     if set(receipt.get('artifact_digests', {})) != set(paths):
         raise ValueError('Producer evidence inventory mismatch')
     for name in paths:
@@ -125,8 +156,37 @@ def unpack() -> None:
 
 def install_browser_runtime() -> None:
     runtime = ARTIFACTS / 'node-runtime'
+    decision = {'schema': 1, 'status': 'fresh_install', 'browser_execution_required': True}
+    archive, receipt = ARTIFACTS / 'browser-packages.tar.gz', ARTIFACTS / 'browser-packages.json'
+    # Only an empty destination is eligible. Existing local dependencies never
+    # become retained authority and are not removed by archive reconstruction.
+    if not runtime.exists() and not runtime.is_symlink() and archive.is_file() and receipt.is_file():
+        transport = None
+        try:
+            transport = runtime_transport()
+            declaration = transport.IDENTITY.decoded(receipt.read_bytes())
+            # Validate and reconstruct in an owned sibling before installing a
+            # complete tree. Refused transports leave the destination untouched.
+            with tempfile.TemporaryDirectory(prefix='npm-transport-', dir=ARTIFACTS) as folder:
+                staged = Path(folder) / 'runtime'
+                started = time.monotonic()
+                transport.unpack(archive, declaration, TESTS, staged)
+                decision['verification_and_reconstruction_seconds'] = time.monotonic() - started
+                staged.rename(runtime)
+            decision.update(status='transported', archive_sha256=declaration['archive_sha256'],
+                            members_sha256=declaration['members_sha256'])
+        except (ValueError, OSError, EOFError, KeyError, TypeError, json.JSONDecodeError) as error:
+            decision['reason'] = str(error)
+            if transport is not None and isinstance(error, transport.InputIdentityMismatch):
+                decision['input_mismatch'] = error.diagnosis
+    else:
+        decision['reason'] = 'Transport missing or runtime destination already exists'
+    if any(path.is_symlink() for path in (runtime, *runtime.parents)):
+        raise ValueError('Runtime destination has a symlink ancestor')
     runtime.mkdir(parents=True, exist_ok=True)
     for name in ('package.json', 'package-lock.json'):
+        if (runtime / name).is_symlink():
+            raise ValueError('Runtime dependency manifest is a symlink')
         shutil.copyfile(TESTS / name, runtime / name)
     link = TESTS / 'node_modules'
     if link.is_symlink():
@@ -136,36 +196,60 @@ def install_browser_runtime() -> None:
         raise ValueError('Preserve existing browser dependencies')
     else:
         link.symlink_to(runtime / 'node_modules', target_is_directory=True)
-    env = dict(os.environ, NPM_CONFIG_CACHE=str(ARTIFACTS / 'npm-cache'))
-    subprocess.run(['npm', '--prefix', str(runtime), 'ci'], cwd=ROOT, env=env, check=True)
+    if decision['status'] != 'transported':
+        env = dict(os.environ, NPM_CONFIG_CACHE=str(ARTIFACTS / 'npm-cache'))
+        COSTS.measured('npm_installation')(subprocess.run)(
+            ['npm', '--prefix', str(runtime), 'ci'], cwd=ROOT, env=env, check=True)
+    write_json(ARTIFACTS / 'runtime-transport.json', decision)
+    print('Browser package transport: ' + json.dumps(decision, sort_keys=True))
 
 
-def run(group: str, engine: str) -> None:
+def retain_runtime_transport(batch: str, engine: str) -> None:
+    """Keep the diagnostic inside its existing canonical group artifact namespace."""
+    if batch not in BATCHES or engine not in ENGINES:
+        raise ValueError('Unknown runtime observation owner')
+    folder = ARTIFACTS / 'shards' / f'{BATCHES[batch][0]}-{engine}'
+    target = folder / 'runtime-transport.json'
+    source = ARTIFACTS / 'runtime-transport.json'
+    if any(path.is_symlink() for path in (target, *target.parents, source)):
+        raise ValueError('Runtime observation path contains a link')
+    if target.exists():
+        raise ValueError('Preserve existing runtime observation')
+    folder.mkdir(parents=True, exist_ok=True)
+    shutil.copyfile(source, target)
+
+
+def run(batch: str, engine: str) -> None:
     if any(name in os.environ for name in ('BIJUX_UI_BROWSER_ENGINE', 'BIJUX_UI_PROJECTS', 'BIJUX_UI_PROFILE')):
         raise ValueError('Browser execution selection must come from its assigned group/engine')
-    if group not in GROUPS or engine not in ENGINES:
+    if batch not in BATCHES or engine not in ENGINES:
         raise ValueError('Unknown assigned browser group or engine')
     controllers = workflow_controllers()
-    collection = controllers.collect('producer', caller='browser-' + group + '-' + engine) if controllers.retained_producer() else None
+    collection = controllers.collect('producer', caller='browser-' + batch + '-' + engine) if controllers.retained_producer() else None
     producer = verify_producer_envelope(collection.producer if collection is not None else None)
     # Cold recovery must admit and verify inventories before deriving their ownership.
     assignments = partition_plan()
     unpack()
     install_browser_runtime()
+    retain_runtime_transport(batch, engine)
     failed = []
-    for suite in GROUPS[group]:
-        output = ARTIFACTS / 'shards' / f'{group}-{engine}' / suite
-        output.mkdir(parents=True, exist_ok=True)
-        env = environment(suite, output)
-        env.update(PARTITIONS.selection(group, suite, engine))
-        if not assignments[(f'{group}-{engine}', suite)]:
-            raise ValueError('Browser partition must execute cases')
-        result = subprocess.run([playwright(), 'test', '--config', str(TESTS / f'playwright.{suite}.config.js')], cwd=ROOT, env=env)
-        if result.returncode:
-            failed.append(suite)
+    for group in BATCHES[batch]:
+        group_failed = False
+        for suite in GROUPS[group]:
+            output = ARTIFACTS / 'shards' / f'{group}-{engine}' / suite
+            output.mkdir(parents=True, exist_ok=True)
+            env = environment(suite, output)
+            env.update(PARTITIONS.selection(group, suite, engine))
+            if not assignments[(f'{group}-{engine}', suite)]:
+                raise ValueError('Browser partition must execute cases')
+            result = subprocess.run([playwright(), 'test', '--config', str(TESTS / f'playwright.{suite}.config.js')], cwd=ROOT, env=env)
+            if result.returncode:
+                failed.append(group + '/' + suite)
+                group_failed = True
+        if not group_failed:
+            controllers.record_execution(ARTIFACTS / 'shards' / f'{group}-{engine}', f'browser-{group}-{engine}', producer)
     if failed:
         raise ValueError('Browser qualification failed: ' + ', '.join(failed))
-    controllers.record_execution(ARTIFACTS / 'shards' / f'{group}-{engine}', f'browser-{group}-{engine}', producer)
 
 
 def aggregate(collection=None) -> None:
@@ -255,16 +339,19 @@ def load_module(path: Path, name: str):
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('operation', choices=('prepare', 'run', 'aggregate'))
-    parser.add_argument('--group', choices=GROUPS)
+    parser.add_argument('--batch', choices=BATCHES)
     parser.add_argument('--engine', choices=ENGINES)
+    parser.add_argument('--package-container', action='store_true', help='Observe installed packages inside the immutable browser container')
     args = parser.parse_args()
-    if args.operation == 'run' and (not args.group or not args.engine):
+    if args.operation == 'run' and (not args.batch or not args.engine):
         parser.error('Browser execution requires an assigned group and engine')
+    if args.package_container and args.operation != 'prepare':
+        parser.error('Consumer-platform packaging belongs to fixture preparation')
     try:
         if args.operation == 'prepare':
-            prepare()
+            prepare(package_container=args.package_container)
         elif args.operation == 'run':
-            run(args.group, args.engine)
+            run(args.batch, args.engine)
         else:
             aggregate()
     except (ValueError, OSError, subprocess.CalledProcessError) as error:

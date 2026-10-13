@@ -21,7 +21,7 @@ class MaterialMakeAdmissionTests(unittest.TestCase):
         self.fixture = Path(self.directory.name)
         self.shared = self.fixture / '.bijux/shared/bijux-docs'
         shutil.copytree(ROOT / 'shared/bijux-docs/tooling/material', self.shared / 'tooling/material')
-        for relative in ['tooling/quality/validate_production_url.py', 'tooling/scripts/verify_bijux_docs_site.sh', 'tooling/scripts/docs_source_authority.sh', 'partials/main.html', json.loads((self.shared / 'tooling/material/runtime-provenance.json').read_text())['output_asset']]:
+        for relative in ['tooling/quality/validate_production_url.py', 'tooling/scripts/verify_bijux_docs_site.sh', 'tooling/scripts/docs_source_authority.sh', 'config/style-tokens.json', 'partials/main.html', json.loads((self.shared / 'tooling/material/runtime-provenance.json').read_text())['output_asset']]:
             target = self.shared / relative
             target.parent.mkdir(parents=True, exist_ok=True)
             shutil.copy2(ROOT / 'shared/bijux-docs' / relative, target)

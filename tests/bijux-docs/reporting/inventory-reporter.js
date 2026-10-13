@@ -1,6 +1,6 @@
 "use strict";
 const fs = require("node:fs"), path = require("node:path");
-const { sourceIdentity, fixtureIdentity, cases } = require("./identity");
+const { sourceIdentity, fixtureIdentity, cases, operationCost } = require("./identity");
 class InventoryReporter {
   onBegin(config, suite) {
     const strict = config.reporter.find(entry => String(entry[0]).endsWith("strict-reporter.js"))?.[1];
@@ -14,7 +14,7 @@ class InventoryReporter {
   onEnd() {
     if (!this.report || !process.env.BIJUX_UI_INVENTORY) throw new Error("Inventory output is required");
     fs.mkdirSync(path.dirname(process.env.BIJUX_UI_INVENTORY), { recursive: true });
-    fs.writeFileSync(process.env.BIJUX_UI_INVENTORY, JSON.stringify(this.report, null, 2) + "\n");
+    operationCost("receipt_write", () => fs.writeFileSync(process.env.BIJUX_UI_INVENTORY, JSON.stringify(this.report, null, 2) + "\n"));
   }
 }
 module.exports = InventoryReporter;

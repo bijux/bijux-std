@@ -9,7 +9,7 @@ import json
 from pathlib import Path
 import re
 
-BASELINE_JOBS = {'std / standard', 'std / contracts', 'std / report'}
+BASELINE_JOBS = {'std / standard', 'std / contracts', 'std / report', 'std / input plan'}
 
 
 def require(condition: bool, message: str) -> None:
@@ -213,10 +213,20 @@ def qualify_latest(observation, *, groups: dict, engines: tuple | list,
 def registry_digests(registry_path: Path) -> dict[str, str]:
     names = ('browser_gate.py', 'browser_partitions.py', 'browser_partitions.json', 'renderer_controls.py', 'node_events.cjs', 'persisted_reader.py', 'workflow_artifacts.py', 'workflow_jobs.py', 'workflow_lineage.py', 'workflow_collection.py', 'workflow_controllers.py')
     digests = {name: hashlib.sha256(registry_path.with_name(name).read_bytes()).hexdigest() for name in names}
+    for name in ('publication_gate.py', 'frontend_faults.py', 'proof_continuity/__init__.py',
+                 'proof_continuity/modules.py', 'proof_continuity/source.py', 'proof_continuity/authority.py',
+                 'proof_continuity/native.py', 'proof_continuity/gate.py', 'costs/__init__.py', 'costs/observations.py',
+                 'input_planning/__init__.py', 'input_planning/ownership.py', 'input_planning/source.py',
+                 'input_planning/qualification.py', 'input_planning/cli.py',
+                 'browser_ownership/__init__.py', 'browser_ownership/batches.py', 'browser_ownership/registry.json',
+                 'runtime_transport/__init__.py', 'runtime_transport/identity.py', 'runtime_transport/archive.py'):
+        digests[name] = hashlib.sha256((registry_path.parent / name).read_bytes()).hexdigest()
     for name in ('playwright.persisted-reader-history.config.js', 'ui/generated-specs/persisted-reader-history.spec.js'):
         digests[name] = hashlib.sha256((registry_path.parent.parent / name).read_bytes()).hexdigest()
     catalogue = registry_path.parent.parent / 'catalogue/execution.py'
     digests['catalogue/execution.py'] = hashlib.sha256(catalogue.read_bytes()).hexdigest()
+    for name in ('reporting/identity.js', 'reporting/inventory-reporter.js', 'generated/strict-reporter.js'):
+        digests[name] = hashlib.sha256((registry_path.parent.parent / name).read_bytes()).hexdigest()
     return digests
 
 
@@ -257,7 +267,7 @@ def main() -> int:
             raw = args.output.parent / 'source-observation.json'
             raw.write_text(json.dumps(observation.observation, indent=2) + '\n')
             try:
-                receipt = qualify_latest(observation, groups=registry['GROUPS'], engines=registry['ENGINES'],
+                receipt = qualify_latest(observation, groups=registry['BATCHES'], engines=registry['ENGINES'],
                                          run_id=args.run_id, attempt=args.attempt, head=args.workflow_head)
                 require(collection.checkout_state() == {key: context[key] for key in ('checkout_sha', 'source_tree')},
                         'Actual source changed during budget observation')
@@ -266,7 +276,7 @@ def main() -> int:
             (args.output.parent / 'jobs-selected.json').write_text(json.dumps(receipt['selected_jobs'], indent=2) + '\n')
             receipt['input_sha256'] = hashlib.sha256(raw.read_bytes()).hexdigest()
         else:
-            receipt = qualify(json.loads(args.jobs_json.read_text()), groups=registry['GROUPS'], engines=registry['ENGINES'],
+            receipt = qualify(json.loads(args.jobs_json.read_text()), groups=registry['BATCHES'], engines=registry['ENGINES'],
                               run_id=args.run_id, attempt=args.attempt, head=args.workflow_head)
             receipt['input_sha256'] = hashlib.sha256(args.jobs_json.read_bytes()).hexdigest()
         receipt['registry_sha256'] = hashlib.sha256(registry_path.read_bytes()).hexdigest()

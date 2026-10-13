@@ -18,7 +18,7 @@ import unittest
 ROOT = Path(__file__).resolve().parents[3]
 HERE = Path(__file__).resolve().parent
 COUNTS = {'test_recipe_sources': 32, 'test_source_checkpoint': 8,
-          'test_native_sources': 12, 'test_renderer_authority': 7, 'test_input_identity': 6, 'test_entrypoints': 2}
+          'test_native_sources': 13, 'test_renderer_authority': 10, 'test_input_identity': 6, 'test_entrypoints': 2}
 GROUPS = {'source': ('test_recipe_sources', 'test_source_checkpoint', 'test_input_identity'),
           'renderer': ('test_native_sources', 'test_renderer_authority'),
           'typed-entrypoint': ('test_entrypoints.CatalogueEntrypoints.test_actual_typed_renderer_reconstructs_originals_without_publication_approval',),
@@ -41,6 +41,7 @@ def pins():
             re.findall(r'^([A-Za-z0-9_.-]+)==([^\s]+)', LOCK.read_text(), re.M)}
 
 
+@helpers.COSTS.measured('runtime_inventory')
 def runtime():
     actual = {re.sub(r'[-_.]+', '-', distribution.metadata['Name']).lower(): distribution.version
               for distribution in importlib.metadata.distributions()}
@@ -90,7 +91,7 @@ def artifacts(group):
     return result
 
 
-def verify(receipt, group, source, selected_runtime):
+def verify(receipt, group, source, selected_runtime, workflow=None):
     wanted = expected(group)
     if (receipt.get('schema') != 1 or receipt.get('group') != group
             or receipt.get('expected_ids') != wanted or receipt.get('executed_ids') != wanted
@@ -98,7 +99,7 @@ def verify(receipt, group, source, selected_runtime):
             or receipt.get('source_before') != source or receipt.get('source_after') != source
             or receipt.get('runtime_before') != selected_runtime or receipt.get('runtime_after') != selected_runtime
             or receipt.get('publication_approval') is not False
-            or receipt.get('workflow') != helpers.workflow_identity()):
+            or receipt.get('workflow') != (helpers.workflow_identity() if workflow is None else workflow)):
         raise ValueError('Catalogue controls failed or source/runtime/case identity changed')
 
 

@@ -36,3 +36,26 @@ test('synchronous Retry during loading notification does not duplicate startup',
 
 test('cold shared native highlight links establish intent while an empty highlight does not',()=>{for(const suffix of ['?h=resilient+navigation','?q=']){const f=fixture({href:'https://example.invalid/bijux-core/'+suffix}),s=f.subscribe();assert.equal(f.requests.length,1);s.unsubscribe()}const empty=fixture({href:'https://example.invalid/bijux-core/?h='}),s=empty.subscribe();assert.equal(empty.requests.length,0);s.unsubscribe()});
 test('instant document and history highlight intent starts one transfer without deadline renewal',()=>{const f=fixture(),s=f.subscribe();f.location.href='https://example.invalid/bijux-core/deep/?h=reader';f.window.dispatchEvent(new Event('bijux:search-location'));assert.equal(f.requests.length,1);f.advance(3000);f.window.dispatchEvent(new Event('popstate'));f.window.dispatchEvent(new Event('bijux:search-location'));assert.equal(f.requests.length,1);assert.ok([...f.timers.values()].some(t=>t.at===45000));s.unsubscribe();assert.equal(f.handlers.window.get('popstate').size,0);assert.equal(f.handlers.window.get('bijux:search-location').size,0)});
+
+test('unsafe and cross-site result locations reject the entire corpus before native delivery and recover through Retry',()=>{
+ for(const location of ['javascript:alert(1)','data:text/html,<script>alert(1)</script>','https://other.invalid/bijux-core/','https://example.invalid/bijux-atlas/','../bijux-atlas/','https://user@example.invalid/bijux-core/','http://example.invalid/bijux-core/','%2e%2e/bijux-atlas/']){
+  const f=fixture(),s=start(f),bad=index();bad.docs.push({...bad.docs[0],location});f.requests[0].resolve(bad);
+  assert.equal(f.window.bijuxSearchIndex.state.reason,'invalid-index',location);assert.deepEqual(f.values,[]);assert.deepEqual(f.errors,[]);assert.equal(f.timers.size,0);
+  f.retry();const valid=index();f.requests[1].resolve(valid);assert.deepEqual(f.values,[valid]);s.unsubscribe();
+ }
+});
+test('same-site relative absolute anchor and query locations preserve exact native index metadata',()=>{
+ for(const location of ['', 'reading/#heading','reading/?view=wide#encoded%20heading','https://example.invalid/bijux-core/reading/#part','/bijux-core/reading/#part']){
+  const f=fixture(),s=start(f),actual=index();actual.docs[0].location=location;f.requests[0].resolve(actual);assert.deepEqual(f.values,[actual]);s.unsubscribe();
+ }
+});
+test('missing inert parser for markup is a truthful retriable index refusal',()=>{
+ const f=fixture(),s=start(f),unsafe=index();unsafe.docs[0].text='<p>Author text</p>';f.requests[0].resolve(unsafe);assert.equal(f.window.bijuxSearchIndex.state.reason,'invalid-index');assert.deepEqual(f.values,[]);assert.deepEqual(f.errors,[]);f.retry();f.requests[1].resolve(index());assert.equal(f.values.length,1);s.unsubscribe();
+});
+
+test('malformed optional tags and oversized tag arrays reject the whole corpus before native delivery and allow corrected Retry',()=>{
+ for(const tags of ['tag',null,[42],[["tag"]],{},Array(50001).fill('')]){
+  const f=fixture(),s=start(f),bad=index();bad.docs[0].tags=tags;f.requests[0].resolve(bad);assert.equal(f.window.bijuxSearchIndex.state.reason,'invalid-index');assert.deepEqual(f.values,[]);assert.deepEqual(f.errors,[]);assert.equal(f.timers.size,0);
+  f.retry();const valid=index();valid.docs[0].tags=['ordinary tag','second & label'];f.requests[1].resolve(valid);assert.deepEqual(f.values,[valid]);s.unsubscribe();
+ }
+});

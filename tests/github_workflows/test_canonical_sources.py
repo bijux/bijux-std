@@ -48,6 +48,28 @@ class CanonicalSourceCaptureTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, 'stale canonical source snapshot'):
                 owned.validate_source_snapshots(root)
 
+    def test_runtime_wrapper_cannot_replace_authored_standard_source(self):
+        with tempfile.TemporaryDirectory() as workspace:
+            root, owned = source_fixture(workspace)
+            canonical = root / '.github/standards/workflow-sources/bijux-std.yml'
+            original = canonical.read_bytes()
+            runtime = root / '.github/workflows/bijux-std.yml'
+            runtime.write_bytes(original + b'\n# altered runtime projection\n')
+            captured = owned.capture_sources(root)
+            self.assertEqual(captured['.github/standards/workflow-sources/bijux-std.yml'], original)
+            manifest = json.loads(captured['.github/standards/workflow-sources/source-manifest.json'])
+            self.assertIn('.github/standards/workflow-sources/bijux-std.yml', manifest['inputs'])
+            self.assertNotIn('.github/workflows/bijux-std.yml', manifest['inputs'])
+            self.assertEqual(canonical.read_bytes(), original)
+
+    def test_canonical_workflow_change_requires_fresh_source_manifest(self):
+        with tempfile.TemporaryDirectory() as workspace:
+            root, owned = source_fixture(workspace)
+            canonical = root / '.github/standards/workflow-sources/bijux-std.yml'
+            canonical.write_bytes(canonical.read_bytes() + b'\n# changed canonical workflow\n')
+            with self.assertRaisesRegex(ValueError, 'stale canonical source snapshot'):
+                owned.validate_source_snapshots(root)
+
     def test_inventory_divergence_refuses_capture(self):
         with tempfile.TemporaryDirectory() as workspace:
             root, owned = source_fixture(workspace)

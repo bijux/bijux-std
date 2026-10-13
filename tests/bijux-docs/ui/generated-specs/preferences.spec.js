@@ -39,10 +39,12 @@ for (const denial of ["getter", "read", "write"]) {
   test(`independent storage ${denial} denial retains instant and cross-site reading`, async ({ page }, info) => {
     await page.emulateMedia({ colorScheme: "light" });
     await page.addInitScript(mode => {
-      const observations = window.bijuxStorageDenialObservations = { getter: 0, read: 0, write: 0 };
+      const observations = window.bijuxStorageDenialObservations = { getter: 0, read: 0, write: 0, errors: [] };
+      window.bijuxStorageDenialErrorName = "SecurityError";
       const reject = kind => () => {
         observations[kind] += 1;
-        throw new DOMException("Storage denied", "SecurityError");
+        observations.errors.push(window.bijuxStorageDenialErrorName);
+        throw new DOMException("Storage denied", window.bijuxStorageDenialErrorName);
       };
       if (mode === "getter") Object.defineProperty(window, "localStorage", { configurable: true, get: reject("getter") });
       if (mode === "read") Object.defineProperty(Storage.prototype, "getItem", { configurable: true, value: reject("read") });
@@ -82,6 +84,22 @@ for (const denial of ["getter", "read", "write"]) {
       await openDrawer(page);
       await page.keyboard.press("Escape");
       await expect(page.locator("#__drawer")).not.toBeChecked();
+      if (denial === "write") {
+        // A writable getter/read path with exhausted storage is distinct from denial.
+        await page.evaluate(() => { window.bijuxStorageDenialErrorName = "QuotaExceededError"; });
+        await choose(page, "dark");
+        await expect(page.locator("body")).toHaveAttribute("data-md-color-scheme", "slate");
+        await expect.poll(() => page.evaluate(() => window.bijuxStorageDenialObservations.errors.includes("QuotaExceededError"))).toBe(true);
+        expect(await page.evaluate(() => localStorage.getItem("bijux:theme")), "Quota failure does not claim durable persistence").toBeNull();
+        await record("quota-exhausted session theme");
+        await page.reload();
+        await expect(page.locator("[data-bijux-theme-toggle]")).toHaveAttribute("data-bijux-theme-mode", "auto");
+        await expect(page.locator("body")).toHaveAttribute("data-md-color-scheme", "default");
+        await openDrawer(page);
+        await page.keyboard.press("Escape");
+        await expect(control(page, "drawer")).toBeFocused();
+        await record("quota failure reload has no persisted choice");
+      }
     } finally {
       await info.attach("independent-storage-denial-observations", {
         body: Buffer.from(JSON.stringify({ denial, observations }, null, 2)), contentType: "application/json",
@@ -144,7 +162,9 @@ test("writable theme choice survives reload, instant reading and native product 
   } finally { await previous.dispose(); }
 });
 
-test("automatic palette follows live system changes while explicit choices retain ownership", async ({ page }) => {
+test("automatic palette follows live system changes while explicit choices retain ownership", async ({ page }, info) => {
+  const capabilityErrors = [];
+  page.on("pageerror", error => capabilityErrors.push({ message: error.message, stack: error.stack }));
   await page.emulateMedia({ colorScheme: "light" });
   await phone(page);
   // Exercise the actual user cycle to persist Auto rather than inject storage.
@@ -167,4 +187,16 @@ test("automatic palette follows live system changes while explicit choices retai
   }
   await page.reload();
   await preference(page, "dark", "slate");
+  // An installed renderer retains its viewport adapters; subsequent preference
+  // requests must tolerate the optional system-preference API disappearing.
+  await page.evaluate(() => { window.matchMedia = undefined; });
+  await choose(page, "auto");
+  await preference(page, "auto", "default");
+  expect(await page.evaluate(() => typeof window.matchMedia)).toBe("undefined");
+  await choose(page, "dark");
+  await preference(page, "dark", "slate");
+  await openDrawer(page);
+  await page.keyboard.press("Escape");
+  await expect(control(page, "drawer")).toBeFocused();
+  await info.attach("unavailable-preference-api", { body: Buffer.from(JSON.stringify({ unavailable: await page.evaluate(() => typeof window.matchMedia), capabilityErrors }, null, 2)), contentType: "application/json" });
 });

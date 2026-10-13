@@ -28,6 +28,9 @@ class MasterclassDependencyAuthorityTests(unittest.TestCase):
             source.extractall(cls.baseline, filter='data')
         cls.target = cls.fixture / 'bijux-masterclass'
         cls.target.mkdir()
+        manifest = cls.target / MODULE.masterclass.DIRECTORY_MANIFEST_PATH
+        manifest.parent.mkdir(parents=True)
+        manifest.write_text('0' * 64 + '  shared/bijux-docs\n' + '1' * 64 + '  shared/bijux-makes\n')
         cls.sha = 'a' * 40
         cls.expected, cls.absent = MODULE.masterclass.expected_masterclass(ROOT, cls.baseline, cls.target, cls.sha)
 
@@ -75,6 +78,97 @@ class MasterclassDependencyAuthorityTests(unittest.TestCase):
                 self.assertEqual(self.expected[relative], body, relative)
         self.assertIn('.bijux/shared/bijux-gh/README.md', self.expected)
         self.assertIn('.bijux/shared/bijux-gh/scripts/render-dependabot.sh', self.expected)
+
+    def test_documentation_directory_row_follows_exact_component_and_preserves_other_rows(self):
+        self.write_projection()
+        path = self.target / MODULE.masterclass.DIRECTORY_MANIFEST_PATH
+        original = path.read_bytes()
+        rows = original.splitlines(keepends=True)
+        rows[0] = b'0' * 64 + b' shared/bijux-docs\n'
+        path.write_bytes(b''.join(rows))
+        expected = MODULE.masterclass.documentation_directory_manifest(ROOT, ROOT, self.target)
+        self.assertEqual(expected.splitlines()[0].split()[0], original.splitlines()[0].split()[0])
+        self.assertEqual(expected.splitlines(keepends=True)[1:], rows[1:])
+        with patch.object(MODULE.masterclass, 'accepted_baseline', return_value=self.baseline):
+            with self.assertRaisesRegex(ValueError, 'noncanonical bounded Masterclass projection'):
+                MODULE.masterclass.verify_masterclass(ROOT, self.target)
+        self.assertEqual(path.read_bytes(), b''.join(rows))
+        path.write_bytes(original)
+
+    def test_directory_manifest_refuses_missing_duplicate_and_aliased_rows(self):
+        self.write_projection()
+        path = self.target / MODULE.masterclass.DIRECTORY_MANIFEST_PATH
+        original = path.read_bytes()
+        rows = original.splitlines(keepends=True)
+        for body in (rows[1], original + rows[0], b'malformed\n'):
+            with self.subTest(body=body):
+                path.write_bytes(body)
+                with self.assertRaises(ValueError):
+                    MODULE.masterclass.documentation_directory_manifest(ROOT, ROOT, self.target)
+                self.assertEqual(path.read_bytes(), body)
+        path.write_bytes(original)
+        alias = path.with_suffix('.retained')
+        path.rename(alias); path.symlink_to(alias)
+        with self.assertRaises(ValueError):
+            MODULE.masterclass.documentation_directory_manifest(ROOT, ROOT, self.target)
+        path.unlink(); alias.rename(path)
+
+    def test_manifest_repair_uses_previous_projection_and_refuses_dirty_metadata(self):
+        from .policy_fixtures import source_fixture
+        import shutil
+        self.write_projection()
+        artifact = self.target / 'artifacts/manifest-owner'
+        artifact.mkdir(parents=True, exist_ok=True)
+        source, owned = source_fixture(artifact)
+        shutil.copyfile(ROOT / 'shared/bijux-checks/scripts/directory-tree-sha256.sh',
+                        source / 'shared/bijux-checks/scripts/directory-tree-sha256.sh')
+        path = self.target / owned.masterclass.DIRECTORY_MANIFEST_PATH
+        correct = path.read_bytes()
+        stale = b'0' * 64 + correct[64:]
+        path.write_bytes(stale)
+        # Real Git owns all consumer preimages; only official source acceptance is
+        # substituted for this authored fixture, as in the promotion contract.
+        subprocess.run(['git', '-C', str(self.target), 'init', '--quiet'], check=True)
+        subprocess.run(['git', '-C', str(self.target), 'add', '.bijux', '.github'], check=True)
+        subprocess.run(['git', '-C', str(self.target), '-c', 'user.name=Bijux fixture',
+                        '-c', 'user.email=fixture@bijux.local', 'commit', '--quiet', '-m',
+                        'test(std): bind component fixture preimages'], check=True)
+        import sys
+        authority_module = sys.modules[owned.masterclass.__package__ + '.source_authority']
+        original_git = authority_module.git
+        def git(root, *args):
+            if root == source:
+                return {('rev-parse', 'HEAD'): 'b' * 40,
+                        ('remote', 'get-url', 'origin'): 'https://github.com/bijux/bijux-std.git',
+                        ('status', '--porcelain', '--untracked-files=all'): ''}[args]
+            return original_git(root, *args)
+        original_run = subprocess.run
+        def accepted(command, **kwargs):
+            if command[0] == 'bash' and command[1].endswith('/verify-accepted-source.sh'):
+                return subprocess.CompletedProcess(command, 0)
+            return original_run(command, **kwargs)
+        checksum = self.target / '.github/bijux-std-shared.sha256'
+        checksum.write_text(''.join(line for line in checksum.read_text().splitlines(keepends=True)
+                                    if owned.masterclass.DIRECTORY_MANIFEST_PATH not in line))
+        try:
+            with patch.object(authority_module, 'git', side_effect=git), \
+                    patch.object(owned.masterclass.subprocess, 'run', side_effect=accepted), \
+                    patch.object(owned.masterclass, 'admit_previous_projection', return_value=ROOT) as previous, \
+                    patch.object(owned.masterclass, 'accepted_baseline', return_value=self.baseline):
+                path.write_bytes(stale + b'invalid user change\n')
+                with self.assertRaises(subprocess.CalledProcessError):
+                    owned.masterclass.reconcile_documentation_directory_manifest(source, self.target, 'b' * 40)
+                previous.assert_not_called()
+                path.write_bytes(stale)
+                before = {relative: (self.target / relative).read_bytes() for relative, body in self.expected.items()
+                          if body is not None and relative != owned.masterclass.DIRECTORY_MANIFEST_PATH}
+                result = owned.masterclass.reconcile_documentation_directory_manifest(source, self.target, 'b' * 40)
+                previous.assert_called_once_with(source, self.target)
+                self.assertEqual(result['changed_paths'], [owned.masterclass.DIRECTORY_MANIFEST_PATH])
+                self.assertEqual(path.read_bytes(), correct)
+                self.assertEqual(before, {relative: (self.target / relative).read_bytes() for relative in before})
+        finally:
+            shutil.rmtree(artifact)
 
     def test_unexpected_github_paths_are_rejected_without_replacing_them(self):
         self.write_projection()
@@ -331,6 +425,8 @@ class MasterclassDependencyAuthorityTests(unittest.TestCase):
             source, owned = source_fixture(artifact)
             import shutil
             shutil.copytree(ROOT / 'shared/bijux-docs', source / 'shared/bijux-docs')
+            shutil.copyfile(ROOT / 'shared/bijux-checks/scripts/directory-tree-sha256.sh',
+                            source / 'shared/bijux-checks/scripts/directory-tree-sha256.sh')
             fixture_manifest = json.loads((source / '.github/standards/repo-config.manifest.json').read_text())
             canonical = json.loads((ROOT / '.github/standards/repo-config.manifest.json').read_text())
             fixture_manifest['repositories'] = canonical['repositories']

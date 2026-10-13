@@ -1,7 +1,7 @@
 const fs = require("fs");
 const path = require("path");
 const crypto = require("crypto");
-const { sourceIdentity, fixtureIdentity, cases, digest } = require("../reporting/identity");
+const { sourceIdentity, fixtureIdentity, cases, digest, operationCost } = require("../reporting/identity");
 class StrictReporter {
   constructor(options) { this.options = options; this.projects = {}; this.results = []; }
   onBegin(config, suite) {
@@ -44,7 +44,7 @@ class StrictReporter {
     };
     this.report = report;
     fs.mkdirSync(path.dirname(this.options.output), { recursive: true });
-    fs.writeFileSync(this.options.output, `${JSON.stringify(report, null, 2)}\n`);
+    operationCost("receipt_write", () => fs.writeFileSync(this.options.output, `${JSON.stringify(report, null, 2)}\n`));
     return { status: invalid ? "failed" : result.status };
   }
   onExit() {
@@ -55,7 +55,7 @@ class StrictReporter {
       this.report.junit = { path: path.relative(path.dirname(this.options.output), this.options.junitFile), sha256: digest(bytes) };
       if (JSON.stringify(sourceIdentity()) !== JSON.stringify(this.sourceIdentity) || JSON.stringify(fixtureIdentity(this.options)) !== JSON.stringify(this.fixtureIdentity)) throw new Error("Source or fixture changed during shard execution");
     } catch (error) { this.report.status = "failed"; this.report.binding_error = error.message; }
-    fs.writeFileSync(this.options.output, `${JSON.stringify(this.report, null, 2)}\n`);
+    operationCost("receipt_write", () => fs.writeFileSync(this.options.output, `${JSON.stringify(this.report, null, 2)}\n`));
   }
 }
 module.exports = StrictReporter;
