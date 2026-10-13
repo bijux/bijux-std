@@ -6,6 +6,10 @@ This file records notable repository-level changes for `bijux-std`.
 
 ### Unreleased
 
+#### Pending review — [#297](https://github.com/bijux/bijux-std/pull/297) — fix(ci): preserve standard platform imports in proof consumers
+
+Keep the accepted-proof child observer from shadowing Python platform while retaining exact runtime admission and full fallback on refusal
+
 Name the accepted-proof consumer wrapper explicitly so its child process imports the standard Python platform observer. Keep physical Node/npm package and platform identity admission intact and verify it from the real child import directory.
 
 #### Pending review — [#296](https://github.com/bijux/bijux-std/pull/296) — fix(ci): observe completed accepted proof producers
