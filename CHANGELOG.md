@@ -6,6 +6,10 @@ This file records notable repository-level changes for `bijux-std`.
 
 ### Unreleased
 
+#### Pending review — [#295](https://github.com/bijux/bijux-std/pull/295) — feat(ci): qualify accepted browser proof and retained source authority
+
+Authenticate accepted-main browser proof through real producer, actor, source and runtime identities; retire exact obsolete Masterclass documentation assets after prior namespace admission. Preserve retained scientific PDF lineage with explicit accepted security metadata and run its existing refusal controls in the installed renderer partition.
+
 #### Pending review — [#293](https://github.com/bijux/bijux-std/pull/293) — feat(docs): harden native readers and reuse qualified verification
 
 Retain automatic palette operation after preference API loss, deliver inert native search results and tag labels, and report clipboard failure with selectable code. Qualify storage denial, missing optional observers, reduced motion and reader contrast through existing native controls.
