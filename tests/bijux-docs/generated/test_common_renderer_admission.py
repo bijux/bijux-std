@@ -24,7 +24,7 @@ class CommonRendererAdmissionTests(unittest.TestCase):
         self.shared = self.repo / '.bijux/shared/bijux-docs'
         shutil.copytree(ROOT / 'shared/bijux-docs/tooling/material', self.shared / 'tooling/material')
         asset = json.loads((self.shared / 'tooling/material/runtime-provenance.json').read_text())['output_asset']
-        for relative in ('partials/main.html', asset):
+        for relative in ('config/style-tokens.json', 'partials/main.html', asset):
             target = self.shared / relative
             target.parent.mkdir(parents=True, exist_ok=True)
             shutil.copy2(ROOT / 'shared/bijux-docs' / relative, target)
