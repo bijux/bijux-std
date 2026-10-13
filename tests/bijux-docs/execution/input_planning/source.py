@@ -48,18 +48,25 @@ def changes(root, baseline, head):
     return rows
 
 
-def capture(root, expected_head, expected_baseline, event):
+def capture(root, expected_head, expected_baseline, event, mode="full"):
     root, reasons = Path(root).resolve(), []
     head = revision(root, 'HEAD')
     if expected_head != head:
         reasons.append('checkout differs from event source')
-    if event not in ('pull_request', 'merge_group'):
+    qualification = event == 'workflow_dispatch' and mode == 'accepted-proof-qualification'
+    if mode not in ('full', 'accepted-proof-qualification'):
+        reasons.append('unknown verification mode')
+    if event not in ('pull_request', 'merge_group') and not qualification:
         reasons.append('event has no qualified affected-input baseline')
+    if mode != 'full' and not qualification:
+        reasons.append('accepted-proof mode requires its explicit manual event')
     try:
         remote = git(root, 'remote', 'get-url', 'origin').decode().strip()
         if remote not in ('https://github.com/bijux/bijux-std', 'https://github.com/bijux/bijux-std.git', 'git@github.com:bijux/bijux-std.git'):
             reasons.append('baseline remote is not the owning repository')
         baseline = revision(root, 'refs/remotes/origin/main')
+        if qualification and (head != baseline or expected_baseline != head):
+            reasons.append('accepted-proof qualification requires the exact official main checkout')
         if baseline != expected_baseline or not re.fullmatch(r'[a-f0-9]{40}', expected_baseline or ''):
             reasons.append('baseline differs from independent event main identity')
         if subprocess.run(['git', 'merge-base', '--is-ancestor', baseline, head], cwd=root, capture_output=True).returncode:
@@ -82,7 +89,7 @@ def capture(root, expected_head, expected_baseline, event):
     selection = select(changed, reasons)
     return {'schema': 1, 'checkout': head, 'checkout_tree': revision_tree(root, head),
             'baseline': baseline, 'event_baseline': expected_baseline, 'event_source': expected_head,
-            'event': event, 'changes': changed, 'source_objects': current,
+            'event': event, 'qualification_mode': mode, 'changes': changed, 'source_objects': current,
             'planner_objects': {name: value for name, value in current.items() if name.startswith(PLANNER_ROOT)},
             **selection, 'execution_claim': 'Selection only; no prior execution or cross-head proof reused.'}
 

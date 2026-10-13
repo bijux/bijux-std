@@ -24,6 +24,9 @@ GROUPS = ('renderer', 'passive-reader', 'interactive-reports',
           'interactive-make-docs', 'interactive-make-docs-check')
 PASSIVE_READER_ID = ('test_standalone_reader_renderer.StandaloneRendererTests.'
                      'test_committed_passive_reader_and_native_search_reconstruct_together')
+SCIENTIFIC_DOWNLOAD_TEST = TESTS / 'publication/test_scientific_download_capabilities.py'
+SCIENTIFIC_DOWNLOAD_OWNERS = ('test_scientific_download_capabilities.ScientificDownloads.',
+                              'test_scientific_download_capabilities.RetainedSourceAdmission.')
 
 
 def load(name: str, path: Path):
@@ -38,7 +41,7 @@ HELPERS = load('renderer_command_helpers', Path(__file__).with_name('publication
 
 def expected_python_ids() -> list[str]:
     ids = []
-    for path in sorted((TESTS / 'generated').glob('test_*.py')):
+    for path in [*sorted((TESTS / 'generated').glob('test_*.py')), SCIENTIFIC_DOWNLOAD_TEST]:
         for node in ast.parse(path.read_text()).body:
             if isinstance(node, ast.ClassDef):
                 ids.extend(f'{path.stem}.{node.name}.{method.name}' for method in node.body
@@ -55,6 +58,11 @@ def group_python_ids(group: str | None = None) -> list[str]:
         return expected
     if group not in GROUPS or expected.count(PASSIVE_READER_ID) != 1:
         raise ValueError('Unknown renderer group or missing source-owned passive reader')
+    scientific = [name for name in expected if name.startswith(SCIENTIFIC_DOWNLOAD_OWNERS)]
+    if (not all(any(name.startswith(owner) for name in scientific) for owner in SCIENTIFIC_DOWNLOAD_OWNERS)
+            or scientific != [name for name in expected
+            if name.startswith(SCIENTIFIC_DOWNLOAD_TEST.stem + '.')]):
+        raise ValueError('Missing or relocated source-owned scientific download controls')
     make_owner = 'test_interactive_report_make.InteractiveReportMakeOwnershipTests.'
     make_dispatch = 'test_interactive_report_make.InteractiveReportMakeDispatchTests.'
     refusal_methods = (
@@ -288,12 +296,25 @@ def node_cases(path: Path, files: list[Path], expected_count: int | None = None,
     return records
 
 
+def scientific_download_suite() -> unittest.TestSuite:
+    """Load this exact publication owner in the existing admitted renderer runtime."""
+    return unittest.defaultTestLoader.loadTestsFromModule(
+        load(SCIENTIFIC_DOWNLOAD_TEST.stem, SCIENTIFIC_DOWNLOAD_TEST))
+
+
+def python_suite() -> unittest.TestSuite:
+    suite = unittest.TestSuite([
+        unittest.defaultTestLoader.discover(str(TESTS / 'generated'), pattern='test_*.py'),
+        scientific_download_suite(),
+    ])
+    if sorted(test.id() for test in HELPERS.flatten(suite)) != expected_python_ids():
+        raise ValueError('Discovered renderer cases differ from their source-owned inventory')
+    return suite
+
+
 def execute(output: Path, node: Path, group: str | None = None) -> dict:
     before = runtime_identity(node)
-    suite = unittest.defaultTestLoader.discover(str(TESTS / 'generated'), pattern='test_*.py')
-    all_expected = expected_python_ids()
-    if sorted(test.id() for test in HELPERS.flatten(suite)) != all_expected:
-        raise ValueError('Discovered renderer cases differ from their source-owned inventory')
+    suite = python_suite()
     expected = group_python_ids(group)
     suite = unittest.TestSuite(test for test in HELPERS.flatten(suite) if test.id() in expected)
     files = node_files() if group_node_count(group) else []

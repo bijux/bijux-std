@@ -23,7 +23,8 @@ class MasterclassDependencyAuthorityTests(unittest.TestCase):
         cls.baseline = cls.fixture / 'baseline'
         cls.baseline.mkdir()
         archive = subprocess.check_output(['git', '-C', str(ROOT), 'archive', MODULE.masterclass.BASELINE_SHA,
-                                           '.github', 'shared/bijux-gh', 'shared/bijux-checks/scripts/verify-accepted-source.sh'])
+                                           '.github', 'shared/bijux-gh', 'shared/bijux-docs',
+                                           'shared/bijux-checks/scripts/verify-accepted-source.sh'])
         with tarfile.open(fileobj=io.BytesIO(archive)) as source:
             source.extractall(cls.baseline, filter='data')
         cls.target = cls.fixture / 'bijux-masterclass'
@@ -42,7 +43,8 @@ class MasterclassDependencyAuthorityTests(unittest.TestCase):
         _, old_renderer = MODULE.canonical_sources.owning_scripts(self.baseline)
         before, _ = old_renderer.WORKFLOW_EXECUTION.verification.expected_projection(self.baseline, self.target, 'bijux-masterclass')
         for path, body in before.items():
-            if path.startswith('.bijux/shared/') and not path.endswith(('deploy-docs.yml', 'publication_admission.py')):
+            if (path.startswith('.bijux/shared/') and not path.startswith(MODULE.masterclass.DOCS_DESTINATION)
+                    and not path.endswith(('deploy-docs.yml', 'publication_admission.py'))):
                 self.assertEqual(self.expected[path], body, path)
         for path in ['.github/workflows/bijux-std.yml', '.github/workflows/pr-approval-policy.yml', '.github/workflows/github-policy.yml']:
             old = MODULE.parse_workflow(before[path], path)
@@ -65,9 +67,11 @@ class MasterclassDependencyAuthorityTests(unittest.TestCase):
                         self.assertEqual(new_job.get(key), old_job.get(key), (path, identity, key))
         current, _ = MODULE.verification.expected_projection(ROOT, self.target, 'bijux-masterclass')
         self.assertEqual(self.expected['.github/workflows/deploy-docs.yml'], current['.github/workflows/deploy-docs.yml'])
-        for path in (ROOT / 'shared/bijux-docs').rglob('*'):
-            if path.is_file():
-                self.assertEqual(self.expected['.bijux/' + path.relative_to(ROOT).as_posix()], path.read_bytes())
+        current_docs = {'.bijux/' + path.relative_to(ROOT).as_posix(): path.read_bytes()
+                        for path in (ROOT / 'shared/bijux-docs').rglob('*') if path.is_file()}
+        self.assertEqual({path: body for path, body in self.expected.items()
+                          if path.startswith(MODULE.masterclass.DOCS_DESTINATION)}, current_docs)
+        self.assertTrue(set(before) & set(self.expected))
 
     def test_complete_github_tree_retains_baseline_and_finite_publication_overlays(self):
         baseline = MODULE.masterclass.baseline_github_tree(self.baseline)
@@ -433,6 +437,14 @@ class MasterclassDependencyAuthorityTests(unittest.TestCase):
             (source / '.github/standards/repo-config.manifest.json').write_text(json.dumps(fixture_manifest, indent=2) + '\n')
             from .policy_fixtures import refresh_snapshots
             refresh_snapshots(source, owned)
+            old_asset = next((ROOT / 'shared/bijux-docs/assets/javascripts').glob('material-search.*.js'))
+            old_relative = '.bijux/' + old_asset.relative_to(ROOT).as_posix()
+            replacement_body = old_asset.read_bytes() + b'\n// admitted documentation asset fixture\n'
+            replacement_name = 'material-search.' + hashlib.sha256(replacement_body).hexdigest() + '.js'
+            replacement = source / old_asset.relative_to(ROOT).parent / replacement_name
+            replacement.write_bytes(replacement_body)
+            (source / old_asset.relative_to(ROOT)).unlink()
+            replacement_relative = '.bijux/' + replacement.relative_to(source).as_posix()
             new_sha = 'b' * 40
             original_owning = owned.masterclass.owning_scripts
             from types import SimpleNamespace
@@ -494,13 +506,58 @@ class MasterclassDependencyAuthorityTests(unittest.TestCase):
                     self.assertEqual((self.target / owned.masterclass.AUTHORITY_PATH).read_bytes(), authority_before)
                     extra.unlink()
                     previous.reset_mock()
+                    old_target = self.target / old_relative
+                    original_asset = old_target.read_bytes()
+                    docs_extra = old_target.parent / 'unadmitted.js'
+                    for mutation in ('changed', 'extra', 'symlink', 'hardlink'):
+                        with self.subTest(documentation_mutation=mutation):
+                            if mutation == 'changed':
+                                old_target.write_bytes(original_asset + b' changed')
+                            elif mutation == 'extra':
+                                docs_extra.write_bytes(original_asset)
+                            elif mutation == 'symlink':
+                                old_target.unlink(); old_target.symlink_to(old_asset)
+                            else:
+                                import os
+                                os.link(old_target, docs_extra)
+                            with patch.object(previous_renderer.WORKFLOW_EXECUTION.masterclass,
+                                              'verify_masterclass', return_value={}):
+                                with self.assertRaisesRegex(ValueError, 'Masterclass documentation'):
+                                    owned.masterclass.promote_masterclass(source, self.target, new_sha)
+                            self.assertEqual((self.target / owned.masterclass.AUTHORITY_PATH).read_bytes(), authority_before)
+                            self.assertFalse((self.target / replacement_relative).exists())
+                            if mutation in ('extra', 'hardlink'): docs_extra.unlink()
+                            elif mutation == 'symlink': old_target.unlink(); old_target.write_bytes(original_asset)
+                            else: old_target.write_bytes(original_asset)
+                    checksum = self.target / '.github/bijux-std-shared.sha256'
+                    checksum_before = checksum.read_bytes()
+                    old_binding = hashlib.sha256(original_asset).hexdigest() + '  ' + old_relative + '\n'
+                    self.assertIn(old_binding.encode(), checksum_before)
+                    for changed_checksum in (checksum_before.replace(old_binding.encode(), b''),
+                                             checksum_before + old_binding.encode(),
+                                             checksum_before.replace(old_binding.encode(), ('0' * 64 + '  ' + old_relative + '\n').encode())):
+                        with self.subTest(checksum_retirement=changed_checksum):
+                            checksum.write_bytes(changed_checksum)
+                            with self.assertRaisesRegex(ValueError, 'exact prior checksum'):
+                                owned.masterclass.promote_masterclass(source, self.target, new_sha)
+                            self.assertEqual(old_target.read_bytes(), original_asset)
+                            self.assertFalse((self.target / replacement_relative).exists())
+                            self.assertEqual((self.target / owned.masterclass.AUTHORITY_PATH).read_bytes(), authority_before)
+                    checksum.write_bytes(checksum_before)
+                    previous.reset_mock()
                     result = owned.masterclass.promote_masterclass(source, self.target, new_sha)
                     previous.assert_called_once_with(source, self.target, self.sha)
                     self.assertEqual(result['authorities']['execution_policy_sha'], new_sha)
                     self.assertEqual(result['authorities']['baseline_sha'], owned.masterclass.BASELINE_SHA)
+                    self.assertFalse(old_target.exists())
+                    self.assertIn(old_relative, result['changed_paths'])
+                    self.assertEqual((self.target / replacement_relative).read_bytes(), replacement_body)
+                    self.assertNotIn(old_relative, checksum.read_text())
+                    self.assertIn(replacement_relative, checksum.read_text())
                     second = owned.masterclass.promote_masterclass(source, self.target, new_sha)
                     self.assertEqual(second['changed_paths'], [])
                     self.assertEqual(previous.call_count, 1)
+                    (self.target / replacement_relative).unlink()
                     self.write_projection()
                     previous.reset_mock()
                     reader = source / 'shared/bijux-docs/README.md'
@@ -510,6 +567,8 @@ class MasterclassDependencyAuthorityTests(unittest.TestCase):
                     self.assertEqual(kept['authorities']['execution_policy_sha'], new_sha)
                     self.assertEqual((self.target / owned.masterclass.DOCS_PIN_PATH).read_text().strip(), self.sha)
                     self.assertEqual((self.target / '.bijux/shared/bijux-docs/README.md').read_bytes(), original_reader)
+                    self.assertEqual(old_target.read_bytes(), original_asset)
+                    self.assertFalse((self.target / replacement_relative).exists())
                     self.assertEqual((self.target / '.github/standards/bijux-std.sha').read_text().strip(), owned.masterclass.BASELINE_SHA)
                     self.assertGreaterEqual(previous.call_count, 3)
                     self.assertEqual(owned.masterclass.promote_masterclass(source, self.target, new_sha, keep_documentation=True)['changed_paths'], [])

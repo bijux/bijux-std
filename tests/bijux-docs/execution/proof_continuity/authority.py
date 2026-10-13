@@ -3,9 +3,62 @@ from __future__ import annotations
 
 from datetime import datetime, timezone
 import copy
+import os
 import re
 
 _CREATED = object()
+
+
+def principal(value):
+    """Admit a bounded API principal; display names and Git authors grant nothing."""
+    require(isinstance(value, dict) and type(value.get('id')) is int and value['id'] > 0
+            and isinstance(value.get('login'), str)
+            and re.fullmatch(r'[A-Za-z0-9][A-Za-z0-9-]{0,38}(?:\[bot\])?', value['login']),
+            'Actual API actor login and positive numeric identity are required')
+    return {'login': value['login'], 'id': value['id']}
+
+
+def admit_run_actor(run, expected):
+    """Both the original actor and any rerun actor must own the expected principal."""
+    require(principal(run.get('actor')) == expected
+            and principal(run.get('triggering_actor')) == expected,
+            'Workflow actor or triggering actor differs from its independently admitted owner')
+
+
+def admit_qualification_request(api, plan):
+    """An explicit manual request must independently own current accepted main."""
+    if plan.get('qualification_mode', 'full') == 'full':
+        return
+    require(plan.get('qualification_mode') == 'accepted-proof-qualification'
+            and plan.get('event') == 'workflow_dispatch'
+            and plan['checkout'] == plan['baseline']
+            and api.repository == 'bijux/bijux-std'
+            and os.environ.get('GITHUB_REPOSITORY') == api.repository
+            and os.environ.get('GITHUB_EVENT_NAME') == 'workflow_dispatch'
+            and os.environ.get('GITHUB_REF') == 'refs/heads/main'
+            and os.environ.get('GITHUB_SHA') == plan['checkout']
+            and os.environ.get('VERIFICATION_MODE') == 'accepted-proof-qualification',
+            'Qualification request must own the explicit accepted-main event')
+    run_id, attempt = os.environ.get('GITHUB_RUN_ID', ''), os.environ.get('GITHUB_RUN_ATTEMPT', '')
+    require(run_id.isdecimal() and attempt.isdecimal() and int(run_id) > 0 and int(attempt) > 0,
+            'Qualification requires its actual run and attempt')
+    actor_id = os.environ.get('GITHUB_ACTOR_ID', '')
+    require(actor_id.isdecimal() and int(actor_id) > 0, 'Qualification requires its actual actor identity')
+    actor = principal({'login': os.environ.get('GITHUB_ACTOR'), 'id': int(actor_id)})
+    prefix = 'repos/' + api.repository + '/'
+    main = api.json(prefix + 'git/ref/heads/main')
+    require(main.get('ref') == 'refs/heads/main' and main.get('object', {}).get('type') == 'commit'
+            and main['object'].get('sha') == plan['checkout'], 'Qualification checkout is not current official main')
+    run = api.json(prefix + 'actions/runs/' + run_id)
+    require(run.get('id') == int(run_id) and run.get('run_attempt') == int(attempt)
+            and run.get('event') == 'workflow_dispatch' and run.get('head_branch') == 'main'
+            and run.get('head_sha') == plan['checkout'] and run.get('path') == '.github/workflows/bijux-std.yml'
+            and run.get('repository', {}).get('full_name') == api.repository
+            and run.get('head_repository', {}).get('full_name') == api.repository
+            and run.get('status') in ('in_progress', 'completed')
+            and (run.get('status') != 'completed' or run.get('conclusion') == 'success'),
+            'Qualification is not its live owning accepted-main workflow run')
+    admit_run_actor(run, actor)
 
 
 class AcceptedProducer:
@@ -76,6 +129,7 @@ def locate(api, baseline, *, now=None):
             and pull.get('head', {}).get('repo', {}).get('full_name') == api.repository
             and re.fullmatch('[a-f0-9]{40}', pull.get('head', {}).get('sha', '')),
             'Accepted producer must belong to the independently merged owning-repository PR')
+    author = principal(pull.get('user'))
     merged_at = datetime.fromisoformat(pull['merged_at'].replace('Z', '+00:00'))
     now = now or datetime.now(timezone.utc)
     require(merged_at.tzinfo is not None and now.tzinfo is not None and 0 <= (now - merged_at).total_seconds() <= 14 * 86400,
@@ -95,6 +149,7 @@ def locate(api, baseline, *, now=None):
             and run.get('head_repository', {}).get('full_name') == api.repository
             and type(run.get('run_attempt')) is int and run['run_attempt'] > 0,
             'Newest accepted producer is missing failed pending or foreign')
+    admit_run_actor(run, author)
     accepted = api.json(prefix + 'git/commits/' + baseline)
     candidate = api.json(prefix + 'git/commits/' + head)
     tree = accepted.get('tree', {}).get('sha')

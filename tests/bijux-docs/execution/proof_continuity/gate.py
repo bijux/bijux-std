@@ -26,6 +26,7 @@ def qualify(api, root, plan):
     SOURCE.require(plan['frontend'] is False and not plan['full_verification_reasons'],
                    'Changed unknown or refused inputs require full fresh execution')
     SOURCE.unchanged(root, plan)
+    AUTHORITY.admit_qualification_request(api, plan)
     accepted = AUTHORITY.locate(api, plan['baseline'])
     prefix = 'repos/' + api.repository + '/'
     original_tree = SOURCE.api_tree(api.json(prefix + 'git/trees/' + accepted['source_tree'] + '?recursive=1'),
@@ -80,6 +81,7 @@ def qualify(api, root, plan):
     counts = NATIVE.qualify(Path(root), run_output, context, inputs, jobs, load)
     SOURCE.unchanged(root, plan)
     observation.refresh(sorted(names))
+    AUTHORITY.admit_qualification_request(api, plan)
     refreshed = AUTHORITY.locate(api, plan['baseline'])
     SOURCE.require(all(refreshed[key] == accepted[key] for key in
                        ('accepted_main', 'accepted_pr', 'merged_at', 'head', 'source_tree', 'run')),
@@ -98,10 +100,18 @@ def qualify(api, root, plan):
                    'Headless engines do not establish physical devices or human assistive review.']}
 
 
-def select(root, plan, api=None):
-    result = {
-        'schema': 1, 'source_head': plan['checkout'], 'baseline': plan['baseline'],
+def selection_identity(plan):
+    return {'schema': 1, 'source_head': plan['checkout'], 'baseline': plan['baseline'],
         'plan_sha256': hashlib.sha256(json.dumps(plan, sort_keys=True, separators=(',', ':')).encode()).hexdigest()}
+
+
+def refused(plan, reason):
+    return {**selection_identity(plan), 'frontend': True,
+            'selection_kind': 'accepted_proof_refused_full_execution', 'refusal': reason, 'proof': None}
+
+
+def select(root, plan, api=None):
+    result = selection_identity(plan)
     if plan['frontend']:
         return {**result, 'frontend': True, 'selection_kind': 'full_current_execution', 'proof': None}
     try:
@@ -112,8 +122,7 @@ def select(root, plan, api=None):
     except (ValueError, KeyError, TypeError, OSError, subprocess.SubprocessError, ET.ParseError) as error:
         # Transport errors deliberately contain neither credentials nor signed URLs.
         reason = str(error) if isinstance(error, ValueError) else type(error).__name__
-        return {**result, 'frontend': True, 'selection_kind': 'accepted_proof_refused_full_execution',
-                'refusal': reason, 'proof': None}
+        return refused(plan, reason)
     return {**result, 'frontend': False, 'selection_kind': 'accepted_original_proof', 'proof': proof}
 
 

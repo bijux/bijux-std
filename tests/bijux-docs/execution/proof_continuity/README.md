@@ -40,3 +40,26 @@ The report records zero current frontend cases and nests the unchanged original
 source, producer, counts and API artifact pointers. Current standard and contract
 contexts remain required. Physical devices and human assistive review remain
 outside the headless proof.
+
+The manual workflow defaults to full current execution. Its explicit
+`accepted-proof-qualification` choice is eligible only at the exact current
+accepted `main` checkout. Live APIs must independently bind that checkout and
+this owning workflow-dispatch run and attempt. This event remains a dispatch;
+it does not become a pull-request producer. Only a healthy normally accepted
+pull-request producer can supply the original complete proof.
+
+The producer's API actor and triggering actor must both match the merged pull
+request author's exact login and positive numeric user ID. The qualification
+run's API principals must independently match its actual `GITHUB_ACTOR` and
+`GITHUB_ACTOR_ID` environment. Missing principals and another user's rerun
+conservatively refuse reuse, even when that user could legitimately execute a
+full workflow. Receipt fields and Git author text cannot establish this boundary.
+
+Eligible selection and each required aggregate revalidation execute the current
+source-owned CLI inside the package producer's pinned Playwright image. The
+current Node executable and installed npm package are mounted read-only, and
+all live API capabilities are created inside that process. The image observes
+its own platform rather than inheriting the host's image labels. Missing tools,
+failed launch or invalid proof selects full execution before jobs; loss of proof
+after selection fails the required aggregates. Ordinary full execution remains
+on its existing runners.

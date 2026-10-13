@@ -18,7 +18,8 @@ the complete family.
 The current-head navigation aggregate and required report always execute. They
 recompute the plan, compare the actual job selection, and require success for
 selected jobs and explicit skipped outcomes for unselected jobs. Unselected
-families are never reported as executed or inherited from another source head.
+families are never reported as executed at the current head. Accepted original
+execution is a separate proof qualification with unchanged original identities.
 A later workflow attempt recomputes selection and retains an execution-pending
 observation until the existing same-head, API-created execution admission verifies
 actual physical jobs and receipts. Source-only selection still checks actual
