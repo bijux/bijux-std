@@ -6,6 +6,8 @@ This file records notable repository-level changes for `bijux-std`.
 
 ### Unreleased
 
+Observe independently accepted completed browser producers without requiring a running original report job. Preserve current-workflow active caller checks and reject missing, active, failed or cancelled original owners before proof reuse.
+
 #### Pending review — [#295](https://github.com/bijux/bijux-std/pull/295) — feat(ci): qualify accepted browser proof and retained source authority
 
 Authenticate accepted-main browser proof through real producer, actor, source and runtime identities; retire exact obsolete Masterclass documentation assets after prior namespace admission. Preserve retained scientific PDF lineage with explicit accepted security metadata and run its existing refusal controls in the installed renderer partition.
