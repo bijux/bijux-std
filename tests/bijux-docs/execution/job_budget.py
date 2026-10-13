@@ -215,7 +215,7 @@ def registry_digests(registry_path: Path) -> dict[str, str]:
     digests = {name: hashlib.sha256(registry_path.with_name(name).read_bytes()).hexdigest() for name in names}
     for name in ('publication_gate.py', 'frontend_faults.py', 'proof_continuity/__init__.py',
                  'proof_continuity/modules.py', 'proof_continuity/source.py', 'proof_continuity/authority.py',
-                 'proof_continuity/native.py', 'proof_continuity/gate.py', 'proof_continuity/platform.py',
+                 'proof_continuity/native.py', 'proof_continuity/gate.py', 'proof_continuity/consumer_platform.py',
                  'costs/__init__.py', 'costs/observations.py',
                  'input_planning/__init__.py', 'input_planning/ownership.py', 'input_planning/source.py',
                  'input_planning/qualification.py', 'input_planning/cli.py',

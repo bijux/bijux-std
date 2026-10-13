@@ -193,7 +193,7 @@ class FrontendJobBudgetTests(unittest.TestCase):
                 (root / name).write_text(name)
             dependencies = ('publication_gate.py', 'frontend_faults.py', 'proof_continuity/__init__.py',
                 'proof_continuity/modules.py', 'proof_continuity/source.py', 'proof_continuity/authority.py',
-                'proof_continuity/native.py', 'proof_continuity/gate.py', 'proof_continuity/platform.py',
+                'proof_continuity/native.py', 'proof_continuity/gate.py', 'proof_continuity/consumer_platform.py',
                 'costs/__init__.py', 'costs/observations.py',
                 'input_planning/__init__.py', 'input_planning/ownership.py', 'input_planning/source.py',
                 'input_planning/qualification.py', 'input_planning/cli.py',

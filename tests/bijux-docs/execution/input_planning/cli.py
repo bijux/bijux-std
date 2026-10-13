@@ -75,7 +75,7 @@ def main():
     plan = verify_plan(load(args.plan), ROOT, head, baseline, event, mode)
     if args.consumer_platform and not plan['frontend'] and (args.operation == 'select' or
             args.accepted_proof and load(args.selection).get('frontend') is False):
-        platform = continuity().load('proof_continuity/platform.py')
+        platform = continuity().load('proof_continuity/consumer_platform.py')
         try:
             platform.execute(ROOT, [value for value in sys.argv[1:] if value != '--consumer-platform'])
         except (ValueError, OSError, platform.subprocess.SubprocessError) as error:
