@@ -314,6 +314,19 @@ class RendererControlReceiptTests(unittest.TestCase):
         self.assertEqual(sorted(partitioned), expected)
         self.assertEqual(len(partitioned), len(set(partitioned)))
         self.assertTrue(all(partitions.values()))
+        scientific = [name for name in expected if name.startswith(CONTROLS.SCIENTIFIC_DOWNLOAD_OWNERS)]
+        self.assertTrue(scientific)
+        self.assertTrue(set(scientific) <= set(partitions['renderer']))
+        self.assertFalse(any(set(scientific) & set(partitions[group]) for group in groups if group != 'renderer'))
+        actual = sorted(test.id() for test in CONTROLS.HELPERS.flatten(CONTROLS.scientific_download_suite()))
+        self.assertEqual(actual, scientific)
+        for mutation in ('missing', 'relocated'):
+            changed = [name for name in expected if name not in scientific]
+            if mutation == 'relocated':
+                changed.extend(name.replace('.ScientificDownloads.', '.ForeignDownloads.') for name in scientific)
+            with self.subTest(scientific_owner=mutation), mock.patch.object(CONTROLS, 'expected_python_ids',
+                    return_value=sorted(changed)), self.assertRaisesRegex(ValueError, 'scientific download'):
+                CONTROLS.group_python_ids('renderer')
         self.assertEqual(partitions['interactive-reports'],
                          [name for name in expected if name.startswith('test_interactive_report_renderer.')])
         self.assertEqual(partitions['interactive-make-dispatch'],
