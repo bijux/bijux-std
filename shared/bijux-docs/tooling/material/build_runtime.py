@@ -175,6 +175,27 @@ def compile_runtime(templates: Path, installed_version: str) -> tuple[str, bytes
     return asset, runtime, provenance, template
 
 
+def runtime_vocabulary(runtime: bytes, provenance: dict) -> bytes:
+    """Bind reviewed external writer examples to the newly compiled source."""
+    path = SHARED / 'config/style-tokens.json'
+    if path.is_symlink() or not path.is_file():
+        raise ValueError('Material runtime requires its owned token vocabulary')
+    vocabulary = json.loads(path.read_bytes())
+    external = vocabulary.get('external', {})
+    examples = external.get('runtime_examples')
+    if (vocabulary.get('owner') != 'bijux-std' or vocabulary.get('namespace') != '--bijux-'
+            or external.get('owner') != 'mkdocs-material' or external.get('namespace') != '--md-'
+            or external.get('provenance') != 'tooling/material/runtime-provenance.json'
+            or not isinstance(examples, list) or not examples
+            or any(not isinstance(name, str) or not re.fullmatch(r'--md-[a-z0-9-]+', name) for name in examples)
+            or len(examples) != len(set(examples))):
+        raise ValueError('Material runtime token vocabulary ownership differs')
+    if any(('.setProperty("' + name + '"').encode() not in runtime for name in examples):
+        raise ValueError('Material runtime token example has no admitted literal writer')
+    external['runtime_sha256'] = provenance['output_sha256']
+    return (json.dumps(vocabulary, indent=2) + '\n').encode()
+
+
 def generate(shared: Path, templates: Path, installed_version: str, check: bool = False) -> dict:
     asset, runtime, provenance, template = compile_runtime(templates, installed_version)
     if not check:
@@ -183,6 +204,7 @@ def generate(shared: Path, templates: Path, installed_version: str, check: bool 
         shared / asset: runtime,
         shared / 'tooling/material/runtime-provenance.json': (json.dumps(provenance, indent=2) + '\n').encode(),
         shared / 'partials/main.html': template,
+        shared / 'config/style-tokens.json': runtime_vocabulary(runtime, provenance),
     }
     stale = sorted((shared / 'assets/javascripts').glob('material-search.*.js'))
     stale = [path for path in stale if path != shared / asset]

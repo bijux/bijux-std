@@ -189,6 +189,41 @@ class MaterialRuntimeTests(unittest.TestCase):
         with mock.patch.object(runtime.subprocess, 'run', side_effect=AssertionError('check must compare exact prequalified output')):
             runtime.generate(shared, self.templates, self.version, check=True)
 
+    def test_generated_vocabulary_binds_changed_runtime_and_rejects_unowned_writers(self):
+        shared = self.root / 'shared'
+        record = runtime.generate(shared, self.templates, self.version)
+        vocabulary = json.loads((shared / 'config/style-tokens.json').read_bytes())
+        original = json.loads((runtime.SHARED / 'config/style-tokens.json').read_bytes())
+        expected = json.loads(json.dumps(original))
+        expected['external']['runtime_sha256'] = record['output_sha256']
+        self.assertEqual(vocabulary, expected)
+        runtime.generate(shared, self.templates, self.version, check=True)
+        vocabulary['external']['runtime_sha256'] = '0' * 64
+        (shared / 'config/style-tokens.json').write_text(json.dumps(vocabulary))
+        with self.assertRaisesRegex(ValueError, 'differs from exact admitted source'):
+            runtime.generate(shared, self.templates, self.version, check=True)
+
+        owned = self.root / 'changed-runtime-owned'
+        shutil.copytree(OWNED, owned)
+        adapter = owned / 'search-worker-adapter.js'
+        adapter.write_bytes(adapter.read_bytes() + b'\n/* owned runtime writer binding */\n')
+        changed = self.root / 'changed-shared'
+        with mock.patch.object(runtime, 'OWNED', owned):
+            changed_record = runtime.generate(changed, self.templates, self.version)
+            self.assertNotEqual(record['output_sha256'], changed_record['output_sha256'])
+            self.assertEqual(json.loads((changed / 'config/style-tokens.json').read_bytes())['external']['runtime_sha256'],
+                             changed_record['output_sha256'])
+            runtime.generate(changed, self.templates, self.version, check=True)
+
+        vocabulary_owner = self.root / 'vocabulary-owner'
+        (vocabulary_owner / 'config').mkdir(parents=True)
+        original['external']['runtime_examples'] = ['--md-invented-owner']
+        (vocabulary_owner / 'config/style-tokens.json').write_text(json.dumps(original))
+        before = {str(path.relative_to(changed)): path.read_bytes() for path in changed.rglob('*') if path.is_file()}
+        with mock.patch.object(runtime, 'SHARED', vocabulary_owner), self.assertRaisesRegex(ValueError, 'no admitted literal writer'):
+            runtime.generate(changed, self.templates, self.version)
+        self.assertEqual(before, {str(path.relative_to(changed)): path.read_bytes() for path in changed.rglob('*') if path.is_file()})
+
     def test_head_extension_changes_template_only_and_remains_optional_consumer_content(self):
         asset, output, record, template = runtime.compile_runtime(self.templates, self.version)
         self.assertEqual(record["template_extension"], {
