@@ -48,6 +48,13 @@ this owning workflow-dispatch run and attempt. This event remains a dispatch;
 it does not become a pull-request producer. Only a healthy normally accepted
 pull-request producer can supply the original complete proof.
 
+The producer's API actor and triggering actor must both match the merged pull
+request author's exact login and positive numeric user ID. The qualification
+run's API principals must independently match its actual `GITHUB_ACTOR` and
+`GITHUB_ACTOR_ID` environment. Missing principals and another user's rerun
+conservatively refuse reuse, even when that user could legitimately execute a
+full workflow. Receipt fields and Git author text cannot establish this boundary.
+
 Eligible selection and each required aggregate revalidation execute the current
 source-owned CLI inside the package producer's pinned Playwright image. The
 current Node executable and installed npm package are mounted read-only, and

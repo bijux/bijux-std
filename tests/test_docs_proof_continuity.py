@@ -44,11 +44,13 @@ class AcceptedBoundaryTests(unittest.TestCase):
         self.base, self.head, self.checkout, self.tree = (value * 40 for value in 'abcd')
         self.prefix = 'repos/bijux/bijux-std/'
         repo = {'full_name': 'bijux/bijux-std'}
+        self.actor = {'login': 'bijux', 'id': 222414480, 'type': 'User'}
         pull = {'number': 17, 'merged': True, 'state': 'closed', 'merge_commit_sha': self.base,
-                'merged_at': '2026-10-12T18:00:00Z', 'base': {'ref': 'main', 'repo': repo},
+                'merged_at': '2026-10-12T18:00:00Z', 'user': self.actor, 'base': {'ref': 'main', 'repo': repo},
                 'head': {'sha': self.head, 'ref': 'ci/owned-source', 'repo': repo}}
         self.run = {'id': 101, 'run_attempt': 2, 'head_sha': self.head, 'status': 'completed',
                     'conclusion': 'success', 'event': 'pull_request', 'repository': repo,
+                    'actor': self.actor, 'triggering_actor': self.actor,
                     'head_repository': repo, 'head_branch': 'ci/owned-source', 'workflow_id': 9,
                     'path': '.github/workflows/bijux-std.yml'}
         self.responses = {
@@ -105,6 +107,36 @@ class AcceptedBoundaryTests(unittest.TestCase):
                 if scenario == 'failed-latest': runs['workflow_runs'].append({**self.run, 'id': 102, 'conclusion': 'failure'})
             with self.subTest(scenario=scenario), self.assertRaises(ValueError): self.accepted()
 
+        # Independently observed PR authors and both Actions principals must
+        # agree; no receipt or Git author can substitute for a missing API ID.
+        for owner in ('author', 'actor', 'triggering_actor'):
+            for identity in (None, {}, {'login': 'foreign', 'id': self.actor['id']},
+                             {'login': self.actor['login'], 'id': 1},
+                             {'login': self.actor['login'], 'id': 0},
+                             {'login': self.actor['login'], 'id': True},
+                             {'login': self.actor['login'], 'id': str(self.actor['id'])},
+                             {'login': 'bijux\nforeign', 'id': self.actor['id']}):
+                self.responses.clear(); self.responses.update(copy.deepcopy(original))
+                if owner == 'author':
+                    self.responses[self.prefix + 'pulls/17']['user'] = identity
+                else:
+                    rows = self.responses[self.prefix + 'actions/workflows/bijux-std.yml/runs?head_sha=' + self.head + '&event=pull_request&per_page=100&page=1']
+                    rows['workflow_runs'][0][owner] = identity
+                with self.subTest(owner=owner, principal=identity), self.assertRaises(ValueError):
+                    self.accepted()
+                plan = {'frontend': False, 'full_verification_reasons': [],
+                        'checkout': self.head, 'baseline': self.base}
+                live_locate = AUTHORITY.locate
+                with patch.object(SOURCE, 'unchanged'), patch.object(AUTHORITY, 'locate',
+                        side_effect=lambda api, baseline: live_locate(api, baseline, now=NOW)):
+                    selected = GATE.select(ROOT, plan, self.api)
+                    self.assertTrue(selected['frontend']); self.assertIsNone(selected['proof'])
+                    self.assertEqual(selected['selection_kind'], 'accepted_proof_refused_full_execution')
+                    supplied = {**GATE.selection_identity(plan), 'frontend': False,
+                                'selection_kind': 'accepted_original_proof', 'proof': {'status': 'passed'}}
+                    with self.assertRaisesRegex(ValueError, 'independent required aggregate revalidation'):
+                        GATE.verify(ROOT, plan, supplied, 'false', self.api)
+
     def test_preview_parent_or_tree_drift_cannot_relax_ordinary_observation(self):
         accepted = self.accepted()
         path = self.prefix + 'git/commits/' + self.checkout
@@ -139,7 +171,8 @@ class AcceptedBoundaryTests(unittest.TestCase):
                 'checkout': self.base, 'baseline': self.base}
         env = {'GITHUB_REPOSITORY': self.api.repository, 'GITHUB_EVENT_NAME': 'workflow_dispatch',
                'GITHUB_REF': 'refs/heads/main', 'GITHUB_SHA': self.base, 'VERIFICATION_MODE': plan['qualification_mode'],
-               'GITHUB_RUN_ID': '201', 'GITHUB_RUN_ATTEMPT': '1'}
+               'GITHUB_RUN_ID': '201', 'GITHUB_RUN_ATTEMPT': '1',
+               'GITHUB_ACTOR': self.actor['login'], 'GITHUB_ACTOR_ID': str(self.actor['id'])}
         path = self.prefix + 'actions/runs/201'
         run = {**self.run, 'id': 201, 'run_attempt': 1, 'event': 'workflow_dispatch',
                'head_sha': self.base, 'head_branch': 'main', 'status': 'in_progress', 'conclusion': None}
@@ -153,6 +186,14 @@ class AcceptedBoundaryTests(unittest.TestCase):
                 self.responses[path] = {**run, key: value}
                 with self.subTest(key=key), self.assertRaises(ValueError):
                     AUTHORITY.admit_qualification_request(self.api, plan)
+            for key in ('actor', 'triggering_actor'):
+                for value in (None, {}, {'login': 'foreign', 'id': self.actor['id']},
+                              {'login': self.actor['login'], 'id': 1},
+                              {'login': self.actor['login'], 'id': 0},
+                              {'login': self.actor['login'], 'id': True}):
+                    self.responses[path] = {**run, key: value}
+                    with self.subTest(principal=key, value=value), self.assertRaises(ValueError):
+                        AUTHORITY.admit_qualification_request(self.api, plan)
             self.responses[path] = {**run, 'status': 'completed', 'conclusion': 'failure'}
             with self.assertRaises(ValueError): AUTHORITY.admit_qualification_request(self.api, plan)
             self.responses[path] = run
@@ -162,7 +203,10 @@ class AcceptedBoundaryTests(unittest.TestCase):
             main['object']['sha'] = self.base
             for key, value in [('GITHUB_REF', 'refs/heads/foreign'), ('GITHUB_SHA', self.head),
                                ('GITHUB_REPOSITORY', 'foreign/project'), ('GITHUB_EVENT_NAME', 'pull_request'),
-                               ('GITHUB_RUN_ATTEMPT', '0'), ('GITHUB_RUN_ID', 'invalid'), ('VERIFICATION_MODE', 'full')]:
+                               ('GITHUB_RUN_ATTEMPT', '0'), ('GITHUB_RUN_ID', 'invalid'), ('VERIFICATION_MODE', 'full'),
+                               ('GITHUB_ACTOR', ''), ('GITHUB_ACTOR', 'foreign'),
+                               ('GITHUB_ACTOR_ID', ''), ('GITHUB_ACTOR_ID', '0'),
+                               ('GITHUB_ACTOR_ID', '1'), ('GITHUB_ACTOR_ID', 'invalid')]:
                 with self.subTest(environment=key), patch.dict(os.environ, {key: value}), self.assertRaises(ValueError):
                     AUTHORITY.admit_qualification_request(self.api, plan)
             AUTHORITY.admit_qualification_request(self.api, {'qualification_mode': 'full'})
@@ -173,9 +217,10 @@ class AcceptedBoundaryTests(unittest.TestCase):
         api.json_array = api.json
         base = 'd' * 40
         run = fixture.responses[fixture.paths['run']]
-        run.update(status='completed', conclusion='success', event='pull_request')
+        run.update(status='completed', conclusion='success', event='pull_request',
+                   actor=self.actor, triggering_actor=self.actor)
         pull = {'number': 17, 'merged': True, 'state': 'closed', 'merge_commit_sha': base,
-                'merged_at': '2026-10-12T18:00:00Z', 'base': {'ref': 'main', 'repo': run['repository']},
+                'merged_at': '2026-10-12T18:00:00Z', 'user': self.actor, 'base': {'ref': 'main', 'repo': run['repository']},
                 'head': {'sha': identity['head'], 'repo': run['head_repository']}}
         fixture.responses.update({
             self.prefix + 'git/ref/heads/main': {'ref': 'refs/heads/main', 'object': {'type': 'commit', 'sha': base}},
@@ -329,13 +374,16 @@ class ConsumerPlatformBoundaryTests(unittest.TestCase):
             marker = Path(command[command.index('--child') + 1])
             marker.write_bytes(b'live-admission-completed\n')
         env = {'GH_TOKEN': 'never-print-controlled-token', 'ImageOS': 'ubuntu24', 'ImageVersion': 'foreign-host',
-               'RUNNER_OS': 'Linux', 'RUNNER_ARCH': 'X64', 'GITHUB_RUN_ID': '201'}
+               'RUNNER_OS': 'Linux', 'RUNNER_ARCH': 'X64', 'GITHUB_RUN_ID': '201',
+               'GITHUB_ACTOR': 'bijux', 'GITHUB_ACTOR_ID': '222414480'}
         with patch.dict(os.environ, env, clear=True), patch.object(self.platform.shutil, 'which', side_effect=self.tools.get), \
                 patch.object(self.platform.subprocess, 'run', side_effect=run):
             self.platform.execute(ROOT, ['select'])
         command = commands[0]
         self.assertIn(self.platform.CONTAINER.IMAGE, command)
         self.assertIn('GH_TOKEN', command); self.assertNotIn(env['GH_TOKEN'], ' '.join(command))
+        self.assertIn('GITHUB_ACTOR', command); self.assertIn('GITHUB_ACTOR_ID', command)
+        self.assertNotIn(env['GITHUB_ACTOR_ID'], ' '.join(command))
         self.assertNotIn('ImageOS', ' '.join(command)); self.assertNotIn('ImageVersion', ' '.join(command))
         mounts = [command[i + 1] for i, value in enumerate(command) if value == '--mount']
         self.assertIn(f'type=bind,src={ROOT},dst={ROOT},readonly', mounts)
