@@ -1,5 +1,6 @@
 "use strict";
 const { rgba, composite, contrast, textThreshold } = require("./color.cjs");
+const { PNG } = require("playwright-core/lib/utilsBundle");
 
 async function tabTo(page, locator, browserName, maximum = 80) {
   const key = browserName === "webkit" ? "Alt+Tab" : "Tab";
@@ -10,9 +11,9 @@ async function tabTo(page, locator, browserName, maximum = 80) {
   throw new Error("Ordinary keyboard traversal did not reach the named control");
 }
 
-async function state(locator, icon = false) {
-  await settle(locator);
-  return locator.evaluate((node, isIcon) => {
+function readStates(input, icon = false) {
+  const samples = Array.isArray(input) ? input : [{ node: input, icon }];
+  return samples.map(({ node, icon: isIcon }) => {
     const style = getComputedStyle(node);
     const rectangle = node.getBoundingClientRect();
     let opacity = 1;
@@ -55,70 +56,109 @@ async function state(locator, icon = false) {
       centerOwned: hit === node || node.contains(hit), focused: node === document.activeElement,
       focusVisible: node.matches(":focus-visible"), outline: style.outlineColor,
       outlineWidth: parseFloat(style.outlineWidth), outlineOffset: parseFloat(style.outlineOffset), outlineStyle: style.outlineStyle, points };
-  }, icon);
+  });
+}
+
+async function state(locator, icon = false) {
+  await settle(locator);
+  return (await locator.evaluate(readStates, icon))[0];
 }
 
 async function screenshotPixels(page, points) {
   const screenshot = await page.screenshot({ animations: "disabled", scale: "css" });
-  return page.evaluate(async ({ data, samples }) => {
-    const image = new Image();
-    image.src = `data:image/png;base64,${data}`;
-    await image.decode();
-    const canvas = document.createElement("canvas");
-    canvas.width = image.width;
-    canvas.height = image.height;
-    const context = canvas.getContext("2d");
-    context.drawImage(image, 0, 0);
-    return samples.map(point => Array.from(context.getImageData(
-      Math.floor(point.x), Math.floor(point.y), 1, 1).data));
-  }, { data: screenshot.toString("base64"), samples: points });
+  return pixels(screenshot, points);
 }
 
-async function settle(locator) {
+function pixels(screenshot, points) {
+  // Playwright's pinned PNG reader avoids transferring and decoding the same
+  // viewport again inside the page and recording it twice in each trace.
+  const image = PNG.sync.read(screenshot);
+  return points.map(point => {
+    const x = Math.floor(point.x), y = Math.floor(point.y);
+    if (x < 0 || y < 0 || x >= image.width || y >= image.height) {
+      throw new Error("Contrast sample is outside the actual viewport image");
+    }
+    return [...image.data.subarray((y * image.width + x) * 4, (y * image.width + x) * 4 + 4)];
+  });
+}
+
+function runningAnimations(input) {
+  const nodes = Array.isArray(input) ? input : [input];
+  const animations = new Set();
+  for (const node of nodes) {
+    // Ancestor transforms and opacity affect sampled paint coordinates.
+    for (const animation of node.getAnimations({ subtree: true })) animations.add(animation);
+    for (let ancestor = node.parentElement; ancestor; ancestor = ancestor.parentElement) {
+      for (const animation of ancestor.getAnimations()) animations.add(animation);
+    }
+  }
+  return [...animations].filter(animation => animation.playState === "running" &&
+    Number.isFinite(animation.effect?.getComputedTiming().endTime)).length;
+}
+
+async function settleObservation(observe) {
   // Synchronous browser observations also work in Firefox's no-script contexts.
   for (let attempt = 0; attempt < 100; attempt++) {
-    const running = await locator.evaluate(node => {
-      // Ancestor transforms and opacity affect the glyph's sampled paint coordinates.
-      const animations = new Set(node.getAnimations({ subtree: true }));
-      for (let ancestor = node.parentElement; ancestor; ancestor = ancestor.parentElement) {
-        for (const animation of ancestor.getAnimations()) animations.add(animation);
-      }
-      return [...animations].filter(animation => animation.playState === "running" &&
-        Number.isFinite(animation.effect?.getComputedTiming().endTime)).length;
-    });
-    if (!running) return;
+    if (!await observe()) return;
     await new Promise(resolve => setTimeout(resolve, 20));
   }
   throw new Error("Relevant finite control animation did not settle within two seconds");
 }
 
-async function textOrIcon(page, locator, { icon = false } = {}) {
-  await settle(locator);
-  const observed = await state(locator, icon);
-  if (!observed.points.length) throw new Error("No visible, hit-tested text/background sample");
-  for (const group of observed.opacityGroups) {
-    if (rgba(group.background)[3] !== 0 || group.image !== "none") {
-      throw new Error("Opacity group with its own backdrop needs a separate paint model");
+async function settle(locator) {
+  await settleObservation(() => locator.evaluate(runningAnimations));
+}
+
+async function textOrIcons(page, nodes, { icon = false } = {}) {
+  if (!nodes.length) throw new Error("A contrast measurement needs actual nodes");
+  // A single cohort keeps its viewport and control state throughout the paint.
+  await settleObservation(() => page.evaluate(runningAnimations, nodes));
+  const observations = await page.evaluate(readStates, nodes.map(node => ({ node, icon })));
+  for (const observed of observations) {
+    if (!observed.points.length) throw new Error("No visible, hit-tested text/background sample");
+    for (const group of observed.opacityGroups) {
+      if (rgba(group.background)[3] !== 0 || group.image !== "none") {
+        throw new Error("Opacity group with its own backdrop needs a separate paint model");
+      }
     }
   }
-  // This diagnostic temporarily removes glyph paint only, after recording geometry/state.
-  // It never changes control state or supplies input to the acceptance journey.
   const token = `bijux-contrast-${Date.now()}`;
-  await locator.evaluate((node, key) => node.setAttribute("data-bijux-contrast-sample", key), token);
-  const style = await page.addStyleTag({ content: icon ?
-    `[data-bijux-contrast-sample="${token}"] { visibility: hidden !important; }` :
-    `[data-bijux-contrast-sample="${token}"], [data-bijux-contrast-sample="${token}"] * { -webkit-text-fill-color: transparent !important; text-shadow: none !important; text-decoration-color: transparent !important; }` });
+  await page.evaluate(({ samples, key }) => {
+    for (const node of samples) node.setAttribute("data-bijux-contrast-sample", key);
+  }, { samples: nodes, key: token });
+  let style;
   let backgrounds;
-  try { backgrounds = await screenshotPixels(page, observed.points); }
-  finally {
-    await style.evaluate(node => node.remove());
-    await locator.evaluate(node => node.removeAttribute("data-bijux-contrast-sample"));
+  try {
+    // Remove only glyph paint; retain every node's geometry and backdrop.
+    style = await page.addStyleTag({ content: icon ?
+      `[data-bijux-contrast-sample="${token}"] { visibility: hidden !important; }` :
+      `[data-bijux-contrast-sample="${token}"], [data-bijux-contrast-sample="${token}"] * { -webkit-text-fill-color: transparent !important; text-shadow: none !important; text-decoration-color: transparent !important; }` });
+    backgrounds = await screenshotPixels(page, observations.flatMap(observed => observed.points));
+  } finally {
+    if (!page.isClosed()) {
+      await page.evaluate(({ samples, sheet }) => {
+        sheet?.remove();
+        for (const node of samples) node.removeAttribute("data-bijux-contrast-sample");
+      }, { samples: nodes, sheet: style });
+      await style?.dispose();
+    }
   }
-  const foreground = rgba(observed.fill === "currentcolor" ? observed.color : observed.fill);
-  const ratios = backgrounds.map(background => contrast(composite(foreground, background, observed.opacity), background));
-  return { ...observed, backgrounds, ratios, minimum: Math.min(...ratios),
-    threshold: icon ? 3 : textThreshold(observed.size, observed.weight),
-    method: "computed glyph color composited against diagnostic screenshot background; visible samples only" };
+  let offset = 0;
+  return observations.map(observed => {
+    const backdrop = backgrounds.slice(offset, offset += observed.points.length);
+    const foreground = rgba(observed.fill === "currentcolor" ? observed.color : observed.fill);
+    const ratios = backdrop.map(background => contrast(composite(foreground, background, observed.opacity), background));
+    return { ...observed, backgrounds: backdrop, ratios, minimum: Math.min(...ratios),
+      threshold: icon ? 3 : textThreshold(observed.size, observed.weight),
+      method: "computed glyph color composited against diagnostic screenshot background; visible samples only" };
+  });
+}
+
+async function textOrIcon(page, locator, options = {}) {
+  const node = await locator.elementHandle();
+  if (!node) throw new Error("Contrast target is missing");
+  try { return (await textOrIcons(page, [node], options))[0]; }
+  finally { await node.dispose(); }
 }
 
 async function focus(page, locator) {
@@ -141,4 +181,4 @@ async function focus(page, locator) {
   return { ...observed, backdrop, ratio: contrast(composite(rgba(observed.outline), rgba(backdrop.color), observed.opacity), rgba(backdrop.color)),
     method: "computed outline with effective ancestor opacity versus verified flat opaque header; complete ring inside that surface" };
 }
-module.exports = { tabTo, state, screenshotPixels, textOrIcon, focus, settle };
+module.exports = { tabTo, state, pixels, screenshotPixels, textOrIcon, textOrIcons, focus, settle };
