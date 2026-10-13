@@ -6,6 +6,7 @@ import os
 import re
 import shutil
 import subprocess
+import sys
 import tempfile
 import unittest
 
@@ -40,9 +41,10 @@ class RequiredNavigationTests(unittest.TestCase):
         cls.source_fixture.setUp()
         cls.addClassCleanup(cls.source_fixture.doCleanups)
         fixture = cls.source_fixture
-        shutil.copytree(ROOT / 'tests/bijux-docs/execution/input_planning',
-                        fixture.repo / 'tests/bijux-docs/execution/input_planning', dirs_exist_ok=True)
-        fixture.commit('test(ci): retain actual source planner')
+        shutil.copytree(ROOT / 'tests/bijux-docs/execution',
+                        fixture.repo / 'tests/bijux-docs/execution', dirs_exist_ok=True,
+                        ignore=shutil.ignore_patterns('__pycache__'))
+        fixture.commit('test(ci): retain actual verification source')
         fixture.base = fixture.git('rev-parse', 'HEAD')
         fixture.git('update-ref', 'refs/remotes/origin/main', fixture.base)
         fixture.put('.github/ISSUE_TEMPLATE/question.yml', 'repository question form')
@@ -54,6 +56,20 @@ class RequiredNavigationTests(unittest.TestCase):
         cls.plan_path = fixture.repo / 'artifacts/bijux-docs/input-plan/plan.json'
         cls.plan_path.parent.mkdir(parents=True)
         cls.plan_path.write_text(json.dumps(cls.current_plan))
+        cls.selection_path = cls.plan_path.with_name('selection.json')
+        cls.select_plan(cls.current_plan)
+
+    @classmethod
+    def select_plan(cls, plan):
+        env = {**os.environ, 'GITHUB_REPOSITORY': 'bijux/bijux-std', 'GH_TOKEN': '',
+               'GITHUB_SHA': plan['checkout'], 'EXPECTED_BASELINE': cls.source_fixture.base,
+               'GITHUB_EVENT_NAME': 'pull_request',
+               'GITHUB_OUTPUT': str(cls.plan_path.with_name('outputs'))}
+        result = subprocess.run([sys.executable, '-B',
+            str(cls.source_fixture.repo / 'tests/bijux-docs/execution/input_planning/cli.py'), 'select'],
+            cwd=cls.source_fixture.repo, env=env, capture_output=True, text=True)
+        if result.returncode:
+            raise AssertionError(result.stderr)
 
     def test_hub_diagram_command_failure_reaches_required_report(self):
         section = job('checks').split('      - name: Run matrix check\n', 1)[1].split('      - name:', 1)[0]
@@ -90,7 +106,7 @@ class RequiredNavigationTests(unittest.TestCase):
 
     def run_gate(self, repository, checks='success', navigation='success', catalogue=None, renderer=None,
                  frontend='true', frontend_result='success', plan_result='success'):
-        env = {**os.environ, 'GITHUB_REPOSITORY': repository,
+        env = {**os.environ, 'GITHUB_REPOSITORY': repository, 'GH_TOKEN': '',
                'GITHUB_RUN_ATTEMPT': '1', 'CHECK_RESULT': checks, 'NAVIGATION_RESULT': navigation,
                'CATALOGUE_RESULT': catalogue if catalogue is not None else ('success' if repository == 'bijux/bijux-std' else 'skipped'),
                'RENDERER_RESULT': renderer if renderer is not None else ('success' if repository == 'bijux/bijux-std' else 'skipped'),
@@ -103,7 +119,8 @@ class RequiredNavigationTests(unittest.TestCase):
                               cwd=self.source_fixture.repo, env=env, capture_output=True, text=True)
 
     def test_complete_shared_source_and_rendered_execution_passes(self):
-        self.assertEqual(self.run_gate('bijux/bijux-std').returncode, 0)
+        result = self.run_gate('bijux/bijux-std')
+        self.assertEqual(result.returncode, 0, result.stderr)
 
     def test_actual_required_gate_rejects_absent_tampered_or_failed_selection(self):
         original = self.plan_path.read_bytes()
@@ -115,27 +132,47 @@ class RequiredNavigationTests(unittest.TestCase):
             self.assertNotEqual(self.run_gate('bijux/bijux-std').returncode, 0)
         finally:
             self.plan_path.write_bytes(original)
+        original_selection = self.selection_path.read_bytes()
+        try:
+            self.selection_path.unlink()
+            self.assertNotEqual(self.run_gate('bijux/bijux-std').returncode, 0)
+            selection = json.loads(original_selection)
+            self.selection_path.write_text(json.dumps(dict(selection, frontend=False)))
+            self.assertNotEqual(self.run_gate('bijux/bijux-std').returncode, 0)
+            self.selection_path.write_text(json.dumps(dict(selection, proof={'status': 'passed'})))
+            self.assertNotEqual(self.run_gate('bijux/bijux-std').returncode, 0)
+        finally:
+            self.selection_path.write_bytes(original_selection)
         self.assertNotEqual(self.run_gate('bijux/bijux-std', frontend='false').returncode, 0)
         self.assertNotEqual(self.run_gate('bijux/bijux-std', plan_result='failure').returncode, 0)
         self.assertNotEqual(self.run_gate('bijux/bijux-std', frontend_result='skipped').returncode, 0)
 
-    def test_source_only_current_head_still_requires_actual_source_and_aggregate_contexts(self):
+    def test_source_only_current_head_without_accepted_proof_requires_full_execution(self):
         full_plan = self.current_plan
+        original_selection = self.selection_path.read_bytes()
         self.source_fixture.git('checkout', '--detach', self.source_only_plan['checkout'])
         self.current_plan = self.source_only_plan
         self.plan_path.write_text(json.dumps(self.current_plan))
         try:
-            outcomes = dict(frontend='false', frontend_result='skipped', renderer='skipped', catalogue='skipped')
-            result = self.run_gate('bijux/bijux-std', **outcomes)
+            self.select_plan(self.current_plan)
+            selection = json.loads(self.selection_path.read_text())
+            self.assertTrue(selection['frontend'])
+            self.assertEqual(selection['selection_kind'], 'accepted_proof_refused_full_execution')
+            self.assertEqual(selection['refusal'], 'API token is required')
+            self.assertIsNone(selection['proof'])
+            self.assertNotEqual(self.run_gate('bijux/bijux-std', frontend='false',
+                frontend_result='skipped', renderer='skipped', catalogue='skipped').returncode, 0)
+            result = self.run_gate('bijux/bijux-std')
             self.assertEqual(result.returncode, 0, result.stderr)
             for context in ('checks', 'navigation'):
-                self.assertNotEqual(self.run_gate('bijux/bijux-std', **outcomes, **{context: 'failure'}).returncode, 0)
+                self.assertNotEqual(self.run_gate('bijux/bijux-std', **{context: 'failure'}).returncode, 0)
             qualification = json.loads((self.plan_path.parent / 'report-qualification.json').read_text())
-            self.assertFalse(qualification['frontend_executed'])
+            self.assertTrue(qualification['frontend_executed'])
         finally:
             self.source_fixture.git('checkout', '--detach', full_plan['checkout'])
             self.current_plan = full_plan
             self.plan_path.write_text(json.dumps(full_plan))
+            self.selection_path.write_bytes(original_selection)
 
     def test_shared_failure_cancellation_skip_or_absent_result_cannot_green_report(self):
         for prerequisite in ('checks', 'navigation', 'renderer'):
