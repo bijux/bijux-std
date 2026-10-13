@@ -80,6 +80,38 @@ class RenderRepoConfigsTests(unittest.TestCase):
         self.assertEqual(set(publishers), {"deploy-docs", "release-github", "release-ghcr", "release-pypi"})
         self.assertTrue(all(entry["mode"] == "manual-only" for entry in publishers.values()))
 
+    def test_pollenomics_public_release_roles_include_optional_engine(self):
+        manifest = json.loads(MANIFEST_PATH.read_text())
+        repository = MODULE.find_repo_config(manifest, "bijux-pollenomics")
+        declarations = {entry["key"]: entry["value"] for entry in repository["release_env"]}
+        expected_public = {"bijux-pollenomics", "pollenomics", "bijux-pollenomics-lra"}
+        for key in ("BIJUX_RELEASE_BUILD_MATRIX_JSON", "BIJUX_PYPI_PACKAGE_MATRIX_JSON"):
+            with self.subTest(destination=key):
+                self.assertEqual({row["package_slug"] for row in declarations[key]}, expected_public)
+                self.assertEqual(len(declarations[key]), 3)
+        engine = next(row for row in declarations["BIJUX_RELEASE_BUILD_MATRIX_JSON"]
+                      if row["package_slug"] == "bijux-pollenomics-lra")
+        self.assertEqual(engine, {
+            "package_slug": "bijux-pollenomics-lra",
+            "package_dir": "packages/bijux-pollenomics-lra",
+            "artifacts_dir": "artifacts/bijux-pollenomics-lra",
+            "build_targets": "build sbom",
+        })
+        self.assertEqual({row["package_slug"] for row in declarations["BIJUX_GHCR_RELEASE_PACKAGE_MATRIX_JSON"]},
+                         {"bijux-pollenomics", "pollenomics"})
+        prepared = MODULE.prepare_repo_files("bijux-pollenomics", manifest)
+        rendered = prepared[".github/release.env"].decode()
+        import shlex
+        values = dict(line.split("=", 1) for line in rendered.splitlines()
+                      if line and not line.startswith("#"))
+        for key in ("BIJUX_RELEASE_BUILD_MATRIX_JSON", "BIJUX_PYPI_PACKAGE_MATRIX_JSON",
+                    "BIJUX_GHCR_RELEASE_PACKAGE_MATRIX_JSON"):
+            self.assertEqual(json.loads(shlex.split(values[key])[0]), declarations[key])
+            self.assertNotIn("bijux-pollenomics-dev", values[key])
+        self.assertEqual(declarations["BIJUX_PYPI_MODE"], "artifact")
+        publishers = repository["workflow_execution_policy"]["publication_entrypoints"]
+        self.assertTrue(all(entry["mode"] == "manual-only" for entry in publishers.values()))
+
     def test_pollenomics_rendered_release_hook_requires_checked_tag_version(self):
         manifest = json.loads(MANIFEST_PATH.read_text())
         prepared = MODULE.prepare_repo_files("bijux-pollenomics", manifest)
