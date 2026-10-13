@@ -26,6 +26,13 @@ or inapplicable runtime archive uses a fresh `npm ci`; browser execution and
 the native case reports remain mandatory. A pre-existing dependency tree is
 preserved and uses the ordinary install route.
 
+An input mismatch retains the freshly observed differing package, lock,
+toolchain and platform fields. Only bounded known metadata values are shown;
+other values and complete input objects are represented by their digests.
+The decision is copied unchanged into the batch's first canonical group and
+bound by that group's execution declaration, preserving existing archive paths.
+This diagnostic explains refusal and never supplies reuse authority.
+
 The bounded transport candidate changes neither cases nor engine assignments.
 Local compression and reconstruction clocks measure only those operations.
 Hosted transfer, setup, upload and cleanup costs remain part of the complete

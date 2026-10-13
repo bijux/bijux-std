@@ -180,6 +180,11 @@ class RecoveryProducerOrderTests(unittest.TestCase):
                 events.append('native')
                 return SimpleNamespace(returncode=0)
 
+            def install_runtime():
+                events.append('install')
+                (root / 'runtime-transport.json').write_text(json.dumps(
+                    {'schema': 1, 'status': 'fresh_install', 'browser_execution_required': True}))
+
             controllers = SimpleNamespace(retained_producer=lambda: recovery,
                 collect=Mock(side_effect=collect), record_execution=Mock(side_effect=lambda *a: events.append('record')))
             if not recovery:
@@ -190,7 +195,7 @@ class RecoveryProducerOrderTests(unittest.TestCase):
             verifier = stack.enter_context(patch.object(GATE, 'verify_producer_envelope', side_effect=verify))
             planner = stack.enter_context(patch.object(GATE, 'partition_plan', side_effect=plan))
             unpack = stack.enter_context(patch.object(GATE, 'unpack', side_effect=lambda: events.append('unpack')))
-            install = stack.enter_context(patch.object(GATE, 'install_browser_runtime', side_effect=lambda: events.append('install')))
+            install = stack.enter_context(patch.object(GATE, 'install_browser_runtime', side_effect=install_runtime))
             runner = stack.enter_context(patch.object(GATE.subprocess, 'run', side_effect=native))
             yield SimpleNamespace(root=root, events=events, controllers=controllers,
                 loader=loader, verifier=verifier, planner=planner, unpack=unpack, install=install, runner=runner)

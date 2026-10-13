@@ -105,6 +105,55 @@ class RuntimeTransportTests(unittest.TestCase):
         altered = {**self.receipt, 'members_sha256': 'f' * 64}
         with self.assertRaises(ValueError): self.unpack(declaration=altered)
 
+    def test_mismatch_reports_known_changed_fields_and_redacts_arbitrary_values_before_output(self):
+        changed = copy.deepcopy(self.inputs)
+        changed['node_version'] = 'v24.22.0'
+        changed['platform'].update(release='6.17.0-1023-azure', image_version=None)
+        changed['npm_cli_sha256'] = '/private/runtime/token=never-report-this'
+        changed['credential'] = 'never-report-this-either'
+        with self.assertRaises(ARCHIVE.InputIdentityMismatch) as raised:
+            self.unpack(inputs=changed)
+        diagnosis = raised.exception.diagnosis
+        fields = {row['field']: row for row in diagnosis['differing_fields']}
+        self.assertEqual(fields['toolchain.node_version']['current']['value'], 'v24.22.0')
+        self.assertEqual(fields['toolchain.platform.release']['current']['value'], '6.17.0-1023-azure')
+        self.assertEqual(fields['toolchain.platform.image_version']['producer'], {'present': False})
+        self.assertEqual(fields['toolchain.platform.image_version']['current'], {'present': True, 'value': None})
+        self.assertIn('redacted_sha256', fields['toolchain.npm_cli_sha256']['current'])
+        serialized = json.dumps(diagnosis)
+        self.assertNotIn('/private', serialized); self.assertNotIn('never-report', serialized)
+        self.assertNotIn('credential', serialized)
+        self.assertLess(len(serialized), 10_000)
+        self.assertFalse((self.root / 'consumer').exists())
+        for value in ('v' + '1' * 512 + '.0.0', 'v24.21.0\nnever-report-control-text'):
+            changed = copy.deepcopy(self.inputs)
+            changed['node_version'] = value
+            with self.subTest(value_kind='oversized' if len(value) > 128 else 'control'), \
+                 self.assertRaises(ARCHIVE.InputIdentityMismatch) as raised:
+                self.unpack(inputs=changed)
+            row = raised.exception.diagnosis['differing_fields'][0]
+            self.assertIn('redacted_sha256', row['current'])
+            self.assertNotIn(value, json.dumps(raised.exception.diagnosis))
+            self.assertFalse((self.root / 'consumer').exists())
+        def forged_producer(members):
+            index = json.loads(members[0][1])
+            index['inputs']['toolchain']['node_version'] = 'v' + '1' * 512 + '.0.0'
+            index['inputs']['toolchain']['platform']['libc'] = ['glibc', '2' * 512]
+            index['inputs']['private'] = {'credential_path': '/private/never-report-producer-text'}
+            members[0] = ('index.json', json.dumps(index).encode(), tarfile.REGTYPE)
+        self.mutate(forged_producer)
+        with self.assertRaises(ARCHIVE.InputIdentityMismatch) as raised:
+            self.unpack()
+        diagnosis = raised.exception.diagnosis
+        fields = {row['field']: row for row in diagnosis['differing_fields']}
+        self.assertIn('redacted_sha256', fields['toolchain.node_version']['producer'])
+        self.assertIn('redacted_sha256', fields['toolchain.platform.libc']['producer'])
+        serialized = json.dumps(diagnosis)
+        self.assertNotIn('credential_path', serialized); self.assertNotIn('/private', serialized)
+        self.assertNotIn('never-report-producer-text', serialized)
+        self.assertLess(len(serialized), 10_000)
+        self.assertFalse((self.root / 'consumer').exists())
+
     def test_archive_alias_links_duplicate_members_and_trailing_data_refuse(self):
         original = self.archive.read_bytes()
         declaration = copy.deepcopy(self.receipt)
@@ -197,6 +246,29 @@ class RuntimeTransportTests(unittest.TestCase):
             self.assertEqual(install.call_args.args[0], ['npm', '--prefix', str(artifacts / 'node-runtime'), 'ci'])
             self.assertFalse((artifacts / 'node-runtime/node_modules').exists())
 
+    def test_refused_gate_retains_identical_diagnosis_in_assigned_group_without_authorizing_reuse(self):
+        artifacts, decision, install = self.gate(applicable=False)
+        self.assertEqual(decision['status'], 'fresh_install')
+        self.assertIs(decision['browser_execution_required'], True)
+        self.assertEqual(decision['input_mismatch']['differing_fields'][0]['field'], 'toolchain.node_sha256')
+        install.assert_called_once()
+        batch, engine = next(iter(GATE.BATCHES)), 'chromium'
+        with patch.object(GATE, 'ARTIFACTS', artifacts):
+            GATE.retain_runtime_transport(batch, engine)
+            target = artifacts / 'shards' / (GATE.BATCHES[batch][0] + '-' + engine) / 'runtime-transport.json'
+            self.assertEqual(target.read_bytes(), (artifacts / 'runtime-transport.json').read_bytes())
+            with self.assertRaisesRegex(ValueError, 'Preserve existing'):
+                GATE.retain_runtime_transport(batch, engine)
+            with self.assertRaisesRegex(ValueError, 'Unknown runtime observation owner'):
+                GATE.retain_runtime_transport('foreign', engine)
+            target.unlink()
+            authored = self.root / 'authored-observation'; authored.write_text('preserved')
+            target.symlink_to(authored)
+            with self.assertRaisesRegex(ValueError, 'contains a link'):
+                GATE.retain_runtime_transport(batch, engine)
+            self.assertEqual(authored.read_text(), 'preserved')
+        self.assertFalse((artifacts / 'node-runtime/node_modules').exists())
+
     def test_container_preparation_uses_immutable_consumer_platform_and_real_readonly_toolchain(self):
         parser = load(ROOT / '.github/scripts/workflow_execution/yaml_io.py', 'bijux_transport_workflow_parser')
         workflow = parser.parse_workflow((ROOT / '.github/standards/workflow-sources/bijux-std.yml').read_bytes(), 'bijux-std')
@@ -205,6 +277,10 @@ class RuntimeTransportTests(unittest.TestCase):
         fixture = workflow['jobs']['navigation-fixtures']
         self.assertNotIn('container', fixture)
         self.assertTrue(any('browser_gate.py prepare --package-container' in step.get('run', '') for step in fixture['steps']))
+        upload = next(step for step in workflow['jobs']['navigation-browsers']['steps']
+                      if step['name'] == 'Retain exact shard receipts and failure diagnostics')
+        self.assertEqual(upload['with']['path'].splitlines(),
+                         ['artifacts/bijux-docs/shards', 'artifacts/bijux-docs/shards/*/runtime-transport.json'])
         node, npm = self.root / 'node', self.root / 'npm/bin/npm-cli.js'
         node.write_bytes(b'actual admitted node binary')
         npm.parent.mkdir(parents=True); npm.write_bytes(b'actual installed npm entrypoint')

@@ -27,10 +27,64 @@ SHA256 = re.compile(r'[0-9a-f]{64}\Z')
 require = IDENTITY.require
 
 
+class InputIdentityMismatch(ValueError):
+    """Refuse reuse while retaining a bounded observation of known identity fields."""
+    def __init__(self, producer, current):
+        super().__init__('Runtime platform, toolchain or source lock differs')
+        fields = [('package_sha256',), ('lock_sha256',)]
+        fields += [('toolchain', name) for name in
+                   ('node_version', 'node_sha256', 'npm_version', 'npm_tree_sha256', 'npm_cli_sha256')]
+        fields += [('toolchain', 'platform', name) for name in
+                   ('system', 'machine', 'release', 'libc', 'os_release_sha256',
+                    'runner_os', 'runner_arch', 'image_os', 'image_version')]
+
+        def observed(value, path):
+            for part in path:
+                if not isinstance(value, dict) or part not in value:
+                    return {'present': False}
+                value = value[part]
+            field = path[-1]
+            safe = value is None
+            if isinstance(value, str) and len(value) <= 128:
+                if field.endswith('_sha256'):
+                    safe = bool(SHA256.fullmatch(value))
+                elif field in ('node_version', 'npm_version'):
+                    safe = bool(re.fullmatch(r'v?[0-9]+\.[0-9]+\.[0-9]+(?:[-+][A-Za-z0-9.-]{1,64})?', value))
+                elif field == 'release':
+                    safe = bool(re.fullmatch(r'[0-9][A-Za-z0-9_.+-]{0,127}', value))
+                elif field == 'image_version':
+                    safe = bool(re.fullmatch(r'[0-9]{8}(?:\.[0-9]{1,10}){1,3}', value))
+                elif field == 'image_os':
+                    safe = bool(re.fullmatch(r'(?:ubuntu|win|macos)[0-9]{2,4}', value))
+                else:
+                    allowed = {'system': ('Linux', 'Darwin', 'Windows'),
+                               'machine': ('x86_64', 'aarch64', 'arm64', 'AMD64', 'i386', 'i686', 'armv7l'),
+                               'runner_os': ('Linux', 'macOS', 'Windows'),
+                               'runner_arch': ('X64', 'ARM64', 'X86', 'ARM')}
+                    safe = value in allowed.get(field, ())
+            elif field == 'libc' and isinstance(value, list) and len(value) == 2:
+                safe = value[0] in ('glibc', 'musl', '') and isinstance(value[1], str) and len(value[1]) <= 32 \
+                    and bool(re.fullmatch(r'(?:[0-9]+(?:\.[0-9]+){0,3})?', value[1]))
+            if safe:
+                return {'present': True, 'value': value}
+            return {'present': True, 'redacted_sha256': IDENTITY.digest(IDENTITY.canonical(value))}
+
+        differences = []
+        for path in fields:
+            before, after = observed(producer, path), observed(current, path)
+            if before != after:
+                differences.append({'field': '.'.join(path), 'producer': before, 'current': after})
+        self.diagnosis = {'schema': 1, 'producer_inputs_sha256': IDENTITY.digest(IDENTITY.canonical(producer)),
+                          'current_inputs_sha256': IDENTITY.digest(IDENTITY.canonical(current)),
+                          'differing_fields': differences,
+                          'scope': 'Known package, lock, toolchain and platform fields only; observation never authorizes reuse.'}
+
+
 def validate(index, objects, expected_inputs, source):
     require(set(index) == {'schema', 'format', 'inputs', 'members'} and type(index['schema']) is int
             and index['schema'] == 1 and index['format'] == FORMAT, 'Unsupported runtime archive schema')
-    require(index['inputs'] == expected_inputs, 'Runtime platform, toolchain or source lock differs')
+    if index['inputs'] != expected_inputs:
+        raise InputIdentityMismatch(index['inputs'], expected_inputs)
     records = index['members']
     require(isinstance(records, dict) and 0 < len(records) <= IDENTITY.MAX_FILES, 'Invalid runtime inventory')
     total = 0

@@ -161,6 +161,7 @@ def install_browser_runtime() -> None:
     # Only an empty destination is eligible. Existing local dependencies never
     # become retained authority and are not removed by archive reconstruction.
     if not runtime.exists() and not runtime.is_symlink() and archive.is_file() and receipt.is_file():
+        transport = None
         try:
             transport = runtime_transport()
             declaration = transport.IDENTITY.decoded(receipt.read_bytes())
@@ -176,6 +177,8 @@ def install_browser_runtime() -> None:
                             members_sha256=declaration['members_sha256'])
         except (ValueError, OSError, EOFError, KeyError, TypeError, json.JSONDecodeError) as error:
             decision['reason'] = str(error)
+            if transport is not None and isinstance(error, transport.InputIdentityMismatch):
+                decision['input_mismatch'] = error.diagnosis
     else:
         decision['reason'] = 'Transport missing or runtime destination already exists'
     if any(path.is_symlink() for path in (runtime, *runtime.parents)):
@@ -201,6 +204,21 @@ def install_browser_runtime() -> None:
     print('Browser package transport: ' + json.dumps(decision, sort_keys=True))
 
 
+def retain_runtime_transport(batch: str, engine: str) -> None:
+    """Keep the diagnostic inside its existing canonical group artifact namespace."""
+    if batch not in BATCHES or engine not in ENGINES:
+        raise ValueError('Unknown runtime observation owner')
+    folder = ARTIFACTS / 'shards' / f'{BATCHES[batch][0]}-{engine}'
+    target = folder / 'runtime-transport.json'
+    source = ARTIFACTS / 'runtime-transport.json'
+    if any(path.is_symlink() for path in (target, *target.parents, source)):
+        raise ValueError('Runtime observation path contains a link')
+    if target.exists():
+        raise ValueError('Preserve existing runtime observation')
+    folder.mkdir(parents=True, exist_ok=True)
+    shutil.copyfile(source, target)
+
+
 def run(batch: str, engine: str) -> None:
     if any(name in os.environ for name in ('BIJUX_UI_BROWSER_ENGINE', 'BIJUX_UI_PROJECTS', 'BIJUX_UI_PROFILE')):
         raise ValueError('Browser execution selection must come from its assigned group/engine')
@@ -213,6 +231,7 @@ def run(batch: str, engine: str) -> None:
     assignments = partition_plan()
     unpack()
     install_browser_runtime()
+    retain_runtime_transport(batch, engine)
     failed = []
     for group in BATCHES[batch]:
         group_failed = False

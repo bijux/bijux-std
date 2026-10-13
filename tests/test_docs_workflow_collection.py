@@ -145,6 +145,31 @@ class WorkflowCollectionTests(unittest.TestCase):
             with self.subTest(change=change):
                 with self.assertRaises(ValueError): collection.verify_execution(role, record)
 
+    def test_batch_runtime_diagnosis_is_byte_bound_to_its_group_and_cannot_cross_namespaces(self):
+        role, _, artifact, files, record = self.add_browser('browser-navigation-links-chromium')
+        group = self.roles[role]['groups'][0] + '-chromium'
+        prefix = group + '/'
+        diagnostic = b'{"schema":1,"status":"fresh_install","browser_execution_required":true}'
+        files[prefix + 'runtime-transport.json'] = diagnostic
+        record['files_sha256']['runtime-transport.json'] = hashlib.sha256(diagnostic).hexdigest()
+        files[prefix + 'execution.json'] = json.dumps(record).encode()
+        self.set_body(55, artifact, files)
+        collection = self.collection()
+        with tempfile.TemporaryDirectory(dir=ROOT / 'artifacts') as folder:
+            output = Path(folder) / 'collected'
+            collection.materialize(output)
+            self.assertEqual((output / 'shards' / group / 'runtime-transport.json').read_bytes(), diagnostic)
+            self.assertEqual((output / 'shards' / group / 'qualification.json').read_bytes(),
+                             files[prefix + 'qualification.json'])
+        for change in ('changed', 'missing', 'foreign'):
+            altered = dict(files)
+            if change == 'changed': altered[prefix + 'runtime-transport.json'] = b'changed observation'
+            if change == 'missing': altered.pop(prefix + 'runtime-transport.json')
+            if change == 'foreign': altered['foreign-chromium/runtime-transport.json'] = diagnostic
+            self.set_body(55, artifact, altered)
+            with self.subTest(change=change), self.assertRaises(ValueError):
+                self.collection().plan()
+
     def test_retained_producer_attempt_is_preserved_in_actual_native_input_declaration(self):
         role, _, artifact, files, record = self.add_browser()
         self.job['run_attempt'] = 1
