@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import argparse
+from contextlib import nullcontext
 import hashlib
 import inspect
 import importlib.util
@@ -82,19 +83,20 @@ def runtime_transport():
 def prepare(*, package_container=False) -> None:
     if any(name in os.environ for name in ('BIJUX_UI_BROWSER_ENGINE', 'BIJUX_UI_PROJECTS', 'BIJUX_UI_PROFILE')):
         raise ValueError('Canonical inventory must not select projects')
-    inventory = ARTIFACTS / 'inventories'
-    for suite in (*SUITES, PERSISTED_SUITE):
-        env = environment(suite, inventory / suite)
-        config = TESTS / f'playwright.{suite}.config.js'
-        subprocess.run(['node', str(TESTS / 'reporting/inventory.js'), '--config', str(config), '--output', str(inventory / f'{suite}.json')], cwd=ROOT, env=env, check=True)
-    partition_plan()
-    archive = ARTIFACTS / 'browser-fixtures.tar.gz'
-    receipt = fixture_transport().pack(ARTIFACTS, fixture_roots(), archive)
-    print('Fixture transport: ' + json.dumps(receipt, sort_keys=True))
-    (ARTIFACTS / 'browser-fixtures.sha256').write_text(hashlib.sha256(archive.read_bytes()).hexdigest() + '\n')
+    transport = load_module(TESTS / 'execution/runtime_transport/container.py', 'bijux_runtime_container') if package_container else runtime_transport()
+    with transport.prepared_image() if package_container else nullcontext():
+        inventory = ARTIFACTS / 'inventories'
+        for suite in (*SUITES, PERSISTED_SUITE):
+            env = environment(suite, inventory / suite)
+            config = TESTS / f'playwright.{suite}.config.js'
+            subprocess.run(['node', str(TESTS / 'reporting/inventory.js'), '--config', str(config), '--output', str(inventory / f'{suite}.json')], cwd=ROOT, env=env, check=True)
+        partition_plan()
+        archive = ARTIFACTS / 'browser-fixtures.tar.gz'
+        receipt = fixture_transport().pack(ARTIFACTS, fixture_roots(), archive)
+        print('Fixture transport: ' + json.dumps(receipt, sort_keys=True))
+        (ARTIFACTS / 'browser-fixtures.sha256').write_text(hashlib.sha256(archive.read_bytes()).hexdigest() + '\n')
     runtime_archive = ARTIFACTS / 'browser-packages.tar.gz'
     started = time.monotonic()
-    transport = load_module(TESTS / 'execution/runtime_transport/container.py', 'bijux_runtime_container') if package_container else runtime_transport()
     runtime_receipt = transport.pack(ARTIFACTS / 'node-runtime', TESTS, runtime_archive)
     print('Browser package pack cost: ' + json.dumps({'seconds': time.monotonic() - started,
           'archive_bytes': runtime_receipt['archive_bytes'], 'scope': 'Complete inventory and compression; cost only'}))

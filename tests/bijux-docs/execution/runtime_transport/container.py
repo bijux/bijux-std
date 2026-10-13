@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import argparse
+from contextlib import contextmanager
 import os
 from pathlib import Path
 import shutil
@@ -27,6 +28,26 @@ def mount(source, destination, *, readonly=True):
     if ',' in str(source) or '\n' in str(source):
         raise ValueError('Container mount must have a bounded physical path')
     return ['--mount', f'type=bind,src={source},dst={destination}' + (',readonly' if readonly else '')]
+
+
+@contextmanager
+def prepared_image():
+    """Overlap only image transport; await it before observing runtime identity."""
+    docker = shutil.which('docker')
+    if docker is None:
+        raise ValueError('Docker is required for consumer-platform preparation')
+    command = [docker, 'pull', IMAGE]
+    child = subprocess.Popen(command)
+    try:
+        yield
+        status = child.wait()
+        if status:
+            raise subprocess.CalledProcessError(status, command)
+    except BaseException:
+        if child.poll() is None:
+            child.kill()
+        child.wait()
+        raise
 
 
 def pack(runtime, source, archive):

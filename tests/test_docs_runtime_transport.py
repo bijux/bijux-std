@@ -5,8 +5,10 @@ import io
 import json
 import os
 from pathlib import Path
+import sys
 import tarfile
 import tempfile
+import time
 from types import ModuleType
 import unittest
 from unittest.mock import patch
@@ -341,6 +343,84 @@ class RuntimeTransportTests(unittest.TestCase):
         alias = self.root / 'linked-runtime'; alias.symlink_to(self.runtime, target_is_directory=True)
         with self.assertRaisesRegex(ValueError, 'Linked installed'):
             CONTAINER.pack(alias, ROOT / 'tests/bijux-docs', output)
+
+
+    def test_fixture_inventory_overlaps_owned_pull_and_pack_requires_success_or_reaped_child(self):
+        real_child = CONTAINER.subprocess.Popen
+        program = """import pathlib, sys, time
+started, release = map(pathlib.Path, sys.argv[1:3])
+started.write_text('started')
+while not release.exists(): time.sleep(0.01)
+sys.exit(int(sys.argv[3]))
+"""
+        for outcome in ('success', 'pull-failure', 'preparation-failure', 'interrupted', 'interrupted-wait'):
+            with self.subTest(outcome=outcome):
+                folder = self.root / outcome; folder.mkdir()
+                started, release = folder / 'started', folder / 'release'
+                children, events = [], []
+                def launch(command):
+                    self.assertEqual(command, ['/owned/docker', 'pull', CONTAINER.IMAGE])
+                    child = real_child([sys.executable, '-B', '-c', program, str(started),
+                                        str(release), '9' if outcome == 'pull-failure' else '0'])
+                    children.append(child)
+                    if outcome == 'interrupted-wait':
+                        wait = child.wait
+                        interrupted = False
+                        def interrupt_wait(*args, **kwargs):
+                            nonlocal interrupted
+                            if not interrupted:
+                                interrupted = True
+                                raise KeyboardInterrupt()
+                            return wait(*args, **kwargs)
+                        child.wait = interrupt_wait
+                    return child
+                def inventory(command, **options):
+                    deadline = time.monotonic() + 5
+                    while not started.exists() and time.monotonic() < deadline:
+                        time.sleep(0.01)
+                    self.assertTrue(started.exists(), 'Image pull must start before inventory work')
+                    self.assertIsNone(children[0].poll(), 'Inventory must overlap the owned pull')
+                    events.append('inventory')
+                    if outcome == 'preparation-failure': raise ValueError('fixture preparation refused')
+                    if outcome == 'interrupted': raise KeyboardInterrupt()
+                    Path(command[-1]).parent.mkdir(parents=True, exist_ok=True)
+                    Path(command[-1]).write_bytes(b'owned inventory')
+                def fixtures(artifacts, roots, archive):
+                    self.assertIsNone(children[0].poll())
+                    archive.write_bytes(b'owned fixtures')
+                    if outcome != 'interrupted-wait': release.write_text('prepared')
+                    events.append('fixtures')
+                    return {'archive_bytes': archive.stat().st_size}
+                def packages(runtime, source, archive):
+                    self.assertEqual(children[0].poll(), 0)
+                    self.assertEqual(events, ['inventory', 'inventory', 'fixtures'])
+                    events.append('runtime-pack')
+                    archive.write_bytes(b'owned packages')
+                    return {'archive_bytes': archive.stat().st_size}
+                (folder / 'renderer-source-observation.json').write_bytes(b'owned renderer')
+                fixture = ModuleType('bijux_overlap_fixture'); fixture.pack = fixtures
+                with patch.object(CONTAINER.shutil, 'which', return_value='/owned/docker'), \
+                     patch.object(CONTAINER.subprocess, 'Popen', side_effect=launch), \
+                     patch.object(CONTAINER, 'pack', side_effect=packages), \
+                     patch.object(GATE, 'load_module', return_value=CONTAINER), \
+                     patch.object(GATE, 'ARTIFACTS', folder), patch.object(GATE, 'SUITES', ('navigation',)), \
+                     patch.object(GATE, 'PERSISTED_SUITE', 'persisted'), \
+                     patch.object(GATE, 'environment', return_value={}), \
+                     patch.object(GATE, 'partition_plan'), patch.object(GATE, 'fixture_roots', return_value=[]), \
+                     patch.object(GATE, 'fixture_transport', return_value=fixture), \
+                     patch.object(GATE.subprocess, 'run', side_effect=inventory), \
+                     patch.object(GATE.subprocess, 'check_output', return_value='a' * 40), \
+                     patch.dict(os.environ, {}, clear=True):
+                    if outcome == 'success': GATE.prepare(package_container=True)
+                    else:
+                        error = {'pull-failure': CONTAINER.subprocess.CalledProcessError,
+                                 'preparation-failure': ValueError, 'interrupted': KeyboardInterrupt,
+                                 'interrupted-wait': KeyboardInterrupt}[outcome]
+                        with self.assertRaises(error): GATE.prepare(package_container=True)
+                self.assertEqual(len(children), 1)
+                self.assertIsNotNone(children[0].poll(), 'Owned pull must be stopped and reaped')
+                self.assertEqual((folder / 'producer-envelope.json').exists(), outcome == 'success')
+                self.assertEqual('runtime-pack' in events, outcome == 'success')
 
 
 if __name__ == '__main__':
