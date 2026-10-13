@@ -6,6 +6,10 @@ This file records notable repository-level changes for `bijux-std`.
 
 ### Unreleased
 
+#### Pending review — [#298](https://github.com/bijux/bijux-std/pull/298) — fix(ci): preserve persisted proof identities
+
+Preserve JSON proof identity across storage and fresh aggregate revalidation while retaining strict producer admission
+
 Export accepted-proof selections in their persisted JSON representation so fresh aggregate observations retain the same check-ID keys after storage. Revalidate actual job/check ownership and reject altered checks, artifacts, timestamps or missing proof records.
 
 #### Pending review — [#297](https://github.com/bijux/bijux-std/pull/297) — fix(ci): preserve standard platform imports in proof consumers
