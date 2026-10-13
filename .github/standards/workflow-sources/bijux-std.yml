@@ -269,7 +269,7 @@ jobs:
               observed = read(api_base=api_base, timeout=min(10, remaining))
               (output / f"job-refresh-{identifier}.json").write_text(json.dumps(observed, indent=2) + "\n")
               return observed
-          jobs = budget.refresh_nonterminal(jobs, fetch=fresh_job, groups=registry.GROUPS,
+          jobs = budget.refresh_nonterminal(jobs, fetch=fresh_job, groups=registry.BATCHES,
               engines=registry.ENGINES, run_id=int(os.environ["GITHUB_RUN_ID"]),
               attempt=int(os.environ["GITHUB_RUN_ATTEMPT"]), head=os.environ["EXPECTED_WORKFLOW_HEAD"])
           (output / "jobs.json").write_text(json.dumps(jobs, indent=2) + "\n")

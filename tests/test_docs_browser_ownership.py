@@ -1,4 +1,5 @@
 """Physical batches cannot omit, duplicate or exchange canonical group evidence."""
+import ast
 import copy
 import json
 from pathlib import Path
@@ -6,6 +7,7 @@ from types import ModuleType, SimpleNamespace
 import unittest
 
 import test_docs_browser_execution as EXECUTION
+import test_docs_job_budget as BUDGET_CONTROLS
 import test_docs_workflow_collection as COLLECTION
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -31,6 +33,43 @@ class BrowserOwnershipTests(unittest.TestCase):
         batches = OWNERSHIP.registry(EXECUTION.GATE.GROUPS)
         self.assertEqual(OWNERSHIP.owner(batches, 'contrast-phone'), 'contrast-responsive')
         with self.assertRaises(ValueError): OWNERSHIP.owner(batches, 'foreign')
+
+    def test_report_refresh_admits_the_source_owned_physical_job_inventory(self):
+        workflow = (ROOT / ".github/standards/workflow-sources/bijux-std.yml").read_text()
+        lines = workflow.splitlines()
+        start = next(index for index, line in enumerate(lines)
+                     if "jobs = budget.refresh_nonterminal(" in line)
+        statement = []
+        for line in lines[start:]:
+            statement.append(line.strip())
+            if line.rstrip().endswith(")"):
+                break
+        call = ast.parse("\n".join(statement)).body[0].value
+        self.assertIsInstance(call, ast.Call)
+        groups = next(keyword.value for keyword in call.keywords if keyword.arg == "groups")
+        self.assertIsInstance(groups, ast.Attribute)
+        self.assertEqual(ast.unparse(groups.value), "registry")
+        registry = EXECUTION.GATE
+        supplied = getattr(registry, groups.attr)
+        budget = BUDGET_CONTROLS.BUDGET
+        names = sorted(budget.expected_job_names(registry.BATCHES, registry.ENGINES)
+                       | budget.BASELINE_JOBS)
+        head = "a" * 40
+        payload = {"total_count": len(names), "jobs": [
+            {"id": index + 1, "name": name, "run_id": 123, "run_attempt": 1,
+             "head_sha": head, "status": "completed", "conclusion": "success"}
+            for index, name in enumerate(names)]}
+        def unexpected_refresh(identifier):
+            self.fail("Complete physical job inventory must not request another API row")
+        observed = budget.refresh_nonterminal(payload, fetch=unexpected_refresh,
+            groups=supplied, engines=registry.ENGINES, run_id=123, attempt=1, head=head)
+        self.assertEqual(observed, payload)
+        self.assertEqual(set(supplied), set(registry.BATCHES))
+        self.assertNotEqual(set(registry.GROUPS), set(registry.BATCHES))
+        with self.assertRaisesRegex(ValueError, "Missing or unexpected current job name"):
+            budget.refresh_nonterminal(payload, fetch=unexpected_refresh,
+                groups=registry.GROUPS, engines=registry.ENGINES,
+                run_id=123, attempt=1, head=head)
 
     def test_two_viewports_share_one_setup_and_keep_two_original_native_owners(self):
         controls = EXECUTION.RecoveryProducerOrderTests()
