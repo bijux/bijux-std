@@ -420,7 +420,7 @@ class PortableNativeSourceTests(unittest.TestCase):
 
 class ConsumerPlatformBoundaryTests(unittest.TestCase):
     def setUp(self):
-        self.platform = GATE.load('proof_continuity/platform.py')
+        self.platform = GATE.load('proof_continuity/consumer_platform.py')
         owner = ROOT / 'artifacts/qualification/proof-platform'; owner.mkdir(parents=True, exist_ok=True)
         directory = tempfile.TemporaryDirectory(dir=owner); self.addCleanup(directory.cleanup)
         self.workspace = Path(directory.name)
@@ -428,6 +428,34 @@ class ConsumerPlatformBoundaryTests(unittest.TestCase):
         self.npm = self.workspace / 'npm/bin/npm-cli.js'
         self.npm.parent.mkdir(parents=True); self.npm.write_bytes(b'admitted npm entrypoint')
         self.tools = {'node': str(self.node), 'npm': str(self.npm), 'docker': '/usr/bin/docker'}
+
+    def test_child_runtime_observer_uses_standard_platform_with_real_installed_tools(self):
+        # A child starts beside its wrapper. Import the actual package observer
+        # there and read installed tool bytes without asserting producer proof.
+        program = """
+import json
+import runpy
+import sys
+context = runpy.run_path(sys.argv[1])
+identity = context['CONTAINER'].archive_module().IDENTITY
+observed = identity.toolchain()
+import platform
+assert observed['platform']['system'] == platform.system()
+assert observed['platform']['machine'] == platform.machine()
+print(json.dumps(observed, sort_keys=True))
+"""
+        path = Path(self.platform.__file__)
+        child = subprocess.run([sys.executable, '-B', '-c', program, str(path)],
+                               cwd=path.parent, capture_output=True, text=True)
+        self.assertEqual(child.returncode, 0, child.stderr)
+        observed = json.loads(child.stdout.splitlines()[-1])
+        node = Path(shutil.which('node')).resolve(strict=True)
+        npm = Path(shutil.which('npm')).resolve(strict=True)
+        self.assertEqual(observed['node_version'], subprocess.check_output([str(node), '--version'], text=True).strip())
+        self.assertEqual(observed['node_sha256'], hashlib.sha256(node.read_bytes()).hexdigest())
+        self.assertEqual(observed['npm_cli_sha256'], hashlib.sha256(npm.read_bytes()).hexdigest())
+        self.assertEqual(observed['npm_version'], json.loads((npm.parent.parent / 'package.json').read_bytes())['version'])
+        self.assertRegex(observed['npm_tree_sha256'], r'^[a-f0-9]{64}$')
 
     def test_live_platform_mounts_exact_tools_and_forwards_token_name_without_host_image_claim(self):
         commands = []

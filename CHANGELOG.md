@@ -6,6 +6,8 @@ This file records notable repository-level changes for `bijux-std`.
 
 ### Unreleased
 
+Name the accepted-proof consumer wrapper explicitly so its child process imports the standard Python platform observer. Keep physical Node/npm package and platform identity admission intact and verify it from the real child import directory.
+
 #### Pending review — [#296](https://github.com/bijux/bijux-std/pull/296) — fix(ci): observe completed accepted proof producers
 
 Bind terminal accepted producer observation to physical source-owned jobs and checks while preserving live current-workflow caller enforcement
