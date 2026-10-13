@@ -153,7 +153,7 @@ class InputPlanningMutationTests(unittest.TestCase):
         forged.write_text("raise RuntimeError('retained bytecode acquired source authority')\n")
         owner = self.repo / 'tests/bijux-docs/execution/input_planning/ownership.py'
         cache = Path(importlib.util.cache_from_source(str(owner)))
-        cache.parent.mkdir()
+        cache.parent.mkdir(parents=True, exist_ok=True)
         py_compile.compile(str(forged), cfile=str(cache), invalidation_mode=py_compile.PycInvalidationMode.UNCHECKED_HASH)
         cli = owner.with_name('cli.py')
         result = subprocess.run([sys.executable, '-B', str(cli), 'plan'], cwd=self.repo, capture_output=True, text=True,
