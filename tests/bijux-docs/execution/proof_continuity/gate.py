@@ -51,7 +51,9 @@ def qualify(api, root, plan):
     budget = load('job_budget.py')
     names = budget.expected_job_names(gate.BATCHES, gate.ENGINES) | budget.BASELINE_JOBS
     checkout_authority = AUTHORITY.admit_checkout(api, accepted, checkout)
-    observation = lineage.observe_source(api, identity, reconcile=True, caller='std / report', names=sorted(names),
+    # The accepted producer has finished; active caller authority belongs only
+    # to the current workflow observing its own running execution.
+    observation = lineage.observe_source(api, identity, reconcile=True, names=sorted(names),
                                          checkout_authority=checkout_authority)
     budget_receipt = budget.qualify_latest(observation, groups=gate.BATCHES, engines=gate.ENGINES,
         run_id=run['id'], attempt=run['run_attempt'], head=accepted['head'])

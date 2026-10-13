@@ -17,6 +17,7 @@ from unittest.mock import patch
 
 import test_docs_workflow_artifacts as ARTIFACTS
 import test_docs_workflow_lineage as LINEAGE
+import test_docs_workflow_jobs as JOBS
 import test_docs_renderer_controls as RENDERER
 from test_docs_input_planning import FRONTEND_CONTEXTS, require_results
 
@@ -210,6 +211,68 @@ class AcceptedBoundaryTests(unittest.TestCase):
                 with self.subTest(environment=key), patch.dict(os.environ, {key: value}), self.assertRaises(ValueError):
                     AUTHORITY.admit_qualification_request(self.api, plan)
             AUTHORITY.admit_qualification_request(self.api, {'qualification_mode': 'full'})
+
+    def test_completed_original_reconciles_before_admission_without_granting_active_ownership(self):
+        fixture = JOBS.PhysicalWorkflowTests(); fixture.setUp()
+        lineage = JOBS.LINEAGE
+        browser, budget = GATE.load('browser_gate.py'), GATE.load('job_budget.py')
+        names = budget.expected_job_names(browser.BATCHES, browser.ENGINES) | budget.BASELINE_JOBS
+        self.run.update(run_attempt=1, run_started_at='2026-10-12T17:39:00Z', check_suite_id=99)
+        runpath = self.prefix + 'actions/runs/101'
+        self.responses[runpath] = self.run
+        self.responses[runpath + '/attempts/1'] = self.run
+        self.responses[self.prefix + 'actions/workflows/9'] = {'id': 9, 'path': self.run['path']}
+        rows = []
+        for identifier, name in enumerate(sorted(names), 1000):
+            row = fixture.job(identifier, 1, name, '2026-10-12T17:40:00Z', '2026-10-12T17:41:00Z')
+            row.update(run_id=101, head_sha=self.head, head_branch=self.run['head_branch'])
+            rows.append(row)
+            self.responses[self.prefix + 'actions/jobs/' + str(identifier)] = row
+            self.responses[self.prefix + 'check-runs/' + str(identifier)] = fixture.check(row)
+        inventory = {'total_count': len(rows), 'jobs': rows}
+        self.responses[runpath + '/attempts/1/jobs?per_page=100&page=1'] = inventory
+        self.responses[runpath + '/jobs?filter=latest&per_page=100&page=1'] = inventory
+        self.responses[runpath + '/artifacts?per_page=100&page=1'] = {'total_count': 1, 'artifacts': [
+            {'id': 33, 'name': 'docs-navigation-complete-' + self.checkout + '-1'}]}
+        objects = SOURCE.api_tree(self.responses[self.prefix + 'git/trees/' + self.tree + '?recursive=1'], self.tree)
+        plan = {'frontend': False, 'full_verification_reasons': [], 'source_objects': objects,
+                'baseline': self.base, 'qualification_mode': 'full'}
+        load, locate = GATE.load, AUTHORITY.locate
+
+        class ReconciledOriginal(Exception):
+            pass
+
+        def admitted(observation, roles):
+            snapshot = observation.observation
+            self.assertIsNone(snapshot['execution_reconciliation']['caller'])
+            self.assertEqual(snapshot['latest']['total_count'], len(names))
+            self.assertTrue(all(row['status'] == 'completed' and row['conclusion'] == 'success'
+                                for row in snapshot['latest']['jobs']))
+            self.assertEqual(roles['complete']['job_name'], 'std / navigation')
+            raise ReconciledOriginal
+
+        original = copy.deepcopy(self.responses)
+        with patch.object(SOURCE, 'unchanged'), \
+                patch.object(AUTHORITY, 'locate', side_effect=lambda api, base: locate(api, base, now=NOW)), \
+                patch.object(GATE, 'load', side_effect=lambda name: lineage if name == 'workflow_lineage.py' else load(name)), \
+                patch.object(lineage.SourceObservation, 'admit', admitted):
+            # Actual merged-PR admission, physical reconciliation, job/check
+            # ownership and whole-job qualification reach archive admission.
+            with self.assertRaises(ReconciledOriginal): GATE.qualify(self.api, ROOT, plan)
+            for variant in ('active', 'missing', 'failed', 'cancelled'):
+                self.responses.clear(); self.responses.update(copy.deepcopy(original))
+                inventory = self.responses[runpath + '/attempts/1/jobs?per_page=100&page=1']
+                row = next(row for row in inventory['jobs'] if row['name'] == 'std / navigation')
+                if variant == 'missing':
+                    inventory['jobs'].remove(row); inventory['total_count'] -= 1
+                elif variant == 'active':
+                    row.update(status='in_progress', conclusion=None, completed_at=None)
+                    row['steps'][0].update(status='in_progress', conclusion=None, completed_at=None)
+                else:
+                    row['conclusion'] = 'failure' if variant == 'failed' else 'cancelled'
+                self.responses[self.prefix + 'check-runs/' + str(row['id'])] = fixture.check(row)
+                with self.subTest(variant=variant), self.assertRaises(ValueError):
+                    GATE.qualify(self.api, ROOT, plan)
 
     def test_live_accepted_merge_can_relax_only_its_exact_original_preview_tree(self):
         fixture = ARTIFACTS.WorkflowArtifactOwnershipTests(); fixture.setUp()
