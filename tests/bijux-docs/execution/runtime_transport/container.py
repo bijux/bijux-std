@@ -10,8 +10,8 @@ import tempfile
 from types import ModuleType
 
 IMAGE = 'mcr.microsoft.com/playwright@sha256:6446946a1d9fd62d9ae501312a2d76a43ee688542b21622056a372959b65d63d'
-FORWARDED_ENVIRONMENT = ('RUNNER_OS', 'RUNNER_ARCH', 'ImageOS', 'ImageVersion',
-                         'GITHUB_RUN_ID', 'GITHUB_RUN_ATTEMPT', 'GITHUB_SHA', 'BIJUX_COST_OWNER')
+FORWARDED_ENVIRONMENT = ('RUNNER_OS', 'RUNNER_ARCH', 'GITHUB_RUN_ID',
+                         'GITHUB_RUN_ATTEMPT', 'GITHUB_SHA', 'BIJUX_COST_OWNER')
 
 
 def archive_module():

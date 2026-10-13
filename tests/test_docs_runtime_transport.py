@@ -286,6 +286,9 @@ class RuntimeTransportTests(unittest.TestCase):
         npm.parent.mkdir(parents=True); npm.write_bytes(b'actual installed npm entrypoint')
         costs = self.root / 'costs'; costs.mkdir()
         output = self.root / 'prepared.tar.gz'
+        self.assertEqual(CONTAINER.FORWARDED_ENVIRONMENT,
+                         ('RUNNER_OS', 'RUNNER_ARCH', 'GITHUB_RUN_ID',
+                          'GITHUB_RUN_ATTEMPT', 'GITHUB_SHA', 'BIJUX_COST_OWNER'))
         forwarded = {name: 'actual-' + name for name in CONTAINER.FORWARDED_ENVIRONMENT}
         def execute(command, **options):
             self.assertTrue(options['check'])
@@ -295,6 +298,8 @@ class RuntimeTransportTests(unittest.TestCase):
             self.assertIn(f'type=bind,src={node},dst=/bijux-toolchain/node,readonly', mounts)
             self.assertIn(f'type=bind,src={npm.parent.parent},dst=/bijux-toolchain/npm,readonly', mounts)
             for name, value in forwarded.items(): self.assertIn(name + '=' + value, command)
+            self.assertNotIn('ImageOS=ubuntu24', command)
+            self.assertNotIn('ImageVersion=20261004.327.1', command)
             self.assertNotIn('GH_TOKEN', ' '.join(command))
             self.assertIn('--read-only', command); self.assertIn('--network=none', command)
             self.assertIn(CONTAINER.IMAGE, command)
@@ -305,7 +310,8 @@ class RuntimeTransportTests(unittest.TestCase):
         which = lambda name: str(node if name == 'node' else npm) if name != 'docker' else '/usr/bin/docker'
         with patch.object(CONTAINER, 'archive_module', return_value=ARCHIVE), \
              patch.object(CONTAINER.shutil, 'which', side_effect=which), \
-             patch.dict(os.environ, {**forwarded, 'GH_TOKEN': 'never-forwarded'}, clear=True), \
+             patch.dict(os.environ, {**forwarded, 'ImageOS': 'ubuntu24',
+                                     'ImageVersion': '20261004.327.1', 'GH_TOKEN': 'never-forwarded'}, clear=True), \
              patch.object(CONTAINER.subprocess, 'run', side_effect=execute):
             self.assertEqual(CONTAINER.pack(self.runtime, ROOT / 'tests/bijux-docs', output), self.receipt)
         self.assertEqual(output.read_bytes(), self.archive.read_bytes())
