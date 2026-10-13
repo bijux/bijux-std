@@ -427,7 +427,7 @@ class RenderRepoConfigsTests(unittest.TestCase):
         expected_revisions = {
             "actions/checkout": "3d3c42e5aac5ba805825da76410c181273ba90b1",
             "actions/setup-python": "5fda3b95a4ea91299a34e894583c3862153e4b97",
-            "astral-sh/setup-uv": "c18668ad3cf93ea998bef934396af7bb5c839dc7",
+            "astral-sh/setup-uv": "1c37ad07a6a961277cf70c0d37d6f313000f5884",
             "actions/setup-node": "949feb2413d6458794dcd2491c4babbbce0c15c1",
             "actions/setup-java": "de7274f081f381c8f8158605e0321c36c376e2e6",
         }
