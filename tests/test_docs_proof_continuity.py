@@ -274,6 +274,40 @@ class AcceptedBoundaryTests(unittest.TestCase):
                 with self.subTest(variant=variant), self.assertRaises(ValueError):
                     GATE.qualify(self.api, ROOT, plan)
 
+    def test_physical_check_selection_survives_json_storage_and_refuses_changed_proof(self):
+        fixture = JOBS.PhysicalWorkflowTests(); fixture.setUp()
+        identity = {**fixture.identity, 'attempt': 1}
+        plan = {'checkout': self.base, 'baseline': self.base, 'frontend': False,
+                'full_verification_reasons': []}
+        cli = GATE.load('input_planning/cli.py')
+        owner = ROOT / 'artifacts/qualification/persisted-proof'; owner.mkdir(parents=True, exist_ok=True)
+
+        def qualified(api, root, supplied_plan):
+            # Exercise real physical reconciliation; JSON is only the export
+            # boundary and cannot replace job/check lifecycle admission.
+            reconciled = JOBS.JOBS.capture(fixture.api, identity, JOBS.LINEAGE.ARTIFACTS.pages)
+            checks = reconciled['execution_reconciliation']['checks']
+            self.assertEqual(set(checks), {fixture.producer['id'], fixture.old_browser['id']})
+            self.assertTrue(all(type(key) is int for key in checks))
+            return {'original_workflow': identity, 'original_artifacts': {'producer': fixture.artifact},
+                    'original_job_budget': reconciled['execution_reconciliation']}
+
+        with tempfile.TemporaryDirectory(dir=owner) as folder, patch.object(GATE, 'qualify', side_effect=qualified):
+            selected = GATE.select(ROOT, plan, fixture.api)
+            path = Path(folder) / 'selection.json'; cli.write(path, selected)
+            persisted = cli.load(path)
+            self.assertEqual(GATE.verify(ROOT, plan, persisted, 'false', fixture.api), persisted)
+            check_id = str(fixture.producer['id'])
+            for changed in ('check', 'artifact', 'timestamp', 'missing'):
+                altered = copy.deepcopy(persisted)
+                proof = altered['proof']
+                if changed == 'check': proof['original_job_budget']['checks'][check_id]['head_sha'] = '0' * 40
+                elif changed == 'artifact': proof['original_artifacts']['producer']['digest'] = 'sha256:' + '0' * 64
+                elif changed == 'timestamp': proof['original_job_budget']['frames'][0]['run']['run_started_at'] = '2026-01-02T00:00:00Z'
+                else: del proof['original_job_budget']['checks'][check_id]
+                with self.subTest(changed=changed), self.assertRaisesRegex(ValueError, 'independent required aggregate'):
+                    GATE.verify(ROOT, plan, altered, 'false', fixture.api)
+
     def test_live_accepted_merge_can_relax_only_its_exact_original_preview_tree(self):
         fixture = ARTIFACTS.WorkflowArtifactOwnershipTests(); fixture.setUp()
         identity, api = fixture.identity, fixture.api

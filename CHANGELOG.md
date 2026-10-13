@@ -6,6 +6,8 @@ This file records notable repository-level changes for `bijux-std`.
 
 ### Unreleased
 
+Export accepted-proof selections in their persisted JSON representation so fresh aggregate observations retain the same check-ID keys after storage. Revalidate actual job/check ownership and reject altered checks, artifacts, timestamps or missing proof records.
+
 #### Pending review — [#297](https://github.com/bijux/bijux-std/pull/297) — fix(ci): preserve standard platform imports in proof consumers
 
 Keep the accepted-proof child observer from shadowing Python platform while retaining exact runtime admission and full fallback on refusal
