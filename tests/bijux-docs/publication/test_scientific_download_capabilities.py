@@ -168,5 +168,62 @@ class ScientificDownloads(unittest.TestCase):
         self.rejected()
 
 
+class RetainedSourceAdmission(unittest.TestCase):
+    """Refuse forged lineage before any historical Git or PDF callback executes."""
+
+    write = ScientificDownloads.write
+    write_json = ScientificDownloads.write_json
+    row = ScientificDownloads.row
+    capture = ScientificDownloads.capture
+
+    def setUp(self):
+        ScientificDownloads.setUp(self)
+        source = FIXTURE/'retained/configs/docs/science_downloads.py'
+        shutil.copyfile(source, self.path)
+        spec = importlib.util.spec_from_file_location('bijux_reviewed_retained_downloads', self.path)
+        self.hook = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(self.hook)
+        self.configuration.hooks['downloads'] = self.hook
+        self.write_json(capabilities.RETAINED_DECK_CONTEXT_PATH, capabilities.RETAINED_DECK_CONTEXT)
+
+    def test_missing_retained_context_never_falls_back_to_current_source_lock(self):
+        (self.root/capabilities.RETAINED_DECK_CONTEXT_PATH).unlink()
+        with self.assertRaisesRegex(ValueError, 'source must belong'):
+            self.capture()
+
+    def test_unknown_context_fields_cannot_rebind_historical_exports(self):
+        context = json.loads((self.root/capabilities.RETAINED_DECK_CONTEXT_PATH).read_bytes())
+        context['newly_generated'] = True
+        self.write_json(capabilities.RETAINED_DECK_CONTEXT_PATH, context)
+        with self.assertRaisesRegex(ValueError, 'differs from reviewed lineage'):
+            self.capture()
+
+    def test_other_security_delta_cannot_inherit_reviewed_compatibility(self):
+        context = json.loads((self.root/capabilities.RETAINED_DECK_CONTEXT_PATH).read_bytes())
+        context['security_metadata']['toml_path'] = ['project', 'dependencies']
+        self.write_json(capabilities.RETAINED_DECK_CONTEXT_PATH, context)
+        with self.assertRaisesRegex(ValueError, 'differs from reviewed lineage'):
+            self.capture()
+
+    def test_mutated_loaded_context_constant_is_refused(self):
+        self.hook.RETAINED_CONTEXT['source_revision'] = '0'*40
+        with self.assertRaisesRegex(ValueError, 'context or dependency binding changed'):
+            self.capture()
+
+    def test_substituted_history_helper_is_refused_before_execution(self):
+        self.hook._committed_inputs = lambda *args: {}
+        with self.assertRaisesRegex(ValueError, 'loaded callback differs'):
+            self.capture()
+
+    def test_retention_dependencies_must_keep_native_bindings(self):
+        for name in ('io', 'subprocess', 'tomllib'):
+            with self.subTest(dependency=name):
+                original = getattr(self.hook, name)
+                setattr(self.hook, name, types.SimpleNamespace())
+                with self.assertRaisesRegex(ValueError, 'dependency binding changed'):
+                    self.capture()
+                setattr(self.hook, name, original)
+
+
 if __name__ == '__main__':
     unittest.main(verbosity=2)
