@@ -110,6 +110,27 @@ class InputPlanningMutationTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             verify_plan(wrong_head, self.repo, '0' * 40, self.base, 'pull_request')
 
+    def test_explicit_qualification_requires_immutable_official_main_and_unchanged_mode(self):
+        mode = 'accepted-proof-qualification'
+        plan = capture(self.repo, self.base, self.base, 'workflow_dispatch', mode)
+        self.assertFalse(plan['frontend'])
+        self.assertEqual(plan['event'], 'workflow_dispatch')
+        self.assertEqual(plan['qualification_mode'], mode)
+        self.assertEqual(verify_plan(plan, self.repo, self.base, self.base, 'workflow_dispatch', mode), plan)
+        for event, requested in [('workflow_dispatch', 'full'), ('workflow_dispatch', 'unknown'),
+                                 ('pull_request', mode), ('push', mode)]:
+            with self.subTest(event=event, requested=requested):
+                self.assertTrue(capture(self.repo, self.base, self.base, event, requested)['frontend'])
+        with self.assertRaises(ValueError):
+            verify_plan(plan, self.repo, self.base, self.base, 'workflow_dispatch')
+        self.put('shared/bijux-docs/assets/runtime.js', 'different source awaiting normal acceptance')
+        self.commit('test(ci): change protected qualification input')
+        head = self.git('rev-parse', 'HEAD')
+        self.assertTrue(capture(self.repo, head, head, 'workflow_dispatch', mode)['frontend'])
+        self.assertTrue(capture(self.repo, head, self.base, 'workflow_dispatch', mode)['frontend'])
+        self.git('update-ref', 'refs/remotes/origin/main', head)
+        self.assertFalse(capture(self.repo, head, head, 'workflow_dispatch', mode)['frontend'])
+
     def test_tampered_selection_changed_baseline_and_any_missing_or_skipped_selected_context_fail(self):
         self.put('shared/bijux-docs/assets/runtime.js', 'changed executable runtime')
         self.commit('test(ci): change owned browser runtime')

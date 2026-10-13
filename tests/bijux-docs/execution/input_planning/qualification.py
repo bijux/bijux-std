@@ -7,8 +7,8 @@ from .ownership import closure, FRONTEND_FAMILIES
 FRONTEND_CONTEXTS = ('fixtures', 'browsers', 'commands', 'renderer', 'catalogue', 'persisted', 'fault_browser', 'fault_public')
 
 
-def verify_plan(supplied, root, expected_head, expected_baseline, event):
-    expected = capture(root, expected_head, expected_baseline, event)
+def verify_plan(supplied, root, expected_head, expected_baseline, event, mode="full"):
+    expected = capture(root, expected_head, expected_baseline, event, mode)
     if expected['checkout'] != expected_head:
         raise ValueError('Required selection must qualify the actual event checkout')
     if not isinstance(supplied, dict) or supplied != expected:

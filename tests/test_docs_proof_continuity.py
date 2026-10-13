@@ -10,6 +10,7 @@ import os
 from pathlib import Path
 import shutil
 import subprocess
+import sys
 import tempfile
 import unittest
 from unittest.mock import patch
@@ -132,6 +133,39 @@ class AcceptedBoundaryTests(unittest.TestCase):
         self.assertEqual(api.json_array(path), [{'number': 17}])
         self.assertEqual(opener.requests[0].get_header('Authorization'), 'Bearer controlled-token')
         with self.assertRaises(ValueError): api.json_array('repos/foreign/project/commits/' + self.base + '/pulls')
+
+    def test_manual_qualification_independently_binds_live_main_event_run_and_attempt(self):
+        plan = {'qualification_mode': 'accepted-proof-qualification', 'event': 'workflow_dispatch',
+                'checkout': self.base, 'baseline': self.base}
+        env = {'GITHUB_REPOSITORY': self.api.repository, 'GITHUB_EVENT_NAME': 'workflow_dispatch',
+               'GITHUB_REF': 'refs/heads/main', 'GITHUB_SHA': self.base, 'VERIFICATION_MODE': plan['qualification_mode'],
+               'GITHUB_RUN_ID': '201', 'GITHUB_RUN_ATTEMPT': '1'}
+        path = self.prefix + 'actions/runs/201'
+        run = {**self.run, 'id': 201, 'run_attempt': 1, 'event': 'workflow_dispatch',
+               'head_sha': self.base, 'head_branch': 'main', 'status': 'in_progress', 'conclusion': None}
+        self.responses[path] = run
+        with patch.dict(os.environ, env, clear=True):
+            AUTHORITY.admit_qualification_request(self.api, plan)
+            for key, value in [('event', 'pull_request'), ('head_sha', self.head), ('head_branch', 'foreign'),
+                               ('run_attempt', 2), ('id', 202), ('path', '.github/workflows/foreign.yml'),
+                               ('repository', {'full_name': 'foreign/project'}),
+                               ('head_repository', {'full_name': 'foreign/project'}), ('status', 'queued')]:
+                self.responses[path] = {**run, key: value}
+                with self.subTest(key=key), self.assertRaises(ValueError):
+                    AUTHORITY.admit_qualification_request(self.api, plan)
+            self.responses[path] = {**run, 'status': 'completed', 'conclusion': 'failure'}
+            with self.assertRaises(ValueError): AUTHORITY.admit_qualification_request(self.api, plan)
+            self.responses[path] = run
+            main = self.responses[self.prefix + 'git/ref/heads/main']
+            main['object']['sha'] = self.head
+            with self.assertRaises(ValueError): AUTHORITY.admit_qualification_request(self.api, plan)
+            main['object']['sha'] = self.base
+            for key, value in [('GITHUB_REF', 'refs/heads/foreign'), ('GITHUB_SHA', self.head),
+                               ('GITHUB_REPOSITORY', 'foreign/project'), ('GITHUB_EVENT_NAME', 'pull_request'),
+                               ('GITHUB_RUN_ATTEMPT', '0'), ('GITHUB_RUN_ID', 'invalid'), ('VERIFICATION_MODE', 'full')]:
+                with self.subTest(environment=key), patch.dict(os.environ, {key: value}), self.assertRaises(ValueError):
+                    AUTHORITY.admit_qualification_request(self.api, plan)
+            AUTHORITY.admit_qualification_request(self.api, {'qualification_mode': 'full'})
 
     def test_live_accepted_merge_can_relax_only_its_exact_original_preview_tree(self):
         fixture = ARTIFACTS.WorkflowArtifactOwnershipTests(); fixture.setUp()
@@ -274,6 +308,97 @@ class PortableNativeSourceTests(unittest.TestCase):
         self.assertEqual((output / 'producer-envelope.json').read_bytes(), item.read('producer-envelope.json'))
         with self.assertRaises(ValueError): NATIVE.materialize({'complete': item}, output)
         with self.assertRaises(ValueError): NATIVE.materialize({'complete': {'files': item.files}}, self.owner / 'forged-evidence')
+
+
+class ConsumerPlatformBoundaryTests(unittest.TestCase):
+    def setUp(self):
+        self.platform = GATE.load('proof_continuity/platform.py')
+        owner = ROOT / 'artifacts/qualification/proof-platform'; owner.mkdir(parents=True, exist_ok=True)
+        directory = tempfile.TemporaryDirectory(dir=owner); self.addCleanup(directory.cleanup)
+        self.workspace = Path(directory.name)
+        self.node = self.workspace / 'node'; self.node.write_bytes(b'admitted Node bytes')
+        self.npm = self.workspace / 'npm/bin/npm-cli.js'
+        self.npm.parent.mkdir(parents=True); self.npm.write_bytes(b'admitted npm entrypoint')
+        self.tools = {'node': str(self.node), 'npm': str(self.npm), 'docker': '/usr/bin/docker'}
+
+    def test_live_platform_mounts_exact_tools_and_forwards_token_name_without_host_image_claim(self):
+        commands = []
+        def run(command, **kwargs):
+            commands.append(command)
+            self.assertEqual(kwargs, {'check': True})
+            marker = Path(command[command.index('--child') + 1])
+            marker.write_bytes(b'live-admission-completed\n')
+        env = {'GH_TOKEN': 'never-print-controlled-token', 'ImageOS': 'ubuntu24', 'ImageVersion': 'foreign-host',
+               'RUNNER_OS': 'Linux', 'RUNNER_ARCH': 'X64', 'GITHUB_RUN_ID': '201'}
+        with patch.dict(os.environ, env, clear=True), patch.object(self.platform.shutil, 'which', side_effect=self.tools.get), \
+                patch.object(self.platform.subprocess, 'run', side_effect=run):
+            self.platform.execute(ROOT, ['select'])
+        command = commands[0]
+        self.assertIn(self.platform.CONTAINER.IMAGE, command)
+        self.assertIn('GH_TOKEN', command); self.assertNotIn(env['GH_TOKEN'], ' '.join(command))
+        self.assertNotIn('ImageOS', ' '.join(command)); self.assertNotIn('ImageVersion', ' '.join(command))
+        mounts = [command[i + 1] for i, value in enumerate(command) if value == '--mount']
+        self.assertIn(f'type=bind,src={ROOT},dst={ROOT},readonly', mounts)
+        self.assertIn(f'type=bind,src={ROOT / "artifacts"},dst={ROOT / "artifacts"}', mounts)
+        self.assertIn(f'type=bind,src={self.node},dst=/bijux-toolchain/node,readonly', mounts)
+        self.assertIn(f'type=bind,src={self.npm.parent.parent},dst=/bijux-toolchain/npm,readonly', mounts)
+        self.assertIn('GIT_OPTIONAL_LOCKS=0', command)
+        self.assertEqual(command[-1], 'select')
+
+    def test_missing_tools_foreign_npm_child_failure_and_uncompleted_operation_refuse(self):
+        for missing in ('docker', 'node', 'npm'):
+            tools = {**self.tools, missing: None}
+            with self.subTest(missing=missing), patch.object(self.platform.shutil, 'which', side_effect=tools.get), \
+                    self.assertRaises(ValueError):
+                self.platform.execute(ROOT, ['select'])
+
+        self.tools['npm'] = str(self.node)
+        with patch.object(self.platform.shutil, 'which', side_effect=self.tools.get), self.assertRaises(ValueError):
+            self.platform.execute(ROOT, ['select'])
+        self.tools['npm'] = str(self.npm)
+        for action in (lambda *args, **kwargs: None,
+                       self.platform.subprocess.CalledProcessError(1, ['docker'])):
+            with self.subTest(action=type(action).__name__), \
+                    patch.object(self.platform.shutil, 'which', side_effect=self.tools.get), \
+                    patch.object(self.platform.subprocess, 'run', side_effect=action), \
+                    self.assertRaises((ValueError, self.platform.subprocess.SubprocessError)):
+                self.platform.execute(ROOT, ['select'])
+
+    def test_actual_cli_launch_failure_selects_full_but_cannot_revalidate_skipped_work(self):
+        from test_docs_input_planning import InputPlanningMutationTests, capture
+        fixture = InputPlanningMutationTests(); fixture.setUp(); self.addCleanup(fixture.doCleanups)
+        shutil.copytree(ROOT / 'tests/bijux-docs/execution', fixture.repo / 'tests/bijux-docs/execution',
+                        dirs_exist_ok=True, ignore=shutil.ignore_patterns('__pycache__'))
+        fixture.commit('test(ci): own platform qualification source')
+        fixture.base = fixture.git('rev-parse', 'HEAD')
+        fixture.git('update-ref', 'refs/remotes/origin/main', fixture.base)
+        plan = capture(fixture.repo, fixture.base, fixture.base, 'workflow_dispatch', 'accepted-proof-qualification')
+        output = fixture.repo / 'artifacts/bijux-docs/input-plan'; output.mkdir(parents=True)
+        (output / 'plan.json').write_text(json.dumps(plan))
+        docker = self.workspace / 'docker'; docker.write_text('#!/bin/sh\nexit 17\n'); docker.chmod(0o755)
+        node = self.workspace / 'bin/node'; node.parent.mkdir(); node.write_text('#!/bin/sh\nexit 0\n'); node.chmod(0o755)
+        self.npm.chmod(0o755)
+        (node.parent / 'npm').symlink_to(self.npm)
+        env = {**os.environ, 'PATH': str(self.workspace) + os.pathsep + str(node.parent) + os.pathsep + os.environ['PATH'],
+               'GITHUB_REPOSITORY': 'bijux/bijux-std', 'GITHUB_EVENT_NAME': 'workflow_dispatch',
+               'GITHUB_SHA': fixture.base, 'EXPECTED_BASELINE': fixture.base, 'VERIFICATION_MODE': 'accepted-proof-qualification',
+               'GITHUB_OUTPUT': str(output / 'outputs')}
+        command = [sys.executable, '-B',
+                   str(fixture.repo / 'tests/bijux-docs/execution/input_planning/cli.py')]
+        selected = subprocess.run([*command, 'select', '--consumer-platform'], env=env, capture_output=True, text=True)
+        self.assertEqual(selected.returncode, 0, selected.stderr)
+        decision = json.loads((output / 'selection.json').read_bytes())
+        self.assertTrue(decision['frontend']); self.assertIsNone(decision['proof'])
+        self.assertEqual(decision['selection_kind'], 'accepted_proof_refused_full_execution')
+        self.assertEqual((output / 'outputs').read_text(), 'frontend=true\n')
+        decision.update(frontend=False, selection_kind='accepted_original_proof', proof={'status': 'passed'})
+        (output / 'selection.json').write_text(json.dumps(decision))
+        refused = subprocess.run([*command, 'verify', '--consumer-platform', '--accepted-proof'],
+                                 env={**env, 'EXPECTED_FRONTEND': 'false'}, capture_output=True, text=True)
+        self.assertNotEqual(refused.returncode, 0)
+        self.assertIn('consumer-platform revalidation failed', refused.stderr)
+        self.assertFalse((output / 'qualification.json').exists())
+
 
 
 if __name__ == '__main__':

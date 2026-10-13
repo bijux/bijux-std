@@ -3,9 +3,42 @@ from __future__ import annotations
 
 from datetime import datetime, timezone
 import copy
+import os
 import re
 
 _CREATED = object()
+
+
+def admit_qualification_request(api, plan):
+    """An explicit manual request must independently own current accepted main."""
+    if plan.get('qualification_mode', 'full') == 'full':
+        return
+    require(plan.get('qualification_mode') == 'accepted-proof-qualification'
+            and plan.get('event') == 'workflow_dispatch'
+            and plan['checkout'] == plan['baseline']
+            and api.repository == 'bijux/bijux-std'
+            and os.environ.get('GITHUB_REPOSITORY') == api.repository
+            and os.environ.get('GITHUB_EVENT_NAME') == 'workflow_dispatch'
+            and os.environ.get('GITHUB_REF') == 'refs/heads/main'
+            and os.environ.get('GITHUB_SHA') == plan['checkout']
+            and os.environ.get('VERIFICATION_MODE') == 'accepted-proof-qualification',
+            'Qualification request must own the explicit accepted-main event')
+    run_id, attempt = os.environ.get('GITHUB_RUN_ID', ''), os.environ.get('GITHUB_RUN_ATTEMPT', '')
+    require(run_id.isdecimal() and attempt.isdecimal() and int(run_id) > 0 and int(attempt) > 0,
+            'Qualification requires its actual run and attempt')
+    prefix = 'repos/' + api.repository + '/'
+    main = api.json(prefix + 'git/ref/heads/main')
+    require(main.get('ref') == 'refs/heads/main' and main.get('object', {}).get('type') == 'commit'
+            and main['object'].get('sha') == plan['checkout'], 'Qualification checkout is not current official main')
+    run = api.json(prefix + 'actions/runs/' + run_id)
+    require(run.get('id') == int(run_id) and run.get('run_attempt') == int(attempt)
+            and run.get('event') == 'workflow_dispatch' and run.get('head_branch') == 'main'
+            and run.get('head_sha') == plan['checkout'] and run.get('path') == '.github/workflows/bijux-std.yml'
+            and run.get('repository', {}).get('full_name') == api.repository
+            and run.get('head_repository', {}).get('full_name') == api.repository
+            and run.get('status') in ('in_progress', 'completed')
+            and (run.get('status') != 'completed' or run.get('conclusion') == 'success'),
+            'Qualification is not its live owning accepted-main workflow run')
 
 
 class AcceptedProducer:

@@ -56,6 +56,7 @@ def continuity():
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('operation', choices=('plan', 'select', 'verify'))
+    parser.add_argument('--consumer-platform', action='store_true', help='Independently admit proof in its immutable consumer platform')
     parser.add_argument('--accepted-proof', action='store_true', help='Require independent accepted original proof before omission')
     parser.add_argument('--selection', type=Path, default=ROOT / 'artifacts/bijux-docs/input-plan/selection.json')
     parser.add_argument('--navigation-output', type=Path)
@@ -63,14 +64,30 @@ def main():
     parser.add_argument('--plan', type=Path, default=ROOT / 'artifacts/bijux-docs/input-plan/plan.json')
     parser.add_argument('--output', type=Path, default=ROOT / 'artifacts/bijux-docs/input-plan/qualification.json')
     args = parser.parse_args()
+    mode = os.environ.get('VERIFICATION_MODE') or 'full'
     head, baseline, event = (os.environ.get(key) for key in ('GITHUB_SHA', 'EXPECTED_BASELINE', 'GITHUB_EVENT_NAME'))
     if args.operation == 'plan':
-        plan = capture(ROOT, head, baseline, event)
+        plan = capture(ROOT, head, baseline, event, mode)
         write(args.plan, plan)
         with open(os.environ['GITHUB_OUTPUT'], 'a') as stream:
             stream.write('frontend=' + str(plan['frontend']).lower() + '\n')
         return
-    plan = verify_plan(load(args.plan), ROOT, head, baseline, event)
+    plan = verify_plan(load(args.plan), ROOT, head, baseline, event, mode)
+    if args.consumer_platform and not plan['frontend'] and (args.operation == 'select' or
+            args.accepted_proof and load(args.selection).get('frontend') is False):
+        platform = continuity().load('proof_continuity/platform.py')
+        try:
+            platform.execute(ROOT, [value for value in sys.argv[1:] if value != '--consumer-platform'])
+        except (ValueError, OSError, platform.subprocess.SubprocessError) as error:
+            if args.operation != 'select':
+                raise ValueError('Accepted proof consumer-platform revalidation failed') from error
+            selected = continuity().refused(plan, 'Consumer platform unavailable or refused')
+            write(args.selection, selected)
+        if args.operation == 'select':
+            selected = load(args.selection)
+            with open(os.environ['GITHUB_OUTPUT'], 'a') as stream:
+                stream.write('frontend=' + str(selected['frontend']).lower() + '\n')
+        return
     if args.operation == 'select':
         selected = continuity().select(ROOT, plan)
         write(args.selection, selected)
