@@ -120,7 +120,9 @@ def select(root, plan, api=None):
         if api is None:
             SOURCE.require(os.environ.get('GITHUB_REPOSITORY') == 'bijux/bijux-std', 'Continuity requires its owning repository')
             api = load('workflow_artifacts.py').GitHubAPI('bijux/bijux-std', os.environ.get('GH_TOKEN'))
-        proof = qualify(api, root, plan)
+        # Selection crosses JSON storage before aggregate revalidation. Export
+        # the same key representation while internal job/check IDs stay typed.
+        proof = json.loads(json.dumps(qualify(api, root, plan)))
     except (ValueError, KeyError, TypeError, OSError, subprocess.SubprocessError, ET.ParseError) as error:
         # Transport errors deliberately contain neither credentials nor signed URLs.
         reason = str(error) if isinstance(error, ValueError) else type(error).__name__

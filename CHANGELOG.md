@@ -6,6 +6,14 @@ This file records notable repository-level changes for `bijux-std`.
 
 ### Unreleased
 
+#### Pending review — [#298](https://github.com/bijux/bijux-std/pull/298) — fix(ci): preserve persisted proof identities
+
+Preserve JSON proof identity across storage and fresh aggregate revalidation while retaining strict producer admission
+
+Export accepted-proof selections in their persisted JSON representation so fresh aggregate observations retain the same check-ID keys after storage. Revalidate actual job/check ownership and reject altered checks, artifacts, timestamps or missing proof records.
+
+Overlap the existing pinned browser image pull with canonical fixture inventory preparation, and require successful image transport before observing and packing the runtime. Stop and reap the owned pull when preparation fails while preserving the strict three-minute whole-job bound and every engine and case.
+
 #### Pending review — [#297](https://github.com/bijux/bijux-std/pull/297) — fix(ci): preserve standard platform imports in proof consumers
 
 Keep the accepted-proof child observer from shadowing Python platform while retaining exact runtime admission and full fallback on refusal
