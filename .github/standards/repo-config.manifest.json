@@ -3217,6 +3217,11 @@
           "key": "BIJUX_RELEASE_ARTIFACT_VERIFICATION_COMMAND",
           "value": "test -n \"${RELEASE_TAG}\"; guard_python=\"${ARTIFACTS_DIR}/venv/bin/python\"; test -x \"${guard_python}\"; resolved_version=\"$(PYTHONPATH=\"${GITHUB_WORKSPACE}/packages/bijux-pollenomics-dev/src\" \"${guard_python}\" -m bijux_pollenomics_dev.release.publication_guard --pyproject \"${PACKAGE_DIR}/pyproject.toml\" --package-name \"${PACKAGE_SLUG}\" --dist-dir \"${DIST_DIR}\")\"; test \"${resolved_version}\" = \"${RELEASE_TAG#v}\"",
           "type": "string"
+        },
+        {
+          "key": "BIJUX_RELEASE_SOURCE_VERIFICATION_COMMAND",
+          "type": "string",
+          "value": "if [ \"${PACKAGE_SLUG}\" = \"bijux-pollenomics-lra\" ]; then PYTHONPATH=\"${GITHUB_WORKSPACE}/packages/bijux-pollenomics-dev/src\" python3 -B -m bijux_pollenomics_dev.ci.lra_reference.release_gate --target-sha \"${GITHUB_SHA}\" --release-tag \"${RELEASE_TAG}\" --repository \"${GITHUB_REPOSITORY}\" --repository-root \"${GITHUB_WORKSPACE}\" --output \"${GITHUB_WORKSPACE}/${ARTIFACTS_DIR}/lra-source-evidence\"; fi"
         }
       ],
       "dependabot": {
