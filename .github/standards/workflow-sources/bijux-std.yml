@@ -464,7 +464,7 @@ jobs:
             tests/bijux-docs/generated/build.py \
             --output artifacts/bijux-docs/contrast-generated \
             --base-url http://127.0.0.1:62599
-          python3 tests/bijux-docs/execution/browser_gate.py prepare
+          python3 tests/bijux-docs/execution/browser_gate.py prepare --package-container
       - name: Identify the executed fixture attempt
         id: fixture-identity
         run: echo "attempt=$GITHUB_RUN_ATTEMPT" >> "$GITHUB_OUTPUT"

@@ -79,7 +79,7 @@ def runtime_transport():
     return module
 
 
-def prepare() -> None:
+def prepare(*, package_container=False) -> None:
     if any(name in os.environ for name in ('BIJUX_UI_BROWSER_ENGINE', 'BIJUX_UI_PROJECTS', 'BIJUX_UI_PROFILE')):
         raise ValueError('Canonical inventory must not select projects')
     inventory = ARTIFACTS / 'inventories'
@@ -94,7 +94,8 @@ def prepare() -> None:
     (ARTIFACTS / 'browser-fixtures.sha256').write_text(hashlib.sha256(archive.read_bytes()).hexdigest() + '\n')
     runtime_archive = ARTIFACTS / 'browser-packages.tar.gz'
     started = time.monotonic()
-    runtime_receipt = runtime_transport().pack(ARTIFACTS / 'node-runtime', TESTS, runtime_archive)
+    transport = load_module(TESTS / 'execution/runtime_transport/container.py', 'bijux_runtime_container') if package_container else runtime_transport()
+    runtime_receipt = transport.pack(ARTIFACTS / 'node-runtime', TESTS, runtime_archive)
     print('Browser package pack cost: ' + json.dumps({'seconds': time.monotonic() - started,
           'archive_bytes': runtime_receipt['archive_bytes'], 'scope': 'Complete inventory and compression; cost only'}))
     write_json(ARTIFACTS / 'browser-packages.json', runtime_receipt)
@@ -321,12 +322,15 @@ def main() -> int:
     parser.add_argument('operation', choices=('prepare', 'run', 'aggregate'))
     parser.add_argument('--batch', choices=BATCHES)
     parser.add_argument('--engine', choices=ENGINES)
+    parser.add_argument('--package-container', action='store_true', help='Observe installed packages inside the immutable browser container')
     args = parser.parse_args()
     if args.operation == 'run' and (not args.batch or not args.engine):
         parser.error('Browser execution requires an assigned group and engine')
+    if args.package_container and args.operation != 'prepare':
+        parser.error('Consumer-platform packaging belongs to fixture preparation')
     try:
         if args.operation == 'prepare':
-            prepare()
+            prepare(package_container=args.package_container)
         elif args.operation == 'run':
             run(args.batch, args.engine)
         else:

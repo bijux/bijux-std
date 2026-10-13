@@ -23,6 +23,7 @@ def load(path, key):
 
 ARCHIVE = load(ROOT / 'tests/bijux-docs/execution/runtime_transport/archive.py', 'bijux_runtime_transport_controls')
 GATE = load(ROOT / 'tests/bijux-docs/execution/browser_gate.py', 'bijux_runtime_gate_controls')
+CONTAINER = load(ROOT / 'tests/bijux-docs/execution/runtime_transport/container.py', 'bijux_runtime_container_controls')
 
 
 class RuntimeTransportTests(unittest.TestCase):
@@ -85,6 +86,12 @@ class RuntimeTransportTests(unittest.TestCase):
             changed = copy.deepcopy(self.inputs)
             changed[field] = {'system': 'Darwin', 'machine': 'arm64'} if field == 'platform' else 'altered'
             with self.subTest(field=field), self.assertRaisesRegex(ValueError, 'platform, toolchain or source lock'):
+                self.unpack(inputs=changed)
+            self.assertFalse((self.root / 'consumer').exists())
+        for field in ('release', 'libc', 'os_release_sha256', 'runner_os', 'runner_arch', 'image_os', 'image_version'):
+            changed = copy.deepcopy(self.inputs)
+            changed['platform'][field] = 'different physical platform'
+            with self.subTest(platform_field=field), self.assertRaisesRegex(ValueError, 'platform, toolchain or source lock'):
                 self.unpack(inputs=changed)
             self.assertFalse((self.root / 'consumer').exists())
         (self.source / 'package-lock.json').write_text('{"lockfileVersion":3,"packages":{}}')
@@ -189,6 +196,69 @@ class RuntimeTransportTests(unittest.TestCase):
             self.assertTrue(decision['reason'])
             self.assertEqual(install.call_args.args[0], ['npm', '--prefix', str(artifacts / 'node-runtime'), 'ci'])
             self.assertFalse((artifacts / 'node-runtime/node_modules').exists())
+
+    def test_container_preparation_uses_immutable_consumer_platform_and_real_readonly_toolchain(self):
+        parser = load(ROOT / '.github/scripts/workflow_execution/yaml_io.py', 'bijux_transport_workflow_parser')
+        workflow = parser.parse_workflow((ROOT / '.github/standards/workflow-sources/bijux-std.yml').read_bytes(), 'bijux-std')
+        for job in ('navigation-browsers', 'frontend-browser-faults', 'persisted-native-reader'):
+            self.assertEqual(workflow['jobs'][job]['container']['image'], CONTAINER.IMAGE)
+        fixture = workflow['jobs']['navigation-fixtures']
+        self.assertNotIn('container', fixture)
+        self.assertTrue(any('browser_gate.py prepare --package-container' in step.get('run', '') for step in fixture['steps']))
+        node, npm = self.root / 'node', self.root / 'npm/bin/npm-cli.js'
+        node.write_bytes(b'actual admitted node binary')
+        npm.parent.mkdir(parents=True); npm.write_bytes(b'actual installed npm entrypoint')
+        costs = self.root / 'costs'; costs.mkdir()
+        output = self.root / 'prepared.tar.gz'
+        forwarded = {name: 'actual-' + name for name in CONTAINER.FORWARDED_ENVIRONMENT}
+        def execute(command, **options):
+            self.assertTrue(options['check'])
+            mounts = [command[index + 1] for index, value in enumerate(command) if value == '--mount']
+            for destination in ('/bijux/source', '/bijux/runtime', '/bijux-toolchain/node', '/bijux-toolchain/npm', '/bijux-toolchain/bin'):
+                self.assertTrue(any(f'dst={destination},readonly' in value for value in mounts))
+            self.assertIn(f'type=bind,src={node},dst=/bijux-toolchain/node,readonly', mounts)
+            self.assertIn(f'type=bind,src={npm.parent.parent},dst=/bijux-toolchain/npm,readonly', mounts)
+            for name, value in forwarded.items(): self.assertIn(name + '=' + value, command)
+            self.assertNotIn('GH_TOKEN', ' '.join(command))
+            self.assertIn('--read-only', command); self.assertIn('--network=none', command)
+            self.assertIn(CONTAINER.IMAGE, command)
+            location = next(value for value in mounts if 'dst=/bijux-package-output' in value)
+            owned = Path(location.split(',src=', 1)[1].split(',dst=', 1)[0])
+            (owned / 'browser-packages.tar.gz').write_bytes(self.archive.read_bytes())
+            (owned / 'browser-packages.json').write_text(json.dumps(self.receipt))
+        which = lambda name: str(node if name == 'node' else npm) if name != 'docker' else '/usr/bin/docker'
+        with patch.object(CONTAINER, 'archive_module', return_value=ARCHIVE), \
+             patch.object(CONTAINER.shutil, 'which', side_effect=which), \
+             patch.dict(os.environ, {**forwarded, 'GH_TOKEN': 'never-forwarded'}, clear=True), \
+             patch.object(CONTAINER.subprocess, 'run', side_effect=execute):
+            self.assertEqual(CONTAINER.pack(self.runtime, ROOT / 'tests/bijux-docs', output), self.receipt)
+        self.assertEqual(output.read_bytes(), self.archive.read_bytes())
+
+    def test_container_preparation_refuses_missing_docker_foreign_source_and_failed_child_without_output(self):
+        output = self.root / 'prepared.tar.gz'
+        with patch.object(CONTAINER.shutil, 'which', return_value=None), patch.object(CONTAINER.subprocess, 'run') as child:
+            with self.assertRaisesRegex(ValueError, 'Docker is required'):
+                CONTAINER.pack(self.runtime, ROOT / 'tests/bijux-docs', output)
+            with self.assertRaisesRegex(ValueError, 'owning source'):
+                CONTAINER.pack(self.runtime, self.source, output)
+            child.assert_not_called()
+        self.assertFalse(output.exists())
+        output.write_bytes(b'preserve existing archive')
+        with self.assertRaisesRegex(ValueError, 'Preserve existing'):
+            CONTAINER.pack(self.runtime, ROOT / 'tests/bijux-docs', output)
+        self.assertEqual(output.read_bytes(), b'preserve existing archive')
+        output.unlink()
+        node, npm = self.root / 'node', self.root / 'npm/bin/npm-cli.js'
+        node.write_bytes(b'actual node'); npm.parent.mkdir(parents=True); npm.write_bytes(b'actual npm')
+        which = lambda name: str(node if name == 'node' else npm) if name != 'docker' else '/usr/bin/docker'
+        with patch.object(CONTAINER.shutil, 'which', side_effect=which), \
+             patch.object(CONTAINER.subprocess, 'run', side_effect=CONTAINER.subprocess.CalledProcessError(1, ['docker'])):
+            with self.assertRaises(CONTAINER.subprocess.CalledProcessError):
+                CONTAINER.pack(self.runtime, ROOT / 'tests/bijux-docs', output)
+        self.assertFalse(output.exists())
+        alias = self.root / 'linked-runtime'; alias.symlink_to(self.runtime, target_is_directory=True)
+        with self.assertRaisesRegex(ValueError, 'Linked installed'):
+            CONTAINER.pack(alias, ROOT / 'tests/bijux-docs', output)
 
 
 if __name__ == '__main__':
