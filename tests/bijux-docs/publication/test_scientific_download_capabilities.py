@@ -225,5 +225,46 @@ class RetainedSourceAdmission(unittest.TestCase):
                 setattr(self.hook, name, original)
 
 
+class RetainedBuildSourceAdmission(unittest.TestCase):
+    """Actual reviewed hook bytes cannot acquire authority through a forged helper."""
+
+    write = ScientificDownloads.write
+    write_json = ScientificDownloads.write_json
+    row = ScientificDownloads.row
+    capture = ScientificDownloads.capture
+
+    def setUp(self):
+        ScientificDownloads.setUp(self)
+        shutil.copyfile(FIXTURE/'retained-build/configs/docs/science_downloads.py', self.path)
+        spec = importlib.util.spec_from_file_location('bijux_reviewed_retained_build_downloads', self.path)
+        self.hook = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(self.hook)
+        self.configuration.hooks['downloads'] = self.hook
+
+    def test_exact_current_hook_has_a_distinct_source_recipe(self):
+        self.assertEqual(capabilities.HOOKS[digest(self.path.read_bytes())],
+                         'retained-build-scientific-pdf-downloads')
+
+    def test_loaded_history_helper_cannot_be_replaced(self):
+        self.hook._committed_inputs = lambda *args: {}
+        with self.assertRaisesRegex(ValueError, 'loaded callback differs'):
+            self.capture()
+
+    def test_callback_cannot_keep_code_with_foreign_globals(self):
+        original = self.hook.retained_deck_sources
+        self.hook.retained_deck_sources = types.FunctionType(original.__code__, dict(original.__globals__))
+        with self.assertRaisesRegex(ValueError, 'loaded callback differs'):
+            self.capture()
+
+    def test_missing_build_context_is_refused(self):
+        with self.assertRaisesRegex(ValueError, 'source must belong'):
+            self.capture()
+
+    def test_build_source_constant_cannot_be_substituted(self):
+        self.hook.CURRENT_DECK_SOURCE_LOCK_SHA256 = '0'*64
+        with self.assertRaisesRegex(ValueError, 'constants or native dependency'):
+            self.capture()
+
+
 if __name__ == '__main__':
     unittest.main(verbosity=2)
