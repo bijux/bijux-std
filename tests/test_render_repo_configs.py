@@ -583,6 +583,7 @@ class RenderRepoConfigsTests(unittest.TestCase):
         repo = MODULE.find_repo_config(manifest, "bijux-genomics")
         jobs = repo["workflow_wrappers"]["ci"]["jobs"]
         producer = jobs["test-build"]
+        self.assertEqual(producer["env"]["CARGO_BUILD_JOBS"], "4")
         self.assertEqual(producer["outputs"], {"matrix": "${{ steps.matrix.outputs.matrix }}"})
         self.assertIn("make ci-test-build", [step.get("run") for step in producer["steps"]])
         cache = next(step for step in producer["steps"] if step.get("name") == "Restore the compilation cache")
