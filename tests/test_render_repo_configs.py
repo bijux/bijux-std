@@ -535,7 +535,7 @@ class RenderRepoConfigsTests(unittest.TestCase):
                 ]
                 self.assertIn(f"make {gate}", commands)
 
-    def test_genomics_ci_runs_format_lint_and_audit_without_product_tests(self) -> None:
+    def test_genomics_ci_keeps_source_checks_and_requires_distributed_product_tests(self) -> None:
         manifest = json.loads(MANIFEST_PATH.read_text(encoding="utf-8"))
         repository = next(
             repository
@@ -546,8 +546,8 @@ class RenderRepoConfigsTests(unittest.TestCase):
 
         self.assertEqual(wrapper["env"]["RUST_TOOLCHAIN_VERSION"], "1.95.0")
         self.assertEqual(wrapper["on"]["workflow_dispatch"], {})
-        self.assertEqual(set(wrapper["jobs"]), {"fmt", "lint", "audit"})
-        self.assertNotIn("CARGO_NEXTEST_VERSION", wrapper["env"])
+        self.assertEqual(set(wrapper["jobs"]), {"fmt", "lint", "audit", "test-build", "native-tests", "python-tests", "test-complete"})
+        self.assertEqual(wrapper["env"]["CARGO_NEXTEST_VERSION"], "0.9.100")
         for gate in ("fmt", "lint", "audit"):
             commands = [step.get("run") for step in wrapper["jobs"][gate]["steps"]]
             self.assertIn(f"make {gate}", commands)
@@ -577,6 +577,95 @@ class RenderRepoConfigsTests(unittest.TestCase):
                 if step.get("uses")
             }
             self.assertIn(sccache_action, uses)
+
+    def test_genomics_native_archive_matrix_and_required_aggregate_are_bound(self) -> None:
+        manifest = json.loads(MANIFEST_PATH.read_text(encoding="utf-8"))
+        repo = MODULE.find_repo_config(manifest, "bijux-genomics")
+        jobs = repo["workflow_wrappers"]["ci"]["jobs"]
+        producer = jobs["test-build"]
+        self.assertEqual(producer["env"]["CARGO_BUILD_JOBS"], "4")
+        self.assertEqual(producer["outputs"], {"matrix": "${{ steps.matrix.outputs.matrix }}"})
+        self.assertIn("make ci-test-build", [step.get("run") for step in producer["steps"]])
+        cache = next(step for step in producer["steps"] if step.get("name") == "Restore the compilation cache")
+        self.assertEqual(cache["with"]["workspaces"], ". -> artifacts/ci/distributed/scratch/producer/compile-cache/cargo")
+        publish = next(step for step in producer["steps"] if step.get("id") == "matrix")
+        self.assertIn("artifacts/ci/distributed/build/matrix.json", publish["run"])
+        native = jobs["native-tests"]
+        self.assertEqual(native["needs"], ["test-build"])
+        self.assertEqual(native["env"]["RUSTC_WRAPPER"], "")
+        self.assertFalse(native["strategy"]["fail-fast"])
+        self.assertEqual(native["strategy"]["max-parallel"], 20)
+        self.assertEqual(native["strategy"]["matrix"], "${{ fromJSON(needs.test-build.outputs.matrix) }}")
+        consume = next(step for step in native["steps"] if step.get("run") == "make ci-test-shard")
+        self.assertEqual(consume["env"], {"CI_TEST_PARTITION": "${{ matrix.partition }}"})
+        upload = next(step for step in native["steps"] if step.get("name") == "Upload native outcomes and diagnostics")
+        self.assertEqual(upload["if"], "${{ always() }}")
+        self.assertEqual(upload["with"]["path"], "artifacts/ci/distributed/shards/")
+        archive = next(step for step in producer["steps"] if step.get("name") == "Upload the compiled test archive")
+        self.assertEqual(archive["with"]["path"], "artifacts/ci/distributed/build/")
+        self.assertEqual(archive["with"]["compression-level"], 0)
+        self.assertNotIn("artifacts/target", archive["with"]["path"])
+        aggregate = jobs["test-complete"]
+        self.assertEqual(aggregate["name"], "tests / complete")
+        self.assertEqual(set(aggregate["needs"]), {"test-build", "native-tests", "python-tests"})
+        self.assertEqual(aggregate["if"], "${{ always() }}")
+        self.assertIn("make ci-test-aggregate", [step.get("run") for step in aggregate["steps"]])
+        download = next(step for step in aggregate["steps"] if step.get("name") == "Download all current-attempt native outcomes")
+        self.assertTrue(download["with"]["merge-multiple"])
+        self.assertEqual(download["with"]["path"], "artifacts/ci/distributed/shards")
+        rules = json.loads(MODULE.render_required_status_ruleset(repo))["rules"]
+        required = next(rule for rule in rules if rule["type"] == "required_status_checks")
+        contexts = {check["context"] for check in required["parameters"]["required_status_checks"]}
+        self.assertIn("tests / complete", contexts)
+        self.assertIn("tests / complete", MODULE.render_required_status_reference(repo))
+
+    def test_genomics_aggregate_rejects_every_unsuccessful_lane(self) -> None:
+        manifest = json.loads(MANIFEST_PATH.read_text(encoding="utf-8"))
+        jobs = MODULE.find_repo_config(manifest, "bijux-genomics")["workflow_wrappers"]["ci"]["jobs"]
+        guard = next(step for step in jobs["test-complete"]["steps"] if step.get("name") == "Require successful build, all native partitions and Python lanes")
+        keys = ("BUILD_RESULT", "NATIVE_RESULT", "PYTHON_RESULT")
+        for changed in keys:
+            for value in ("success", "failure", "cancelled", "skipped", ""):
+                with self.subTest(lane=changed, result=value):
+                    environment = dict(os.environ, **{key: "success" for key in keys})
+                    environment[changed] = value
+                    result = subprocess.run(["/bin/bash", "-c", guard["run"]], env=environment,
+                                            check=False, capture_output=True, text=True)
+                    self.assertEqual(result.returncode == 0, value == "success", result.stderr)
+        prepared = MODULE.prepare_workflow_wrappers(
+            MODULE.find_repo_config(manifest, "bijux-genomics"),
+            MODULE.find_repo_config(manifest, "bijux-genomics")["workflow_execution_policy"],
+        )["ci"]
+        self.assertIn("always()", prepared["jobs"]["test-complete"]["if"])
+        self.assertIn("dependabot", prepared["jobs"]["test-complete"]["if"])
+
+    def test_genomics_test_executor_and_native_runtime_are_declared_before_execution(self) -> None:
+        manifest = json.loads(MANIFEST_PATH.read_text(encoding="utf-8"))
+        jobs = MODULE.find_repo_config(manifest, "bijux-genomics")["workflow_wrappers"]["ci"]["jobs"]
+        for job in ("test-build", "native-tests"):
+            steps = jobs[job]["steps"]
+            install = next(step for step in steps if step.get("name") == "Install the pinned test executor")
+            self.assertEqual(install["with"], {"tool": "cargo-nextest@${{ env.CARGO_NEXTEST_VERSION }}", "checksum": "true", "fallback": "none"})
+            verify = next(step for step in steps if step.get("name") == "Verify the test executor version")
+            runtime = next(step for step in steps if step.get("run") == "make ci-test-runtime")
+            execute = next(step for step in steps if step.get("run") in ("make ci-test-build", "make ci-test-shard"))
+            self.assertLess(steps.index(install), steps.index(verify))
+            self.assertLess(steps.index(runtime), steps.index(execute))
+            for observed, expected in (("cargo-nextest 0.9.100", 0), ("cargo-nextest 0.9.101", 1)):
+                with self.subTest(job=job, version=observed), tempfile.TemporaryDirectory(dir=MANIFEST_PATH.parents[2] / "artifacts") as directory:
+                    cargo = Path(directory) / "cargo"
+                    cargo.write_text(f"#!/bin/sh\nprintf '%s\\n' '{observed}'\n")
+                    cargo.chmod(0o755)
+                    result = subprocess.run(["/bin/bash", "-c", verify["run"]],
+                                            env=dict(os.environ, PATH=directory, CARGO_NEXTEST_VERSION="0.9.100"),
+                                            check=False, capture_output=True, text=True)
+                    self.assertEqual(result.returncode, expected, result.stderr)
+        python = jobs["python-tests"]
+        self.assertNotIn("needs", python)
+        self.assertEqual(python["env"]["RUSTC_WRAPPER"], "")
+        self.assertIn("Set up Rust", [step.get("name") for step in python["steps"]])
+        self.assertIn("make ci-test-python", [step.get("run") for step in python["steps"]])
+        self.assertEqual(python["env"]["PYTHON"], "${{ github.workspace }}/artifacts/python/checks-environment/bin/python")
 
     def test_genomics_audit_tools_require_verified_pinned_binaries(self) -> None:
         manifest = json.loads(MANIFEST_PATH.read_text(encoding="utf-8"))

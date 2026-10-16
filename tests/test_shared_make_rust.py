@@ -18,6 +18,28 @@ class SharedMakeRustTests(unittest.TestCase):
         shutil.rmtree(TEST_ROOT, ignore_errors=True)
         TEST_ROOT.mkdir(parents=True)
 
+    def test_report_sink_failure_cannot_turn_a_gate_green(self) -> None:
+        source = (RUST_SHARED_ROOT / "scripts/rust_gate.sh").read_text(encoding="utf-8")
+        functions = source[source.index("run_logged() {"):source.index("\nnextest_expression() {")]
+        for function in ("run_logged", "run_logged_append"):
+            for tool_status, sink_status in ((0, 0), (7, 0), (0, 23), (7, 23)):
+                with self.subTest(function=function, tool=tool_status, sink=sink_status):
+                    report = TEST_ROOT / f"{function}-{tool_status}-{sink_status}.log"
+                    script = functions + """
+checked_tool() { printf 'checked output\\n'; return "$TOOL_STATUS"; }
+tee() { cat; return "$SINK_STATUS"; }
+if "$FUNCTION" "$REPORT" checked_tool; then result=0; else result=$?; fi
+exit "$result"
+"""
+                    result = subprocess.run(
+                        ["/bin/bash", "-c", script],
+                        env=dict(os.environ, TOOL_STATUS=str(tool_status), SINK_STATUS=str(sink_status),
+                                 FUNCTION=function, REPORT=str(report)),
+                        check=False, capture_output=True, text=True,
+                    )
+                    self.assertEqual(result.returncode, tool_status or sink_status, result.stderr)
+                    self.assertIn("checked output", result.stdout)
+
     def prepare_workspace(self, name: str) -> Path:
         workspace = TEST_ROOT / name
         (workspace / "configs/rust").mkdir(parents=True)
