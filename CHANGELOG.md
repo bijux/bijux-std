@@ -6,6 +6,12 @@ This file records notable repository-level changes for `bijux-std`.
 
 ### Unreleased
 
+#### Pending review — [#299](https://github.com/bijux/bijux-std/pull/299) — feat(github): require distributed genomics test coverage
+
+Build Genomics native tests once, execute source-bound hash partitions and Python lanes independently, and require exact terminal coverage in the test aggregate. Pin the test executor and native runtime, retain diagnostic artifacts, and declare the stable repository-specific test check.
+
+Propagate Rust gate report-write failures while preserving the checked command's error when both the command and report sink fail.
+
 #### Pending review — [#298](https://github.com/bijux/bijux-std/pull/298) — fix(ci): preserve persisted proof identities
 
 Preserve JSON proof identity across storage and fresh aggregate revalidation while retaining strict producer admission
