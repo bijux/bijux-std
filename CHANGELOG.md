@@ -6,6 +6,10 @@ This file records notable repository-level changes for `bijux-std`.
 
 ### Unreleased
 
+#### [#301](https://github.com/bijux/bijux-std/pull/301) — perf(github): preserve owned genomics compilation caches
+
+Retain explicit repository-owned Cargo registry and compiler-product directories without package pruning that removes dependencies stored beneath the checkout. Bind compatible restores to the platform, Rust version, build configuration and lockfile, and save rebuilt workspace products under the source identity. Build and test execution remains mandatory.
+
 #### [#300](https://github.com/bijux/bijux-std/pull/300) — fix(github): enforce complete genomics verification
 
 Validate the exact Nextest executable and version tokens while accepting the pinned release binary's build metadata. Exercise both rendered checks against observed multiline output and reject mismatched versions and failed observations. Cache Genomics formatting, lint and audit products using the actual Make-owned Cargo home and target directories, and explicitly use all four hosted runner cores. Require successful formatting, lint and dependency auditing alongside every native and Python test lane before the stable completion gate can pass. Verification results are recorded in the linked pull request.
