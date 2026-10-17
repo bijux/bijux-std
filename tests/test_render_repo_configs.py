@@ -615,7 +615,7 @@ class RenderRepoConfigsTests(unittest.TestCase):
         self.assertNotIn("artifacts/target", archive["with"]["path"])
         aggregate = jobs["test-complete"]
         self.assertEqual(aggregate["name"], "tests / complete")
-        self.assertEqual(set(aggregate["needs"]), {"test-build", "native-tests", "python-tests"})
+        self.assertEqual(set(aggregate["needs"]), {"fmt", "lint", "audit", "test-build", "native-tests", "python-tests"})
         self.assertEqual(aggregate["if"], "${{ always() }}")
         self.assertIn("make ci-test-aggregate", [step.get("run") for step in aggregate["steps"]])
         download = next(step for step in aggregate["steps"] if step.get("name") == "Download all current-attempt native outcomes")
@@ -629,9 +629,24 @@ class RenderRepoConfigsTests(unittest.TestCase):
 
     def test_genomics_aggregate_rejects_every_unsuccessful_lane(self) -> None:
         manifest = json.loads(MANIFEST_PATH.read_text(encoding="utf-8"))
-        jobs = MODULE.find_repo_config(manifest, "bijux-genomics")["workflow_wrappers"]["ci"]["jobs"]
-        guard = next(step for step in jobs["test-complete"]["steps"] if step.get("name") == "Require successful build, all native partitions and Python lanes")
-        keys = ("BUILD_RESULT", "NATIVE_RESULT", "PYTHON_RESULT")
+        rendered = MODULE.prepare_repo_files("bijux-genomics", manifest)
+        jobs = MODULE.WORKFLOW_EXECUTION.parse_workflow(
+            rendered[".github/workflows/ci.yml"], "rendered genomics ci"
+        )["jobs"]
+        guard = next(step for step in jobs["test-complete"]["steps"]
+                     if step.get("name") == "Require successful source and test lanes")
+        expected_results = {
+            "FMT_RESULT": "${{ needs.fmt.result }}",
+            "LINT_RESULT": "${{ needs.lint.result }}",
+            "AUDIT_RESULT": "${{ needs.audit.result }}",
+            "BUILD_RESULT": "${{ needs.test-build.result }}",
+            "NATIVE_RESULT": "${{ needs.native-tests.result }}",
+            "PYTHON_RESULT": "${{ needs.python-tests.result }}",
+        }
+        self.assertEqual(guard["env"], expected_results)
+        self.assertEqual(set(jobs["test-complete"]["needs"]),
+                         {"fmt", "lint", "audit", "test-build", "native-tests", "python-tests"})
+        keys = tuple(expected_results)
         for changed in keys:
             for value in ("success", "failure", "cancelled", "skipped", ""):
                 with self.subTest(lane=changed, result=value):
