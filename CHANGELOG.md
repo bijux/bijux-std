@@ -6,9 +6,9 @@ This file records notable repository-level changes for `bijux-std`.
 
 ### Unreleased
 
-#### [#300](https://github.com/bijux/bijux-std/pull/300) — fix(github): admit nextest release metadata in version checks
+#### [#300](https://github.com/bijux/bijux-std/pull/300) — fix(github): enforce complete genomics verification
 
-Validate the exact Nextest executable and version tokens while accepting the pinned release binary's build metadata. Exercise both rendered checks against observed multiline output and reject mismatched versions and failed observations. Cache Genomics formatting, lint and audit products using the actual Make-owned Cargo home and target directories, and explicitly use all four hosted runner cores. Verification results are recorded in the linked pull request.
+Validate the exact Nextest executable and version tokens while accepting the pinned release binary's build metadata. Exercise both rendered checks against observed multiline output and reject mismatched versions and failed observations. Cache Genomics formatting, lint and audit products using the actual Make-owned Cargo home and target directories, and explicitly use all four hosted runner cores. Require successful formatting, lint and dependency auditing alongside every native and Python test lane before the stable completion gate can pass. Verification results are recorded in the linked pull request.
 
 #### Verified merge — [#299](https://github.com/bijux/bijux-std/pull/299) — feat(github): require distributed genomics test coverage
 
