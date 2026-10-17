@@ -556,9 +556,19 @@ class RenderRepoConfigsTests(unittest.TestCase):
             self.assertEqual(job["env"]["CARGO_TARGET_DIR"], "${{ github.workspace }}/artifacts/target")
             self.assertEqual(job["env"]["CARGO_BUILD_JOBS"], "4")
             cache = next(step for step in job["steps"]
-                         if step.get("uses", "").startswith("Swatinem/rust-cache@"))
-            self.assertEqual(cache["with"]["workspaces"], ". -> artifacts/target")
-            self.assertEqual(cache["with"]["shared-key"], f"ci-{gate}")
+                         if step.get("name") == "Restore the Rust cache")
+            self.assertEqual(cache["uses"], "actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830")
+            self.assertEqual(cache["with"]["path"].splitlines(), [
+                "artifacts/cargo/home/registry", "artifacts/cargo/home/git", "artifacts/target",
+            ])
+            prefix = (
+                "genomics-${{ runner.os }}-${{ runner.arch }}-rust-${{ env.RUST_TOOLCHAIN_VERSION }}-"
+                "${{ hashFiles('Cargo.lock', 'Cargo.toml', 'crates/**/Cargo.toml', 'rust-toolchain.toml', "
+                "'.cargo/config.toml', 'configs/ci/build-authority.json', 'configs/ci/full-shards.json') }}-"
+                f"{gate}-dev-source-"
+            )
+            self.assertEqual(cache["with"]["key"], prefix + "${{ github.sha }}")
+            self.assertEqual(cache["with"]["restore-keys"], prefix)
         for job in wrapper["jobs"].values():
             self.assertNotIn("continue-on-error", job)
 
@@ -595,7 +605,19 @@ class RenderRepoConfigsTests(unittest.TestCase):
         self.assertEqual(producer["outputs"], {"matrix": "${{ steps.matrix.outputs.matrix }}"})
         self.assertIn("make ci-test-build", [step.get("run") for step in producer["steps"]])
         cache = next(step for step in producer["steps"] if step.get("name") == "Restore the compilation cache")
-        self.assertEqual(cache["with"]["workspaces"], ". -> artifacts/ci/distributed/scratch/producer/compile-cache/cargo")
+        self.assertEqual(cache["uses"], "actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830")
+        self.assertEqual(cache["with"]["path"].splitlines(), [
+            "artifacts/cargo/home/registry", "artifacts/cargo/home/git", "artifacts/target",
+            "artifacts/ci/distributed/scratch/producer/compile-cache/cargo",
+        ])
+        prefix = (
+            "genomics-${{ runner.os }}-${{ runner.arch }}-rust-${{ env.RUST_TOOLCHAIN_VERSION }}-"
+            "${{ hashFiles('Cargo.lock', 'Cargo.toml', 'crates/**/Cargo.toml', 'rust-toolchain.toml', "
+            "'.cargo/config.toml', 'configs/ci/build-authority.json', 'configs/ci/full-shards.json') }}-"
+            "producer-ci-source-"
+        )
+        self.assertEqual(cache["with"]["key"], prefix + "${{ github.sha }}")
+        self.assertEqual(cache["with"]["restore-keys"], prefix)
         publish = next(step for step in producer["steps"] if step.get("id") == "matrix")
         self.assertIn("artifacts/ci/distributed/build/matrix.json", publish["run"])
         native = jobs["native-tests"]
