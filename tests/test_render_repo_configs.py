@@ -641,7 +641,10 @@ class RenderRepoConfigsTests(unittest.TestCase):
 
     def test_genomics_test_executor_and_native_runtime_are_declared_before_execution(self) -> None:
         manifest = json.loads(MANIFEST_PATH.read_text(encoding="utf-8"))
-        jobs = MODULE.find_repo_config(manifest, "bijux-genomics")["workflow_wrappers"]["ci"]["jobs"]
+        prepared = MODULE.prepare_repo_files("bijux-genomics", manifest)
+        jobs = MODULE.WORKFLOW_EXECUTION.parse_workflow(
+            prepared[".github/workflows/ci.yml"], "rendered genomics ci"
+        )["jobs"]
         for job in ("test-build", "native-tests"):
             steps = jobs[job]["steps"]
             install = next(step for step in steps if step.get("name") == "Install the pinned test executor")
@@ -651,13 +654,29 @@ class RenderRepoConfigsTests(unittest.TestCase):
             execute = next(step for step in steps if step.get("run") in ("make ci-test-build", "make ci-test-shard"))
             self.assertLess(steps.index(install), steps.index(verify))
             self.assertLess(steps.index(runtime), steps.index(execute))
-            for observed, expected in (("cargo-nextest 0.9.100", 0), ("cargo-nextest 0.9.101", 1)):
-                with self.subTest(job=job, version=observed), tempfile.TemporaryDirectory(dir=MANIFEST_PATH.parents[2] / "artifacts") as directory:
+            observed_release = (
+                "cargo-nextest 0.9.100 (7e6129fe2 2025-07-07)\n"
+                "release: 0.9.100\ncommit-hash: 7e6129fe2\n"
+                "commit-date: 2025-07-07\nhost: x86_64-unknown-linux-gnu"
+            )
+            for observed, status, expected in (
+                ("cargo-nextest 0.9.100", 0, 0),
+                (observed_release, 0, 0),
+                ("cargo-nextest 0.9.101", 0, 1),
+                ("other-nextest 0.9.100", 0, 1),
+                ("cargo-nextest 0.9.100-custom", 0, 1),
+                ("release: 0.9.100\ncargo-nextest 0.9.100", 0, 1),
+                (observed_release, 7, 7),
+            ):
+                with self.subTest(job=job, version=observed, status=status), tempfile.TemporaryDirectory(dir=MANIFEST_PATH.parents[2] / "artifacts") as directory:
                     cargo = Path(directory) / "cargo"
-                    cargo.write_text(f"#!/bin/sh\nprintf '%s\\n' '{observed}'\n")
+                    cargo.write_text(
+                        '#!/bin/sh\nprintf \'%s\\n\' "$REPORTED_VERSION"\nexit "$COMMAND_STATUS"\n'
+                    )
                     cargo.chmod(0o755)
                     result = subprocess.run(["/bin/bash", "-c", verify["run"]],
-                                            env=dict(os.environ, PATH=directory, CARGO_NEXTEST_VERSION="0.9.100"),
+                                            env=dict(os.environ, PATH=directory, CARGO_NEXTEST_VERSION="0.9.100",
+                                                     REPORTED_VERSION=observed, COMMAND_STATUS=str(status)),
                                             check=False, capture_output=True, text=True)
                     self.assertEqual(result.returncode, expected, result.stderr)
         python = jobs["python-tests"]

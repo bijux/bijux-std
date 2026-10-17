@@ -2112,7 +2112,7 @@
                 },
                 {
                   "name": "Verify the test executor version",
-                  "run": "set -euo pipefail\nobserved=\"$(cargo nextest --version)\"\n[[ \"$observed\" == \"cargo-nextest ${CARGO_NEXTEST_VERSION}\" ]] || { printf \"Unexpected test executor: %s\\n\" \"$observed\" >&2; exit 1; }"
+                  "run": "set -euo pipefail\nobserved=\"$(cargo nextest --version)\"\nread -r tool version _ <<< \"${observed%%$'\\n'*}\"\n[[ \"$tool\" == \"cargo-nextest\" && \"$version\" == \"$CARGO_NEXTEST_VERSION\" ]] || { printf \"Unexpected test executor: %s\\n\" \"$observed\" >&2; exit 1; }"
                 },
                 {
                   "name": "Restore the exact native test runtime",
@@ -2217,7 +2217,7 @@
                 },
                 {
                   "name": "Verify the test executor version",
-                  "run": "set -euo pipefail\nobserved=\"$(cargo nextest --version)\"\n[[ \"$observed\" == \"cargo-nextest ${CARGO_NEXTEST_VERSION}\" ]] || { printf \"Unexpected test executor: %s\\n\" \"$observed\" >&2; exit 1; }"
+                  "run": "set -euo pipefail\nobserved=\"$(cargo nextest --version)\"\nread -r tool version _ <<< \"${observed%%$'\\n'*}\"\n[[ \"$tool\" == \"cargo-nextest\" && \"$version\" == \"$CARGO_NEXTEST_VERSION\" ]] || { printf \"Unexpected test executor: %s\\n\" \"$observed\" >&2; exit 1; }"
                 },
                 {
                   "name": "Restore the exact native test runtime",
