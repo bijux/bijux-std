@@ -6,7 +6,11 @@ This file records notable repository-level changes for `bijux-std`.
 
 ### Unreleased
 
-#### Pending review — [#299](https://github.com/bijux/bijux-std/pull/299) — feat(github): require distributed genomics test coverage
+#### [#300](https://github.com/bijux/bijux-std/pull/300) — fix(github): admit nextest release metadata in version checks
+
+Validate the exact Nextest executable and version tokens while accepting the pinned release binary's build metadata. Exercise both rendered checks against observed multiline output and reject mismatched versions and failed observations. Verification results are recorded in the linked pull request.
+
+#### Verified merge — [#299](https://github.com/bijux/bijux-std/pull/299) — feat(github): require distributed genomics test coverage
 
 Build Genomics native tests once, execute source-bound hash partitions and Python lanes independently, and require exact terminal coverage in the test aggregate. Pin the test executor and native runtime, retain diagnostic artifacts, and declare the stable repository-specific test check.
 
