@@ -549,8 +549,16 @@ class RenderRepoConfigsTests(unittest.TestCase):
         self.assertEqual(set(wrapper["jobs"]), {"fmt", "lint", "audit", "test-build", "native-tests", "python-tests", "test-complete"})
         self.assertEqual(wrapper["env"]["CARGO_NEXTEST_VERSION"], "0.9.100")
         for gate in ("fmt", "lint", "audit"):
-            commands = [step.get("run") for step in wrapper["jobs"][gate]["steps"]]
+            job = wrapper["jobs"][gate]
+            commands = [step.get("run") for step in job["steps"]]
             self.assertIn(f"make {gate}", commands)
+            self.assertEqual(job["env"]["CARGO_HOME"], "${{ github.workspace }}/artifacts/cargo/home")
+            self.assertEqual(job["env"]["CARGO_TARGET_DIR"], "${{ github.workspace }}/artifacts/target")
+            self.assertEqual(job["env"]["CARGO_BUILD_JOBS"], "4")
+            cache = next(step for step in job["steps"]
+                         if step.get("uses", "").startswith("Swatinem/rust-cache@"))
+            self.assertEqual(cache["with"]["workspaces"], ". -> artifacts/target")
+            self.assertEqual(cache["with"]["shared-key"], f"ci-{gate}")
         for job in wrapper["jobs"].values():
             self.assertNotIn("continue-on-error", job)
 

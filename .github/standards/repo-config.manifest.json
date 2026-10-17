@@ -1980,14 +1980,20 @@
                   "name": "Restore the Rust cache",
                   "uses": "Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6",
                   "with": {
-                    "shared-key": "ci-fmt"
+                    "shared-key": "ci-fmt",
+                    "workspaces": ". -> artifacts/target"
                   }
                 },
                 {
                   "name": "Run repository formatting gate",
                   "run": "make fmt"
                 }
-              ]
+              ],
+              "env": {
+                "CARGO_HOME": "${{ github.workspace }}/artifacts/cargo/home",
+                "CARGO_TARGET_DIR": "${{ github.workspace }}/artifacts/target",
+                "CARGO_BUILD_JOBS": "4"
+              }
             },
             "lint": {
               "name": "lint",
@@ -2018,14 +2024,20 @@
                   "name": "Restore the Rust cache",
                   "uses": "Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6",
                   "with": {
-                    "shared-key": "ci-lint"
+                    "shared-key": "ci-lint",
+                    "workspaces": ". -> artifacts/target"
                   }
                 },
                 {
                   "name": "Run repository lint gate",
                   "run": "make lint"
                 }
-              ]
+              ],
+              "env": {
+                "CARGO_HOME": "${{ github.workspace }}/artifacts/cargo/home",
+                "CARGO_TARGET_DIR": "${{ github.workspace }}/artifacts/target",
+                "CARGO_BUILD_JOBS": "4"
+              }
             },
             "audit": {
               "name": "dependency audit",
@@ -2051,7 +2063,8 @@
                   "name": "Restore the Rust cache",
                   "uses": "Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6",
                   "with": {
-                    "shared-key": "ci-audit"
+                    "shared-key": "ci-audit",
+                    "workspaces": ". -> artifacts/target"
                   }
                 },
                 {
@@ -2071,7 +2084,12 @@
                   "name": "Run repository audit gate",
                   "run": "make audit"
                 }
-              ]
+              ],
+              "env": {
+                "CARGO_HOME": "${{ github.workspace }}/artifacts/cargo/home",
+                "CARGO_TARGET_DIR": "${{ github.workspace }}/artifacts/target",
+                "CARGO_BUILD_JOBS": "4"
+              }
             },
             "test-build": {
               "name": "tests / build",
