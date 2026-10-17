@@ -549,8 +549,16 @@ class RenderRepoConfigsTests(unittest.TestCase):
         self.assertEqual(set(wrapper["jobs"]), {"fmt", "lint", "audit", "test-build", "native-tests", "python-tests", "test-complete"})
         self.assertEqual(wrapper["env"]["CARGO_NEXTEST_VERSION"], "0.9.100")
         for gate in ("fmt", "lint", "audit"):
-            commands = [step.get("run") for step in wrapper["jobs"][gate]["steps"]]
+            job = wrapper["jobs"][gate]
+            commands = [step.get("run") for step in job["steps"]]
             self.assertIn(f"make {gate}", commands)
+            self.assertEqual(job["env"]["CARGO_HOME"], "${{ github.workspace }}/artifacts/cargo/home")
+            self.assertEqual(job["env"]["CARGO_TARGET_DIR"], "${{ github.workspace }}/artifacts/target")
+            self.assertEqual(job["env"]["CARGO_BUILD_JOBS"], "4")
+            cache = next(step for step in job["steps"]
+                         if step.get("uses", "").startswith("Swatinem/rust-cache@"))
+            self.assertEqual(cache["with"]["workspaces"], ". -> artifacts/target")
+            self.assertEqual(cache["with"]["shared-key"], f"ci-{gate}")
         for job in wrapper["jobs"].values():
             self.assertNotIn("continue-on-error", job)
 
@@ -607,7 +615,7 @@ class RenderRepoConfigsTests(unittest.TestCase):
         self.assertNotIn("artifacts/target", archive["with"]["path"])
         aggregate = jobs["test-complete"]
         self.assertEqual(aggregate["name"], "tests / complete")
-        self.assertEqual(set(aggregate["needs"]), {"test-build", "native-tests", "python-tests"})
+        self.assertEqual(set(aggregate["needs"]), {"fmt", "lint", "audit", "test-build", "native-tests", "python-tests"})
         self.assertEqual(aggregate["if"], "${{ always() }}")
         self.assertIn("make ci-test-aggregate", [step.get("run") for step in aggregate["steps"]])
         download = next(step for step in aggregate["steps"] if step.get("name") == "Download all current-attempt native outcomes")
@@ -621,9 +629,24 @@ class RenderRepoConfigsTests(unittest.TestCase):
 
     def test_genomics_aggregate_rejects_every_unsuccessful_lane(self) -> None:
         manifest = json.loads(MANIFEST_PATH.read_text(encoding="utf-8"))
-        jobs = MODULE.find_repo_config(manifest, "bijux-genomics")["workflow_wrappers"]["ci"]["jobs"]
-        guard = next(step for step in jobs["test-complete"]["steps"] if step.get("name") == "Require successful build, all native partitions and Python lanes")
-        keys = ("BUILD_RESULT", "NATIVE_RESULT", "PYTHON_RESULT")
+        rendered = MODULE.prepare_repo_files("bijux-genomics", manifest)
+        jobs = MODULE.WORKFLOW_EXECUTION.parse_workflow(
+            rendered[".github/workflows/ci.yml"], "rendered genomics ci"
+        )["jobs"]
+        guard = next(step for step in jobs["test-complete"]["steps"]
+                     if step.get("name") == "Require successful source and test lanes")
+        expected_results = {
+            "FMT_RESULT": "${{ needs.fmt.result }}",
+            "LINT_RESULT": "${{ needs.lint.result }}",
+            "AUDIT_RESULT": "${{ needs.audit.result }}",
+            "BUILD_RESULT": "${{ needs.test-build.result }}",
+            "NATIVE_RESULT": "${{ needs.native-tests.result }}",
+            "PYTHON_RESULT": "${{ needs.python-tests.result }}",
+        }
+        self.assertEqual(guard["env"], expected_results)
+        self.assertEqual(set(jobs["test-complete"]["needs"]),
+                         {"fmt", "lint", "audit", "test-build", "native-tests", "python-tests"})
+        keys = tuple(expected_results)
         for changed in keys:
             for value in ("success", "failure", "cancelled", "skipped", ""):
                 with self.subTest(lane=changed, result=value):
@@ -641,7 +664,10 @@ class RenderRepoConfigsTests(unittest.TestCase):
 
     def test_genomics_test_executor_and_native_runtime_are_declared_before_execution(self) -> None:
         manifest = json.loads(MANIFEST_PATH.read_text(encoding="utf-8"))
-        jobs = MODULE.find_repo_config(manifest, "bijux-genomics")["workflow_wrappers"]["ci"]["jobs"]
+        prepared = MODULE.prepare_repo_files("bijux-genomics", manifest)
+        jobs = MODULE.WORKFLOW_EXECUTION.parse_workflow(
+            prepared[".github/workflows/ci.yml"], "rendered genomics ci"
+        )["jobs"]
         for job in ("test-build", "native-tests"):
             steps = jobs[job]["steps"]
             install = next(step for step in steps if step.get("name") == "Install the pinned test executor")
@@ -651,13 +677,29 @@ class RenderRepoConfigsTests(unittest.TestCase):
             execute = next(step for step in steps if step.get("run") in ("make ci-test-build", "make ci-test-shard"))
             self.assertLess(steps.index(install), steps.index(verify))
             self.assertLess(steps.index(runtime), steps.index(execute))
-            for observed, expected in (("cargo-nextest 0.9.100", 0), ("cargo-nextest 0.9.101", 1)):
-                with self.subTest(job=job, version=observed), tempfile.TemporaryDirectory(dir=MANIFEST_PATH.parents[2] / "artifacts") as directory:
+            observed_release = (
+                "cargo-nextest 0.9.100 (7e6129fe2 2025-07-07)\n"
+                "release: 0.9.100\ncommit-hash: 7e6129fe2\n"
+                "commit-date: 2025-07-07\nhost: x86_64-unknown-linux-gnu"
+            )
+            for observed, status, expected in (
+                ("cargo-nextest 0.9.100", 0, 0),
+                (observed_release, 0, 0),
+                ("cargo-nextest 0.9.101", 0, 1),
+                ("other-nextest 0.9.100", 0, 1),
+                ("cargo-nextest 0.9.100-custom", 0, 1),
+                ("release: 0.9.100\ncargo-nextest 0.9.100", 0, 1),
+                (observed_release, 7, 7),
+            ):
+                with self.subTest(job=job, version=observed, status=status), tempfile.TemporaryDirectory(dir=MANIFEST_PATH.parents[2] / "artifacts") as directory:
                     cargo = Path(directory) / "cargo"
-                    cargo.write_text(f"#!/bin/sh\nprintf '%s\\n' '{observed}'\n")
+                    cargo.write_text(
+                        '#!/bin/sh\nprintf \'%s\\n\' "$REPORTED_VERSION"\nexit "$COMMAND_STATUS"\n'
+                    )
                     cargo.chmod(0o755)
                     result = subprocess.run(["/bin/bash", "-c", verify["run"]],
-                                            env=dict(os.environ, PATH=directory, CARGO_NEXTEST_VERSION="0.9.100"),
+                                            env=dict(os.environ, PATH=directory, CARGO_NEXTEST_VERSION="0.9.100",
+                                                     REPORTED_VERSION=observed, COMMAND_STATUS=str(status)),
                                             check=False, capture_output=True, text=True)
                     self.assertEqual(result.returncode, expected, result.stderr)
         python = jobs["python-tests"]
