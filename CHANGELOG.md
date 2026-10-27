@@ -8,13 +8,22 @@ This file records notable repository-level changes for `bijux-std`.
 
 Changes awaiting integration into GitHub's `main` branch.
 
-#### [#308](https://github.com/bijux/bijux-std/pull/308) — feat(std): enforce publication provenance and secure documentation tooling
+#### [#311](https://github.com/bijux/bijux-std/pull/311) — fix(docs): patch renderer and source-wheel security dependencies
 
-Status: pending review. Consolidate the source-admission, scientific
-documentation provenance and action-dependency changes below. Supersede the six
-individual dependency proposals while preserving their complete changes. Reconcile
-the merged history with all 284 merged pull requests' final titles, links and
-UTC merge timestamps. This entry does not record a merge or completed qualification.
+Status: pending review. Pin Certifi 2026.10.19 and GitPython 3.2.1 in the active verification and
+publication recipes, covering the dependency proposals in [#309](https://github.com/bijux/bijux-std/pull/309)
+and [#310](https://github.com/bijux/bijux-std/pull/310). Renew the installed
+physical profiles without broadening runtime admission. Patch Setuptools to
+84.1.0 in the media wheel builder and independently reproduce both minifier
+wheels before admitting their new hashes. Preserve the original Canon
+observation as historical evidence, separate from active publication recipes.
+
+### Merged pull requests
+
+Merge timestamps are recorded in UTC. Entries use the final GitHub pull-request
+title; topic-branch merges identify their integration path in the entry.
+
+#### 2026-10-27T14:22:19Z — [#308](https://github.com/bijux/bijux-std/pull/308) — feat(std): enforce publication provenance and secure documentation tooling
 
 ##### GitHub Action dependency consolidation
 
@@ -43,11 +52,6 @@ the upstream IN_PLACE, template/shadow-root and XHTML SMIL sanitization
 advisories. Rebuild the self-hosted renderer and refresh its provenance,
 licenses, SHA-256 baseline and script integrity after qualification in
 Chromium, Firefox and WebKit.
-
-### Merged pull requests
-
-Merge timestamps are recorded in UTC. Entries use the final GitHub pull-request
-title; topic-branch merges identify their integration path in the entry.
 
 #### 2026-10-17T01:06:18Z — [#301](https://github.com/bijux/bijux-std/pull/301) — perf(github): preserve owned genomics compilation caches
 
