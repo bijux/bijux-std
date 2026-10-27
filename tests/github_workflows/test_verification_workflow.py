@@ -29,7 +29,7 @@ class CanonicalVerificationWorkflowTests(unittest.TestCase):
     def test_parser_provision_is_pinned_unconditional_and_actual_runtime_checked(self):
         steps = self.workflow()['jobs']['policy']['steps']
         setup = next(s for s in steps if s.get('name')=='Provision selected workflow parser')
-        self.assertEqual(setup['uses'], 'ruby/setup-ruby@e81a8fa391b11a595c1b7ed84177cc0fe02faf83')
+        self.assertEqual(setup['uses'], 'ruby/setup-ruby@26e5b7d197ebf60545ee9667bcbace0be11ccaec')
         self.assertEqual(setup['with']['ruby-version'], '3.3.12')
         self.assertNotIn('if', setup)
         check = next(s for s in steps if s.get('name')=='Admit selected workflow parser runtime')

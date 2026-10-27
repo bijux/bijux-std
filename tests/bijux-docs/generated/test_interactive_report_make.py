@@ -214,8 +214,9 @@ class InteractiveReportMakeOwnershipTests(unittest.TestCase):
         owned=self.source();self.assertEqual(owned.source_sha,source_before)
         scope=owned.verify(self.site,reports['csp'],reports['build-identity'])
         scope.unchanged(self.site,reports['csp'])
-        retained=self.output/target/'consumer'
-        retained.parent.mkdir(parents=True,exist_ok=True)
+        retained_parent=self.output/target
+        retained_parent.mkdir(parents=True,exist_ok=True)
+        retained=Path(tempfile.mkdtemp(prefix='source-',dir=retained_parent))/'consumer'
         shutil.copytree(self.repo,retained,ignore=shutil.ignore_patterns('__pycache__','*.pyc'))
         self.assertTrue((self.site/'report/records.html').is_file())
         self.assertTrue((self.site/'search/search_index.json').is_file())
