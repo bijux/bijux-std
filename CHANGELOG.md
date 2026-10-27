@@ -8,15 +8,23 @@ This file records notable repository-level changes for `bijux-std`.
 
 Changes awaiting integration into GitHub's `main` branch.
 
-#### GitHub Action dependency consolidation
+#### [#308](https://github.com/bijux/bijux-std/pull/308) — feat(github): bind publication source provenance and consolidate action pins
+
+Status: pending review (draft). Consolidate the source-admission, scientific
+documentation provenance and action-dependency changes below. Supersede the six
+individual dependency proposals while preserving their complete changes. Reconcile
+the merged history with all 284 merged pull requests' final titles, links and
+UTC merge timestamps. This entry does not record a merge or completed qualification.
+
+##### GitHub Action dependency consolidation
 
 Adopt the immutable action revisions proposed in [#294](https://github.com/bijux/bijux-std/pull/294) and [#303](https://github.com/bijux/bijux-std/pull/303)–[#307](https://github.com/bijux/bijux-std/pull/307): upload-artifact 7.0.2, rust-toolchain `683b588`, setup-ruby 1.334.0, setup-uv 10.3.2, setup-python 7.1.0 and rust-cache 2.9.3. Apply the revisions to canonical workflow sources and repository manifests, regenerate this repository's managed workflows, and refresh source and shared-content digests. Keep the selected language and installer versions unchanged.
 
-#### Release source admission
+##### Release source admission
 
 Include the optional Pollenomics engine in the public release selection. Require repository-owned source admission and a successful revision-bound receipt before dependency installation, build commands or artifact upload.
 
-#### Scientific documentation source provenance
+##### Scientific documentation source provenance
 
 Authenticate retained scientific build inputs against their original source epochs and bind committed scientific download manifests to their exact source context. Preserve the distinction between current build inputs and retained historical outputs.
 
