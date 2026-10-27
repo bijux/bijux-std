@@ -33,6 +33,8 @@ renderer verification partition. Require every owner to remain present and
 reject relocated or missing controls before admitting execution receipts.
 Retain each Make reconstruction's evidence in its own source directory so
 repeated local verification preserves earlier evidence and remains executable.
+Give Std's complete contracts job a bounded 20-minute execution budget while
+retaining the 10-minute standard/consumer checks and existing browser budgets.
 
 ##### Diagram sanitizer security
 
