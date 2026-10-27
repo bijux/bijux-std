@@ -458,8 +458,8 @@ class RenderRepoConfigsTests(unittest.TestCase):
         manifest = json.loads(MANIFEST_PATH.read_text(encoding="utf-8"))
         expected_revisions = {
             "actions/checkout": "3d3c42e5aac5ba805825da76410c181273ba90b1",
-            "actions/setup-python": "5fda3b95a4ea91299a34e894583c3862153e4b97",
-            "astral-sh/setup-uv": "1c37ad07a6a961277cf70c0d37d6f313000f5884",
+            "actions/setup-python": "6d4fd22b20465ccc0f7354476588e8df7c9ca0e0",
+            "astral-sh/setup-uv": "07a047e608db84b3d8c06cd9a7c7dcc9c355c18e",
             "actions/setup-node": "949feb2413d6458794dcd2491c4babbbce0c15c1",
             "actions/setup-java": "de7274f081f381c8f8158605e0321c36c376e2e6",
         }
@@ -606,7 +606,7 @@ class RenderRepoConfigsTests(unittest.TestCase):
 
         rust_toolchain_action = (
             "dtolnay/rust-toolchain@"
-            "e2a55d2ffb04f378e9626c28d38b36d230d1e12f"
+            "683b588c487a69d01f6c6ddf40f036ff682cc2c8"
         )
         for job in wrapper["jobs"].values():
             for step in job.get("steps", []):

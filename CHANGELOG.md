@@ -6,6 +6,10 @@ This file records notable repository-level changes for `bijux-std`.
 
 ### Unreleased
 
+#### GitHub Action dependency consolidation
+
+Adopt the immutable action revisions proposed in [#294](https://github.com/bijux/bijux-std/pull/294) and [#303](https://github.com/bijux/bijux-std/pull/303)–[#307](https://github.com/bijux/bijux-std/pull/307): upload-artifact 7.0.2, rust-toolchain `683b588`, setup-ruby 1.334.0, setup-uv 10.3.2, setup-python 7.1.0 and rust-cache 2.9.3. Apply the revisions to canonical workflow sources and repository manifests, regenerate this repository's managed workflows, and refresh source and shared-content digests. Keep the selected language and installer versions unchanged.
+
 #### [#301](https://github.com/bijux/bijux-std/pull/301) — perf(github): preserve owned genomics compilation caches
 
 Retain explicit repository-owned Cargo registry and compiler-product directories without package pruning that removes dependencies stored beneath the checkout. Bind compatible restores to the platform, Rust version, build configuration and lockfile, and save rebuilt workspace products under the source identity. Build and test execution remains mandatory.
