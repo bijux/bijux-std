@@ -33,7 +33,7 @@ class DiagramDependencyTests(unittest.TestCase):
     def test_changed_install_manifest_rejected_before_bundle_execution(self):
         path = self.deps / "package.json"
         config = json.loads(path.read_text())
-        config["dependencies"]["dompurify"] = "3.4.12"
+        config["dependencies"]["dompurify"] = "3.4.16"
         path.write_text(json.dumps(config))
         result = self.build()
         self.assertNotEqual(result.returncode, 0)
@@ -53,7 +53,7 @@ class DiagramDependencyTests(unittest.TestCase):
         for name, version in (manifest["dependencies"] | manifest["devDependencies"]).items():
             path = self.deps / "node_modules" / name
             path.mkdir(parents=True)
-            (path / "package.json").write_text(json.dumps({"name": name, "version": "3.4.12" if name == "dompurify" else version}))
+            (path / "package.json").write_text(json.dumps({"name": name, "version": "3.4.16" if name == "dompurify" else version}))
         result = self.build()
         self.assertNotEqual(result.returncode, 0)
         self.assertIn("Installed dompurify version differs", result.stderr)
@@ -104,7 +104,7 @@ class DiagramDependencyTests(unittest.TestCase):
         self.assertEqual(data["inputs"]["builder_sha256"], hashlib.sha256((DOMAIN / "build.mjs").read_bytes()).hexdigest())
         self.assertEqual(data["license_sha256"], hashlib.sha256((DOMAIN / "THIRD-PARTY-LICENSES.txt").read_bytes()).hexdigest())
         graph = {p["name"]: p["version"] for p in data["bundled_packages"]}
-        self.assertEqual(graph["dompurify"], "3.4.16")
+        self.assertEqual(graph["dompurify"], "3.4.17")
         self.assertEqual(graph["mermaid"], "11.17.2")
         self.assertEqual(graph["katex"], "0.18.2")
         self.assertTrue(data["bundled_inputs"])

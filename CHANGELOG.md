@@ -8,9 +8,9 @@ This file records notable repository-level changes for `bijux-std`.
 
 Changes awaiting integration into GitHub's `main` branch.
 
-#### [#308](https://github.com/bijux/bijux-std/pull/308) — feat(github): bind publication source provenance and consolidate action pins
+#### [#308](https://github.com/bijux/bijux-std/pull/308) — feat(std): enforce publication provenance and secure documentation tooling
 
-Status: pending review (draft). Consolidate the source-admission, scientific
+Status: pending review. Consolidate the source-admission, scientific
 documentation provenance and action-dependency changes below. Supersede the six
 individual dependency proposals while preserving their complete changes. Reconcile
 the merged history with all 284 merged pull requests' final titles, links and
@@ -31,6 +31,14 @@ Authenticate retained scientific build inputs against their original source epoc
 Include all retained and committed scientific-download test owners in the
 renderer verification partition. Require every owner to remain present and
 reject relocated or missing controls before admitting execution receipts.
+
+##### Diagram sanitizer security
+
+Pin DOMPurify 3.4.17 in the reproducible Mermaid dependency graph to address
+the upstream IN_PLACE, template/shadow-root and XHTML SMIL sanitization
+advisories. Rebuild the self-hosted renderer and refresh its provenance,
+licenses, SHA-256 baseline and script integrity after qualification in
+Chromium, Firefox and WebKit.
 
 ### Merged pull requests
 
