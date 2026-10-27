@@ -27,7 +27,7 @@ entrypoint and actual consumer reconstruction receipts remain separate evidence.
 
 
 The required catalogue CI jobs use an independent hash-locked CPython 3.14.4
-verification environment. They cover 46 source/checkpoint/input-identity, 19 native/renderer,
+verification environment. They cover 46 source/checkpoint/input-identity, 23 native/renderer,
 and two complete renderer-entrypoint cases in four bounded groups. The normal
 32-package browser renderer and retained historical recipes stay independent.
 
@@ -53,7 +53,8 @@ through pinned uv 0.11.17. This is a distinct verification runtime; its recipe,
 interpreter digest and full physical source/cache checks remain recorded. The
 installer preserves existing destinations and rejects alternate download
 authorities. It does not delete caches or exempt installed bytecode from the
-normal renderer checks. The default32 and historical Canon locks remain unchanged.
+normal renderer checks. The default32 recipe is installed independently of the
+catalogue lock; the historical Canon observation retains its frozen dependency bytes.
 
 ```sh
 make ui-test-install-catalogue-interpreter
