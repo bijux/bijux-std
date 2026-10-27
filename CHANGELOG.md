@@ -31,6 +31,8 @@ Authenticate retained scientific build inputs against their original source epoc
 Include all retained and committed scientific-download test owners in the
 renderer verification partition. Require every owner to remain present and
 reject relocated or missing controls before admitting execution receipts.
+Retain each Make reconstruction's evidence in its own source directory so
+repeated local verification preserves earlier evidence and remains executable.
 
 ##### Diagram sanitizer security
 
