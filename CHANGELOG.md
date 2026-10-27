@@ -28,6 +28,10 @@ Include the optional Pollenomics engine in the public release selection. Require
 
 Authenticate retained scientific build inputs against their original source epochs and bind committed scientific download manifests to their exact source context. Preserve the distinction between current build inputs and retained historical outputs.
 
+Include all retained and committed scientific-download test owners in the
+renderer verification partition. Require every owner to remain present and
+reject relocated or missing controls before admitting execution receipts.
+
 ### Merged pull requests
 
 Merge timestamps are recorded in UTC. Entries use the final GitHub pull-request
