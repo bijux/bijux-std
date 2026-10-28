@@ -8,6 +8,13 @@ This file records notable repository-level changes for `bijux-std`.
 
 Changes awaiting integration into GitHub's `main` branch.
 
+#### Canonical installer, cache and publication actions
+
+Adopt Ruby setup 1.335.0, cache 6.1.0, tool installation 2.87.31 and PyPI
+publication 1.14.3 through immutable canonical references. Preserve workflow
+inputs and selected runtime versions, and regenerate managed projections and
+source/component checksum records for downstream consumption.
+
 #### Masterclass installer action promotion
 
 Admit canonical Ruby and uv action references during Masterclass governance

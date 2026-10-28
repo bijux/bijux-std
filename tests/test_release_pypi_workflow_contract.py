@@ -30,7 +30,7 @@ class ReleasePyPiWorkflowContractTests(unittest.TestCase):
         self.assertIn("permissions:\n      contents: read\n      actions: read\n      id-token: write", workflow)
         self.assertIn("Publish PyPI distributions with custom command", workflow)
         self.assertIn("needs.resolve.outputs.publish_command == ''", workflow)
-        self.assertIn("uses: pypa/gh-action-pypi-publish@dc37677b2e1c63e2034f94d8a5b11f265b73ba33 # release/v1", workflow)
+        self.assertIn("uses: pypa/gh-action-pypi-publish@7245906fb61fa33a13554f9d5fb856fe61758086 # release/v1", workflow)
         self.assertIn("packages-dir: artifacts/python/build", workflow)
         self.assertNotIn('make publish-py PUBLISH_BUILD=0', workflow)
 

@@ -589,7 +589,7 @@ class RenderRepoConfigsTests(unittest.TestCase):
             self.assertEqual(job["env"]["CARGO_BUILD_JOBS"], "4")
             cache = next(step for step in job["steps"]
                          if step.get("name") == "Restore the Rust cache")
-            self.assertEqual(cache["uses"], "actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830")
+            self.assertEqual(cache["uses"], "actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9")
             self.assertEqual(cache["with"]["path"].splitlines(), [
                 "artifacts/cargo/home/registry", "artifacts/cargo/home/git", "artifacts/target",
             ])
@@ -637,7 +637,7 @@ class RenderRepoConfigsTests(unittest.TestCase):
         self.assertEqual(producer["outputs"], {"matrix": "${{ steps.matrix.outputs.matrix }}"})
         self.assertIn("make ci-test-build", [step.get("run") for step in producer["steps"]])
         cache = next(step for step in producer["steps"] if step.get("name") == "Restore the compilation cache")
-        self.assertEqual(cache["uses"], "actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830")
+        self.assertEqual(cache["uses"], "actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9")
         self.assertEqual(cache["with"]["path"].splitlines(), [
             "artifacts/cargo/home/registry", "artifacts/cargo/home/git", "artifacts/target",
             "artifacts/ci/distributed/scratch/producer/compile-cache/cargo",
@@ -769,7 +769,7 @@ class RenderRepoConfigsTests(unittest.TestCase):
         wrapper = MODULE.prepare_workflow_wrappers(repo, repo["workflow_execution_policy"])["ci"]
         steps = wrapper["jobs"]["audit"]["steps"]
         install = next(step for step in steps if step["name"] == "Install Rust audit tools")
-        self.assertEqual(install["uses"], "taiki-e/install-action@ab6895351a88b908e96a4697860d4ffea5e57dbe")
+        self.assertEqual(install["uses"], "taiki-e/install-action@1e29709c0ec63babbe8f266397a465f29a825f91")
         self.assertEqual(install["with"], {
             "tool": "cargo-deny@${{ env.CARGO_DENY_VERSION }},cargo-audit@${{ env.CARGO_AUDIT_VERSION }}",
             "checksum": "true", "fallback": "none",
