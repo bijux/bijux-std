@@ -83,6 +83,38 @@ class MasterclassDependencyAuthorityTests(unittest.TestCase):
         self.assertIn('.bijux/shared/bijux-gh/README.md', self.expected)
         self.assertIn('.bijux/shared/bijux-gh/scripts/render-dependabot.sh', self.expected)
 
+    def test_installer_action_pins_follow_canonical_sources_without_changing_inputs(self):
+        def action_steps(value, action):
+            if isinstance(value, dict):
+                if str(value.get('uses', '')).startswith(action + '@'):
+                    yield value
+                for child in value.values():
+                    yield from action_steps(child, action)
+            elif isinstance(value, list):
+                for child in value:
+                    yield from action_steps(child, action)
+
+        _, old_renderer = MODULE.canonical_sources.owning_scripts(self.baseline)
+        before, _ = old_renderer.WORKFLOW_EXECUTION.verification.expected_projection(
+            self.baseline, self.target, 'bijux-masterclass')
+        cases = [
+            ('astral-sh/setup-uv', '.github/workflows/bijux-std.yml', '.github/workflows/bijux-std.yml'),
+            ('ruby/setup-ruby', 'shared/bijux-gh/workflows/github-policy.yml', '.github/workflows/github-policy.yml'),
+        ]
+        for action, canonical, destination in cases:
+            with self.subTest(action=action):
+                source = MODULE.parse_workflow((ROOT / canonical).read_bytes(), canonical)
+                references = {step['uses'] for step in action_steps(source, action)}
+                self.assertEqual(len(references), 1)
+                reference = references.pop()
+                original = list(action_steps(MODULE.parse_workflow(before[destination], destination), action))
+                promoted = list(action_steps(MODULE.parse_workflow(self.expected[destination], destination), action))
+                self.assertTrue(original)
+                self.assertEqual(len(original), len(promoted))
+                for old, new in zip(original, promoted):
+                    self.assertNotEqual(old['uses'], reference)
+                    self.assertEqual(new, {**old, 'uses': reference})
+
     def test_documentation_directory_row_follows_exact_component_and_preserves_other_rows(self):
         self.write_projection()
         path = self.target / MODULE.masterclass.DIRECTORY_MANIFEST_PATH
