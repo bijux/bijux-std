@@ -8,6 +8,12 @@ This file records notable repository-level changes for `bijux-std`.
 
 Changes awaiting integration into GitHub's `main` branch.
 
+#### Masterclass installer action promotion
+
+Admit canonical Ruby and uv action references during Masterclass governance
+promotion without changing installer inputs or the accepted program runtime
+baseline.
+
 #### [#312](https://github.com/bijux/bijux-std/pull/312) — feat(docs): authenticate retained interactive template ancestry
 
 Status: pending review. Authenticate an explicit retained recipe template through
