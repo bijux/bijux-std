@@ -498,5 +498,35 @@ class RendererControlReceiptTests(unittest.TestCase):
             CONTROLS.verify_groups(output, self.source, self.workflow)
 
 
+class PublicReceiptRendererOwnership(unittest.TestCase):
+    """Check source inventory ownership independently of native Node event fixtures."""
+
+    def test_public_receipt_controls_keep_real_runtime_inventory_and_renderer_ownership(self):
+        expected = CONTROLS.expected_python_ids()
+        owned = [name for name in expected if name.startswith(CONTROLS.PUBLIC_RECEIPT_OWNER)]
+        actual = sorted(test.id() for test in CONTROLS.HELPERS.flatten(CONTROLS.public_receipt_suite()))
+        self.assertEqual(len(owned), 9)
+        self.assertEqual(actual, owned)
+        self.assertTrue(set(owned) <= set(CONTROLS.group_python_ids('renderer')))
+        for group in CONTROLS.GROUPS:
+            if group != 'renderer':
+                self.assertTrue(set(owned).isdisjoint(CONTROLS.group_python_ids(group)))
+
+    def test_missing_or_relocated_public_receipt_controls_are_refused(self):
+        expected = CONTROLS.expected_python_ids()
+        owner = CONTROLS.PUBLIC_RECEIPT_OWNER
+        owned = [name for name in expected if name.startswith(owner)]
+        self.assertEqual(len(owned), 9)
+        self.assertTrue(set(owned) <= set(CONTROLS.group_python_ids('renderer')))
+        for mutation in ('missing', 'relocated'):
+            changed = [name for name in expected if name not in owned]
+            if mutation == 'relocated':
+                changed.extend(name.replace(owner, 'test_foreign_receipts.UnownedReceipts.') for name in owned)
+            with self.subTest(mutation=mutation), mock.patch.object(
+                    CONTROLS, 'expected_python_ids', return_value=sorted(changed)), self.assertRaisesRegex(
+                        ValueError, 'public receipt'):
+                CONTROLS.group_python_ids('renderer')
+
+
 if __name__ == '__main__':
     unittest.main()
