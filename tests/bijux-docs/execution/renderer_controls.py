@@ -29,6 +29,10 @@ SCIENTIFIC_DOWNLOAD_TESTS = (
     TESTS / 'publication/test_retained_scientific_downloads.py',
     TESTS / 'publication/test_committed_scientific_downloads.py',
 )
+PUBLIC_RECEIPT_TESTS = (
+    TESTS / 'publication/test_public_report_provenance_recipes.py',
+)
+PUBLIC_RECEIPT_OWNER = 'test_public_report_provenance_recipes.PublicReportDisplayRecipes.'
 SCIENTIFIC_DOWNLOAD_OWNERS = ('test_scientific_download_capabilities.ScientificDownloads.',
                               'test_scientific_download_capabilities.RetainedSourceAdmission.',
                               'test_scientific_download_capabilities.RetainedBuildSourceAdmission.',
@@ -49,7 +53,7 @@ HELPERS = load('renderer_command_helpers', Path(__file__).with_name('publication
 
 def expected_python_ids() -> list[str]:
     ids = []
-    for path in [*sorted((TESTS / 'generated').glob('test_*.py')), *SCIENTIFIC_DOWNLOAD_TESTS]:
+    for path in [*sorted((TESTS / 'generated').glob('test_*.py')), *SCIENTIFIC_DOWNLOAD_TESTS, *PUBLIC_RECEIPT_TESTS]:
         for node in ast.parse(path.read_text()).body:
             if isinstance(node, ast.ClassDef):
                 ids.extend(f'{path.stem}.{node.name}.{method.name}' for method in node.body
@@ -71,6 +75,10 @@ def group_python_ids(group: str | None = None) -> list[str]:
             or scientific != [name for name in expected
             if name.startswith(tuple(path.stem + '.' for path in SCIENTIFIC_DOWNLOAD_TESTS))]):
         raise ValueError('Missing or relocated source-owned scientific download controls')
+    receipts = [name for name in expected if name.startswith(PUBLIC_RECEIPT_OWNER)]
+    if (not receipts or receipts != [name for name in expected
+            if name.startswith(tuple(path.stem + '.' for path in PUBLIC_RECEIPT_TESTS))]):
+        raise ValueError('Missing or relocated source-owned public receipt controls')
     make_owner = 'test_interactive_report_make.InteractiveReportMakeOwnershipTests.'
     make_dispatch = 'test_interactive_report_make.InteractiveReportMakeDispatchTests.'
     refusal_methods = (
@@ -312,10 +320,19 @@ def scientific_download_suite() -> unittest.TestSuite:
     )
 
 
+def public_receipt_suite() -> unittest.TestSuite:
+    """Load receipt declarations with the real pinned MkDocs dependency bindings."""
+    return unittest.TestSuite(
+        unittest.defaultTestLoader.loadTestsFromModule(load(path.stem, path))
+        for path in PUBLIC_RECEIPT_TESTS
+    )
+
+
 def python_suite() -> unittest.TestSuite:
     suite = unittest.TestSuite([
         unittest.defaultTestLoader.discover(str(TESTS / 'generated'), pattern='test_*.py'),
         scientific_download_suite(),
+        public_receipt_suite(),
     ])
     if sorted(test.id() for test in HELPERS.flatten(suite)) != expected_python_ids():
         raise ValueError('Discovered renderer cases differ from their source-owned inventory')
