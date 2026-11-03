@@ -37,6 +37,7 @@ jobs:
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
+          filter: blob:none
       - name: Select complete proof families from owned inputs
         id: plan
         env:
@@ -78,6 +79,7 @@ jobs:
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
+          filter: blob:none
 
       - name: Prepare diagram contract runtime
         if: ${{ matrix.check == 'contracts' && (github.repository == 'bijux/bijux-std' || github.repository == 'bijux/bijux.github.io') }}
@@ -170,6 +172,7 @@ jobs:
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
+          filter: blob:none
       - name: Prepare exact runtime for accepted original proof
         if: ${{ github.repository == 'bijux/bijux-std' && needs.input-plan.outputs.frontend == 'false' }}
         uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1
@@ -731,6 +734,7 @@ jobs:
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
+          filter: blob:none
       - name: Prepare exact runtime for accepted original proof
         if: ${{ github.repository == 'bijux/bijux-std' && needs.input-plan.outputs.frontend == 'false' }}
         uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1

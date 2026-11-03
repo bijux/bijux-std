@@ -103,6 +103,42 @@ class PullRequestSourceRangeTests(unittest.TestCase):
         self.assertIn('no merge base', result.stderr)
         self.assertEqual(self.git(self.clone, 'rev-parse', '--is-shallow-repository').stdout.strip(), 'true')
 
+    def test_filtered_checkout_retains_event_history_and_protected_paths(self):
+        self.git(self.source, 'config', 'uploadpack.allowFilter', 'true')
+        self.clone = self.root / 'filtered-checkout'
+        self.git(self.root, 'clone', '-q', '--no-local', '--no-checkout',
+                 '--filter=blob:none', self.source.as_uri(), str(self.clone))
+        self.assertEqual(self.git(self.clone, 'rev-parse', '--is-shallow-repository').stdout.strip(), 'false')
+        self.assertEqual(self.git(self.clone, 'config', 'remote.origin.promisor').stdout.strip(), 'true')
+        self.git(self.clone, 'checkout', '-q', '--detach', self.preview)
+        self.assertEqual(self.git(self.clone, 'merge-base', self.base, self.head).stdout.strip(), self.common)
+        for workflow in WORKFLOWS:
+            result, output = self.gather(workflow)
+            self.assertEqual(result.returncode, 0, result.stderr)
+            self.assertEqual(output.read_text().splitlines(), ['.github/workflows/bijux-std.yml', 'docs/reader.md'])
+        self.assertEqual(self.git(self.clone, 'show', f'{self.head}:docs/reader.md').stdout, '# Reader\n')
+        self.assertEqual(self.git(self.clone, 'show', f'{self.common}:common.txt').stdout, 'Common source\n')
+
+    def test_full_history_policy_checkout_filters_historical_blobs(self):
+        for workflow in WORKFLOWS:
+            document = MODULE.parse_workflow((ROOT / workflow).read_bytes(), workflow)
+            checkout = next(step for step in document['jobs']['policy']['steps']
+                            if step.get('uses', '').startswith('actions/checkout@'))
+            self.assertEqual(checkout['with']['fetch-depth'], 0)
+            self.assertEqual(checkout['with']['filter'], 'blob:none')
+            gather = self.gather_script(workflow)
+            self.assertIn('requires complete checkout history', gather)
+            self.assertIn('${PR_BASE_SHA}...${PR_HEAD_SHA}', gather)
+        for workflow in ('.github/standards/workflow-sources/bijux-std.yml',
+                         '.github/workflows/bijux-std.yml'):
+            document = MODULE.parse_workflow((ROOT / workflow).read_bytes(), workflow)
+            complete = [step for job in document['jobs'].values()
+                        for step in job.get('steps', [])
+                        if step.get('uses', '').startswith('actions/checkout@')
+                        and step.get('with', {}).get('fetch-depth') == 0]
+            self.assertEqual(len(complete), 4)
+            self.assertTrue(all(step['with'].get('filter') == 'blob:none' for step in complete))
+
     def test_event_range_preserves_all_topic_paths_and_excludes_later_main(self):
         self.assertEqual(self.git(self.clone, 'rev-parse', 'origin/main').stdout.strip(), self.later)
         self.assertNotEqual(self.git(self.clone, 'merge-base', self.base, self.head).stdout.strip(), self.base)
