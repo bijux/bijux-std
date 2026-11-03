@@ -68,6 +68,19 @@ class BrowserPartitionTests(unittest.TestCase):
         self.assertIn('fail-fast: false', job)
         self.assertEqual(len(batches) * len(engines), 54)
 
+    def test_navigation_parallelism_preserves_case_inventory_and_budget(self) -> None:
+        navigation = (ROOT / 'tests/bijux-docs/playwright.navigation.config.js').read_text()
+        inherited = (ROOT / 'tests/bijux-docs/playwright.config.js').read_text()
+        workflow = (ROOT / '.github/standards/workflow-sources/bijux-std.yml').read_text()
+        self.assertIn('workers: process.env.CI ? 2 : inherited.workers', navigation)
+        self.assertIn('metadata: { required_case_count: 14 }', navigation)
+        self.assertIn('fullyParallel: true', inherited)
+        self.assertIn('retries: 0', inherited)
+        browser_job = workflow.split('  navigation-browsers:', 1)[1].split('\n  navigation:', 1)[0]
+        self.assertIn('timeout-minutes: 3', browser_job)
+        budget = (ROOT / 'tests/bijux-docs/execution/job_budget.py').read_text()
+        self.assertIn("require(duration < 180, 'Frontend job reached the strict 180-second limit')", budget)
+
     def test_contrast_profiles_preserve_all_thirty_nine_canonical_cases(self) -> None:
         data = inventories()
         data['contrast'] = inventory(True)

@@ -13,7 +13,9 @@ Changes awaiting integration into GitHub's `main` branch.
 Status: pending review. Filter historical blobs from policy and standards
 checkouts while preserving the complete commit graph, protected-path checks
 and on-demand access to historical files. Exercise filtered checkout history
-and regenerate canonical workflow projections and shared checksums.
+and regenerate canonical workflow projections and shared checksums. Run
+independent responsive-navigation cases with two CI workers while preserving
+all case inventories, zero retries and the strict three-minute job budget.
 
 #### Canonical installer, cache and publication actions
 
