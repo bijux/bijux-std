@@ -8,6 +8,15 @@ This file records notable repository-level changes for `bijux-std`.
 
 Changes awaiting integration into GitHub's `main` branch.
 
+#### [#318](https://github.com/bijux/bijux-std/pull/318) — fix(ci): filter historical blobs from complete-history checkouts
+
+Status: pending review. Filter historical blobs from policy and standards
+checkouts while preserving the complete commit graph, protected-path checks
+and on-demand access to historical files. Exercise filtered checkout history
+and regenerate canonical workflow projections and shared checksums. Run
+independent responsive-navigation cases with two CI workers while preserving
+all case inventories, zero retries and the strict three-minute job budget.
+
 #### Canonical installer, cache and publication actions
 
 Adopt Ruby setup 1.335.0, cache 6.1.0, tool installation 2.87.31 and PyPI
