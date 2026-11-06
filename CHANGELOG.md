@@ -8,6 +8,13 @@ This file records notable repository-level changes for `bijux-std`.
 
 Changes awaiting integration into GitHub's `main` branch.
 
+#### Canonical action and OpenAPI dependency security
+
+Adopt immutable uv 10.3.3, Ruby 1.336.0 and Java 6.1.0 setup actions while
+preserving selected runtime versions. Align the shared OpenAPI baseline and
+pinned bootstrap recipes with generator CLI 2.42.0 and Redocly CLI 2.71.2.
+Regenerate workflow projections and authenticated shared component digests.
+
 #### [#318](https://github.com/bijux/bijux-std/pull/318) — fix(ci): filter historical blobs from complete-history checkouts
 
 Status: pending review. Filter historical blobs from policy and standards
