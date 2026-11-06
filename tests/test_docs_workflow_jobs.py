@@ -6,6 +6,7 @@ import importlib.util
 import io
 import json
 from pathlib import Path
+from urllib.parse import parse_qs
 from unittest.mock import patch
 import unittest
 import zipfile
@@ -24,7 +25,15 @@ class API:
         self.responses, self.body, self.calls = responses, archive, []
     def json(self, endpoint):
         self.calls.append(endpoint)
-        return copy.deepcopy(self.responses[endpoint])
+        path, _, query = endpoint.partition('?')
+        parameters = parse_qs(query)
+        page = int(parameters.get('page', ['1'])[0])
+        page_size = int(parameters.get('per_page', ['100'])[0])
+        key = endpoint if endpoint in self.responses else endpoint.rsplit('page=', 1)[0] + 'page=1'
+        payload = copy.deepcopy(self.responses[key])
+        if path.endswith('/jobs') and len(payload.get('jobs', [])) == payload.get('total_count'):
+            payload['jobs'] = payload['jobs'][(page - 1) * page_size:page * page_size]
+        return payload
     def archive(self, artifact_id):
         self.calls.append(('archive', artifact_id))
         return self.body
@@ -59,7 +68,7 @@ class PhysicalWorkflowTests(unittest.TestCase):
                           self.prefix+'git/commits/'+'a'*40:{'sha':'a'*40,'tree':{'sha':'b'*40}}}
         for attempt,rows in [(1,[self.producer,self.old_browser]),(2,[self.copy,self.queued,self.browser])]:
             self.responses[self.runpath+'/attempts/'+str(attempt)]=self.runs[attempt-1]
-            self.responses[self.runpath+'/attempts/'+str(attempt)+'/jobs?per_page=100&page=1']={'total_count':len(rows),'jobs':rows}
+            self.responses[self.runpath+'/attempts/'+str(attempt)+'/jobs?per_page=25&page=1']={'total_count':len(rows),'jobs':rows}
         for row in [self.producer,self.old_browser,self.copy,self.queued,self.browser]:
             self.responses[self.prefix+'actions/jobs/'+str(row['id'])]=row
             self.responses[self.prefix+'check-runs/'+str(row['id'])]=self.check(row)
@@ -105,14 +114,14 @@ class PhysicalWorkflowTests(unittest.TestCase):
         audit['observation']['execution_reconciliation']['frames'][0]['inventory']['jobs'][0]['id'] = 999
         item = source.admit(self.roles, now=datetime(2026, 1, 2, tzinfo=timezone.utc))['producer']
         self.assertEqual(item.pointer()['owner_job_id'], 11)
-        for suffix in ('', '/jobs?per_page=100&page=1'):
+        for suffix in ('', '/jobs?per_page=25&page=1'):
             self.assertEqual(self.api.calls.count(self.runpath + '/attempts/1' + suffix), 1)
             self.assertEqual(self.api.calls.count(self.runpath + '/attempts/2' + suffix), 3)
         self.assertEqual(len(source.export_record()['refresh_observations']), 2)
         # Standalone job observation still performs both live current fences.
         source.verify_jobs([self.producer['name']])
-        self.assertEqual(self.api.calls.count(self.runpath + '/attempts/2/jobs?per_page=100&page=1'), 5)
-        self.assertEqual(self.api.calls.count(self.runpath + '/attempts/1/jobs?per_page=100&page=1'), 1)
+        self.assertEqual(self.api.calls.count(self.runpath + '/attempts/2/jobs?per_page=25&page=1'), 5)
+        self.assertEqual(self.api.calls.count(self.runpath + '/attempts/1/jobs?per_page=25&page=1'), 1)
 
     def test_new_current_owner_during_metadata_refuses_before_archive_get(self):
         self.runs[0]['status'] = 'completed'
@@ -122,7 +131,7 @@ class PhysicalWorkflowTests(unittest.TestCase):
             data = original(endpoint)
             if endpoint == self.prefix + 'actions/artifacts/33':
                 owner = self.job(23, 2, self.producer['name'], '2026-01-01T00:02:03Z', '2026-01-01T00:02:42Z')
-                frame = self.responses[self.runpath + '/attempts/2/jobs?per_page=100&page=1']
+                frame = self.responses[self.runpath + '/attempts/2/jobs?per_page=25&page=1']
                 frame['jobs'].append(owner)
                 frame['total_count'] += 1
                 self.responses[self.prefix + 'actions/jobs/23'] = owner
@@ -141,7 +150,7 @@ class PhysicalWorkflowTests(unittest.TestCase):
         def changed(artifact_id):
             data = original(artifact_id)
             owner = self.job(23, 2, self.producer['name'], '2026-01-01T00:02:03Z', '2026-01-01T00:02:42Z')
-            frame = self.responses[self.runpath + '/attempts/2/jobs?per_page=100&page=1']
+            frame = self.responses[self.runpath + '/attempts/2/jobs?per_page=25&page=1']
             frame['jobs'].append(owner)
             frame['total_count'] += 1
             self.responses[self.prefix + 'actions/jobs/23'] = owner
@@ -158,7 +167,7 @@ class PhysicalWorkflowTests(unittest.TestCase):
         self.runs[0]['status'] = 'completed'
         source = self.observe()
         extra = self.job(23, 2, self.browser['name'], '2026-01-01T00:02:03Z', '2026-01-01T00:02:42Z')
-        frame = self.responses[self.runpath + '/attempts/2/jobs?per_page=100&page=1']
+        frame = self.responses[self.runpath + '/attempts/2/jobs?per_page=25&page=1']
         frame['jobs'].append(extra)
         frame['total_count'] += 1
         with self.assertRaisesRegex(ValueError, 'Multiple actual latest'):
@@ -208,7 +217,7 @@ class PhysicalWorkflowTests(unittest.TestCase):
 
     def test_ambiguous_current_physical_owner_refuses(self):
         extra=self.job(23,2,self.browser['name'],'2026-01-01T00:02:03Z','2026-01-01T00:02:42Z')
-        frame=self.responses[self.runpath+'/attempts/2/jobs?per_page=100&page=1'];frame['jobs'].append(extra);frame['total_count']+=1
+        frame=self.responses[self.runpath+'/attempts/2/jobs?per_page=25&page=1'];frame['jobs'].append(extra);frame['total_count']+=1
         with self.assertRaises(ValueError):self.observe()
 
     def test_unmatched_reservation_cannot_grant_role_success(self):
@@ -245,7 +254,7 @@ class PhysicalWorkflowTests(unittest.TestCase):
         alias={**copy.deepcopy(self.old_browser),'id':102,'run_attempt':2,
                'created_at':'2026-01-01T00:02:05Z',
                'check_run_url':'https://api.github.com/'+self.prefix+'check-runs/102'}
-        frame=self.responses[self.runpath+'/attempts/2/jobs?per_page=100&page=1']
+        frame=self.responses[self.runpath+'/attempts/2/jobs?per_page=25&page=1']
         frame['jobs'].append(alias);frame['total_count']+=1
         self.responses[self.prefix+'actions/jobs/102']=alias
         s=self.observe()
@@ -261,7 +270,7 @@ class PhysicalWorkflowTests(unittest.TestCase):
         self.responses[self.runpath]=run
         self.responses[self.runpath+'/attempts/3']=run
         row=self.job(32,3,self.browser['name'],'2026-01-01T00:04:01Z','2026-01-01T00:04:41Z')
-        self.responses[self.runpath+'/attempts/3/jobs?per_page=100&page=1']={'total_count':1,'jobs':[row]}
+        self.responses[self.runpath+'/attempts/3/jobs?per_page=25&page=1']={'total_count':1,'jobs':[row]}
         self.responses[self.prefix+'actions/jobs/32']=row
         self.responses[self.prefix+'check-runs/32']=self.check(row)
         s=self.observe()
@@ -271,7 +280,7 @@ class PhysicalWorkflowTests(unittest.TestCase):
 
     def test_unassigned_cancellation_without_any_execution_remains_unresolved(self):
         row=self.job(30,1,'std / never started','2026-01-01T00:00:04Z','2026-01-01T00:01:44Z')
-        frame=self.responses[self.runpath+'/attempts/1/jobs?per_page=100&page=1']
+        frame=self.responses[self.runpath+'/attempts/1/jobs?per_page=25&page=1']
         frame['jobs'].append(row);frame['total_count']+=1
         self.responses[self.prefix+'actions/jobs/30']=row
         self.cancel_before_assignment(row)
@@ -293,7 +302,7 @@ class PhysicalWorkflowTests(unittest.TestCase):
 
     def test_unassigned_cancellation_cannot_authorize_artifact_download(self):
         row=self.job(30,2,self.producer['name'],'2026-01-01T00:02:04Z','2026-01-01T00:02:44Z')
-        frame=self.responses[self.runpath+'/attempts/2/jobs?per_page=100&page=1']
+        frame=self.responses[self.runpath+'/attempts/2/jobs?per_page=25&page=1']
         frame['jobs'].append(row);frame['total_count']+=1
         self.responses[self.prefix+'actions/jobs/30']=row
         self.cancel_before_assignment(row)
@@ -356,7 +365,7 @@ class PhysicalWorkflowTests(unittest.TestCase):
             self.responses[endpoint]=old
 
     def test_scoped_worker_retains_history_without_reading_unrelated_job_owners(self):
-        frame = self.responses[self.runpath + '/attempts/1/jobs?per_page=100&page=1']
+        frame = self.responses[self.runpath + '/attempts/1/jobs?per_page=25&page=1']
         for number in range(70):
             row = self.job(1000 + number, 1, 'unrelated-' + str(number),
                            '2026-01-01T00:00:02Z', '2026-01-01T00:01:00Z')
@@ -401,7 +410,7 @@ class PhysicalWorkflowTests(unittest.TestCase):
         self.assertEqual(self.api.calls,[])
 
     def test_incomplete_attempt_page_refuses(self):
-        self.responses[self.runpath+'/attempts/2/jobs?per_page=100&page=1']['total_count']=4
+        self.responses[self.runpath+'/attempts/2/jobs?per_page=25&page=1']['total_count']=4
         with self.assertRaises(ValueError):self.observe()
 
     def test_foreign_attempt_source_and_attempt_bound_refuse(self):
@@ -425,7 +434,7 @@ class PhysicalWorkflowTests(unittest.TestCase):
 
     def test_new_physical_attempt_during_refresh_revokes_old_producer(self):
         s=self.observe();row=self.job(30,2,self.producer['name'],'2026-01-01T00:02:04Z','2026-01-01T00:02:44Z');row['conclusion']='cancelled'
-        frame=self.responses[self.runpath+'/attempts/2/jobs?per_page=100&page=1'];frame['jobs'].append(row);frame['total_count']+=1
+        frame=self.responses[self.runpath+'/attempts/2/jobs?per_page=25&page=1'];frame['jobs'].append(row);frame['total_count']+=1
         self.responses[self.prefix+'actions/jobs/30']=row;self.responses[self.prefix+'check-runs/30']=self.check(row)
         with self.assertRaises(ValueError):s.admit(self.roles,now=datetime(2026,1,2,tzinfo=timezone.utc))
         self.assertFalse(any(isinstance(c,tuple) for c in self.api.calls))

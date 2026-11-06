@@ -8,6 +8,7 @@ import io
 import json
 import os
 from pathlib import Path
+from urllib.parse import parse_qs
 import shutil
 import subprocess
 import sys
@@ -35,7 +36,15 @@ class ObservedAPI:
 
     def json(self, endpoint):
         self.calls.append(endpoint)
-        return copy.deepcopy(self.responses[endpoint])
+        path, _, query = endpoint.partition('?')
+        parameters = parse_qs(query)
+        page = int(parameters.get('page', ['1'])[0])
+        page_size = int(parameters.get('per_page', ['100'])[0])
+        key = endpoint if endpoint in self.responses else endpoint.rsplit('page=', 1)[0] + 'page=1'
+        payload = copy.deepcopy(self.responses[key])
+        if path.endswith('/jobs') and len(payload.get('jobs', [])) == payload.get('total_count'):
+            payload['jobs'] = payload['jobs'][(page - 1) * page_size:page * page_size]
+        return payload
 
     json_array = json
 
@@ -230,8 +239,8 @@ class AcceptedBoundaryTests(unittest.TestCase):
             self.responses[self.prefix + 'actions/jobs/' + str(identifier)] = row
             self.responses[self.prefix + 'check-runs/' + str(identifier)] = fixture.check(row)
         inventory = {'total_count': len(rows), 'jobs': rows}
-        self.responses[runpath + '/attempts/1/jobs?per_page=100&page=1'] = inventory
-        self.responses[runpath + '/jobs?filter=latest&per_page=100&page=1'] = inventory
+        self.responses[runpath + '/attempts/1/jobs?per_page=25&page=1'] = inventory
+        self.responses[runpath + '/jobs?filter=latest&per_page=25&page=1'] = inventory
         self.responses[runpath + '/artifacts?per_page=100&page=1'] = {'total_count': 1, 'artifacts': [
             {'id': 33, 'name': 'docs-navigation-complete-' + self.checkout + '-1'}]}
         objects = SOURCE.api_tree(self.responses[self.prefix + 'git/trees/' + self.tree + '?recursive=1'], self.tree)
@@ -261,7 +270,7 @@ class AcceptedBoundaryTests(unittest.TestCase):
             with self.assertRaises(ReconciledOriginal): GATE.qualify(self.api, ROOT, plan)
             for variant in ('active', 'missing', 'failed', 'cancelled'):
                 self.responses.clear(); self.responses.update(copy.deepcopy(original))
-                inventory = self.responses[runpath + '/attempts/1/jobs?per_page=100&page=1']
+                inventory = self.responses[runpath + '/attempts/1/jobs?per_page=25&page=1']
                 row = next(row for row in inventory['jobs'] if row['name'] == 'std / navigation')
                 if variant == 'missing':
                     inventory['jobs'].remove(row); inventory['total_count'] -= 1

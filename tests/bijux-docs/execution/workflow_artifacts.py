@@ -22,6 +22,7 @@ import zipfile
 
 API = 'https://api.github.com'
 MAX_PAGES = 100
+API_PAGE_SIZE = {'jobs': 25, 'artifacts': 100}
 MAX_JSON_BYTES = 16 * 1024 * 1024
 MAX_ARCHIVE_BYTES = 512 * 1024 * 1024
 MAX_EXPANDED_BYTES = 2 * 1024 * 1024 * 1024
@@ -188,15 +189,17 @@ class GitHubAPI:
 def pages(fetch, endpoint: str, key: str) -> dict:
     """Keep every page; incoherent totals or duplicate IDs are not silently deduplicated."""
     require(key in ('jobs', 'artifacts'), 'Unknown paginated collection')
+    # Rich job pages stay bounded during retry admission; every page remains required.
+    page_size = API_PAGE_SIZE[key]
     rows, retained, total = [], [], None
     for page in range(1, MAX_PAGES + 1):
-        payload = fetch(endpoint + ('&' if '?' in endpoint else '?') + 'per_page=100&page=' + str(page))
+        payload = fetch(endpoint + ('&' if '?' in endpoint else '?') + f'per_page={page_size}&page={page}')
         require(isinstance(payload, dict) and type(payload.get('total_count')) is int
-                and 0 <= payload['total_count'] <= MAX_PAGES * 100, 'Invalid API collection total')
+                and 0 <= payload['total_count'] <= MAX_PAGES * page_size, 'Invalid API collection total')
         require(total is None or total == payload['total_count'], 'API collection changed during pagination')
         total = payload['total_count']
         part = payload.get(key)
-        require(isinstance(part, list) and len(part) <= 100, 'Invalid API page')
+        require(isinstance(part, list) and len(part) <= page_size, 'Invalid API page')
         require(all(isinstance(row, dict) and positive(row.get('id')) for row in part), 'Actual API IDs are required')
         retained.append(payload)
         rows.extend(part)
@@ -204,7 +207,7 @@ def pages(fetch, endpoint: str, key: str) -> dict:
         require(len(rows) <= total, 'API page exceeds declared total')
         if len(rows) == total:
             return {'total_count': total, key: rows, 'pages': retained}
-        require(len(part) == 100, 'Incomplete API pagination')
+        require(len(part) == page_size, 'Incomplete API pagination')
     raise ValueError('API pagination limit exceeded')
 
 

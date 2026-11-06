@@ -6,6 +6,7 @@ import importlib.util
 import io
 import json
 from pathlib import Path
+from urllib.parse import parse_qs
 import stat
 import tempfile
 import unittest
@@ -35,7 +36,15 @@ class API:
 
     def json(self, endpoint):
         self.calls.append(endpoint)
-        return copy.deepcopy(self.responses[endpoint])
+        path, _, query = endpoint.partition('?')
+        parameters = parse_qs(query)
+        page = int(parameters.get('page', ['1'])[0])
+        page_size = int(parameters.get('per_page', ['100'])[0])
+        key = endpoint if endpoint in self.responses else endpoint.rsplit('page=', 1)[0] + 'page=1'
+        payload = copy.deepcopy(self.responses[key])
+        if path.endswith('/jobs') and len(payload.get('jobs', [])) == payload.get('total_count'):
+            payload['jobs'] = payload['jobs'][(page - 1) * page_size:page * page_size]
+        return payload
 
     def archive(self, artifact_id):
         self.calls.append(('download', artifact_id))
@@ -77,8 +86,8 @@ class WorkflowArtifactOwnershipTests(unittest.TestCase):
             prefix + 'git/commits/' + 'a' * 40: {'sha': 'a' * 40, 'tree': {'sha': 'c' * 40}},
             prefix + 'git/commits/' + 'b' * 40: {'sha': 'b' * 40, 'tree': {'sha': 'c' * 40},
                                                 'parents': [{'sha': 'd' * 40}, {'sha': 'a' * 40}]},
-            self.paths['run'] + '/jobs?filter=latest&per_page=100&page=1': {'total_count': 1, 'jobs': [self.job]},
-            self.paths['run'] + '/jobs?filter=all&per_page=100&page=1': {'total_count': 2, 'jobs': [self.old, self.job]},
+            self.paths['run'] + '/jobs?filter=latest&per_page=25&page=1': {'total_count': 1, 'jobs': [self.job]},
+            self.paths['run'] + '/jobs?filter=all&per_page=25&page=1': {'total_count': 2, 'jobs': [self.old, self.job]},
             self.paths['run'] + '/artifacts?per_page=100&page=1': {'total_count': 1, 'artifacts': [self.artifact]},
             self.paths['job']: self.job, self.paths['artifact']: self.artifact,
         }
@@ -119,30 +128,46 @@ class WorkflowArtifactOwnershipTests(unittest.TestCase):
 
     def test_all_pages_are_retained_and_role_lookup_fetches_only_needed_owner(self):
         rows = [{**self.job, 'id': number + 100, 'name': 'unneeded-' + str(number)} for number in range(101)]
-        payloads = [{'total_count': 101, 'jobs': rows[:100]}, {'total_count': 101, 'jobs': rows[100:]}]
+        payloads = [{'total_count': 101, 'jobs': rows[start:start + 25]}
+                    for start in range(0, len(rows), 25)]
         calls = []
         def fetch(endpoint):
             calls.append(endpoint)
             return payloads[len(calls) - 1]
         result = ARTIFACTS.pages(fetch, 'repos/bijux/bijux-std/actions/runs/123/jobs?filter=all', 'jobs')
         self.assertEqual(len(result['jobs']), 101)
-        self.assertEqual(len(result['pages']), 2)
+        self.assertEqual(len(result['pages']), 5)
+        self.assertEqual([row['id'] for row in result['jobs']], [row['id'] for row in rows])
         self.select()
         self.assertEqual([call for call in self.api.calls if '/actions/jobs/' in call], [self.paths['job']])
 
     def test_short_duplicate_changed_total_and_overfull_api_pages_are_refused(self):
         cases = [{'total_count': 2, 'jobs': [self.job]}, {'total_count': 2, 'jobs': [self.job, self.job]},
-                 {'total_count': 0, 'jobs': [self.job]}, {'total_count': True, 'jobs': []}]
+                 {'total_count': 0, 'jobs': [self.job]}, {'total_count': True, 'jobs': []},
+                 {'total_count': 26, 'jobs': [{'id': n} for n in range(1, 27)]}]
         for payload in cases:
             with self.subTest(payload=payload):
                 with self.assertRaises(ValueError): ARTIFACTS.pages(lambda _: payload, 'jobs', 'jobs')
-        pages = [{'total_count': 101, 'jobs': [{**self.job, 'id': i + 1} for i in range(100)]},
+        pages = [{'total_count': 101, 'jobs': [{**self.job, 'id': i + 1} for i in range(25)]},
                  {'total_count': 102, 'jobs': [{**self.job, 'id': 101}]}]
         with self.assertRaisesRegex(ValueError, 'changed during pagination'):
             ARTIFACTS.pages(lambda _: pages.pop(0), 'jobs', 'jobs')
 
+    def test_artifact_pages_keep_their_complete_listing_and_job_duplicates_crossing_pages_refuse(self):
+        calls = []
+        def artifacts(endpoint):
+            calls.append(endpoint)
+            return {'total_count': 2, 'artifacts': [{'id': 1}, {'id': 2}]}
+        result = ARTIFACTS.pages(artifacts, 'artifacts', 'artifacts')
+        self.assertEqual([row['id'] for row in result['artifacts']], [1, 2])
+        self.assertEqual(calls, ['artifacts?per_page=100&page=1'])
+        pages = [{'total_count': 26, 'jobs': [{'id': n} for n in range(1, 26)]},
+                 {'total_count': 26, 'jobs': [{'id': 25}]}]
+        with self.assertRaisesRegex(ValueError, 'Duplicate API ID'):
+            ARTIFACTS.pages(lambda _: pages.pop(0), 'jobs', 'jobs')
+
     def test_latest_cannot_hide_newer_or_duplicate_owner_or_missing_history(self):
-        endpoint = self.paths['run'] + '/jobs?filter=all&per_page=100&page=1'
+        endpoint = self.paths['run'] + '/jobs?filter=all&per_page=25&page=1'
         for newest in [{**self.job, 'id': 44, 'run_attempt': 3}, {**self.job, 'id': 44},
                        {**self.job, 'id': 44, 'name': 'hidden owner'}]:
             with self.subTest(newest=newest):
@@ -160,7 +185,7 @@ class WorkflowArtifactOwnershipTests(unittest.TestCase):
 
     def test_earlier_latest_success_needs_future_explicit_lineage_not_attempt_comparison(self):
         self.job['run_attempt'] = 1
-        self.responses[self.paths['run'] + '/jobs?filter=all&per_page=100&page=1'] = {'total_count': 1, 'jobs': [self.job]}
+        self.responses[self.paths['run'] + '/jobs?filter=all&per_page=25&page=1'] = {'total_count': 1, 'jobs': [self.job]}
         with self.assertRaisesRegex(ValueError, 'Cross-attempt'): self.select()
 
     def test_wrong_history_run_head_and_future_attempt_are_refused(self):
@@ -255,7 +280,7 @@ class WorkflowArtifactOwnershipTests(unittest.TestCase):
             for status, conclusion in [('completed', 'failure'), ('queued', None), ('in_progress', None), ('completed', 'success')]:
                 with self.subTest(status=status, conclusion=conclusion):
                     newer = {**self.job, 'id': 44, 'status': status, 'conclusion': conclusion}
-                    self.responses[self.paths['run'] + '/jobs?filter=latest&per_page=100&page=1'] = {'total_count': 1, 'jobs': [newer]}
+                    self.responses[self.paths['run'] + '/jobs?filter=latest&per_page=25&page=1'] = {'total_count': 1, 'jobs': [newer]}
                     with self.assertRaisesRegex(ValueError, 'no longer the actual latest'):
                         ARTIFACTS.download(self.api, pin, destination)
                     self.assertFalse(destination.exists())
