@@ -769,7 +769,7 @@ class RenderRepoConfigsTests(unittest.TestCase):
         wrapper = MODULE.prepare_workflow_wrappers(repo, repo["workflow_execution_policy"])["ci"]
         steps = wrapper["jobs"]["audit"]["steps"]
         install = next(step for step in steps if step["name"] == "Install Rust audit tools")
-        self.assertEqual(install["uses"], "taiki-e/install-action@1e29709c0ec63babbe8f266397a465f29a825f91")
+        self.assertEqual(install["uses"], "taiki-e/install-action@68a389c788b2cd04016ce8c80ee23b80d2ab3d68")
         self.assertEqual(install["with"], {
             "tool": "cargo-deny@${{ env.CARGO_DENY_VERSION }},cargo-audit@${{ env.CARGO_AUDIT_VERSION }}",
             "checksum": "true", "fallback": "none",
