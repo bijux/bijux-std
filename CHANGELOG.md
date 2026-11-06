@@ -8,7 +8,7 @@ This file records notable repository-level changes for `bijux-std`.
 
 Changes awaiting integration into GitHub's `main` branch.
 
-#### Canonical action and OpenAPI dependency security
+#### [#319](https://github.com/bijux/bijux-std/pull/319) — fix(deps): qualify canonical setup actions and openapi tooling
 
 Adopt immutable uv 10.3.3, Ruby 1.336.0 and Java 6.1.0 setup actions while
 preserving selected runtime versions. Align the shared OpenAPI baseline and
