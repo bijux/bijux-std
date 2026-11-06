@@ -48,7 +48,7 @@ class WorkflowInputLineageTests(unittest.TestCase):
         self.job['run_attempt'] = 1
         self.artifact['name'] = self.artifact['name'][:-1] + '1'
         self.set_body({**self.receipt, 'workflow_attempt': '1'})
-        self.responses[self.paths['run'] + '/jobs?filter=all&per_page=100&page=1'] = {'total_count': 1, 'jobs': [self.job]}
+        self.responses[self.paths['run'] + '/jobs?filter=all&per_page=25&page=1'] = {'total_count': 1, 'jobs': [self.job]}
 
     def observe(self):
         return LINEAGE.observe_source(self.api, self.identity)
@@ -84,8 +84,8 @@ class WorkflowInputLineageTests(unittest.TestCase):
         second.update(id=44, name='std / native browser', run_attempt=2)
         self.retained()
         historical = {**copy.deepcopy(second), 'id': 11, 'run_attempt': 1, 'conclusion': 'cancelled'}
-        self.responses[self.paths['run'] + '/jobs?filter=latest&per_page=100&page=1'] = {'total_count': 2, 'jobs': [self.job, second]}
-        self.responses[self.paths['run'] + '/jobs?filter=all&per_page=100&page=1'] = {'total_count': 3, 'jobs': [self.job, historical, second]}
+        self.responses[self.paths['run'] + '/jobs?filter=latest&per_page=25&page=1'] = {'total_count': 2, 'jobs': [self.job, second]}
+        self.responses[self.paths['run'] + '/jobs?filter=all&per_page=25&page=1'] = {'total_count': 3, 'jobs': [self.job, historical, second]}
         self.responses['repos/bijux/bijux-std/actions/jobs/44'] = second
         source = self.observe()
         rows = source.verify_jobs([self.job['name'], second['name']])
@@ -167,7 +167,7 @@ class WorkflowInputLineageTests(unittest.TestCase):
 
     def test_new_owner_after_cached_verification_cannot_survive_reuse(self):
         source = self.observe(); source.verify_jobs([self.job['name']])
-        self.responses[self.paths['run'] + '/jobs?filter=latest&per_page=100&page=1'] = {'total_count': 1,
+        self.responses[self.paths['run'] + '/jobs?filter=latest&per_page=25&page=1'] = {'total_count': 1,
              'jobs': [{**self.job, 'id': 44, 'conclusion': 'failure'}]}
         with self.assertRaisesRegex(ValueError, 'latest execution changed'): source.verify_jobs([self.job['name']])
         frame = source.export_record()['refresh_observations'][-1]
@@ -216,7 +216,7 @@ class WorkflowInputLineageTests(unittest.TestCase):
         self.responses['repos/bijux/bijux-std/git/commits/' + 'b' * 40]['tree']['sha'] = 'e' * 40
         with self.assertRaisesRegex(ValueError, 'source tree'): self.observe()
         self.responses.clear(); self.responses.update(copy.deepcopy(baseline))
-        self.responses[self.paths['run'] + '/jobs?filter=all&per_page=100&page=1']['jobs'][0]['run_attempt'] = 3
+        self.responses[self.paths['run'] + '/jobs?filter=all&per_page=25&page=1']['jobs'][0]['run_attempt'] = 3
         with self.assertRaisesRegex(ValueError, 'History'): self.observe()
 
     def test_duplicate_role_alias_and_changed_source_owner_cannot_supply_inputs(self):
@@ -229,8 +229,8 @@ class WorkflowInputLineageTests(unittest.TestCase):
 
     def test_authoritative_jobs_are_bounded_concurrent_cached_and_history_preserving(self):
         jobs = [{**copy.deepcopy(self.job), 'id': 100 + index, 'name': 'source-owned-' + str(index)} for index in range(8)]
-        self.responses[self.paths['run'] + '/jobs?filter=latest&per_page=100&page=1'] = {'total_count': 8, 'jobs': jobs}
-        self.responses[self.paths['run'] + '/jobs?filter=all&per_page=100&page=1'] = {'total_count': 8, 'jobs': jobs}
+        self.responses[self.paths['run'] + '/jobs?filter=latest&per_page=25&page=1'] = {'total_count': 8, 'jobs': jobs}
+        self.responses[self.paths['run'] + '/jobs?filter=all&per_page=25&page=1'] = {'total_count': 8, 'jobs': jobs}
         for row in jobs: self.responses['repos/bijux/bijux-std/actions/jobs/' + str(row['id'])] = row
         original = self.api.json; lock = Lock(); active = maximum = 0
         def delayed(endpoint):
@@ -266,8 +266,8 @@ class WorkflowCollectionObservationTests(unittest.TestCase):
                      'conclusion': None, 'completed_at': None}
         finished = {**copy.deepcopy(unrelated), 'status': 'completed', 'conclusion': 'success',
                     'completed_at': self.job['completed_at']}
-        self.responses[self.paths['run'] + '/jobs?filter=latest&per_page=100&page=1'] = {'total_count': 2, 'jobs': [self.job, unrelated]}
-        self.responses[self.paths['run'] + '/jobs?filter=all&per_page=100&page=1'] = {'total_count': 2, 'jobs': [self.job, finished]}
+        self.responses[self.paths['run'] + '/jobs?filter=latest&per_page=25&page=1'] = {'total_count': 2, 'jobs': [self.job, unrelated]}
+        self.responses[self.paths['run'] + '/jobs?filter=all&per_page=25&page=1'] = {'total_count': 2, 'jobs': [self.job, finished]}
         self.responses['repos/bijux/bijux-std/actions/jobs/44'] = finished
         source = self.observe()
         source.admit(self.roles, now=self.now)
@@ -281,13 +281,13 @@ class WorkflowCollectionObservationTests(unittest.TestCase):
         latest = {**copy.deepcopy(self.job), 'id': 44, 'name': 'std / report', 'status': 'in_progress',
                   'conclusion': None, 'completed_at': None}
         authoritative = {**copy.deepcopy(latest), 'steps': [*latest['steps'], {'name': 'Observe budgets', 'status': 'in_progress', 'conclusion': None}]}
-        self.responses[self.paths['run'] + '/jobs?filter=latest&per_page=100&page=1'] = {'total_count': 2, 'jobs': [self.job, latest]}
-        self.responses[self.paths['run'] + '/jobs?filter=all&per_page=100&page=1'] = {'total_count': 2, 'jobs': [self.job, authoritative]}
+        self.responses[self.paths['run'] + '/jobs?filter=latest&per_page=25&page=1'] = {'total_count': 2, 'jobs': [self.job, latest]}
+        self.responses[self.paths['run'] + '/jobs?filter=all&per_page=25&page=1'] = {'total_count': 2, 'jobs': [self.job, authoritative]}
         self.responses['repos/bijux/bijux-std/actions/jobs/44'] = authoritative
         source = self.observe()
         self.assertEqual(source.verify_jobs(['std / report'])[0], authoritative)
         authoritative.update(status='completed', conclusion='success', completed_at=self.job['completed_at'])
-        self.responses[self.paths['run'] + '/jobs?filter=latest&per_page=100&page=1']['jobs'][1] = authoritative
+        self.responses[self.paths['run'] + '/jobs?filter=latest&per_page=25&page=1']['jobs'][1] = authoritative
         self.assertEqual(source.verify_jobs(['std / report'])[0]['conclusion'], 'success')
         self.assertEqual(len(source.export_record()['current_report_observations']), 2)
         self.assertEqual(source.observation['latest']['jobs'][1]['status'], 'in_progress')
@@ -310,8 +310,8 @@ class WorkflowCollectionObservationTests(unittest.TestCase):
             self.responses['repos/bijux/bijux-std/actions/jobs/' + str(job['id'])] = job
             self.responses['repos/bijux/bijux-std/actions/artifacts/' + str(artifact['id'])] = artifact
             self.bodies[artifact['id']] = self.body
-        self.responses[self.paths['run'] + '/jobs?filter=latest&per_page=100&page=1'] = {'total_count': 8, 'jobs': jobs}
-        self.responses[self.paths['run'] + '/jobs?filter=all&per_page=100&page=1'] = {'total_count': 8, 'jobs': jobs}
+        self.responses[self.paths['run'] + '/jobs?filter=latest&per_page=25&page=1'] = {'total_count': 8, 'jobs': jobs}
+        self.responses[self.paths['run'] + '/jobs?filter=all&per_page=25&page=1'] = {'total_count': 8, 'jobs': jobs}
         self.responses[self.paths['run'] + '/artifacts?per_page=100&page=1'] = {'total_count': 8, 'artifacts': artifacts}
         original = self.api.json; lock = Lock(); active = maximum = 0
         def delayed(endpoint):

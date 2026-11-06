@@ -8,6 +8,14 @@ This file records notable repository-level changes for `bijux-std`.
 
 Changes awaiting integration into GitHub's `main` branch.
 
+#### [#320](https://github.com/bijux/bijux-std/pull/320) — fix(deps): qualify redocly release in shared openapi tooling
+
+Adopt Redocly CLI 2.73.0 through the canonical OpenAPI configuration and pinned
+bootstrap recipe, preserving runtime requirements and regenerating the Python
+make component digest. Bound workflow job evidence responses to 25 items while
+retaining complete paginated inventories, source and owner authentication, and
+strict execution deadlines.
+
 #### [#319](https://github.com/bijux/bijux-std/pull/319) — fix(deps): qualify canonical setup actions and openapi tooling
 
 Adopt immutable uv 10.3.3, Ruby 1.336.0 and Java 6.1.0 setup actions while

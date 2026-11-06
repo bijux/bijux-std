@@ -1,5 +1,6 @@
 """Keep collection ownership, lineage and filesystem admission exact."""
 import copy
+from collections import Counter
 from datetime import datetime, timezone
 import hashlib
 import importlib.util
@@ -85,8 +86,8 @@ class WorkflowCollectionTests(unittest.TestCase):
             files[prefix + 'execution.json'] = json.dumps(record, sort_keys=True).encode()
             records.append(record)
         self.set_body(55, artifact, files)
-        self.responses[self.paths['run'] + '/jobs?filter=latest&per_page=100&page=1'] = {'total_count': 2, 'jobs': [self.job, job]}
-        self.responses[self.paths['run'] + '/jobs?filter=all&per_page=100&page=1'] = {'total_count': 2, 'jobs': [self.job, job]}
+        self.responses[self.paths['run'] + '/jobs?filter=latest&per_page=25&page=1'] = {'total_count': 2, 'jobs': [self.job, job]}
+        self.responses[self.paths['run'] + '/jobs?filter=all&per_page=25&page=1'] = {'total_count': 2, 'jobs': [self.job, job]}
         self.responses[self.paths['run'] + '/artifacts?per_page=100&page=1'] = {'total_count': 2, 'artifacts': [self.artifact, artifact]}
         self.responses['repos/bijux/bijux-std/actions/jobs/44'] = job
         self.responses['repos/bijux/bijux-std/actions/artifacts/55'] = artifact
@@ -256,7 +257,7 @@ class WorkflowCollectionTests(unittest.TestCase):
             self.responses['repos/bijux/bijux-std/actions/artifacts/' + str(artifact['id'])] = artifact
             jobs.append(job); artifacts.append(artifact)
         for query in ('latest', 'all'):
-            self.responses[self.paths['run'] + '/jobs?filter=' + query + '&per_page=100&page=1'] = {'total_count': len(jobs), 'jobs': jobs}
+            self.responses[self.paths['run'] + '/jobs?filter=' + query + '&per_page=25&page=1'] = {'total_count': len(jobs), 'jobs': jobs}
         self.responses[self.paths['run'] + '/artifacts?per_page=100&page=1'] = {'total_count': len(artifacts), 'artifacts': artifacts}
         with tempfile.TemporaryDirectory(dir=ROOT / 'artifacts') as folder:
             collection = COLLECTION.collect(self.api, self.identity, 'navigation', Path(folder) / 'collected')
@@ -264,7 +265,16 @@ class WorkflowCollectionTests(unittest.TestCase):
             self.assertEqual({pointer['owner_attempt'] for pointer in collection.export_record()['admission']['inputs'].values()}, {2})
             self.assertEqual(len([call for call in self.api.calls if isinstance(call, str) and '/actions/jobs/' in call]), len(jobs))
             self.assertEqual(len([call for call in self.api.calls if isinstance(call, str) and '/actions/artifacts/' in call]), len(artifacts))
-            self.assertEqual(sum('/actions/runs/' in call for call in self.api.calls if isinstance(call, str)), 8)
+            run_calls = [call for call in self.api.calls
+                         if isinstance(call, str) and '/actions/runs/' in call]
+            expected_reads = {self.paths['run']: 3,
+                              self.paths['run'] + '/artifacts?per_page=100&page=1': 1}
+            # Owner refreshes reuse the complete captured history.
+            expected_reads.update({
+                self.paths['run'] + f'/jobs?filter={query}&per_page=25&page={page}': count
+                for query, count in (('latest', 3), ('all', 1))
+                for page in range(1, (len(jobs) + 24) // 25 + 1)})
+            self.assertEqual(Counter(run_calls), Counter(expected_reads))
 
     def test_dirty_wrong_root_or_untracked_source_closure_cannot_consume_git_authority(self):
         # Compile the exact function independently of this class's controlled

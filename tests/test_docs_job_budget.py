@@ -395,7 +395,8 @@ class LatestFrontendJobBudgetTests(unittest.TestCase):
                 if relative.startswith('actions/runs/123/jobs?'):
                     rows = parent.data['jobs'] if 'filter=latest' in relative else parent.history
                     page = int(relative.rsplit('page=', 1)[1])
-                    return copy.deepcopy({'total_count': len(rows), 'jobs': rows[(page - 1) * 100:page * 100]})
+                    page_size = int(relative.split('per_page=', 1)[1].split('&', 1)[0])
+                    return copy.deepcopy({'total_count': len(rows), 'jobs': rows[(page - 1) * page_size:page * page_size]})
                 if relative.startswith('actions/runs/123/artifacts?'):
                     return {'total_count': 0, 'artifacts': []}
                 if relative.startswith('actions/jobs/'):
