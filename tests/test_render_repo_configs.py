@@ -459,9 +459,9 @@ class RenderRepoConfigsTests(unittest.TestCase):
         expected_revisions = {
             "actions/checkout": "3d3c42e5aac5ba805825da76410c181273ba90b1",
             "actions/setup-python": "6d4fd22b20465ccc0f7354476588e8df7c9ca0e0",
-            "astral-sh/setup-uv": "07a047e608db84b3d8c06cd9a7c7dcc9c355c18e",
+            "astral-sh/setup-uv": "68559e99cc807c1eb7e9238fd43a15bba460eec2",
             "actions/setup-node": "949feb2413d6458794dcd2491c4babbbce0c15c1",
-            "actions/setup-java": "de7274f081f381c8f8158605e0321c36c376e2e6",
+            "actions/setup-java": "b843ebf9b913146b38da2eaa7aeddf76074ae1ad",
         }
 
         for repository in manifest["repositories"]:
@@ -517,7 +517,7 @@ class RenderRepoConfigsTests(unittest.TestCase):
         node = next(step for step in checks if step.get("uses", "").startswith("actions/setup-node@"))
         java = next(step for step in checks if step.get("uses", "").startswith("actions/setup-java@"))
         self.assertEqual(node["with"]["node-version"], "24.21.0")
-        self.assertEqual(java["uses"], "actions/setup-java@de7274f081f381c8f8158605e0321c36c376e2e6")
+        self.assertEqual(java["uses"], "actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad")
         self.assertEqual(node["if"], "${{ contains(fromJson(inputs.api_toolchain_targets), matrix.target) }}")
         install = next(step for step in checks if step.get("name") == "Install package toolchain")
         run = next(step for step in checks if step.get("name") == "Run ${{ matrix.target }}")

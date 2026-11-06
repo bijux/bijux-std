@@ -126,8 +126,8 @@ class PythonApiBootstrapTests(unittest.TestCase):
         calls = self.calls()
         self.assertEqual(len(calls), 1)
         self.assertEqual(calls[0]["args"][0], "install")
-        self.assertIn("@openapitools/openapi-generator-cli@2.41.0", calls[0]["args"])
-        self.assertIn("@redocly/cli@2.58.1", calls[0]["args"])
+        self.assertIn("@openapitools/openapi-generator-cli@2.42.0", calls[0]["args"])
+        self.assertIn("@redocly/cli@2.71.2", calls[0]["args"])
         self.assertFalse(self.marker.exists())
 
 
