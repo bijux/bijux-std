@@ -33,13 +33,13 @@ class BuildRepoManifestTests(unittest.TestCase):
 
     def test_capture_retains_reviewed_policy_without_inferring_from_runtime(self) -> None:
         inventory = MODULE.load_workflow_inventory()
-        policy = {"schema": 1, "automatic_runs": "repository-policy-only", "publication_entrypoints": {"deploy-docs": {"mode": "manual-only", "refs": "main-only"}}}
+        policy = {"schema": 1, "dependency_pull_requests": "notification-only", "dependency_merge": "owner-consolidation", "automatic_runs": "repository-policy-only", "publication_entrypoints": {"deploy-docs": {"mode": "manual-only", "refs": "main-only"}}}
         with tempfile.TemporaryDirectory() as workspace:
             standard = Path(workspace) / "bijux-std"
             manifest_path = standard / ".github/standards/repo-config.manifest.json"
             manifest_path.parent.mkdir(parents=True)
             (manifest_path.parent / "node-workspaces.json").write_text(json.dumps({"version":1,"repositories":[]}))
-            manifest_path.write_text(json.dumps({"workflow_inventory": inventory, "repositories": [{"name": "bijux-atlas", "workflow_allowlist": ["github-policy", "deploy-docs"], "workflow_execution_policy": policy}, {"name": "bijux-canon"}]}))
+            manifest_path.write_text(json.dumps({"workflow_inventory": inventory, "repositories": [{"name": "bijux-atlas", "workflow_allowlist": ["dependency-notice", "github-policy", "deploy-docs"], "additional_required_status_checks": [{"context": "atlas / domain", "workflow": "Validation"}], "workflow_execution_policy": policy}, {"name": "bijux-canon"}]}))
             atlas = Path(workspace) / "bijux-atlas"
             canon = Path(workspace) / "bijux-canon"
             atlas.mkdir()
@@ -55,6 +55,8 @@ class BuildRepoManifestTests(unittest.TestCase):
                 MODULE.main()
             captured = json.loads(first)
             self.assertEqual(captured["repositories"][0]["workflow_execution_policy"], policy)
+            self.assertIn("dependency-notice", captured["repositories"][0]["workflow_allowlist"])
+            self.assertEqual(captured["repositories"][0]["additional_required_status_checks"], [{"context": "atlas / domain", "workflow": "Validation"}])
             self.assertNotIn("workflow_execution_policy", captured["repositories"][1])
             self.assertEqual(manifest_path.read_bytes(), first)
 

@@ -101,9 +101,12 @@ def release_env_value(entries: list[dict], key: str, default: bool = False) -> b
     return default
 
 
-def derive_workflow_allowlist(repo_name: str, release_env: list[dict], wrappers: dict, inventory: dict[str, Any]) -> list[str]:
+def derive_workflow_allowlist(repo_name: str, release_env: list[dict], wrappers: dict, inventory: dict[str, Any], policy: dict | None = None) -> list[str]:
     known = workflow_ids(inventory)
     allow: set[str] = {"github-policy", "pr-approval-policy", "deploy-docs"}
+
+    if policy and policy.get("dependency_pull_requests") == "notification-only":
+        allow.add("dependency-notice")
 
     if release_env_value(release_env, "BIJUX_RELEASE_ENABLED"):
         allow.add("release-github")
@@ -288,7 +291,8 @@ def main() -> None:
     existing_path = STD_REPO / ".github/standards/repo-config.manifest.json"
     existing = json.loads(existing_path.read_text(encoding="utf-8")) if existing_path.exists() else {"repositories": []}
     # Reviewed policy is canonical configuration; consumer workflow bytes never select it.
-    existing_names = [entry["name"] for entry in existing["repositories"]]
+    existing_entries = {entry["name"]: entry for entry in existing["repositories"]}
+    existing_names = list(existing_entries)
     retained = WORKFLOW_EXECUTION.validate_manifest(existing, existing_names)
     for name, policy in retained.items():
         if policy is not None and name not in MANAGED_REPOSITORIES:
@@ -305,6 +309,9 @@ def main() -> None:
         repo_entry: dict = {"name": repo_name}
         if retained.get(repo_name) is not None:
             repo_entry["workflow_execution_policy"] = retained[repo_name]
+        checks = existing_entries.get(repo_name, {}).get("additional_required_status_checks")
+        if checks is not None:
+            repo_entry["additional_required_status_checks"] = checks
         release_env = parse_release_env(repo_path / ".github/release.env")
         repo_entry["release_env"] = release_env
 
@@ -323,7 +330,7 @@ def main() -> None:
 
         if wrappers:
             repo_entry["workflow_wrappers"] = wrappers
-        repo_entry["workflow_allowlist"] = derive_workflow_allowlist(repo_name, release_env, wrappers, inventory)
+        repo_entry["workflow_allowlist"] = derive_workflow_allowlist(repo_name, release_env, wrappers, inventory, retained.get(repo_name))
 
         pinned_sha = parse_text(repo_path / ".github/standards/bijux-std.sha")
         if pinned_sha:

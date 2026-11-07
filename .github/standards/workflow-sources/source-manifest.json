@@ -9,7 +9,7 @@
     ".github/automation-identity.md": "e2383f4f7108fbd4d5e0ea173e54c30b3ffe385c238a5d6f206f179735100a96",
     ".github/required-status-checks.md": "de462a41e1b8ecf4ac5b6908a18b74cd33a55d6fa4b6daf64080dfc9e062a6b1",
     ".github/rulesets/main-branch-protection.json": "a194664f7530191d4f0fb239ee5e58cf5fd9648a7ab013030e6d84c5f4bc9585",
-    ".github/scripts/build_repo_manifest.py": "5529785c0d8c484178b0ef4e22e34ba568fa0b8e3eea6d86d6f1e96ec4ec9e85",
+    ".github/scripts/build_repo_manifest.py": "3d418c54380082b5b3dd97198fc46290b8b68cd0940b74327a6c4cc6e50a214d",
     ".github/scripts/check_pinned_actions.py": "fb239a883158612e5b46512bf32d0ba3fba46ea59bcbcf766559bd3bfe472ec9",
     ".github/scripts/check_protected_github_changes.py": "2189d393e303d65521f0bb19f83d308d9723b5e0cdbfa272354536361959ae7e",
     ".github/scripts/check_workflow_prerequisites.py": "14a20c0c2b1a81886cdf9b9b92d0495da9614eff4efcd82206184eaa190b4bb9",
