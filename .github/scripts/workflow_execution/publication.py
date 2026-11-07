@@ -75,7 +75,7 @@ def controller_admission_job(workflow_id: str) -> dict:
                 "PUBLICATION_TRIGGERING_ACTOR": "${{ github.triggering_actor }}",
                 "PUBLICATION_CONTROLLER_ACTOR_ID": "${{ vars.BIJUX_PUBLICATION_ACTOR_ID }}",
                 "PUBLICATION_COMMIT": "${{ inputs.accepted_commit }}", "PUBLICATION_RUN_SHA": "${{ github.sha }}",
-                "PUBLICATION_WORKFLOW": workflow_id, "PUBLICATION_TAG": "${{ inputs.release_tag || '' }}",
+                "PUBLICATION_WORKFLOW": workflow_id, "PUBLICATION_TAG": "" if workflow_id == "deploy-docs" else "${{ inputs.release_tag }}",
                 "PYTHONPYCACHEPREFIX": "${{ github.workspace }}/artifacts/python/pycache",
             }, "run": "python3 .bijux/shared/bijux-gh/scripts/publication_admission.py"},
         ],

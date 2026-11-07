@@ -28,3 +28,9 @@ class NpmWorkflowTests(unittest.TestCase):
         self.assertTrue(any(a.startswith('actions/download-artifact@') for a in actions))
         self.assertFalse(any('npm run build' in s.get('run','') or 'npm pack' in s.get('run','') for s in jobs['publish']['steps']))
         self.assertIs(projected['concurrency']['cancel-in-progress'],False)
+
+
+    def test_documentation_admission_does_not_reference_an_undeclared_release_tag(self):
+        for workflow,wanted in [('deploy-docs',''),('release-npm','${{ inputs.release_tag }}')]:
+            admission=POLICY.publication.controller_admission_job(workflow)
+            self.assertEqual(admission['steps'][1]['env']['PUBLICATION_TAG'],wanted)
