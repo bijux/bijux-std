@@ -155,6 +155,7 @@ language-neutral Make behavior form the baseline contract.
 | `docs` | `bijux-docs` |
 | `python` | `bijux-makes-py` |
 | `rust` | `bijux-makes-rs` |
+| `node` | `bijux-makes-node` |
 
 For example, a Rust repository with a documentation site adopts:
 
