@@ -137,3 +137,56 @@ class NpmArchiveTests(unittest.TestCase):
         archive=self.archive()
         with patch.object(MODULE,'MAX_UNCOMPRESSED',256),self.assertRaisesRegex(ValueError,'decompression budget'):
             MODULE.validate_archive(archive,PACKAGE,REPOSITORY)
+
+
+    def test_candidate_receipts_bind_source_lock_archive_bytes_and_dependency_order(self):
+        destination=self.root/'candidate'
+        (destination/'reports').mkdir(parents=True)
+        (destination/'packages').mkdir()
+        (self.root/'package-lock.json').write_text('{}\n')
+        (destination/'reports/candidate-commit.txt').write_text(COMMIT)
+        (destination/'reports/candidate-tree.txt').write_text('tree-identity')
+        (destination/'reports/package-lock.sha256').write_text(hashlib.sha256((self.root/'package-lock.json').read_bytes()).hexdigest()+'  package-lock.json\n')
+        core=self.archive();core.rename(destination/'packages/core.tgz')
+        def validator(p):
+            p['name']='@bijux/ro-crate-validator'
+            p['repository']['directory']='packages/validator'
+            p['dependencies']={PACKAGE['name']:'0.1.0'}
+        self.archive(validator).rename(destination/'packages/validator.tgz')
+        packages=[PACKAGE,{'name':'@bijux/ro-crate-validator','version':'0.1.0','directory':'validator'}]
+        records=[MODULE.validate_archive(destination/'packages'/filename,p,REPOSITORY)
+                 for filename,p in zip(['core.tgz','validator.tgz'],packages)]
+        manifest=destination/'packages/manifest.json'
+        manifest.write_text(json.dumps(records))
+        with patch.object(MODULE,'run',return_value='tree-identity'):
+            result=MODULE.inspect_archives(self.root,destination,packages,REPOSITORY,COMMIT)
+            self.assertEqual([r['name'] for r in result],[p['name'] for p in packages])
+            self.assertTrue(all(not Path(r['archive']).is_absolute() for r in result))
+            bad=copy.deepcopy(records);bad[0]['sha256']='0'*64
+            manifest.write_text(json.dumps(bad))
+            with self.assertRaisesRegex(ValueError,'digest'):
+                MODULE.inspect_archives(self.root,destination,packages,REPOSITORY,COMMIT)
+            manifest.write_text(json.dumps(records[::-1]))
+            with self.assertRaisesRegex(ValueError,'precede'):
+                MODULE.inspect_archives(self.root,destination,packages[::-1],REPOSITORY,COMMIT)
+            manifest.write_text(json.dumps(records))
+            for file,bad,message in [('candidate-commit.txt','b'*40,'source'),
+                                     ('candidate-tree.txt','another-tree','tree'),
+                                     ('package-lock.sha256','0'*64,'lock')]:
+                path=destination/'reports'/file;original=path.read_bytes();path.write_text(bad)
+                with self.subTest(file=file),self.assertRaisesRegex(ValueError,message):
+                    MODULE.inspect_archives(self.root,destination,packages,REPOSITORY,COMMIT)
+                path.write_bytes(original)
+
+    def test_symbolic_and_hard_link_archive_members_are_refused(self):
+        for kind in [tarfile.SYMTYPE,tarfile.LNKTYPE]:
+            path=self.archive()
+            with tarfile.open(path,'r:gz') as source:
+                package=source.extractfile('package/package.json').read()
+            with tarfile.open(path,'w:gz') as archive:
+                member=tarfile.TarInfo('package/package.json');member.size=len(package)
+                archive.addfile(member,io.BytesIO(package))
+                member=tarfile.TarInfo('package/linked.js');member.type=kind;member.linkname='../outside'
+                archive.addfile(member)
+            with self.subTest(kind=kind),self.assertRaisesRegex(ValueError,'regular files'):
+                MODULE.validate_archive(path,PACKAGE,REPOSITORY)
