@@ -8,6 +8,12 @@ export NPM_CONFIG_CACHE ?= $(BIJUX_NODE_ARTIFACTS)/cache/npm
 export NPM_CONFIG_LOGS_DIR ?= $(BIJUX_NODE_ARTIFACTS)/logs/npm
 export TMPDIR ?= $(BIJUX_NODE_ARTIFACTS)/work
 
+BIJUX_HELP_TARGETS += node-install node-build node-test node-check
+BIJUX_HELP_node-install := Install the exact npm workspace lockfile
+BIJUX_HELP_node-build := Build public workspaces
+BIJUX_HELP_node-test := Run package-owned tests
+BIJUX_HELP_node-check := Verify workspace metadata and public declarations
+
 .PHONY: node-environment node-install node-build node-test node-check
 node-environment:
 	@mkdir -p "$(TMPDIR)" "$(NPM_CONFIG_CACHE)" "$(NPM_CONFIG_LOGS_DIR)"

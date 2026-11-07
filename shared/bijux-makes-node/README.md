@@ -1,8 +1,8 @@
 # Node workspace Make contract
 
 The `node` capability supplies `workspace.mk`; `common` continues to own generic
-Make, checks and GitHub governance. Include the vendored workspace library from
-the consumer's Make entry point. The private root must use an npm workspace array,
+Make, checks and GitHub governance. Set `BIJUX_MAKE_COMPONENTS := node` before
+including `.bijux/shared/bijux-makes/bijux.mk` in the consumer's Make entry point. The private root must use an npm workspace array,
 a committed lockfile and Node 22 or later.
 
 `node-install` uses `npm ci`. `node-build` and `node-test` invoke repository-owned

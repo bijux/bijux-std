@@ -23,12 +23,14 @@ class NodeWorkspaceContractTests(unittest.TestCase):
         with tempfile.TemporaryDirectory(dir=ROOT/'artifacts/tests') as directory:
             root=Path(directory)
             (root/'package.json').write_text(json.dumps({'private':True,'workspaces':['packages/*']}))
-            (root/'Makefile').write_text('include '+str(ROOT/'shared/bijux-makes-node/workspace.mk')+'\n')
+            (root/'Makefile').write_text('BIJUX_MAKE_COMPONENTS := node\ninclude '+str(ROOT/'shared/bijux-makes/bijux.mk')+'\n')
             npm=root/'npm'
             npm.write_text('#!/bin/sh\nprintf "%s|%s|%s|%s\\n" "$*" "$NPM_CONFIG_CACHE" "$NPM_CONFIG_LOGS_DIR" "$TMPDIR" >> "$BIJUX_TEST_OUTPUT"\n')
             npm.chmod(0o755)
             env={k:v for k,v in os.environ.items() if k not in {'TMPDIR','NPM_CONFIG_CACHE','NPM_CONFIG_LOGS_DIR'}}
             env['BIJUX_TEST_OUTPUT']=str(root/'commands.txt')
+            help_result=subprocess.run(['make','help'],cwd=root,env=env,text=True,capture_output=True,check=True)
+            self.assertIn('node-check',help_result.stdout)
             command=['make','NPM='+str(npm),'node-install','node-build','node-test','node-check']
             result=subprocess.run(command,cwd=root,env=env,text=True,capture_output=True)
             self.assertEqual(result.returncode,0,result.stderr)
