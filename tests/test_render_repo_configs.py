@@ -565,7 +565,13 @@ class RenderRepoConfigsTests(unittest.TestCase):
                     for step in jobs[gate]["steps"]
                     if step.get("run")
                 ]
-                self.assertIn(f"make {gate}", commands)
+                if repository_name == "bijux-core" and gate == "test":
+                    self.assertIn('make gh-test TEST_CHECK="accept"', commands)
+                    self.assertEqual(set(jobs[gate]["needs"]), {
+                        "test_plan", "test_libraries", "test_binaries", "test_tools", "test_rust", "test_python",
+                    })
+                else:
+                    self.assertIn(f"make {gate}", commands)
 
     def test_genomics_ci_keeps_source_checks_and_requires_distributed_product_tests(self) -> None:
         manifest = json.loads(MANIFEST_PATH.read_text(encoding="utf-8"))
