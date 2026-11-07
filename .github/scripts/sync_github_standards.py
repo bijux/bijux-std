@@ -320,6 +320,8 @@ def copy_repo_files(target_repo: str, repo_config: dict[str, Any], manifest: dic
     source_snapshots = WORKFLOW_EXECUTION.capture_sources(STD_REPO)
     prepared = prepare_runtime_workflows(repo_config, manifest)
     repo_dir = resolve_repository_checkout(target_repo)
+    if target_repo != "bijux-std" and repo_dir.resolve() == STD_REPO.resolve():
+        raise ValueError("Consumer synchronization cannot target canonical shared source")
     retirement = WORKFLOW_EXECUTION.retired_package_workflows.plan_retirement(repo_dir, target_repo)
     legacy_helper = qualified_legacy_policy_helper(repo_dir)
     for relative, content in source_snapshots.items():
@@ -373,7 +375,7 @@ def copy_repo_files(target_repo: str, repo_config: dict[str, Any], manifest: dic
         if path.exists():
             path.unlink()
 
-    if repo_dir.name != "bijux-std" and (repo_dir / ".bijux/shared").exists():
+    if target_repo != "bijux-std" and (repo_dir / ".bijux/shared").exists():
         for legacy_name in ("bijux-docs", "bijux-makes-py", "bijux-checks", "bijux-gh"):
             legacy_shared_path = repo_dir / "shared" / legacy_name
             if legacy_shared_path.exists():
