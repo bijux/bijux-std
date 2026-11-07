@@ -37,7 +37,7 @@ def classify(path):
         return 'workflow-and-policy', SOURCE_FAMILIES + FRONTEND_FAMILIES
     if path.startswith(('tests/', 'shared/bijux-docs/', 'shared/bijux-gh/', 'makes/')) or path == 'Makefile':
         return 'documentation-verification', SOURCE_FAMILIES + FRONTEND_FAMILIES
-    if path.startswith(('shared/bijux-checks/', 'shared/bijux-makes/', 'shared/bijux-makes-py/', 'shared/bijux-makes-rs/')):
+    if path.startswith(('shared/bijux-checks/', 'shared/bijux-makes/', 'shared/bijux-makes-py/', 'shared/bijux-makes-rs/', 'shared/bijux-makes-node/')):
         return 'shared-source-contracts', SOURCE_FAMILIES + FRONTEND_FAMILIES
     if path.startswith(('.github/ISSUE_TEMPLATE/', '.github/PULL_REQUEST_TEMPLATE/', '.github/rulesets/')):
         return 'repository-governance', SOURCE_FAMILIES

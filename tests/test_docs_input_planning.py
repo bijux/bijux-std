@@ -73,7 +73,8 @@ class InputPlanningMutationTests(unittest.TestCase):
                  'tests/bijux-docs/generated/content/page.md', 'tests/bijux-docs/tooling/diagrams/input.json',
                  'tests/bijux-docs/unit/browser.test.js', 'tests/bijux-docs/package-lock.json',
                  'shared/bijux-docs/security/renderer.py', 'shared/bijux-gh/workflows/deploy-docs.yml',
-                 '.github/standards/workflow-sources/bijux-std.yml', 'makes/bijux-docs.mk']
+                 '.github/standards/workflow-sources/bijux-std.yml', 'makes/bijux-docs.mk',
+                 'shared/bijux-makes-node/workspace.mk']
         for path in paths:
             with self.subTest(path=path):
                 plan = select([{'status': 'M', 'paths': [path]}])

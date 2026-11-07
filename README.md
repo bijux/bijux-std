@@ -322,3 +322,13 @@ mechanics belong here; product decisions do not.
 ## License
 
 This repository is licensed under the [MIT License](LICENSE).
+
+### Local contract runtime
+
+The native renderer contracts use Node 24.21.0 and Bash 4 or later. Select those
+runtimes before running `make contract-tests`; the default macOS Bash 3.2 lacks
+required shell syntax. Install the exact Python fixture graph from
+`tests/bijux-docs/generated/requirements.lock.txt` into an environment under
+`artifacts/` and select that environment's `python3`. System Python without this
+graph cannot load all contracts. The Make target installs its pinned diagram
+runtime under `artifacts/website-security/dependencies`.
