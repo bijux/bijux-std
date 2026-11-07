@@ -31,12 +31,13 @@ class DocumentationPublicationSourceTests(unittest.TestCase):
         self.assertNotIn("always()", uploader.get("if", ""))
         self.assertIn("verify_command", verifier["env"]["DOCS_COMMAND"])
 
-    def test_all_twelve_manual_projections_keep_budget_and_source_admission(self):
+    def test_every_docs_publisher_keeps_budget_and_source_admission(self):
         manifest = json.loads((ROOT / ".github/standards/repo-config.manifest.json").read_text())
-        self.assertEqual(len(manifest["repositories"]), 12)
+        publishers = [repo for repo in manifest["repositories"] if "deploy-docs" in repo["workflow_allowlist"]]
+        self.assertEqual(len(publishers), 12)
         source = self.workflow()
         before = copy.deepcopy(source)
-        for repo in manifest["repositories"]:
+        for repo in publishers:
             with self.subTest(repository=repo["name"]):
                 policy = repo["workflow_execution_policy"]
                 projected = MODULE.project_publication_entrypoints("deploy-docs", source, policy)

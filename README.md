@@ -88,7 +88,8 @@ An owner consolidates supported dependency changes into a locally qualified
 human PR before normal merging. The former automatic merge workflow is a
 manual explanation of this policy and grants no merge authority.
 
-Eleven repositories declare `main_verification: accepted-pull-request`; their
+The governed repositories except Masterclass declare
+`main_verification: accepted-pull-request`; their
 normal PR merge does not repeat the same complete verification on a main push.
 GitHub updates its dependency graph from supported manifests and lockfiles.
 Manual publication verifies the exact human PR that produced current main,
@@ -155,6 +156,7 @@ language-neutral Make behavior form the baseline contract.
 | `docs` | `bijux-docs` |
 | `python` | `bijux-makes-py` |
 | `rust` | `bijux-makes-rs` |
+| `node` | `bijux-makes-node` |
 
 For example, a Rust repository with a documentation site adopts:
 
@@ -320,3 +322,13 @@ mechanics belong here; product decisions do not.
 ## License
 
 This repository is licensed under the [MIT License](LICENSE).
+
+### Local contract runtime
+
+The native renderer contracts use Node 24.21.0 and Bash 4 or later. Select those
+runtimes before running `make contract-tests`; the default macOS Bash 3.2 lacks
+required shell syntax. Install the exact Python fixture graph from
+`tests/bijux-docs/generated/requirements.lock.txt` into an environment under
+`artifacts/` and select that environment's `python3`. System Python without this
+graph cannot load all contracts. The Make target installs its pinned diagram
+runtime under `artifacts/website-security/dependencies`.

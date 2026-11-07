@@ -12,7 +12,7 @@ import unittest
 ROOT = Path(__file__).resolve().parents[1]
 CHECKS = ROOT / "shared/bijux-checks"
 GUARD = CHECKS / "scripts/verify-documentation-components.sh"
-NAMES = ("bijux-docs", "bijux-makes", "bijux-checks", "bijux-gh", "bijux-makes-py", "bijux-makes-rs")
+NAMES = ("bijux-docs", "bijux-makes", "bijux-checks", "bijux-gh", "bijux-makes-py", "bijux-makes-rs", "bijux-makes-node")
 
 
 class DocumentationCompositionContractTests(unittest.TestCase):

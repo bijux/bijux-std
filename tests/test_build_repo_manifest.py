@@ -33,12 +33,13 @@ class BuildRepoManifestTests(unittest.TestCase):
 
     def test_capture_retains_reviewed_policy_without_inferring_from_runtime(self) -> None:
         inventory = MODULE.load_workflow_inventory()
-        policy = {"schema": 1, "automatic_runs": "repository-policy-only", "publication_entrypoints": {"deploy-docs": {"mode": "manual-only", "refs": "main-only"}}}
+        policy = {"schema": 1, "dependency_pull_requests": "notification-only", "dependency_merge": "owner-consolidation", "automatic_runs": "repository-policy-only", "publication_entrypoints": {"deploy-docs": {"mode": "manual-only", "refs": "main-only"}}}
         with tempfile.TemporaryDirectory() as workspace:
             standard = Path(workspace) / "bijux-std"
             manifest_path = standard / ".github/standards/repo-config.manifest.json"
             manifest_path.parent.mkdir(parents=True)
-            manifest_path.write_text(json.dumps({"workflow_inventory": inventory, "repositories": [{"name": "bijux-atlas", "workflow_allowlist": ["github-policy", "deploy-docs"], "workflow_execution_policy": policy}, {"name": "bijux-canon"}]}))
+            (manifest_path.parent / "node-workspaces.json").write_text(json.dumps({"version":1,"repositories":[]}))
+            manifest_path.write_text(json.dumps({"workflow_inventory": inventory, "repositories": [{"name": "bijux-atlas", "workflow_allowlist": ["dependency-notice", "github-policy", "deploy-docs"], "additional_required_status_checks": [{"context": "atlas / domain", "workflow": "Validation"}], "workflow_execution_policy": policy}, {"name": "bijux-canon"}]}))
             atlas = Path(workspace) / "bijux-atlas"
             canon = Path(workspace) / "bijux-canon"
             atlas.mkdir()
@@ -54,6 +55,8 @@ class BuildRepoManifestTests(unittest.TestCase):
                 MODULE.main()
             captured = json.loads(first)
             self.assertEqual(captured["repositories"][0]["workflow_execution_policy"], policy)
+            self.assertIn("dependency-notice", captured["repositories"][0]["workflow_allowlist"])
+            self.assertEqual(captured["repositories"][0]["additional_required_status_checks"], [{"context": "atlas / domain", "workflow": "Validation"}])
             self.assertNotIn("workflow_execution_policy", captured["repositories"][1])
             self.assertEqual(manifest_path.read_bytes(), first)
 
@@ -138,3 +141,33 @@ class BuildRepoManifestTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class NodeWorkspaceRegistryTests(unittest.TestCase):
+    def test_registered_workspace_has_all_product_checks_and_publication_stays_disabled(self):
+        profiles=MODULE.node_workspace_profiles()
+        self.assertEqual(set(profiles),{'bijux-ro-crate-node'})
+        entry=profiles['bijux-ro-crate-node']
+        values={item['key']:item['value'] for item in entry['release_env']}
+        self.assertIs(values['BIJUX_NPM_ENABLED'],False)
+        self.assertEqual([p['name'] for p in values['BIJUX_NPM_PACKAGES_JSON']],['@bijux/ro-crate-core','@bijux/ro-crate-validator'])
+        self.assertNotIn('deploy-docs',entry['workflow_allowlist'])
+        self.assertEqual(len(entry['additional_required_status_checks']),4)
+        self.assertEqual(entry['workflow_execution_policy']['publication_entrypoints'],{'release-npm':{'mode':'manual-only','controller':'iac'}})
+
+    def test_node_generation_preserves_every_unrelated_repository_and_is_idempotent(self):
+        original=json.loads((MODULE.STD_REPO/'.github/standards/repo-config.manifest.json').read_text())
+        profiles=MODULE.node_workspace_profiles()
+        with tempfile.TemporaryDirectory() as directory:
+            root=Path(directory)
+            target=root/'.github/standards/repo-config.manifest.json'
+            target.parent.mkdir(parents=True)
+            target.write_text(json.dumps(original))
+            with mock.patch.object(MODULE,'STD_REPO',root),mock.patch.object(MODULE,'node_workspace_profiles',return_value=profiles):
+                MODULE.register_node_workspaces()
+                first=target.read_bytes()
+                MODULE.register_node_workspaces()
+            self.assertEqual(target.read_bytes(),first)
+            result=json.loads(first)
+            self.assertEqual([e for e in result['repositories'] if e['name'] not in profiles],
+                             [e for e in original['repositories'] if e['name'] not in profiles])

@@ -66,9 +66,9 @@ class DirectoryDigestBatchingTests(unittest.TestCase):
         self.assertEqual(new.stdout, old.stdout)
         return old.stdout.decode().strip(), old_seconds, new_seconds
 
-    def test_actual_six_canonical_tree_digests_and_timings(self):
+    def test_canonical_tree_digests_and_timings(self):
         records = []
-        for name in ("bijux-checks", "bijux-docs", "bijux-gh", "bijux-makes", "bijux-makes-py", "bijux-makes-rs"):
+        for name in ("bijux-checks", "bijux-docs", "bijux-gh", "bijux-makes", "bijux-makes-py", "bijux-makes-rs", "bijux-makes-node"):
             with self.subTest(directory=name):
                 digest, old_seconds, new_seconds = self.assert_equivalent(ROOT / "shared" / name)
                 records.append({"directory": "shared/" + name, "digest": digest,

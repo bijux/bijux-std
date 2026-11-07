@@ -13,7 +13,7 @@ from unittest.mock import patch
 
 ROOT = Path(__file__).resolve().parents[1]
 SHARED = ROOT / "shared/bijux-checks"
-DIRECTORIES = ["bijux-docs", "bijux-makes", "bijux-makes-py", "bijux-makes-rs", "bijux-checks", "bijux-gh"]
+DIRECTORIES = ["bijux-docs", "bijux-makes", "bijux-makes-py", "bijux-makes-rs", "bijux-makes-node", "bijux-checks", "bijux-gh"]
 
 
 class SharedComponentRefreshTests(unittest.TestCase):
@@ -92,18 +92,18 @@ class SharedComponentRefreshTests(unittest.TestCase):
         result = self.refresh()
         self.assertEqual(result.returncode, 0, result.stderr)
         after = self.snapshot()
-        for name in ("bijux-docs", "bijux-makes-py", "bijux-makes-rs"):
+        for name in ("bijux-docs", "bijux-makes-py", "bijux-makes-rs", "bijux-makes-node"):
             path = f".bijux/shared/{name}/contract.txt"
             self.assertEqual(after[path], before[path])
         for name in ("bijux-makes", "bijux-checks", "bijux-gh"):
             self.assertEqual(after[f".bijux/shared/{name}/contract.txt"], b"new component\n")
         rows = (self.consumer / ".bijux/shared/shared-dir-sha256.txt").read_text().splitlines()
-        self.assertEqual(len(rows), 6)
+        self.assertEqual(len(rows), len(DIRECTORIES))
         self.assertEqual(rows[0], before[".bijux/shared/shared-dir-sha256.txt"].decode().splitlines()[0])
         receipt = json.loads((self.consumer / "artifacts/bijux-std/source-provenance.json").read_text())
         self.assertTrue(receipt["preserve_unselected"])
         self.assertEqual({r["directory"] for r in receipt["retained_components"]},
-                         {"shared/bijux-docs", "shared/bijux-makes-py", "shared/bijux-makes-rs"})
+                         {"shared/bijux-docs", "shared/bijux-makes-py", "shared/bijux-makes-rs", "shared/bijux-makes-node"})
         self.assertEqual({r["source_sha"] for r in receipt["retained_components"]}, {self.old_sha})
 
     def test_default_refresh_still_prunes_unselected_components(self):
@@ -279,7 +279,7 @@ class SharedComponentRefreshTests(unittest.TestCase):
 
     def test_provider_uses_own_shared_source_despite_historical_metadata_pins(self):
         self.prepare_full_reader_contract()
-        provider = self.base / "bijux-std"
+        provider = self.base / "owned-standard"
         self.consumer.rename(provider)
         self.consumer = provider
         shutil.rmtree(provider / ".bijux")
@@ -301,10 +301,11 @@ class SharedComponentRefreshTests(unittest.TestCase):
         self.assertIn("using local bijux-std manifest", result.stdout)
 
     def test_additive_provider_mode_is_refused_even_with_forced_external_mode(self):
-        provider = self.base / "bijux-std"
+        provider = self.base / "owned-standard"
         self.consumer.rename(provider)
         self.consumer = provider
         shutil.copytree(provider / ".bijux/shared", provider / "shared")
+        self.git(provider, "remote", "add", "origin", "https://github.com/bijux/bijux-std.git")
         result = self.assert_refusal_preserves_inputs()
         self.assertIn("explicit consumer capabilities", result.stderr)
 

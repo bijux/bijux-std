@@ -63,11 +63,13 @@ DEFAULT_REPOS = [
     "bijux-phylogenetics",
     "bijux-pollenomics",
     "bijux-proteomics",
+    "bijux-ro-crate-node",
     "bijux-gnss",
     "bijux.github.io",
 ]
 
 BASE_FILE_MAPPINGS: list[tuple[str, str]] = [
+    ("shared/bijux-gh/scripts/npm_release.py", ".bijux/shared/bijux-gh/scripts/npm_release.py"),
     ("shared/bijux-gh/scripts/publication_admission.py", ".bijux/shared/bijux-gh/scripts/publication_admission.py"),
     (".github/CODEOWNERS", ".github/CODEOWNERS"),
     (".github/ISSUE_TEMPLATE/bug-report.yml", ".github/ISSUE_TEMPLATE/bug-report.yml"),
@@ -100,6 +102,7 @@ BASE_FILE_MAPPINGS: list[tuple[str, str]] = [
     (".github/scripts/render_repo_configs.py", ".github/scripts/render_repo_configs.py"),
     (".github/scripts/sync_github_standards.py", ".github/scripts/sync_github_standards.py"),
     (".github/scripts/wait_for_ci.py", ".github/scripts/wait_for_ci.py"),
+    (".github/standards/node-workspaces.json", ".github/standards/node-workspaces.json"),
     (".github/standards/workflow-inventory.json", ".github/standards/workflow-inventory.json"),
     (".github/standards/repo-config.manifest.json", ".github/standards/repo-config.manifest.json"),
     (".github/standards/workflow-sources/bijux-std.yml", ".github/standards/workflow-sources/bijux-std.yml"),
@@ -317,6 +320,8 @@ def copy_repo_files(target_repo: str, repo_config: dict[str, Any], manifest: dic
     source_snapshots = WORKFLOW_EXECUTION.capture_sources(STD_REPO)
     prepared = prepare_runtime_workflows(repo_config, manifest)
     repo_dir = resolve_repository_checkout(target_repo)
+    if target_repo != "bijux-std" and repo_dir.resolve() == STD_REPO.resolve():
+        raise ValueError("Consumer synchronization cannot target canonical shared source")
     retirement = WORKFLOW_EXECUTION.retired_package_workflows.plan_retirement(repo_dir, target_repo)
     legacy_helper = qualified_legacy_policy_helper(repo_dir)
     for relative, content in source_snapshots.items():
@@ -370,7 +375,7 @@ def copy_repo_files(target_repo: str, repo_config: dict[str, Any], manifest: dic
         if path.exists():
             path.unlink()
 
-    if repo_dir.name != "bijux-std" and (repo_dir / ".bijux/shared").exists():
+    if target_repo != "bijux-std" and (repo_dir / ".bijux/shared").exists():
         for legacy_name in ("bijux-docs", "bijux-makes-py", "bijux-checks", "bijux-gh"):
             legacy_shared_path = repo_dir / "shared" / legacy_name
             if legacy_shared_path.exists():

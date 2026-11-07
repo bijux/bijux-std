@@ -31,6 +31,28 @@ SPEC.loader.exec_module(MODULE)
 
 
 class SyncGithubStandardsTests(unittest.TestCase):
+    def test_consumer_cannot_target_the_actual_canonical_source_checkout(self):
+        manifest=MODULE.load_manifest()
+        with mock.patch.object(MODULE,'resolve_repository_checkout',return_value=MODULE.STD_REPO), \
+             mock.patch.object(MODULE,'prepare_runtime_workflows',return_value={}), \
+             mock.patch.object(MODULE,'copy_file_mapping') as copy_file:
+            with self.assertRaisesRegex(ValueError,'canonical shared source'):
+                MODULE.copy_repo_files('bijux-atlas',MODULE.find_repo_config(manifest,'bijux-atlas'),manifest)
+        copy_file.assert_not_called()
+
+    def test_canonical_source_cleanup_uses_repository_identity_not_worktree_basename(self):
+        manifest=MODULE.load_manifest()
+        for name,basename,preserved in [('bijux-std','owned-checkout',True),('bijux-atlas','bijux-std',False)]:
+            with self.subTest(repository=name),tempfile.TemporaryDirectory() as directory:
+                target=Path(directory)/basename
+                marker=target/'shared/bijux-gh/owned.txt'
+                marker.parent.mkdir(parents=True)
+                marker.write_text('repository-owned source')
+                with mock.patch.object(MODULE,'resolve_repository_checkout',return_value=target):
+                    MODULE.copy_repo_files(name,MODULE.find_repo_config(manifest,name),manifest)
+                self.assertEqual(marker.exists(),preserved)
+                if preserved:self.assertEqual(marker.read_text(),'repository-owned source')
+
     def test_source_capture_failure_refuses_before_any_managed_copy(self) -> None:
         manifest = copy.deepcopy(MODULE.load_manifest())
         repo = MODULE.find_repo_config(manifest, "bijux-atlas")
