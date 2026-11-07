@@ -28,7 +28,7 @@ class PublicationAdmissionTests(unittest.TestCase):
     def runs(self):
         return [{"id": index + 1, "name": context, "head_sha": HEAD, "app": {"id": 15368},
                  "status": "completed", "conclusion": "success"}
-                for index, context in enumerate(["policy / github", "policy / pr approval", "std / standard", "std / report"])]
+                for index, context in enumerate(["policy / github", "policy / pr approval", "std / standard", "std / report", "verification-ready"])]
 
     def pull(self):
         return {"number": 42, "state": "closed", "merged": True, "merged_at": "2026-10-11T00:00:00Z",
@@ -45,7 +45,7 @@ class PublicationAdmissionTests(unittest.TestCase):
             return {"sha": COMMIT, "parents": [{"sha": BASE}, {"sha": HEAD}]}
         return [{"type": "required_status_checks", "parameters": {"required_status_checks": [
             {"context": context, "integration_id": 15368}
-            for context in ["policy / github", "policy / pr approval", "std / standard", "std / report"]]}}]
+            for context in ["policy / github", "policy / pr approval", "std / standard", "std / report", "verification-ready"]]}}]
 
     def test_authorized_manual_request_is_bound_to_commit_and_version_tag(self):
         with patch.object(MODULE, "api", side_effect=self.api), patch.object(MODULE, "check_runs", return_value=self.runs()), patch.object(MODULE, "associated_pulls", return_value=[self.pull()]):
@@ -56,6 +56,56 @@ class PublicationAdmissionTests(unittest.TestCase):
         self.assertEqual(receipt["accepted_pull_request"], 42)
         self.assertEqual(receipt["verification_commit"], HEAD)
         self.assertIn("policy / pr approval", receipt["required_commit_checks"])
+
+    def test_canonical_product_bindings_cannot_be_removed_from_effective_rules(self):
+        manifest = json.loads((ROOT / ".github/standards/repo-config.manifest.json").read_text())
+        entry = next(repo for repo in manifest["repositories"] if repo["name"] == "bijux-ro-crate-node")
+        product = {check["context"] for check in entry["additional_required_status_checks"]}
+        self.assertEqual(product, {"packages / node-22.23.4", "packages / node-24.3.0",
+                                   "Python reference", "Browser validation and draft lifecycle"})
+        common = {"policy / github", "policy / pr approval", "std / standard", "std / report"}
+        pull = copy.deepcopy(self.pull())
+        for branch in ("base", "head"):
+            pull[branch]["repo"]["full_name"] = "bijux/bijux-ro-crate-node"
+        env = {**self.environment(), "PUBLICATION_REPOSITORY": "bijux/bijux-ro-crate-node",
+               "PUBLICATION_WORKFLOW": "release-npm"}
+
+        def exercise(bound, runs):
+            def api(path):
+                if "/rules/branches/main" in path:
+                    return [{"type": "required_status_checks", "parameters": {"required_status_checks": [
+                        {"context": name, "integration_id": 15368} for name in sorted(bound)]}}]
+                if "/pulls/" in path:
+                    return pull
+                return self.api(path)
+            with patch.object(MODULE, "api", side_effect=api), \
+                    patch.object(MODULE, "check_runs", return_value=runs), \
+                    patch.object(MODULE, "associated_pulls", return_value=[pull]):
+                return MODULE.admit(env)
+
+        runs = [{"id": i + 1, "name": name, "head_sha": HEAD, "app": {"id": 15368},
+                 "status": "completed", "conclusion": "success"}
+                for i, name in enumerate(sorted(common | product))]
+        for removed in [product, *[{context} for context in sorted(product)]]:
+            with self.subTest(removed=removed), self.assertRaisesRegex(ValueError, "canonical product check bindings"):
+                exercise((common | product) - removed, runs)
+        for missing in product:
+            with self.subTest(missing=missing), self.assertRaisesRegex(ValueError, "unhealthy or missing"):
+                exercise(common | product, [run for run in runs if run["name"] != missing])
+        receipt = exercise(common | product, runs)
+        self.assertEqual(set(receipt["required_commit_checks"]), common | product)
+        self.assertEqual(receipt["verification_commit"], HEAD)
+
+    def test_malformed_canonical_product_checks_are_rejected(self):
+        manifest = json.loads((ROOT / ".github/standards/repo-config.manifest.json").read_text())
+        entry = next(repo for repo in manifest["repositories"] if repo["name"] == "bijux-canon")
+        for invalid in (None, {}, ["verification-ready"], [{}], [{"context": ""}], [{"context": 1}]):
+            entry["additional_required_status_checks"] = invalid
+            with self.subTest(invalid=invalid), patch.object(MODULE.Path, "read_text", return_value=json.dumps(manifest)), \
+                    patch.object(MODULE, "api", side_effect=self.api), patch.object(MODULE, "check_runs") as checks:
+                with self.assertRaisesRegex(ValueError, "malformed canonical"):
+                    MODULE.admit(self.environment())
+                checks.assert_not_called()
 
     def test_routed_foundations_cannot_publish_an_independent_site(self):
         for repository in ("bijux/bijux-std", "bijux/bijux-iac"):
@@ -88,12 +138,12 @@ class PublicationAdmissionTests(unittest.TestCase):
         contexts = {"std / report"}
         for conclusion in ["failure", "cancelled", "skipped", None]:
             runs = self.runs()
-            runs.append({**runs[-1], "id": 100, "conclusion": conclusion})
+            runs.append({**next(run for run in runs if run["name"] == "std / report"), "id": 100, "conclusion": conclusion})
             with self.subTest(conclusion=conclusion), self.assertRaises(ValueError):
                 MODULE.require_green_checks(contexts, HEAD, runs)
         for changes in [{"head_sha": "d" * 40}, {"app": {"id": 1}}, {"status": "in_progress"}]:
             with self.subTest(changes=changes), self.assertRaises(ValueError):
-                MODULE.require_green_checks(contexts, HEAD, [{**self.runs()[-1], **changes}])
+                MODULE.require_green_checks(contexts, HEAD, [{**next(run for run in self.runs() if run["name"] == "std / report"), **changes}])
         with self.assertRaises(ValueError):
             MODULE.require_green_checks(contexts, HEAD, [])
 
