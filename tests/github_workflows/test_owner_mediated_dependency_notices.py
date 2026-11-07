@@ -26,7 +26,8 @@ class OwnerMediatedDependencyNoticeTests(unittest.TestCase):
     def test_actual_family_has_uniform_notification_and_explicit_master_exception(self):
         manifest = json.loads((ROOT / '.github/standards/repo-config.manifest.json').read_text())
         repositories = [repo['name'] for repo in manifest['repositories']]
-        self.assertEqual(len(repositories), 12)
+        self.assertEqual(len(repositories), 13)
+        self.assertIn('bijux-ro-crate-node', repositories)
         policies = MODULE.validate_manifest(manifest, repositories)
         for name, policy in policies.items():
             self.assertEqual(policy['dependency_pull_requests'], 'notification-only', name)

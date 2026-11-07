@@ -2,6 +2,8 @@
 from __future__ import annotations
 
 import json
+import argparse
+import copy
 import os
 import shlex
 import subprocess
@@ -55,6 +57,7 @@ MANAGED_REPOSITORIES = [
     "bijux-phylogenetics",
     "bijux-pollenomics",
     "bijux-proteomics",
+    "bijux-ro-crate-node",
     "bijux-gnss",
     "bijux-std",
     "bijux.github.io",
@@ -253,6 +256,33 @@ def parse_text(path: Path) -> str | None:
     return path.read_text(encoding="utf-8").strip()
 
 
+
+def node_workspace_profiles() -> dict[str, dict]:
+    source = json.loads((STD_REPO / '.github/standards/node-workspaces.json').read_text())
+    if (set(source) != {'version','repositories'} or type(source.get('version')) is not int
+            or source['version'] != 1 or not isinstance(source.get('repositories'), list)):
+        raise ValueError('Invalid canonical Node workspace registry')
+    profiles = {}
+    for entry in source['repositories']:
+        if not isinstance(entry, dict) or entry.get('name') not in MANAGED_REPOSITORIES or entry['name'] in profiles:
+            raise ValueError('Node workspace must identify one distinct governed repository')
+        profiles[entry['name']] = copy.deepcopy(entry)
+    WORKFLOW_EXECUTION.validate_manifest({'workflow_inventory':load_workflow_inventory(),
+                                         'repositories':list(profiles.values())}, list(profiles))
+    return profiles
+
+
+def register_node_workspaces() -> None:
+    """Regenerate reviewed Node declarations without recapturing unrelated checkouts."""
+    path = STD_REPO / '.github/standards/repo-config.manifest.json'
+    manifest = json.loads(path.read_text())
+    profiles = node_workspace_profiles()
+    entries = [entry for entry in manifest['repositories'] if entry['name'] not in profiles]
+    manifest['repositories'] = entries + list(profiles.values())
+    manifest['workflow_inventory'] = load_workflow_inventory()
+    WORKFLOW_EXECUTION.validate_manifest(manifest, MANAGED_REPOSITORIES)
+    path.write_text(json.dumps(manifest, indent=2)+'\n')
+
 def main() -> None:
     inventory = load_workflow_inventory()
     existing_path = STD_REPO / ".github/standards/repo-config.manifest.json"
@@ -266,7 +296,11 @@ def main() -> None:
     WORKFLOW_EXECUTION.validate_inventory(inventory)
     manifest: dict = {"version": 2, "workflow_inventory": inventory, "repositories": []}
 
+    profiles = node_workspace_profiles()
     for repo_name in MANAGED_REPOSITORIES:
+        if repo_name in profiles:
+            manifest['repositories'].append(profiles[repo_name])
+            continue
         repo_path = resolve_repository_checkout(repo_name)
         repo_entry: dict = {"name": repo_name}
         if retained.get(repo_name) is not None:
@@ -303,4 +337,7 @@ def main() -> None:
 
 
 if __name__ == "__main__":
-    main()
+    parser=argparse.ArgumentParser(description="Capture canonical repository configuration")
+    parser.add_argument("--node-workspaces-only",action="store_true")
+    args=parser.parse_args()
+    register_node_workspaces() if args.node_workspaces_only else main()

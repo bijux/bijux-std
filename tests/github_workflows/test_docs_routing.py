@@ -10,9 +10,9 @@ from .policy_fixtures import ROOT, MODULE, RENDERER
 class DocumentationRoutingTests(unittest.TestCase):
     def setUp(self):
         self.manifest = json.loads((ROOT / '.github/standards/repo-config.manifest.json').read_text())
-        self.repositories = {entry['name']: entry for entry in self.manifest['repositories']}
+        self.repositories = {entry['name']: entry for entry in self.manifest['repositories'] if 'deploy-docs' in entry['workflow_allowlist']}
 
-    def test_every_family_member_has_the_same_manual_main_contract(self):
+    def test_every_docs_publisher_has_the_same_manual_main_contract(self):
         self.assertEqual(len(self.repositories), 12)
         for name, entry in self.repositories.items():
             with self.subTest(repository=name):
@@ -64,7 +64,7 @@ class DocumentationRoutingTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             MODULE.validate_manifest(changed, ['bijux-core'])
 
-    def test_all_twelve_managed_workflows_are_identical_manual_entrypoints(self):
+    def test_docs_publishers_have_identical_manual_entrypoints(self):
         sync = MODULE.source_loading.load_script(ROOT / '.github/scripts/sync_github_standards.py', 'bijux_docs_route_sync')
         sync.resolve_repository_checkout = lambda name: ROOT
         workflows = []

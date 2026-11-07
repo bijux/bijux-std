@@ -134,7 +134,7 @@ def external_publisher(job: dict) -> bool:
                 continue
             # A dry-run command cannot hide a later real publisher on the same line.
             for command in re.split(r"&&|\|\||[;|]", line):
-                publisher = re.search(r"(?:^|\s)(?:cargo\s+publish|uv\s+publish|twine\s+upload|docker\s+push|gh\s+release\s+(?:create|upload)|(?:npm|pnpm)\s+(?:stage\s+)?publish|yarn\s+(?:npm\s+)?publish)\b", command)
+                publisher = re.search(r"(?:^|\s)(?:cargo\s+publish|uv\s+publish|twine\s+upload|docker\s+push|gh\s+release\s+(?:create|upload)|(?:npm|pnpm)\s+(?:stage\s+)?publish|yarn\s+(?:npm\s+)?publish|\S*npm_release\.py\s+publish)\b", command)
                 if publisher and not re.search(r"(?:^|\s)--dry-run(?:\s|$)", command):
                     return True
     return False

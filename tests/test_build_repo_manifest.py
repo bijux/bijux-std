@@ -38,6 +38,7 @@ class BuildRepoManifestTests(unittest.TestCase):
             standard = Path(workspace) / "bijux-std"
             manifest_path = standard / ".github/standards/repo-config.manifest.json"
             manifest_path.parent.mkdir(parents=True)
+            (manifest_path.parent / "node-workspaces.json").write_text(json.dumps({"version":1,"repositories":[]}))
             manifest_path.write_text(json.dumps({"workflow_inventory": inventory, "repositories": [{"name": "bijux-atlas", "workflow_allowlist": ["github-policy", "deploy-docs"], "workflow_execution_policy": policy}, {"name": "bijux-canon"}]}))
             atlas = Path(workspace) / "bijux-atlas"
             canon = Path(workspace) / "bijux-canon"
@@ -138,3 +139,33 @@ class BuildRepoManifestTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class NodeWorkspaceRegistryTests(unittest.TestCase):
+    def test_registered_workspace_has_all_product_checks_and_publication_stays_disabled(self):
+        profiles=MODULE.node_workspace_profiles()
+        self.assertEqual(set(profiles),{'bijux-ro-crate-node'})
+        entry=profiles['bijux-ro-crate-node']
+        values={item['key']:item['value'] for item in entry['release_env']}
+        self.assertIs(values['BIJUX_NPM_ENABLED'],False)
+        self.assertEqual([p['name'] for p in values['BIJUX_NPM_PACKAGES_JSON']],['@bijux/ro-crate-core','@bijux/ro-crate-validator'])
+        self.assertNotIn('deploy-docs',entry['workflow_allowlist'])
+        self.assertEqual(len(entry['additional_required_status_checks']),4)
+        self.assertEqual(entry['workflow_execution_policy']['publication_entrypoints'],{'release-npm':{'mode':'manual-only','controller':'iac'}})
+
+    def test_node_generation_preserves_every_unrelated_repository_and_is_idempotent(self):
+        original=json.loads((MODULE.STD_REPO/'.github/standards/repo-config.manifest.json').read_text())
+        profiles=MODULE.node_workspace_profiles()
+        with tempfile.TemporaryDirectory() as directory:
+            root=Path(directory)
+            target=root/'.github/standards/repo-config.manifest.json'
+            target.parent.mkdir(parents=True)
+            target.write_text(json.dumps(original))
+            with mock.patch.object(MODULE,'STD_REPO',root),mock.patch.object(MODULE,'node_workspace_profiles',return_value=profiles):
+                MODULE.register_node_workspaces()
+                first=target.read_bytes()
+                MODULE.register_node_workspaces()
+            self.assertEqual(target.read_bytes(),first)
+            result=json.loads(first)
+            self.assertEqual([e for e in result['repositories'] if e['name'] not in profiles],
+                             [e for e in original['repositories'] if e['name'] not in profiles])

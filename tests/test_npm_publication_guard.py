@@ -9,7 +9,7 @@ POLICY=runpy.run_path(str(ROOT/'.github/scripts/check_workflow_projection.py'))[
 class NpmPublicationGuardTests(unittest.TestCase):
     def test_real_and_staged_registry_writes_are_publishers(self):
         for command in ['npm publish package.tgz --access public','npm stage publish package.tgz',
-                        'pnpm publish','yarn npm publish','npm publish --dry-run; npm publish',
+                        'pnpm publish','yarn npm publish','python3 .bijux/shared/bijux-gh/scripts/npm_release.py publish','npm publish --dry-run; npm publish',
                         'npm publish --dry-run && cargo publish','echo --dry-run; npm publish']:
             with self.subTest(command=command):
                 self.assertTrue(POLICY.publication.external_publisher({'steps':[{'run':command}]}))

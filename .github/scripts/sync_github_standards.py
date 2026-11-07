@@ -63,11 +63,13 @@ DEFAULT_REPOS = [
     "bijux-phylogenetics",
     "bijux-pollenomics",
     "bijux-proteomics",
+    "bijux-ro-crate-node",
     "bijux-gnss",
     "bijux.github.io",
 ]
 
 BASE_FILE_MAPPINGS: list[tuple[str, str]] = [
+    ("shared/bijux-gh/scripts/npm_release.py", ".bijux/shared/bijux-gh/scripts/npm_release.py"),
     ("shared/bijux-gh/scripts/publication_admission.py", ".bijux/shared/bijux-gh/scripts/publication_admission.py"),
     (".github/CODEOWNERS", ".github/CODEOWNERS"),
     (".github/ISSUE_TEMPLATE/bug-report.yml", ".github/ISSUE_TEMPLATE/bug-report.yml"),
@@ -100,6 +102,7 @@ BASE_FILE_MAPPINGS: list[tuple[str, str]] = [
     (".github/scripts/render_repo_configs.py", ".github/scripts/render_repo_configs.py"),
     (".github/scripts/sync_github_standards.py", ".github/scripts/sync_github_standards.py"),
     (".github/scripts/wait_for_ci.py", ".github/scripts/wait_for_ci.py"),
+    (".github/standards/node-workspaces.json", ".github/standards/node-workspaces.json"),
     (".github/standards/workflow-inventory.json", ".github/standards/workflow-inventory.json"),
     (".github/standards/repo-config.manifest.json", ".github/standards/repo-config.manifest.json"),
     (".github/standards/workflow-sources/bijux-std.yml", ".github/standards/workflow-sources/bijux-std.yml"),

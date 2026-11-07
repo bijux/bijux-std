@@ -88,7 +88,8 @@ An owner consolidates supported dependency changes into a locally qualified
 human PR before normal merging. The former automatic merge workflow is a
 manual explanation of this policy and grants no merge authority.
 
-Eleven repositories declare `main_verification: accepted-pull-request`; their
+The governed repositories except Masterclass declare
+`main_verification: accepted-pull-request`; their
 normal PR merge does not repeat the same complete verification on a main push.
 GitHub updates its dependency graph from supported manifests and lockfiles.
 Manual publication verifies the exact human PR that produced current main,
