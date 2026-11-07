@@ -130,8 +130,11 @@ def external_publisher(job: dict) -> bool:
         if action == "docker/build-push-action" and step.get("with", {}).get("push") not in {None, False, "false"}:
             return True
         for line in str(step.get("run", "")).splitlines():
-            if line.lstrip().startswith("#") or "--dry-run" in line:
+            if line.lstrip().startswith("#"):
                 continue
-            if re.search(r"(?:^|[;&\s])(?:cargo\s+publish|uv\s+publish|twine\s+upload|docker\s+push|gh\s+release\s+(?:create|upload))\b", line):
-                return True
+            # A dry-run command cannot hide a later real publisher on the same line.
+            for command in re.split(r"&&|\|\||[;|]", line):
+                publisher = re.search(r"(?:^|\s)(?:cargo\s+publish|uv\s+publish|twine\s+upload|docker\s+push|gh\s+release\s+(?:create|upload)|(?:npm|pnpm)\s+(?:stage\s+)?publish|yarn\s+(?:npm\s+)?publish)\b", command)
+                if publisher and not re.search(r"(?:^|\s)--dry-run(?:\s|$)", command):
+                    return True
     return False
