@@ -356,6 +356,21 @@ def copy_repo_files(target_repo: str, repo_config: dict[str, Any], manifest: dic
             else:
                 path.unlink()
 
+    # The owning checksum seed includes Std's own active workflows. A consumer's
+    # disabled destinations must leave that seed when their files are removed.
+    disabled = {path for path, identity in managed_runtime_paths.items() if identity not in allowlist}
+    checksum = repo_dir / ".github/bijux-std-shared.sha256"
+    retained = []
+    for row in checksum.read_text(encoding="utf-8").splitlines():
+        if not row.strip():
+            continue
+        parts = row.split(maxsplit=1)
+        if len(parts) != 2:
+            raise ValueError(f"Malformed checksum line: {row}")
+        if parts[1] not in disabled:
+            retained.append(row)
+    checksum.write_text("\n".join(retained) + "\n", encoding="utf-8")
+
     WORKFLOW_EXECUTION.retired_package_workflows.apply_retirement(repo_dir, target_repo, retirement)
 
     if legacy_helper is not None:

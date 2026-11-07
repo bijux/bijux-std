@@ -31,6 +31,39 @@ SPEC.loader.exec_module(MODULE)
 
 
 class SyncGithubStandardsTests(unittest.TestCase):
+    def test_first_node_consumer_renders_checksums_and_complete_projection_idempotently(self):
+        owner=SCRIPT_PATH.parents[2]/'artifacts/tests/node-adoption'
+        owner.mkdir(parents=True,exist_ok=True)
+        with tempfile.TemporaryDirectory(dir=owner) as directory:
+            target=Path(directory)/'owned-checkout'
+            manifest=MODULE.load_manifest()
+            environment=dict(os.environ,BIJUX_REPOSITORY_PATH_BIJUX_RO_CRATE_NODE=str(target),
+                             BIJUX_STD_REPO=str(MODULE.STD_REPO),PYTHONDONTWRITEBYTECODE='1')
+            def generate():
+                with mock.patch.object(MODULE,'resolve_repository_checkout',return_value=target):
+                    MODULE.sync_repo_files('bijux-ro-crate-node',manifest)
+                subprocess.run([sys.executable,str(SCRIPT_PATH.with_name('render_repo_configs.py')),
+                                '--repo','bijux-ro-crate-node'],env=environment,check=True,capture_output=True)
+                MODULE.refresh_shared_checksums(target)
+                MODULE.verify_shared_checksums(target)
+                MODULE.WORKFLOW_EXECUTION.verify_projection(MODULE.STD_REPO,target,'bijux-ro-crate-node')
+            generate()
+            checksum=target/'.github/bijux-std-shared.sha256'
+            self.assertNotIn('  .github/workflows/deploy-docs.yml',checksum.read_text())
+            self.assertFalse((target/'.github/workflows/deploy-docs.yml').exists())
+            self.assertIn('  .github/workflows/release-npm.yml',checksum.read_text())
+            before={p.relative_to(target):p.read_bytes() for p in target.rglob('*') if p.is_file()}
+            generate()
+            self.assertEqual(before,{p.relative_to(target):p.read_bytes() for p in target.rglob('*') if p.is_file()})
+            # Disabled destinations are explicit; an active or unrelated missing
+            # managed file still fails without rewriting its checksum manifest.
+            for relative in ['.github/CODEOWNERS','.github/workflows/release-npm.yml']:
+                path=target/relative;original=path.read_bytes();receipt=checksum.read_bytes();path.unlink()
+                with self.subTest(relative=relative),self.assertRaises(FileNotFoundError):
+                    MODULE.refresh_shared_checksums(target)
+                self.assertEqual(checksum.read_bytes(),receipt)
+                path.write_bytes(original)
+
     def test_consumer_cannot_target_the_actual_canonical_source_checkout(self):
         manifest=MODULE.load_manifest()
         with mock.patch.object(MODULE,'resolve_repository_checkout',return_value=MODULE.STD_REPO), \
