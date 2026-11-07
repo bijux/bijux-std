@@ -18,7 +18,9 @@ def admitted_functions():
     source = CHECKER.read_text()
     resolver = source[source.index("resolve_local_rel() {"):source.index("verify_no_legacy_root_shared_dirs() {")]
     admission = source[source.index("verify_complete_navigation_source_contract() {"):source.index("verify_workflow_run_shell_preambles() {")]
-    return resolver + admission
+    identity = 'source "' + str(CHECKER.parent / 'scripts/standard-source-layout.sh') + '"\n'
+    identity += 'in_bijux_std_repo=0\nif is_standard_source_checkout "$repo_root"; then in_bijux_std_repo=1; fi\n'
+    return identity + resolver + admission
 
 
 class NavigationSourceAdmissionTests(unittest.TestCase):
