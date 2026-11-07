@@ -279,7 +279,7 @@ class SharedComponentRefreshTests(unittest.TestCase):
 
     def test_provider_uses_own_shared_source_despite_historical_metadata_pins(self):
         self.prepare_full_reader_contract()
-        provider = self.base / "bijux-std"
+        provider = self.base / "owned-standard"
         self.consumer.rename(provider)
         self.consumer = provider
         shutil.rmtree(provider / ".bijux")
@@ -301,10 +301,11 @@ class SharedComponentRefreshTests(unittest.TestCase):
         self.assertIn("using local bijux-std manifest", result.stdout)
 
     def test_additive_provider_mode_is_refused_even_with_forced_external_mode(self):
-        provider = self.base / "bijux-std"
+        provider = self.base / "owned-standard"
         self.consumer.rename(provider)
         self.consumer = provider
         shutil.copytree(provider / ".bijux/shared", provider / "shared")
+        self.git(provider, "remote", "add", "origin", "https://github.com/bijux/bijux-std.git")
         result = self.assert_refusal_preserves_inputs()
         self.assertIn("explicit consumer capabilities", result.stderr)
 
