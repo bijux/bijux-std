@@ -8,6 +8,12 @@ This file records notable repository-level changes for `bijux-std`.
 
 Changes awaiting integration into GitHub's `main` branch.
 
+#### [#328](https://github.com/bijux/bijux-std/pull/328) — fix(docs): admit source-bound compiled scientific downloads
+
+Bind current compiled deck inputs, Git epochs and compiler records while retaining
+the twelve scientific PDF routes and historical recipes. Authenticate the loaded
+paper-source resolver and native dependencies before download callbacks execute.
+
 #### [#327](https://github.com/bijux/bijux-std/pull/327) — fix(docs): require direct names for annotated runtime literals
 
 Refuse annotated attribute and subscript targets when selecting external-runtime
