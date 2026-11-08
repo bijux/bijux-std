@@ -504,8 +504,9 @@ class ScientificDownloadRendererOwnership(unittest.TestCase):
         self.assertTrue(names <= {path.stem for path in CONTROLS.SCIENTIFIC_DOWNLOAD_TESTS})
         expected = [name for name in CONTROLS.expected_python_ids()
                     if name.split('.')[0] in names]
-        actual = [test.id() for test in CONTROLS.HELPERS.flatten(CONTROLS.scientific_download_suite())
-                  if test.id().split('.')[0] in names]
+        with mock.patch.object(unittest.defaultTestLoader, 'testNamePatterns', None):
+            actual = [test.id() for test in CONTROLS.HELPERS.flatten(CONTROLS.scientific_download_suite())
+                      if test.id().split('.')[0] in names]
         self.assertTrue(expected)
         self.assertEqual(sorted(actual), expected)
         self.assertTrue(set(expected) <= set(CONTROLS.group_python_ids('renderer')))
