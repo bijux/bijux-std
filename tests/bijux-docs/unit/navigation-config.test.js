@@ -8,10 +8,10 @@ const live = require("../playwright.live.config");
 if (previousLive === undefined) delete process.env.BIJUX_LIVE_E2E;
 else process.env.BIJUX_LIVE_E2E = previousLive;
 const expected = ["chromium", "firefox", "webkit"].flatMap(engine => ["phone", "compact", "desktop"].map(profile => `${engine}-${profile}`));
-test("bounded navigation gate requires exactly 126 cases across all engine profiles", () => {
+test("bounded navigation gate requires exactly 144 cases across all engine profiles", () => {
   assert.deepEqual(navigation.projects.map(project => project.name), expected);
-  assert.equal(navigation.projects.reduce((count, project) => count + project.metadata.required_case_count, 0), 126);
-  assert(navigation.projects.every(project => project.metadata.required_case_count === 14));
+  assert.equal(navigation.projects.reduce((count, project) => count + project.metadata.required_case_count, 0), 144);
+  assert(navigation.projects.every(project => project.metadata.required_case_count === 16));
 });
 test("phone dialog gate cannot inherit desktop modal assertions through project merging", () => {
   assert.deepEqual(drawer.projects.map(project => project.name), ["chromium-phone", "firefox-phone", "webkit-phone"]);
