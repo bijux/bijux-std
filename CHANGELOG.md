@@ -14,6 +14,9 @@ Print native MkDocs failures without swallowing unrelated process exits or
 interrupts. Require current PDF/source-resolver controls in renderer CI and keep
 nested ownership discovery independent of outer test filters.
 
+Separate phone branding and ordinary/enlarged text geometry into bounded cases
+while retaining every responsive input and the original test and job limits.
+
 #### [#328](https://github.com/bijux/bijux-std/pull/328) — fix(docs): admit source-bound compiled scientific downloads
 
 Bind current compiled deck inputs, Git epochs and compiler records while retaining
