@@ -8,6 +8,12 @@ This file records notable repository-level changes for `bijux-std`.
 
 Changes awaiting integration into GitHub's `main` branch.
 
+#### [#329](https://github.com/bijux/bijux-std/pull/329) — fix(docs): preserve strict renderer diagnostics and test ownership
+
+Print native MkDocs failures without swallowing unrelated process exits or
+interrupts. Require current PDF/source-resolver controls in renderer CI and keep
+nested ownership discovery independent of outer test filters.
+
 #### [#328](https://github.com/bijux/bijux-std/pull/328) — fix(docs): admit source-bound compiled scientific downloads
 
 Bind current compiled deck inputs, Git epochs and compiler records while retaining
