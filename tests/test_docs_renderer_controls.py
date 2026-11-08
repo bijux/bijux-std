@@ -498,6 +498,39 @@ class RendererControlReceiptTests(unittest.TestCase):
             CONTROLS.verify_groups(output, self.source, self.workflow)
 
 
+class ScientificDownloadRendererOwnership(unittest.TestCase):
+    def test_current_compiled_and_source_revision_controls_belong_to_required_renderer(self):
+        names = {'test_git_compiled_scientific_downloads', 'test_scientific_source_revisions'}
+        self.assertTrue(names <= {path.stem for path in CONTROLS.SCIENTIFIC_DOWNLOAD_TESTS})
+        expected = [name for name in CONTROLS.expected_python_ids()
+                    if name.split('.')[0] in names]
+        actual = [test.id() for test in CONTROLS.HELPERS.flatten(CONTROLS.scientific_download_suite())
+                  if test.id().split('.')[0] in names]
+        self.assertTrue(expected)
+        self.assertEqual(sorted(actual), expected)
+        self.assertTrue(set(expected) <= set(CONTROLS.group_python_ids('renderer')))
+        for group in CONTROLS.GROUPS:
+            if group != 'renderer':
+                self.assertTrue(set(expected).isdisjoint(CONTROLS.group_python_ids(group)))
+
+    def test_missing_or_relocated_current_download_owners_refuse(self):
+        expected = CONTROLS.expected_python_ids()
+        owners = ('test_git_compiled_scientific_downloads.CurrentScientificBindings.',
+                  'test_git_compiled_scientific_downloads.CompiledDeckSources.',
+                  'test_scientific_source_revisions.ScientificSourceRevisions.')
+        for owner in owners:
+            owned = [name for name in expected if name.startswith(owner)]
+            self.assertTrue(owned)
+            for relocated in (False, True):
+                changed = [name for name in expected if name not in owned]
+                if relocated:
+                    changed.extend(name.replace(owner, 'test_foreign_downloads.Unowned.') for name in owned)
+                with self.subTest(owner=owner, relocated=relocated), mock.patch.object(
+                        CONTROLS, 'expected_python_ids', return_value=sorted(changed)), self.assertRaisesRegex(
+                            ValueError, 'scientific download'):
+                    CONTROLS.group_python_ids('renderer')
+
+
 class PublicReceiptRendererOwnership(unittest.TestCase):
     """Check source inventory ownership independently of native Node event fixtures."""
 
