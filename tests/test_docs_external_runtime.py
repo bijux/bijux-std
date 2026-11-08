@@ -354,3 +354,17 @@ class ExternalRuntimeTests(unittest.TestCase):
                 self.write("producer/runtime.py", source)
                 with self.assertRaisesRegex(ValueError, "direct string literal"):
                     self.verify()
+
+    def test_annotated_literal_requires_a_direct_name_target(self):
+        for target in ("LOADER.attribute", "LOADER[0]"):
+            with self.subTest(target=target):
+                self.write(
+                    "producer/runtime.py",
+                    self.producer.replace("LOADER=", target + ": str ="),
+                )
+                with self.assertRaisesRegex(ValueError, "direct string literal"):
+                    self.verify()
+        self.write(
+            "producer/runtime.py", self.producer.replace("LOADER=", "LOADER: str =")
+        )
+        self.assertEqual(len(self.verify()[0]["external_runtime"]), 3)

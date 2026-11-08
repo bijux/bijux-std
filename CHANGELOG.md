@@ -8,6 +8,12 @@ This file records notable repository-level changes for `bijux-std`.
 
 Changes awaiting integration into GitHub's `main` branch.
 
+#### [#327](https://github.com/bijux/bijux-std/pull/327) — fix(docs): require direct names for annotated runtime literals
+
+Refuse annotated attribute and subscript targets when selecting external-runtime
+string constants. Keep direct annotated names valid and preserve current native
+source reconstruction, transport and provider boundaries.
+
 #### [#326](https://github.com/bijux/bijux-std/pull/326) — feat(docs): authenticate source-bound external native runtimes
 
 Reconstruct explicitly selected native runtime and helper scripts from source
