@@ -370,7 +370,7 @@ test("inactive navigation strips remain absent at every responsive boundary", as
     await mastheadGeometry(page, true);
   }
 });
-test("phone brand and visually hidden helper text preserve useful space", async ({ page }, info) => {
+test("phone brand and visually hidden helper text preserve useful space", async ({ page }) => {
   await page.setViewportSize({ width: 320, height: 700 });
   const logoResponse = page.waitForResponse(response => new URL(response.url()).pathname.endsWith("/assets/bijux_logo.png"));
   await ready(page);
@@ -396,39 +396,46 @@ test("phone brand and visually hidden helper text preserve useful space", async 
   await expect.poll(() => logo.evaluate(image => image.complete && image.naturalWidth === 128 && image.naturalHeight === 128)).toBe(true);
   await drawerBrandGeometry(page);
   await page.keyboard.press("Escape");
+});
+async function phoneBrandGeometry(page, info, enlarged) {
+  const title = page.locator("[data-bijux-header-topic='site'] .md-ellipsis");
   const supplementaryWidths = info.project.name.endsWith("-phone") ? [360,412,767,768,769,820,1024,1100,1219,1220,1221,1280,1440,1920] : [];
   for (const width of [320,390,...supplementaryWidths]) {
-    for (const enlarged of [false,true]) {
-      await page.setViewportSize({ width, height:844 });
-      await ready(page, "/platform/");
-      if (enlarged) {
-        const size = await page.evaluate(() => parseFloat(getComputedStyle(document.documentElement).fontSize));
-        await page.addStyleTag({ content:`html { font-size:${size * 2}px !important; } * { line-height:1.5 !important; letter-spacing:.12em !important; word-spacing:.16em !important; } p { margin-block-end:2em !important; }` });
-      } else {
-        await expect(title).toHaveText("Bijux");
-        const text = await title.evaluate(node => ({ client:node.clientWidth, scroll:node.scrollWidth }));
-        expect(text.scroll, "Ordinary 320px identity is not ellipsized").toBeLessThanOrEqual(text.client + 1);
+    await page.setViewportSize({ width, height:844 });
+    await ready(page, "/platform/");
+    if (enlarged) {
+      const size = await page.evaluate(() => parseFloat(getComputedStyle(document.documentElement).fontSize));
+      await page.addStyleTag({ content:`html { font-size:${size * 2}px !important; } * { line-height:1.5 !important; letter-spacing:.12em !important; word-spacing:.16em !important; } p { margin-block-end:2em !important; }` });
+    } else {
+      await expect(title).toHaveText("Bijux");
+      const text = await title.evaluate(node => ({ client:node.clientWidth, scroll:node.scrollWidth }));
+      expect(text.scroll, "Ordinary 320px identity is not ellipsized").toBeLessThanOrEqual(text.client + 1);
+    }
+    await mastheadGeometry(page);
+    expect(await page.evaluate(() => document.documentElement.scrollWidth - innerWidth)).toBeLessThanOrEqual(1);
+    // The existing 320/390 input journeys own every activation assertion;
+    // supplemental widths qualify the same controls' geometry and names.
+    if (width === 320 || width === 390) {
+      if (width < 1220) {
+        await openDrawer(page);
+        await drawerBrandGeometry(page);
+        await drawer(page).getByRole("button", { name:"Close navigation", exact:true }).click();
+        await expect(page.locator("#__drawer")).not.toBeChecked();
+        await expect(control(page,"drawer")).toBeFocused();
       }
-      await mastheadGeometry(page);
-      expect(await page.evaluate(() => document.documentElement.scrollWidth - innerWidth)).toBeLessThanOrEqual(1);
-      // The existing 320/390 input journeys own every activation assertion;
-      // supplemental widths qualify the same controls' geometry and names.
-      if (width === 320 || width === 390) {
-        if (width < 1220) {
-          await openDrawer(page);
-          await drawerBrandGeometry(page);
-          await drawer(page).getByRole("button", { name:"Close navigation", exact:true }).click();
-          await expect(page.locator("#__drawer")).not.toBeChecked();
-          await expect(control(page,"drawer")).toBeFocused();
-        }
-        await control(page,"search").click();
-        await expect(page.locator("#__search")).toBeChecked();
-        await expect(page.locator("[data-md-component='search-query']")).toBeFocused();
-        await page.keyboard.press("Escape");
-        await expect(control(page,"search")).toBeFocused();
-      }
+      await control(page,"search").click();
+      await expect(page.locator("#__search")).toBeChecked();
+      await expect(page.locator("[data-md-component='search-query']")).toBeFocused();
+      await page.keyboard.press("Escape");
+      await expect(control(page,"search")).toBeFocused();
     }
   }
+}
+test("phone ordinary text preserves geometry and native controls", async ({ page }, info) => {
+  await phoneBrandGeometry(page, info, false);
+});
+test("phone enlarged text preserves geometry and native controls", async ({ page }, info) => {
+  await phoneBrandGeometry(page, info, true);
   if (info.project.name.endsWith("-phone")) for (const width of [568,667]) {
     await page.setViewportSize({ width, height:320 });
     await ready(page, "/platform/");

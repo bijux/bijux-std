@@ -73,7 +73,7 @@ class BrowserPartitionTests(unittest.TestCase):
         inherited = (ROOT / 'tests/bijux-docs/playwright.config.js').read_text()
         workflow = (ROOT / '.github/standards/workflow-sources/bijux-std.yml').read_text()
         self.assertIn('workers: process.env.CI ? 2 : inherited.workers', navigation)
-        self.assertIn('metadata: { required_case_count: 14 }', navigation)
+        self.assertIn('metadata: { required_case_count: 16 }', navigation)
         self.assertIn('fullyParallel: true', inherited)
         self.assertIn('retries: 0', inherited)
         browser_job = workflow.split('  navigation-browsers:', 1)[1].split('\n  navigation:', 1)[0]

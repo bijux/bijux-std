@@ -6,5 +6,5 @@ module.exports = configureProjects(defineConfig(inherited, {
   testMatch: "**/shell.spec.js",
   workers: process.env.CI ? 2 : inherited.workers,
   grepInvert: /rich content renders|all declared consumer roots/,
-  projects: inherited.projects.map(project => ({ ...project, metadata: { required_case_count: 14 } })),
+  projects: inherited.projects.map(project => ({ ...project, metadata: { required_case_count: 16 } })),
 }));

@@ -35,6 +35,6 @@ module.exports = configureProjects(defineConfig({
     stdout: "ignore", stderr: "ignore",
   },
   projects: ["chromium", "firefox", "webkit"].flatMap((browserName) =>
-    Object.entries(profiles).map(([profile, settings]) => ({ name: `${browserName}-${profile}`, metadata: { required_case_count: 16 }, use: { browserName, ...settings } }))
+    Object.entries(profiles).map(([profile, settings]) => ({ name: `${browserName}-${profile}`, metadata: { required_case_count: 18 }, use: { browserName, ...settings } }))
   ),
 }));
