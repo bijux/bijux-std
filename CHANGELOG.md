@@ -8,6 +8,14 @@ This file records notable repository-level changes for `bijux-std`.
 
 Changes awaiting integration into GitHub's `main` branch.
 
+#### [#326](https://github.com/bijux/bijux-std/pull/326) — feat(docs): authenticate source-bound external native runtimes
+
+Reconstruct explicitly selected native runtime and helper scripts from source
+literals without executing the producer. Bind loader, JSON parameters, runtime
+and controller paths/SRI, registration transport closure and original resource
+budgets. Inspect provider calls in authenticated external bodies while retaining
+loader-only inline CSP and existing publication/source guards.
+
 #### [#320](https://github.com/bijux/bijux-std/pull/320) — fix(deps): qualify redocly release in shared openapi tooling
 
 Adopt Redocly CLI 2.73.0 through the canonical OpenAPI configuration and pinned
