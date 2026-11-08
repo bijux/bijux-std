@@ -28,6 +28,8 @@ SCIENTIFIC_DOWNLOAD_TESTS = (
     TESTS / 'publication/test_scientific_download_capabilities.py',
     TESTS / 'publication/test_retained_scientific_downloads.py',
     TESTS / 'publication/test_committed_scientific_downloads.py',
+    TESTS / 'publication/test_git_compiled_scientific_downloads.py',
+    TESTS / 'publication/test_scientific_source_revisions.py',
 )
 PUBLIC_RECEIPT_TESTS = (
     TESTS / 'publication/test_public_report_provenance_recipes.py',
@@ -38,7 +40,10 @@ SCIENTIFIC_DOWNLOAD_OWNERS = ('test_scientific_download_capabilities.ScientificD
                               'test_scientific_download_capabilities.RetainedBuildSourceAdmission.',
                               'test_retained_scientific_downloads.RetainedBuildSources.',
                               'test_committed_scientific_downloads.CommittedSourceManifest.',
-                              'test_committed_scientific_downloads.CommittedHookAdmission.')
+                              'test_committed_scientific_downloads.CommittedHookAdmission.',
+                              'test_git_compiled_scientific_downloads.CurrentScientificBindings.',
+                              'test_git_compiled_scientific_downloads.CompiledDeckSources.',
+                              'test_scientific_source_revisions.ScientificSourceRevisions.')
 
 
 def load(name: str, path: Path):

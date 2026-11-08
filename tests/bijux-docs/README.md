@@ -25,8 +25,8 @@ engines. The repository CI owns that operating-system setup.
 `ui-test-navigation` runs strict fixture rendering, runtime/reporting contracts,
 actual consumer-copy contracts, and two explicitly bounded browser matrices:
 
-- Fourteen shell journeys in all nine Chromium/Firefox/WebKit phone, compact
-  and desktop projects: 126 cases in `playwright/qualification.json`.
+- Sixteen shell journeys in all nine Chromium/Firefox/WebKit phone, compact
+  and desktop projects: 144 cases in `playwright/qualification.json`.
 - Three additional drawer interaction journeys in each engine's phone project:
   nine cases in `drawer-playwright/qualification.json`.
 
@@ -80,7 +80,7 @@ This separation keeps the thirty-second test and three-minute job limits intact.
 
 ## Separate scopes and limits
 
-The larger shell command `make ui-test` retains all sixteen generated shell
+The larger shell command `make ui-test` retains all eighteen generated shell
 journeys. The bounded navigation gate explicitly excludes the diagram/rich-content
 journey and the broader all-consumer search-index inventory. Their separate
 qualification must be reported independently; this navigation gate does not
@@ -259,7 +259,8 @@ Tab/Enter; and current and last destinations using trusted touch. The latter
 two cases retain focused native scrolling controls, disabled/enabled Space
 behavior, endpoint ownership and phone focus handoff.
 
-The original 126 shell case identities and predicates are restored unchanged.
+The shell retains its original navigation predicates with branding and ordinary/
+enlarged text profiles in independently bounded cases.
 These desktop journeys have their own group rather than extending the expensive
 expanded-registry shell case. Original 30-second case and three-minute whole-job
 limits remain required, with no retries or omitted coverage. Hosted cold-job
