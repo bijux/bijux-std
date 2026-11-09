@@ -2,6 +2,17 @@
 
 Repository changes are recorded by pull request, newest merge first.
 
+### [#334](https://github.com/bijux/bijux-std/pull/334) — Complete pull request and mainline history
+
+- Record every merged PR in verified merge order, restore eight missing entries and
+  expand mixed deliveries across standards, CI, publication, dependencies and reader
+  behavior.
+- Attribute earlier main-branch work to the next PR, distinguish initial foundations
+  from PR changes, and reconcile rewritten delivery and topic-branch integration without
+  duplicating work.
+- Correct historical versions and scope, remove stale review/rewrite notes, and retain
+  the minimal PR-based format with no permanent changelog gate.
+
 ### [#333](https://github.com/bijux/bijux-std/pull/333) — Action pins and Atlas SQLite toolchain
 
 - Adopt reviewed ruby/setup-ruby 1.338.0 and action-gh-release 3.0.4 commits in
