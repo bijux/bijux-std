@@ -8,6 +8,11 @@ This file records notable repository-level changes for `bijux-std`.
 
 Changes awaiting integration into GitHub's `main` branch.
 
+#### [#331](https://github.com/bijux/bijux-std/pull/331) — fix(docs): separate navigation labels from link warnings
+
+Separate visible navigation link warnings from their labels in both text
+orientations while preserving accessible notices and ordinary inline spacing.
+
 #### [#330](https://github.com/bijux/bijux-std/pull/330) — fix(docs): keep publication qualification logs concise
 
 Keep publication CLI summaries concise while retaining the complete producer

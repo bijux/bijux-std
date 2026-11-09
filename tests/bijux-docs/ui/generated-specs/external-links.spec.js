@@ -54,6 +54,46 @@ async function controlledOutside(context) {
   );
 }
 
+async function navigationWarningSpacing(page) {
+  const originalViewport = page.viewportSize();
+  await page.setViewportSize({ width: 1440, height: 900 });
+  const link = page.locator("header .bijux-hub-strip .bijux-tabs__link").first();
+  const originalTarget = await link.getAttribute("target");
+  const originalDirection = await link.getAttribute("dir");
+  await link.evaluate((node) => { node.target = "_blank"; });
+  const warning = link.locator('[data-bijux-link-indication="new-tab"]');
+  await expect(warning).toHaveCount(1);
+  await expect(warning).toHaveText(" (opens in new tab)");
+  await expect(link).toHaveAccessibleName(/opens in new tab/);
+  for (const direction of ["ltr", "rtl"]) {
+    await link.evaluate((node, value) => { node.dir = value; }, direction);
+    const geometry = await link.evaluate((node) => {
+      const range = document.createRange();
+      range.selectNodeContents(node.firstChild);
+      const label = range.getBoundingClientRect();
+      const notice = node.querySelector("[data-bijux-link-indication]").getBoundingClientRect();
+      const style = getComputedStyle(node);
+      return {
+        gap: style.direction === "rtl" ? label.left - notice.right : notice.left - label.right,
+        fontSize: parseFloat(style.fontSize),
+      };
+    });
+    expect(geometry.gap, `Visible ${direction} navigation warning separation`).toBeGreaterThanOrEqual(geometry.fontSize * 0.2);
+    expect(geometry.gap).toBeLessThanOrEqual(geometry.fontSize * 0.5);
+    await expect(warning).toHaveCount(1);
+  }
+  const inline = page.locator('#link-new-tab [data-bijux-link-indication="new-tab"]');
+  await expect(inline).toHaveText(" (opens in new tab)");
+  expect(await inline.evaluate((node) => getComputedStyle(node).marginInlineStart)).toBe("0px");
+  await link.evaluate((node, original) => {
+    for (const [attribute, value] of Object.entries(original)) {
+      if (value === null) node.removeAttribute(attribute);
+      else node.setAttribute(attribute, value);
+    }
+  }, { target: originalTarget, dir: originalDirection });
+  await page.setViewportSize(originalViewport);
+}
+
 async function compactRepositoryWarning(page) {
   const originalViewport = page.viewportSize();
   await page.setViewportSize({ width: 1440, height: 900 });
@@ -132,6 +172,7 @@ test("authored target, download, relation and description remain distinct", asyn
       .locator("#link-mail, #link-phone, #link-internal, #link-hash")
       .locator("[data-bijux-link-indication]"),
   ).toHaveCount(0);
+  await navigationWarningSpacing(page);
   const repository = page.locator(".md-header__source a.md-source");
   await expect(repository).not.toHaveAttribute("target");
   await expect(repository.locator("[data-bijux-link-indication]")).toHaveCount(0);
