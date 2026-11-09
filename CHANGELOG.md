@@ -8,6 +8,11 @@ This file records notable repository-level changes for `bijux-std`.
 
 Changes awaiting integration into GitHub's `main` branch.
 
+#### [#333](https://github.com/bijux/bijux-std/pull/333) — build(deps): qualify action pins and atlas sqlite toolchain
+
+Adopt verified Ruby setup and GitHub release action pins, and declare the Atlas
+Rust 1.89 baseline needed for patched bundled SQLite and constant-time utilities.
+
 #### [#331](https://github.com/bijux/bijux-std/pull/331) — fix(docs): separate navigation labels from link warnings
 
 Separate visible navigation link warnings from their labels in both text
