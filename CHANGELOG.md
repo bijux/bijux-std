@@ -2,6 +2,14 @@
 
 Repository changes are recorded by pull request, newest merge first.
 
+### [#335](https://github.com/bijux/bijux-std/pull/335) — Shared documentation source verification
+
+- Route documentation source checks with a declared documentation pin through the
+  existing component verifier, preserving separate accepted sources, projection
+  provenance, local verification and site checks.
+- Verify installed Node Make contracts against their accepted source, rejecting
+  modified tooling even when its local checksum has been regenerated.
+
 ### [#334](https://github.com/bijux/bijux-std/pull/334) — Complete pull request and mainline history
 
 - Record every merged PR in verified merge order, restore eight missing entries and
