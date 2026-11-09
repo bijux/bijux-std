@@ -8,6 +8,12 @@ This file records notable repository-level changes for `bijux-std`.
 
 Changes awaiting integration into GitHub's `main` branch.
 
+#### [#330](https://github.com/bijux/bijux-std/pull/330) — fix(docs): keep publication qualification logs concise
+
+Keep publication CLI summaries concise while retaining the complete producer
+authority in written manifests and API results. Preserve admission, source
+reconstruction, CSP and retained-byte verification.
+
 #### [#329](https://github.com/bijux/bijux-std/pull/329) — fix(docs): preserve strict renderer diagnostics and test ownership
 
 Print native MkDocs failures without swallowing unrelated process exits or

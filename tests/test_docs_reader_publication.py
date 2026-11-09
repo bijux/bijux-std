@@ -1,6 +1,7 @@
 """Controlled source/composition prerequisites; no actual renderer approval."""
 from pathlib import Path
 import copy
+import hashlib
 import importlib.util
 import io
 import sys
@@ -180,6 +181,132 @@ class SerializedPublicationClaims(unittest.TestCase):
         c.write_records()
         with self.assertRaisesRegex(ValueError, "publication renderer identity"):
             qualified.publication.verify_manifest(c.root, manifest, c.policy)
+
+
+class PublicationCliOutput(unittest.TestCase):
+    """Exercise serialization after the existing controlled source qualification."""
+
+    def setUp(self):
+        self.case = qualified.QualifiedPublicationTests()
+        self.case.setUp()
+        self.addCleanup(self.case.doCleanups)
+        self.complete = qualified.publication.qualified_manifest
+        self.authority = {
+            'scope': 'isolated-large-output-contract-test', 'verification_only': True,
+            'owner_inputs': [{'path': f'docs/owned-{i}.md', 'sha256': 'a' * 64}
+                             for i in range(2000)],
+        }
+
+    def qualified_with_large_authority(self, *args, **kwargs):
+        # The real controlled source checks still execute; the added inventory
+        # exercises CLI serialization rather than authenticating a real renderer.
+        result = self.complete(*args, **kwargs)
+        return result | {'producer_authority': copy.deepcopy(self.authority)}
+
+    def arguments(self, operation, path):
+        c = self.case
+        prefix = ['publication.py', '--repo-root', str(c.root), operation]
+        if operation == 'verify':
+            return prefix + ['--manifest', str(path), '--require-qualified']
+        return prefix + ['--site-dir', 'artifacts/docs/site', '--site-url', c.url,
+                         '--source-sha', c.source_sha,
+                         '--source-identity', c.paths['source'],
+                         '--build-identity', c.paths['build'],
+                         '--verification-report', c.paths['verification'],
+                         '--csp-report', c.paths['csp'], '--output', str(path)]
+
+    def assert_summary(self, stdout, manifest):
+        self.assertLess(len(stdout.encode()), 4096)
+        value = json.loads(stdout)
+        self.assertEqual(set(value), {
+            'schema', 'scope', 'site_url', 'site_dir', 'repository_source_sha',
+            'standard_sha', 'policy_sha256', 'bundle_sha256', 'file_count',
+            'bytes', 'limitations', 'qualification_receipts',
+        })
+        self.assertEqual(value['schema'], 2)
+        self.assertEqual(value['site_url'], self.case.url)
+        self.assertEqual(value['site_dir'], 'artifacts/docs/site')
+        self.assertEqual(value['repository_source_sha'], self.case.source_sha)
+        self.assertEqual(value['standard_sha'], self.case.standard_sha)
+        self.assertEqual(value['file_count'], 1)
+        self.assertEqual(value['bytes'], (self.case.site / 'index.html').stat().st_size)
+        for key in ('scope', 'policy_sha256', 'bundle_sha256', 'limitations'):
+            self.assertEqual(value[key], manifest[key])
+        expected_receipts = {
+            role: {'path': self.case.paths[role],
+                   'sha256': hashlib.sha256((self.case.root / self.case.paths[role]).read_bytes()).hexdigest()}
+            for role in ('source', 'build', 'verification', 'csp')
+        }
+        self.assertEqual(value['qualification_receipts'], expected_receipts)
+
+    def test_admit_keeps_full_manifest_while_stdout_omits_large_authority(self):
+        c = self.case
+        path = c.root / 'artifacts/website-security/publication.json'
+        with patch.object(sys, 'argv', self.arguments('admit', path)), \
+                patch.object(qualified.publication, 'qualified_manifest',
+                             side_effect=self.qualified_with_large_authority) as complete, \
+                patch('sys.stdout', new_callable=io.StringIO) as stdout:
+            self.assertEqual(qualified.publication.main(), 0)
+        complete.assert_called_once()
+        manifest = json.loads(path.read_text())
+        self.assertGreater(path.stat().st_size, 200000)
+        self.assertEqual(manifest['producer_authority'], self.authority)
+        self.assertIn('files', manifest)
+        self.assertEqual(set(manifest['qualification']), {'source', 'build', 'verification', 'csp'})
+        self.assert_summary(stdout.getvalue(), manifest)
+
+    def test_verify_reconstructs_full_manifest_before_printing_summary(self):
+        c = self.case
+        with patch.object(qualified.publication, 'qualified_manifest',
+                          side_effect=self.qualified_with_large_authority):
+            manifest = c.qualified()
+        path = c.root / 'artifacts/website-security/publication.json'
+        path.write_text(json.dumps(manifest))
+        original = path.read_bytes()
+        with patch.object(sys, 'argv', self.arguments('verify', path)), \
+                patch.object(qualified.publication, 'qualified_manifest',
+                             side_effect=self.qualified_with_large_authority) as complete, \
+                patch('sys.stdout', new_callable=io.StringIO) as stdout:
+            self.assertEqual(qualified.publication.main(), 0)
+        complete.assert_called_once()
+        self.assertEqual(path.read_bytes(), original)
+        self.assert_summary(stdout.getvalue(), manifest)
+
+    def test_hidden_authority_changes_still_reject_verification(self):
+        c = self.case
+        with patch.object(qualified.publication, 'qualified_manifest',
+                          side_effect=self.qualified_with_large_authority):
+            manifest = c.qualified()
+        manifest['producer_authority']['owner_inputs'][-1]['sha256'] = 'b' * 64
+        path = c.root / 'artifacts/website-security/publication.json'
+        path.write_text(json.dumps(manifest))
+        with patch.object(sys, 'argv', self.arguments('verify', path)), \
+                patch.object(qualified.publication, 'qualified_manifest',
+                             side_effect=self.qualified_with_large_authority), \
+                patch('sys.stdout', new_callable=io.StringIO) as stdout, \
+                patch('sys.stderr', new_callable=io.StringIO) as stderr:
+            self.assertEqual(qualified.publication.main(), 1)
+        self.assertEqual(stdout.getvalue(), '')
+        self.assertIn('changed after qualification', stderr.getvalue())
+
+    def test_changed_source_rejects_both_cli_operations_without_success_output(self):
+        c = self.case
+        manifest = c.qualified()
+        retained = c.root / 'artifacts/website-security/publication.json'
+        retained.write_text(json.dumps(manifest))
+        original = retained.read_bytes()
+        c.config_file.write_text(c.config_file.read_text() + '# changed source\n')
+        new_output = c.root / 'artifacts/website-security/unadmitted.json'
+        for operation, path in (('admit', new_output), ('verify', retained)):
+            with self.subTest(operation=operation), \
+                    patch.object(sys, 'argv', self.arguments(operation, path)), \
+                    patch('sys.stdout', new_callable=io.StringIO) as stdout, \
+                    patch('sys.stderr', new_callable=io.StringIO) as stderr:
+                self.assertEqual(qualified.publication.main(), 1)
+                self.assertEqual(stdout.getvalue(), '')
+                self.assertIn('documentation publication rejected:', stderr.getvalue())
+        self.assertFalse(new_output.exists())
+        self.assertEqual(retained.read_bytes(), original)
 
 
 class PreviousGoodRecovery(unittest.TestCase):
