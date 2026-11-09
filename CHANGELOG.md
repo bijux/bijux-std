@@ -1,2032 +1,2409 @@
 # Changelog
 
-This file records notable repository-level changes for `bijux-std`.
-
-## Pull request history
-
-### Unreleased
-
-Changes awaiting integration into GitHub's `main` branch.
-
-#### [#333](https://github.com/bijux/bijux-std/pull/333) — build(deps): qualify action pins and atlas sqlite toolchain
-
-Adopt verified Ruby setup and GitHub release action pins, and declare the Atlas
-Rust 1.89 baseline needed for patched bundled SQLite and constant-time utilities.
-Refresh Atlas advisory parsers to admit current CVSS 4 records.
-
-#### [#331](https://github.com/bijux/bijux-std/pull/331) — fix(docs): separate navigation labels from link warnings
-
-Separate visible navigation link warnings from their labels in both text
-orientations while preserving accessible notices and ordinary inline spacing.
-
-#### [#330](https://github.com/bijux/bijux-std/pull/330) — fix(docs): keep publication qualification logs concise
-
-Keep publication CLI summaries concise while retaining the complete producer
-authority in written manifests and API results. Preserve admission, source
-reconstruction, CSP and retained-byte verification.
-
-#### [#329](https://github.com/bijux/bijux-std/pull/329) — fix(docs): preserve strict renderer diagnostics and test ownership
-
-Print native MkDocs failures without swallowing unrelated process exits or
-interrupts. Require current PDF/source-resolver controls in renderer CI and keep
-nested ownership discovery independent of outer test filters.
-
-Separate phone branding and ordinary/enlarged text geometry into bounded cases
-while retaining every responsive input and the original test and job limits.
-
-#### [#328](https://github.com/bijux/bijux-std/pull/328) — fix(docs): admit source-bound compiled scientific downloads
-
-Bind current compiled deck inputs, Git epochs and compiler records while retaining
-the twelve scientific PDF routes and historical recipes. Authenticate the loaded
-paper-source resolver and native dependencies before download callbacks execute.
-
-#### [#327](https://github.com/bijux/bijux-std/pull/327) — fix(docs): require direct names for annotated runtime literals
-
-Refuse annotated attribute and subscript targets when selecting external-runtime
-string constants. Keep direct annotated names valid and preserve current native
-source reconstruction, transport and provider boundaries.
-
-#### [#326](https://github.com/bijux/bijux-std/pull/326) — feat(docs): authenticate source-bound external native runtimes
-
-Reconstruct explicitly selected native runtime and helper scripts from source
-literals without executing the producer. Bind loader, JSON parameters, runtime
-and controller paths/SRI, registration transport closure and original resource
-budgets. Inspect provider calls in authenticated external bodies while retaining
-loader-only inline CSP and existing publication/source guards.
-
-#### [#320](https://github.com/bijux/bijux-std/pull/320) — fix(deps): qualify redocly release in shared openapi tooling
-
-Adopt Redocly CLI 2.73.0 through the canonical OpenAPI configuration and pinned
-bootstrap recipe, preserving runtime requirements and regenerating the Python
-make component digest. Bound workflow job evidence responses to 25 items while
-retaining complete paginated inventories, source and owner authentication, and
-strict execution deadlines.
-
-#### [#319](https://github.com/bijux/bijux-std/pull/319) — fix(deps): qualify canonical setup actions and openapi tooling
-
-Adopt immutable uv 10.3.3, Ruby 1.336.0 and Java 6.1.0 setup actions while
-preserving selected runtime versions. Align the shared OpenAPI baseline and
-pinned bootstrap recipes with generator CLI 2.42.0 and Redocly CLI 2.71.2.
-Regenerate workflow projections and authenticated shared component digests.
-
-#### [#318](https://github.com/bijux/bijux-std/pull/318) — fix(ci): filter historical blobs from complete-history checkouts
-
-Status: pending review. Filter historical blobs from policy and standards
-checkouts while preserving the complete commit graph, protected-path checks
-and on-demand access to historical files. Exercise filtered checkout history
-and regenerate canonical workflow projections and shared checksums. Run
-independent responsive-navigation cases with two CI workers while preserving
-all case inventories, zero retries and the strict three-minute job budget.
-
-#### Canonical installer, cache and publication actions
-
-Adopt Ruby setup 1.335.0, cache 6.1.0, tool installation 2.87.31 and PyPI
-publication 1.14.3 through immutable canonical references. Preserve workflow
-inputs and selected runtime versions, and regenerate managed projections and
-source/component checksum records for downstream consumption.
-
-#### Masterclass installer action promotion
-
-Admit canonical Ruby and uv action references during Masterclass governance
-promotion without changing installer inputs or the accepted program runtime
-baseline.
-
-#### [#312](https://github.com/bijux/bijux-std/pull/312) — feat(docs): authenticate retained interactive template ancestry
-
-Status: pending review. Authenticate an explicit retained recipe template through
-its exact Git commit, ancestry, path, ordinary file mode, blob, byte count and
-SHA-256 during construction, planning and final verification. Keep other inputs
-bound to physical selected-commit source, preserve historical execution scope,
-and regenerate the canonical shared-directory digest.
-
-### Merged pull requests
-
-Merge timestamps are recorded in UTC. Entries use the final GitHub pull-request
-title; topic-branch merges identify their integration path in the entry.
-
-#### 2026-10-27T15:20:51Z — [#311](https://github.com/bijux/bijux-std/pull/311) — fix(docs): patch renderer and source-wheel security dependencies
-
-Pin Certifi 2026.10.19 and GitPython 3.2.1 in the active verification and
-publication recipes, covering the dependency proposals in [#309](https://github.com/bijux/bijux-std/pull/309)
-and [#310](https://github.com/bijux/bijux-std/pull/310). Renew the installed
-physical profiles without broadening runtime admission. Patch Setuptools to
-84.1.0 in the media wheel builder and independently reproduce both minifier
-wheels before admitting their new hashes. Preserve the original Canon
-observation as historical evidence, separate from active publication recipes.
-
-#### 2026-10-27T14:22:19Z — [#308](https://github.com/bijux/bijux-std/pull/308) — feat(std): enforce publication provenance and secure documentation tooling
-
-##### GitHub Action dependency consolidation
-
-Adopt the immutable action revisions proposed in [#294](https://github.com/bijux/bijux-std/pull/294) and [#303](https://github.com/bijux/bijux-std/pull/303)–[#307](https://github.com/bijux/bijux-std/pull/307): upload-artifact 7.0.2, rust-toolchain `683b588`, setup-ruby 1.334.0, setup-uv 10.3.2, setup-python 7.1.0 and rust-cache 2.9.3. Apply the revisions to canonical workflow sources and repository manifests, regenerate this repository's managed workflows, and refresh source and shared-content digests. Keep the selected language and installer versions unchanged.
-
-##### Release source admission
-
-Include the optional Pollenomics engine in the public release selection. Require repository-owned source admission and a successful revision-bound receipt before dependency installation, build commands or artifact upload.
-
-##### Scientific documentation source provenance
-
-Authenticate retained scientific build inputs against their original source epochs and bind committed scientific download manifests to their exact source context. Preserve the distinction between current build inputs and retained historical outputs.
-
-Include all retained and committed scientific-download test owners in the
-renderer verification partition. Require every owner to remain present and
-reject relocated or missing controls before admitting execution receipts.
-Retain each Make reconstruction's evidence in its own source directory so
-repeated local verification preserves earlier evidence and remains executable.
-Give Std's complete contracts job a bounded 20-minute execution budget while
-retaining the 10-minute standard/consumer checks and existing browser budgets.
-
-##### Diagram sanitizer security
-
-Pin DOMPurify 3.4.17 in the reproducible Mermaid dependency graph to address
-the upstream IN_PLACE, template/shadow-root and XHTML SMIL sanitization
-advisories. Rebuild the self-hosted renderer and refresh its provenance,
-licenses, SHA-256 baseline and script integrity after qualification in
-Chromium, Firefox and WebKit.
-
-#### 2026-10-17T01:06:18Z — [#301](https://github.com/bijux/bijux-std/pull/301) — perf(github): preserve owned genomics compilation caches
-
-Retain explicit repository-owned Cargo registry and compiler-product directories without package pruning that removes dependencies stored beneath the checkout. Bind compatible restores to the platform, Rust version, build configuration and lockfile, and save rebuilt workspace products under the source identity. Build and test execution remains mandatory.
-
-#### 2026-10-17T00:25:05Z — [#300](https://github.com/bijux/bijux-std/pull/300) — fix(github): enforce complete genomics verification
-
-Validate the exact Nextest executable and version tokens while accepting the pinned release binary's build metadata. Exercise both rendered checks against observed multiline output and reject mismatched versions and failed observations. Cache Genomics formatting, lint and audit products using the actual Make-owned Cargo home and target directories, and explicitly use all four hosted runner cores. Require successful formatting, lint and dependency auditing alongside every native and Python test lane before the stable completion gate can pass. Verification results are recorded in the linked pull request.
-
-#### 2026-10-16T23:53:20Z — [#299](https://github.com/bijux/bijux-std/pull/299) — feat(github): require distributed genomics test coverage
-
-Build Genomics native tests once, execute source-bound hash partitions and Python lanes independently, and require exact terminal coverage in the test aggregate. Pin the test executor and native runtime, retain diagnostic artifacts, and declare the stable repository-specific test check.
-
-Propagate Rust gate report-write failures while preserving the checked command's error when both the command and report sink fail.
-
-#### 2026-10-13T12:15:57Z — [#298](https://github.com/bijux/bijux-std/pull/298) — fix(ci): preserve proof identity and bound fixture preparation
-
-Preserve JSON proof identity across storage and fresh aggregate revalidation while retaining strict producer admission
-
-Export accepted-proof selections in their persisted JSON representation so fresh aggregate observations retain the same check-ID keys after storage. Revalidate actual job/check ownership and reject altered checks, artifacts, timestamps or missing proof records.
-
-Overlap the existing pinned browser image pull with canonical fixture inventory preparation, and require successful image transport before observing and packing the runtime. Stop and reap the owned pull when preparation fails while preserving the strict three-minute whole-job bound and every engine and case.
-
-#### 2026-10-13T10:45:11Z — [#297](https://github.com/bijux/bijux-std/pull/297) — fix(ci): preserve standard platform imports in proof consumers
-
-Keep the accepted-proof child observer from shadowing Python platform while retaining exact runtime admission and full fallback on refusal
-
-Name the accepted-proof consumer wrapper explicitly so its child process imports the standard Python platform observer. Keep physical Node/npm package and platform identity admission intact and verify it from the real child import directory.
-
-#### 2026-10-13T10:06:24Z — [#296](https://github.com/bijux/bijux-std/pull/296) — fix(ci): observe completed accepted proof producers
-
-Bind terminal accepted producer observation to physical source-owned jobs and checks while preserving live current-workflow caller enforcement
-
-Observe independently accepted completed browser producers without requiring a running original report job. Preserve current-workflow active caller checks and reject missing, active, failed or cancelled original owners before proof reuse.
-
-#### 2026-10-13T07:51:59Z — [#295](https://github.com/bijux/bijux-std/pull/295) — feat(ci): qualify accepted browser proof and retained source authority
-
-Authenticate accepted-main browser proof through real producer, actor, source and runtime identities; retire exact obsolete Masterclass documentation assets after prior namespace admission. Preserve retained scientific PDF lineage with explicit accepted security metadata and run its existing refusal controls in the installed renderer partition.
-
-#### 2026-10-13T03:19:13Z — [#293](https://github.com/bijux/bijux-std/pull/293) — feat(docs): harden native readers and reuse qualified verification
-
-Retain automatic palette operation after preference API loss, deliver inert native search results and tag labels, and report clipboard failure with selectable code. Qualify storage denial, missing optional observers, reduced motion and reader contrast through existing native controls.
-
-Select verification from owned inputs and authenticate accepted original proof before reusing unchanged frontend coverage. Transport exact installed packages and combine related browser groups while preserving three engines, all group identities, strict current-source aggregates and complete fallback coverage. Record operation and whole-job costs without treating queue time as runner savings.
-
-Renew vulnerable GitPython and urllib3 publication recipes, adopt the authenticated setup-uv release and retire only Atlas’s reviewed unused package workflows. Bind Masterclass component identity and native catalogue source actions to real originals. Admit a finite Pollenomics public-report projection while preserving raw scientific receipts and numerical tokens. Parse native publication references once after independent byte-for-byte reconstruction.
-
-Regenerate the external style-token runtime binding alongside each compiled Material asset and check it against exact generated bytes. Preserve source provenance and literal writer ownership so reader changes cannot leave cascade contracts bound to an obsolete runtime.
-
-#### 2026-10-12T18:29:40Z — [#292](https://github.com/bijux/bijux-std/pull/292) — fix(docs): preserve source checks within manual publication budget
-
-Allow the complete manual documentation build, admission and independent verification to run within a 60-minute build job. Keep the 10-minute Pages deployment budget and strict frontend job limits unchanged.
-
-Allow explicit governance-only standards adoption to retain independently accepted documentation bytes and their exact source pin. Masterclass keeps its complementary program runtime baseline while refreshing the manual publisher. Verify the paired component sources before and after the complete retained documentation checks.
-
-Batch bounded directory-digest invocations while preserving the existing sorted file identities, Perl hash output and failure behavior. Avoid per-file process startup during complete component verification.
-
-#### 2026-10-12T16:05:39Z — [#291](https://github.com/bijux/bijux-std/pull/291) — fix(docs): admit canonical pollenomics checkout origins
-
-Admit the exact Pollenomics HTTPS checkout origin with or without `.git` for its retained native presentations. Preserve finite source, resource and document allowances and reject other repository identities or URL decorations.
-
-#### 2026-10-12T13:31:11Z — [#290](https://github.com/bijux/bijux-std/pull/290) — fix(docs): align catalogue identities and repository-link layout
-
-Keep Material repository-link new-tab indications within the desktop header using the existing compact visible icon and accessible warning text. Preserve authored target, relationship and ARIA changes through shell lifecycle restoration.
-
-Record catalogue source and custom-theme fingerprints with the same component-ordered physical tree identity used by independent admission. Preserve committed-byte ownership and reject missing, changed or extra inputs, including prefix-file/directory siblings.
-
-#### 2026-10-12T11:01:02Z — [#289](https://github.com/bijux/bijux-std/pull/289) — fix(docs): bind publication clocks, routes and retained input recovery
-
-Identify source-owned terminal index reports by their public directory canonicals and sitemap entries. Independently reconstruct those identities while preserving authored frame request paths, report bodies and scientific resources.
-
-Bind native documentation build dates to the selected commit's timestamp in source, build and independent producer admission. Preserve complete sitemap comparison across midnight and reject conflicting ambient or forged clock authority.
-
-Permit existing Bijux workflow badge images through the namespace-confined documentation image policy. Preserve executable, frame and API restrictions and independently reject broadened image policies.
-
-Reduce retained-input API observations while preserving fresh current-owner fences around artifact transport and complete historical-row reconciliation. Bound transient authenticated GET retries by the existing absolute deadline and retain credential, byte, quota and CDN restrictions.
-
-#### 2026-10-11T22:57:38Z — [#288](https://github.com/bijux/bijux-std/pull/288) — perf(docs): batch exact committed revision history admission
-
-Batch exact indexed and committed documentation-page ownership into two NUL-delimited Git inventories instead of spawning processes for each page. Require every page to match a regular blob and mode in the selected commit; reject staged, generated, resurrected, unmerged or symlinked inputs. Preserve native revision callbacks and receipt fields, and require complete original history for catalogue publication.
-
-#### 2026-10-11T22:40:31Z — [#287](https://github.com/bijux/bijux-std/pull/287) — fix(docs): qualify retained report presentations and native producer receipts
-
-Qualify the preserved Pollenomics atlas and native sequence presentations through finite original source, script, bootstrap and resource identities. Retain the default report budgets, forward explicit report ownership through independent publication admission, bind root redirects to the declared site base, and preserve the reviewed standalone Masterclass catalogue generators. Reconstruct media authority from the real configured plugin distribution and physical source fingerprint, preserving the seven baseline renderer package fields.
-
-Admit the finite reviewed Nordic document exception, bind the Swedish chart to its six local data files, and reconstruct Hub custom-domain output from its committed producer. Presentation qualification does not certify scientific results.
-
-#### 2026-10-11T21:46:28Z — [#286](https://github.com/bijux/bijux-std/pull/286) — fix(docs): qualify native consumer publication adapters
-
-Qualify native documentation publication adapters: admit Core's confined five-contract hook, run independent source/artifact verification before shared admission, reconstruct the exact installed Glightbox callback authority and preserve Masterclass's reviewed program-document generator identity.
-
-#### 2026-10-11T20:51:01Z — [#285](https://github.com/bijux/bijux-std/pull/285) — feat(docs): unify qualified manual publication for governed repositories
-
-Declare a source-controlled manual documentation publication contract for all twelve governed repositories, with Std and IaC routed to their authored Hub destinations. Bind publication to the tracked documentation source pin, an independently fetched accepted source tree, authenticated controller requests and exact verification evidence.
-
-Admit three frozen Linux documentation runtimes, hashed package installations and independently reproduced source-built minifier wheels. Preserve complete committed source custody, reject linked renderer inputs, and qualify finite scientific-download, custom-domain and media capabilities. Retain Masterclass program execution through its bounded documentation overlay.
-
-#### 2026-10-11T17:41:20Z — [#284](https://github.com/bijux/bijux-std/pull/284) — fix(docs): preserve usable drawer viewports and qualify reader state
-
-Keep complete drawer navigation inside admitted safe insets, qualify short and changing viewport heights, and verify shell lifecycle equivalence plus persistent automatic and explicit theme choices across real browser journeys.
-
-Qualify native cached navigation responses through exact owned fixture identity, destination and reader state while preserving normal browser revalidation.
-
-#### 2026-10-11T11:48:37Z — [#283](https://github.com/bijux/bijux-std/pull/283) — build(ci): admit verified dependency tool runtimes
-
-Install Genomics audit tools from checksum-verified binaries without source-build fallback, verify both executable versions, and admit sccache v0.0.3 with its Node24 runtime contract. Promote only Masterclass's three admitted action references through its independently accepted execution-policy authority, preserving its fixed runtime baseline and existing human documentation behavior.
-
-#### 2026-10-11T10:00:56Z — [#282](https://github.com/bijux/bijux-std/pull/282) — feat(github): require owner consolidation for dependency proposals
-
-Make dependency proposals notification-only across all twelve governed repositories. Give Dependabot and the identified dependency-lock refresh proposal one read-only owner notice; exclude other jobs before runner allocation and use distinct unverified names. Require locally qualified owner consolidation through human PRs.
-
-For eleven repositories, reuse accepted human-PR verification instead of repeating it on the main push. Bind manual publication to the current normal merge, its exact human PR, successful required checks and approval. Preserve Masterclass runtime and documentation bytes through its separate accepted dependency-policy authority.
-
-#### 2026-10-11T08:36:51Z — [#281](https://github.com/bijux/bijux-std/pull/281) — fix(build): enforce distribution checks and release version admission
-
-Propagate distribution metadata checker failures and log-write failures through build, package-build and standalone artifact checks. Preserve both output streams and handle artifact filenames with spaces without masking failure behind a pipeline.
-
-Retain the authored Pollenomics artifact-version validator and require the staged distribution version to match the selected release tag before publication admission.
-
-#### 2026-10-11T08:00:42Z — [#280](https://github.com/bijux/bijux-std/pull/280) — ci(pollenomics): retain lint and security for source admission
-
-Retain automatic formatting checks, strict lint and security auditing for Pollenomics runtime, compatibility, development and LRA packages while its scientific product tests are deferred. Remove duplicate lint execution and unused test/API-toolchain inputs. Require every retained check to succeed before `verification-ready` passes; scientific verification and publication remain separately controlled manual workflows.
-
-#### 2026-10-11T01:06:12Z — [#279](https://github.com/bijux/bijux-std/pull/279) — fix(github): admit action pins and current python workflow execution
-
-Parse actual workflow job and step references through the canonical Ruby/Psych parser and require immutable SHAs for remote actions and reusable workflows, including named steps and quoted keys. Provision and admit the pinned parser runtime in both hosted callers.
-
-Render Canon package CI from the current Python workflow definitions so the selected Node and Java toolchains execute before package installation. Preserve its package, artifact, input and concurrency contracts; retain repository-level documentation qualification and remove leaf checks without documentation recipes.
-
-#### 2026-10-10T23:54:43Z — [#278](https://github.com/bijux/bijux-std/pull/278) — fix(governance): qualify python toolchains and publication surfaces
-
-Admit all fifteen preserved Proteomics public install surfaces to build, PyPI, and GHCR matrices with explicit runtime, library, and compatibility roles. Verify all sixteen owned package profiles, including development governance, and remove unsupported package documentation defaults while retaining repository documentation publication qualification.
-
-Request merge commits for reviewed safe dependency automation, preserving original ancestry under the admitted merge-only repository settings.
-
-Verify Python repository governance through its independently fetched, exact GitHub standards pin. Compare canonical projected workflow bytes without rendering, copying, or restoring product files.
-
-Use the repository-owned OpenAPI package manifest and lock for strict sandbox installation, reject unreviewed dependency fallback, and invalidate installed tools when either reviewed input changes. Align API workflows with Node 24.21.0, setup-java v6.0.1, and the Redocly 2.58.1 configuration baseline.
-
-#### 2026-10-10T22:49:23Z — [#277](https://github.com/bijux/bijux-std/pull/277) — docs(governance): explain publication admission and reconcile accepted history
-
-Document manual publication admission and accepted documentation source bootstrap, reconcile verified merge dates, and preserve the original accepted action-pin history.
-
-#### 2026-10-10T22:06:55Z — [#275](https://github.com/bijux/bijux-std/pull/275) — fix(publication): preserve ghcr build families and promote action pins
-
-Keep shared release build families intact when selecting individual GHCR publication packages. Map Core's public DAG crates to their shared DAG bundle and CLI to its own bundle; validate both matrix shapes and reject malformed configuration. Promote verified setup-node v7.1.0, download-artifact v8.0.2 and upload-artifact v7.0.2 pins through their canonical owners and generated projections.
-
-#### 2026-10-10T21:43:13Z — [#276](https://github.com/bijux/bijux-std/pull/276) — fix(docs): admit exact accepted standards before publication builds
-
-Fetch and admit the repository's immutable GitHub standards pin before documentation setup and build. Reject missing or malformed pins and fetched commit mismatches; pass explicit source authority to guarded build commands without dispatching publication.
-
-#### 2026-10-10T21:16:11Z — [#274](https://github.com/bijux/bijux-std/pull/274) — ci(genomics): admit source through format lint and dependency audit
-
-Run the Genomics canonical source admission through formatting, lint and dependency audit while its product suites are repaired. Preserve independent publication qualification and other repository test lanes.
-
-#### 2026-10-10T20:21:54Z — [#273](https://github.com/bijux/bijux-std/pull/273) — fix(docs): distinguish scientific assets from generated website output
-
-Allow repository-owned scientific assets while keeping generated documentation output and source verification boundaries explicit.
-
-#### 2026-10-10T19:56:23Z — [#272](https://github.com/bijux/bijux-std/pull/272) — fix(github): render workflow block scalars without whitespace drift
-
-Render workflow shell block scalars without indentation-only trailing lines or extra blank lines, preserving executable shell content.
-
-#### 2026-10-10T19:18:46Z — [#271](https://github.com/bijux/bijux-std/pull/271) — fix(governance): reject publication in publisher-free foundations
-
-Declare publisher-free foundation repositories and reject reusable publisher calls or recognizable publication commands in their authored workflows.
-
-#### 2026-10-10T19:03:09Z — [#270](https://github.com/bijux/bijux-std/pull/270) — fix(docs): retire generated guides from accepted prior source
-
-Retire generated documentation guides against the previously accepted source while admitting their replacements from the new immutable standards pin.
-
-#### 2026-10-10T18:43:53Z — [#269](https://github.com/bijux/bijux-std/pull/269) — fix(governance): admit publication only through authenticated iac dispatch
-
-Require authenticated manual IaC admission for applicable release and documentation publishers. Verify controller identity, accepted protected-main source and producer evidence before jobs receive publication credentials.
-
-#### 2026-10-10T15:26:57Z — [#268](https://github.com/bijux/bijux-std/pull/268) — fix(governance): declare owned gates and produce mandatory verification checks
-
-Declare and produce the missing Pollenomics verification aggregate, retain mandatory Python product checks on applicable dependency and documentation PRs, and declare IaC contracts, plan and governance checks. Align generated protection rules with default-branch selection, enforcement on creation, no bypass and the GitHub Actions app identity. Live repository rulesets remain owned by IaC and require observed check producers before enforcement.
-
-#### 2026-10-10T13:25:56Z — [#267](https://github.com/bijux/bijux-std/pull/267) — fix(docs): cancel viewport history writes before cached departure
-
-Cancel pending native viewport-history work before cross-document departure or browser-cache entry, and resume fresh work after trusted cached restoration or cancelled departure. Preserve same-document navigation and other readers' history state; bind the owned lifecycle source to the reproduced Material runtime and exercise its cancellation boundaries.
-
-#### 2026-10-10T12:44:46Z — [#266](https://github.com/bijux/bijux-std/pull/266) — ci(docs): require hub diagram rendering in the standards report
-
-Require the hub-owned rendered diagram gate in the shared contracts job, including dependency pull requests. Prepare pinned browser/build runtimes, retain diagram evidence, and fail the existing required standards report when the complete reader check fails.
-
-#### 2026-10-10T12:11:53Z — [#265](https://github.com/bijux/bijux-std/pull/265) — build(github): promote setup-uv and rust-toolchain action pins
-
-Promote setup-uv v10.2.0 and the accepted rust-toolchain commit into shared publishers, manifest wrappers and standards gates. Regenerate source snapshots and checksum manifests so downstream repositories consume the dependency changes through canonical refresh.
-
-#### 2026-10-10T11:51:08Z — [#264](https://github.com/bijux/bijux-std/pull/264) — fix(ci): recover attempts after queued job cancellation
-
-Preserve canceled, unassigned jobs as verified nonexecution audit records, admit only newer actual executions, and refuse stale success or artifact ownership after an unsuperseded cancellation. Reconcile repeated attempts and copied cancellation projections without relaxing runner, step, check or source authority.
-
-#### 2026-10-10T10:56:02Z — [#263](https://github.com/bijux/bijux-std/pull/263) — feat(github): verify source-owned workflow execution policy
-
-Capture canonical policy sources, admit repository events before preparation, guard manual publishers and dependency routing, and independently rederive every workflow projection through finite source-owned helpers and snapshots. Preserve default repository behavior and introduce no consumer activation.
-
-#### 2026-10-10T10:55:57Z — [#260](https://github.com/bijux/bijux-std/pull/260) — refactor(docs): separate publication validation responsibilities
-
-Give HTML parsing, destination authority, redirect graphs, stylesheet/SVG resources and sitemap reconciliation explicit module ownership while preserving the public qualification command and diagnostics.
-
-#### 2026-10-10T10:21:56Z — [#262](https://github.com/bijux/bijux-std/pull/262) — ci(docs): recover exact source-owned qualification attempts
-
-Admit retained fixtures and execution evidence through exact live API source and owner identity, preserve each actual workflow attempt, and qualify the full latest job union without relaxing coverage or whole-job limits. Keep ordinary first-attempt downloads and retain failed admission diagnostics.
-
-#### 2026-10-10T00:34:46Z — [#259](https://github.com/bijux/bijux-std/pull/259) — feat(docs): govern shared stylesheet precedence and token ownership
-
-Enforce reviewed declaration priorities, unlayered shared styles and a closed import graph; remove unnecessary footer priority flags and bind owned token references to exact definition scopes.
-
-#### 2026-10-10T00:09:55Z — [#261](https://github.com/bijux/bijux-std/pull/261) — test(docs): measure attributable website performance populations
-
-Account for served payload and navigation ownership, observe controlled cold/warm transport and reader interactions, and compare only source-bound compatible populations. Retain unavailable metrics and failed observations without granting production performance acceptance.
-
-#### 2026-10-09T21:51:39Z — [#257](https://github.com/bijux/bijux-std/pull/257) — fix(docs): validate public artifact destinations
-
-Reject redirect cycles and private destinations, normalize Unicode hostname boundaries, and validate responsive, stylesheet and SVG resources against actual public assets and symbols. Preserve harmless scientific SVG metadata while refusing internal entity authority.
-
-#### 2026-10-09T21:28:33Z — [#253](https://github.com/bijux/bijux-std/pull/253) — fix(docs): retain reader context through native history and layout
-
-Preserve authored reading context through diagram layout changes and native history, defer restoration until pageshow, and yield palette callbacks to trusted reader input. Retain source inspection across proven cached entries using a private entry-bound snapshot, with a required full-Chromium native cache qualification alongside the unchanged three-engine history cases.
-
-#### 2026-10-09T20:59:39Z — [#258](https://github.com/bijux/bijux-std/pull/258) — feat(docs): deliver owned interactive reports through python make
-
-Select committed interactive report ownership consistently through Python Make and publication validation. Validate source selection before cleanup so refusals preserve verified output, and qualify every renderer and Make duty in seven bounded source-owned groups.
-
-#### 2026-10-09T18:52:16Z — [#256](https://github.com/bijux/bijux-std/pull/256) — feat(docs): reconstruct committed interactive report ownership
-
-Render explicitly selected committed interactive report recipes and independently reconstruct their resource, bootstrap and provider authority. Execute captured processor source bytes to preserve provenance across stale bytecode caches.
-
-#### 2026-10-09T18:24:41Z — [#254](https://github.com/bijux/bijux-std/pull/254) — test(docs): qualify independent storage denial journeys
-
-Require getter, read and write denial independently through initial load, session theme, instant navigation and cross-site reading across all three engines.
-
-#### 2026-10-09T17:51:20Z — [#255](https://github.com/bijux/bijux-std/pull/255) — test(docs): bound authored navigation journeys by ancestry
-
-Give every authored root, section and nested route a bounded disjoint journey in all three phone engines while preserving the original overview case and existing deadlines.
-
-#### 2026-10-09T16:52:53Z — [#252](https://github.com/bijux/bijux-std/pull/252) — test(docs): require rendered authored content coverage
-
-Require the existing rich-content assertions in all nine engine and viewport combinations through the existing semantics jobs.
-
-#### 2026-10-09T16:25:54Z — [#251](https://github.com/bijux/bijux-std/pull/251) — test(docs): cover authored phone navigation destinations
-
-Reach every authored fixture destination from the phone root drawer and bind expected routes and headings to the source graph, while retaining all existing navigation case identities.
-
-#### 2026-10-09T15:59:28Z — [#250](https://github.com/bijux/bijux-std/pull/250) — docs(docs): assign native search template ownership
-
-Name the shared native search presentation owner and Material provider boundary, and link the existing site-scope and escaping checks in the executable contract trace.
-
-#### 2026-10-09T15:21:30Z — [#248](https://github.com/bijux/bijux-std/pull/248) — feat(docs): independently render source-owned passive readers
-
-Reconstruct committed passive reader notices, native targets and discovery in both selected and reference renderers while preserving original report bytes and restrictive CSP.
+Repository changes are recorded by pull request, newest merge first.
+
+### [#334](https://github.com/bijux/bijux-std/pull/334) — Complete pull request and mainline history
+
+- Record every merged PR in verified merge order, restore eight missing entries and
+  expand mixed deliveries across standards, CI, publication, dependencies and reader
+  behavior.
+- Attribute earlier main-branch work to the next PR, distinguish initial foundations
+  from PR changes, and reconcile rewritten delivery and topic-branch integration without
+  duplicating work.
+- Correct historical versions and scope, remove stale review/rewrite notes, and retain
+  the minimal PR-based format with no permanent changelog gate.
+
+### [#333](https://github.com/bijux/bijux-std/pull/333) — Action pins and Atlas SQLite toolchain
+
+- Adopt reviewed ruby/setup-ruby 1.338.0 and action-gh-release 3.0.4 commits in
+  canonical workflows and consumer manifests, regenerating source snapshots and
+  integrity records.
+- Declare Rust 1.89 for Atlas CI and release builds so its downstream dependency
+  consolidation can use patched bundled SQLite and constant-time utilities.
+- Refresh Atlas cargo-deny to 0.18.9 and cargo-audit to 0.22.2 for current advisory
+  records; retain other repositories' toolchains and existing verification gates.
+
+### [#331](https://github.com/bijux/bijux-std/pull/331) — Navigation labels and link warnings
+
+- Separate visible navigation link warnings from their labels in both text orientations
+  while preserving accessible notices and ordinary inline spacing.
+
+### [#330](https://github.com/bijux/bijux-std/pull/330) — Concise publication qualification logs
+
+- Keep publication CLI summaries concise while retaining the complete producer authority
+  in written manifests and API results. Preserve admission, source reconstruction, CSP
+  and retained-byte verification.
+
+### [#329](https://github.com/bijux/bijux-std/pull/329) — Renderer diagnostics and bounded phone coverage
+
+- Report the original MkDocs Abort diagnostic and preserve its failed exit status,
+  without swallowing unrelated exits, interrupts or strict warnings.
+- Require all scientific-download controls, including compiled-PDF and historical
+  source-resolver cases, in the actual renderer owner; reject missing or relocated
+  tests.
+- Isolate nested test discovery from outer filters so the required control inventory
+  stays complete.
+- Split phone branding, ordinary text and enlarged-text geometry into separate cases,
+  preserving every width, landscape input, interaction and existing timeout; align
+  source-owned case inventories with the new partition.
+
+### [#328](https://github.com/bijux/bijux-std/pull/328) — Admit source-bound compiled scientific downloads
+
+- Admit the current scientific PDF download hook while retaining the twelve-route,
+  nine-paper population, historical recipes and unknown-hook rejection.
+- Bind compiled decks to their literal Git inputs, ancestor revision, source epoch,
+  regular file modes and successful compiler records.
+- Authenticate the loaded historical paper-source resolver and native dependencies
+  before callbacks execute; retained storage locations do not replace original execution
+  identities.
+
+### [#327](https://github.com/bijux/bijux-std/pull/327) — Require direct names for annotated runtime literals
+
+- Refuse annotated attribute and subscript targets when selecting external-runtime
+  string constants. Keep direct annotated names valid and preserve current native source
+  reconstruction, transport and provider boundaries.
+
+### [#326](https://github.com/bijux/bijux-std/pull/326) — Authenticate source-bound external native runtimes
+
+- Authenticate native reports split into an inline loader, an external runtime and
+  optional controllers, alongside the existing inline and passive recipes.
+- Reconstruct selected Python string literals, template expansions and helper splits
+  without importing or executing the producer; validate repeated parameters and fixed
+  JSON nodes.
+- Bind runtime/controller paths, exact bytes, SRI and source identities to the complete
+  executable graph, and include them in the existing resource budgets.
+- Require registration transport to match its owned bounded resources; inspect provider
+  calls in authenticated external bodies while inline CSP authorizes only the loader.
+
+### [#325](https://github.com/bijux/bijux-std/pull/325) — Require canonical product checks before admission
+
+- Require every canonical product check and its GitHub Actions binding before
+  publication admission, even when effective branch rules omit those checks.
+- Retain exact-commit and latest-result verification; reject missing results, missing
+  bindings and malformed canonical declarations.
+
+### [#324](https://github.com/bijux/bijux-std/pull/324) — Qualify first consumer checksums without disabled workflows
+
+- Remove checksum rows for canonically disabled workflow destinations when
+  synchronization removes those files, allowing the first documentation-free Node
+  consumer to qualify.
+- Keep active or unrelated missing files as failures and verify repeated generation
+  preserves the managed manifest.
+
+### [#323](https://github.com/bijux/bijux-std/pull/323) — Node workspace verification and npm publication candidates
+
+- Register Node workspaces, four required verification contexts and artifact-contained
+  shared Make contracts.
+- Add a manual npm publisher that inspects immutable archives from the successful
+  accepted-main candidate run and verifies source, tree, lockfile and archive identity
+  before publishing in dependency order. Keep registry publication disabled.
+- Retain partial publication receipts and reject rebound candidate evidence, linked
+  archive members, renamed npm writes and mixed dry-run/write commands.
+- Preserve canonical source discovery across isolated worktrees and retain reviewed
+  status-check bindings during manifest generation.
+- Correct undeclared workflow matrix/dispatch expressions and expose Node workspace
+  targets through the common Make component.
+
+### [#322](https://github.com/bijux/bijux-std/pull/322) — Parallel Core compilation and test verification
+
+- Inventory the complete committed Core test workspace and share compiled library inputs
+  across independently prepared all-feature binaries and default CLI/maintainer tools.
+- Run native Rust partitions and Python parity/coverage independently using the existing
+  pinned Nextest executor, canonical filter and CI profile.
+- Authenticate transferred inputs through producer digests and require all six
+  producer/worker results plus complete current-source receipts before the stable test
+  check passes.
+- Cap the new jobs at five minutes with a three-minute target; retain formatting, lint,
+  audit and admission checks. This source change does not establish downstream timing
+  gains.
+
+### [#321](https://github.com/bijux/bijux-std/pull/321) — Pin Genomics installers to reviewed action release
+
+- Pin all three Genomics installer steps to the reviewed taiki-e/install-action 2.88.1
+  revision while preserving exact tool versions and checksums.
+- Regenerate canonical workflow sources and managed checksums without changing
+  permissions or verification gates.
+
+### [#320](https://github.com/bijux/bijux-std/pull/320) — Qualify OpenAPI tooling and bounded workflow evidence
+
+- Qualify Redocly CLI 2.73.0 in the canonical OpenAPI configuration and pinned bootstrap
+  recipe.
+- Fetch workflow job evidence in 25-item pages to avoid failing large API responses
+  while retaining the complete paginated inventory, owner/source checks and absolute
+  deadline. Artifact-list pagination remains separate.
+
+### [#319](https://github.com/bijux/bijux-std/pull/319) — Qualify canonical setup actions and OpenAPI tooling
+
+- Adopt immutable setup-uv 10.3.3, setup-ruby 1.336.0 and setup-java 6.1.0 references
+  while preserving selected language runtimes and verification gates.
+- Align canonical OpenAPI configuration and bootstrap recipes with generator CLI 2.42.0
+  and Redocly CLI 2.71.2, and regenerate managed workflow authority.
+
+### [#318](https://github.com/bijux/bijux-std/pull/318) — Filter historical blobs from complete-history checkouts
+
+- Filter historical file blobs from policy and all four complete-history standards
+  checkouts while preserving the full commit graph, protected-path ranges, on-demand
+  historical files and existing job limits.
+- Run independent responsive-navigation cases with two workers while preserving every
+  case, zero retries and the strict three-minute job budget.
+
+### [#315](https://github.com/bijux/bijux-std/pull/315) — Data-owned public receipt declarations
+
+- Admit public-receipt display declarations from structured metadata while preserving
+  thirteen raw report identities, exact pointer/value bindings, privacy refusals and
+  numerical token bytes.
+- Retain the legacy source recipe and its 32-field contract while qualifying a separate
+  data-owned recipe for other valid declaration populations.
+- Require the receipt controls in the actual MkDocs renderer and reject missing or
+  relocated owners; preserve refusal of altered reports, private data and malformed
+  JSON.
+
+### [#314](https://github.com/bijux/bijux-std/pull/314) — Refresh canonical installer cache and publisher pins
+
+- Adopt canonical Ruby setup 1.335.0, cache 6.1.0, taiki installation 2.87.31 and PyPI
+  publication 1.14.3 references while preserving inputs and selected runtime versions.
+- Regenerate owning workflows, source snapshots and component/shared checksums for
+  exact-source consumer adoption.
+
+### [#313](https://github.com/bijux/bijux-std/pull/313) — Admit canonical Masterclass installer action pins
+
+- Admit canonical Ruby and uv installer action references for Masterclass while
+  preserving installer inputs and its accepted program runtime baseline.
+
+### [#312](https://github.com/bijux/bijux-std/pull/312) — Authenticate retained interactive template ancestry
+
+- Authenticate an explicitly selected historical interactive template through its exact
+  Git commit, ancestry, path, ordinary file mode, blob, byte count and SHA-256 during
+  construction, planning and final verification.
+- Limit retained storage authority to that recipe template; other inputs retain their
+  physical selected-commit checks. Historical correspondence does not establish a new
+  renderer or browser execution.
+
+### [#311](https://github.com/bijux/bijux-std/pull/311) — Patch renderer and source-wheel security dependencies
+
+- Patch active documentation verification/publication recipes with Certifi 2026.10.19
+  for compromised emSign trust roots and GitPython 3.2.1 for submodule-path validation.
+- Patch Setuptools to 84.1.0 in the separate source-wheel builder and independently
+  reproduce both source-only minifier wheels before admitting their hashes.
+- Renew installed-file fingerprints across active profiles while preserving interpreter,
+  startup and consumer-source boundaries; keep the original Canon observation as
+  historical evidence rather than publication authority.
+
+### [#308](https://github.com/bijux/bijux-std/pull/308) — Enforce publication provenance and secure documentation tooling
+
+- Require a release tag bound to the selected revision and repository-owned source
+  admission before dependency installation, package builds or artifact upload; include
+  the optional Pollenomics LRA engine in public release selection.
+- Authenticate retained scientific build inputs against their original source epochs and
+  committed PDF download manifests against their exact source context.
+- Consolidate six dependency proposals through reviewed upload-artifact, rust-toolchain,
+  setup-ruby, setup-uv, setup-python and rust-cache revisions; regenerate canonical
+  workflows and integrity records without changing selected language versions.
+- Require every retained and committed scientific-download test owner in renderer
+  qualification, and reject missing or relocated controls.
+- Preserve each Make reconstruction's evidence in its own source directory so repeated
+  qualification does not overwrite earlier results.
+- Rebuild the reproducible Mermaid bundle with DOMPurify 3.4.17 for the
+  template/shadow-root, IN_PLACE and XHTML SMIL sanitizer advisories; renew provenance,
+  notices, SRI and source digests.
+- Give Std's complete contracts job a 20-minute budget while retaining ten-minute
+  standard/consumer checks and existing frontend limits; reconcile the preceding
+  accepted PR history.
+
+### [#301](https://github.com/bijux/bijux-std/pull/301) — Preserve owned Genomics compilation caches
+
+- Retain explicit repository-owned Cargo registry and compiler-product directories
+  without package pruning that removes dependencies stored beneath the checkout. Bind
+  compatible restores to the platform, Rust version, build configuration and lockfile,
+  and save rebuilt workspace products under the source identity. Build and test
+  execution remains mandatory.
+
+### [#300](https://github.com/bijux/bijux-std/pull/300) — Enforce complete Genomics verification
+
+- Accept the pinned Nextest release's build metadata by comparing its first line's exact
+  executable/version tokens, while preserving checksum verification and installation
+  failures.
+- Cache the actual Make-owned Genomics Cargo home and target directories and use all
+  four compiler cores; cache configuration alone does not prove a timing gain.
+- Require successful formatting, lint and dependency auditing as well as the build,
+  every native partition and Python before tests / complete can pass.
+
+### [#299](https://github.com/bijux/bijux-std/pull/299) — Require distributed Genomics test coverage
+
+- Add a build-once native test producer, twenty source-bound Rust partitions, a parallel
+  Python job and the required tests / complete aggregate to Genomics CI.
+- Bind archive transport to compiled product/source identity and require exact terminal
+  receipt coverage; consumers execute downloaded products without recompiling.
+- Pin Nextest, Rust and Linux prerequisites, and keep artifacts attempt-qualified so a
+  partial rerun cannot borrow an earlier producer's products. Job limits are safeguards
+  rather than cold-run speed guarantees.
+- Propagate shared Rust report-write failures when a checked tool succeeds, preserving
+  the tool's original error when both the tool and report sink fail.
+
+### [#298](https://github.com/bijux/bijux-std/pull/298) — Preserve proof identity and bound fixture preparation
+
+- Export accepted-proof selections in their persisted JSON representation so fresh
+  aggregate observations retain the same check-ID keys after storage. Revalidate actual
+  job/check ownership and reject altered checks, artifacts, timestamps or missing proof
+  records.
+- Overlap the existing pinned browser image pull with canonical fixture inventory
+  preparation, and require successful image transport before observing and packing the
+  runtime. Stop and reap the owned pull when preparation fails while preserving the
+  strict three-minute whole-job bound and every engine and case.
+
+### [#297](https://github.com/bijux/bijux-std/pull/297) — Preserve standard platform imports in proof consumers
+
+- Rename the accepted-proof consumer wrapper to consumer_platform.py so its child
+  process imports the standard Python platform observer. Keep physical Node/npm package
+  and platform identity admission intact, with full fallback on refusal, and verify
+  imports from the real child directory.
+
+### [#296](https://github.com/bijux/bijux-std/pull/296) — Observe completed accepted proof producers
+
+- Observe independently accepted completed browser producers without requiring a running
+  original report job. Preserve current-workflow active caller checks and reject
+  missing, active, failed or cancelled original owners before proof reuse.
+
+### [#295](https://github.com/bijux/bijux-std/pull/295) — Qualify accepted browser proof and retained source authority
+
+- Add accepted-proof qualification only on official main, authenticating the original
+  successful merged-PR producer through live actor, source, runtime, check and artifact
+  evidence.
+- Have both required aggregates independently reopen retained proof; missing or changed
+  authority selects full execution, and receipts distinguish reused coverage from
+  current-head work.
+- Admit Masterclass's complete previous component namespace before retiring only exact
+  obsolete owned documentation files and checksum rows, preserving its independent
+  program runtime.
+- Preserve the finite historical Pollenomics PDF source context and reviewed Bandit
+  metadata difference without changing original PDF hashes or source locks; require the
+  scientific-download refusal controls in the installed renderer.
+
+### [#293](https://github.com/bijux/bijux-std/pull/293) — Native reader resilience and source-qualified verification reuse
+
+- Admit only inert native search result markup and normalized tag labels before
+  delivery, preserving the native worker and result protocol.
+- Keep automatic palette selection working when the optional preference API disappears,
+  and report clipboard failures with recovery feedback and selectable code.
+- Qualify storage denial, missing optional observers, reduced motion and actual reader
+  contrast through maintained native controls.
+- Select verification from owned inputs and authenticate unchanged frontend proof
+  against its original accepted producer, actors, immutable artifacts and freshly
+  observed source/runtime identity; fall back to complete execution on refusal.
+- Transport exact installed browser packages in the consumers' pinned container platform
+  and batch related work into eighteen physical duties per engine while retaining all
+  twenty-seven group identities and three engines.
+- Upgrade vulnerable GitPython and urllib3 publication recipes, promote the
+  authenticated setup-uv action and retire only Atlas's exact reviewed unused package
+  workflows.
+- Preserve Masterclass component identity and bind catalogue edit/view actions to actual
+  authored paths.
+- Admit a finite public-report projection that removes private display paths while
+  preserving original scientific receipts, pointer/value bindings and numerical tokens.
+- Parse native publication references once after independent reconstruction, bind style
+  vocabulary to each compiled runtime, and batch same-viewport contrast observations
+  without changing measured nodes or thresholds.
+
+### [#292](https://github.com/bijux/bijux-std/pull/292) — Preserve source checks within manual publication budget
+
+- Allow the complete manual documentation build, admission and independent verification
+  to run within a 60-minute build job. Keep the 10-minute Pages deployment budget and
+  strict frontend job limits unchanged.
+- Allow explicit governance-only standards adoption to retain independently accepted
+  documentation bytes and their exact source pin. Masterclass keeps its complementary
+  program runtime baseline while refreshing the manual publisher. Verify the paired
+  component sources before and after the complete retained documentation checks.
+- Batch bounded directory-digest invocations while preserving the existing sorted file
+  identities, Perl hash output and failure behavior. Avoid per-file process startup
+  during complete component verification.
+
+### [#291](https://github.com/bijux/bijux-std/pull/291) — Admit canonical pollenomics checkout origins
+
+- Admit the exact Pollenomics HTTPS checkout origin with or without `.git` for its
+  retained native presentations. Preserve finite source, resource and document
+  allowances and reject other repository identities or URL decorations.
+
+### [#290](https://github.com/bijux/bijux-std/pull/290) — Align catalogue identities and repository-link layout
+
+- Keep Material repository-link new-tab indications within the desktop header using the
+  existing compact visible icon and accessible warning text. Preserve authored target,
+  relationship and ARIA changes through shell lifecycle restoration.
+- Record catalogue source and custom-theme fingerprints with the same component-ordered
+  physical tree identity used by independent admission. Preserve committed-byte
+  ownership and reject missing, changed or extra inputs, including prefix-file/directory
+  siblings.
+
+### [#289](https://github.com/bijux/bijux-std/pull/289) — Bind publication clocks, routes and retained input recovery
+
+- Identify source-owned terminal index reports by their public directory canonicals and
+  sitemap entries. Independently reconstruct those identities while preserving authored
+  frame request paths, report bodies and scientific resources.
+- Bind native documentation build dates to the selected commit's timestamp in source,
+  build and independent producer admission. Preserve complete sitemap comparison across
+  midnight and reject conflicting ambient or forged clock authority.
+- Permit existing Bijux workflow badge images through the namespace-confined
+  documentation image policy. Preserve executable, frame and API restrictions and
+  independently reject broadened image policies.
+- Reduce retained-input API observations while preserving fresh current-owner fences
+  around artifact transport and complete historical-row reconciliation. Bound transient
+  authenticated GET retries by the existing absolute deadline and retain credential,
+  byte, quota and CDN restrictions.
+
+### [#288](https://github.com/bijux/bijux-std/pull/288) — Batch exact committed revision history admission
+
+- Batch exact indexed and committed documentation-page ownership into two NUL-delimited
+  Git inventories instead of spawning processes for each page. Require every page to
+  match a regular blob and mode in the selected commit; reject staged, generated,
+  resurrected, unmerged or symlinked inputs. Preserve native revision callbacks and
+  receipt fields, and require complete original history for catalogue publication.
+
+### [#287](https://github.com/bijux/bijux-std/pull/287) — Retained presentations, media callbacks and custom-domain receipts
+
+- Admit exact retained Pollenomics Nordic and Swedish native presentations through
+  finite source, executable, bootstrap and resource identities; retain the default
+  limits for all other reports.
+- Bind the Swedish chart to its six original local data files and carry explicit
+  passive/interactive ownership through reconstruction and independent publication
+  verification.
+- Bind native root redirects to the declared site base and retain the reviewed
+  standalone Masterclass catalogue generator variants.
+- Reconstruct media callback authority from the actual configured plugin distribution
+  and physical source fingerprint, preserving the existing reviewed input recipes.
+- Bind root custom-domain admission to its native owner instead of accepting an
+  unrelated claim.
+
+### [#286](https://github.com/bijux/bijux-std/pull/286) — Qualify native consumer publication adapters
+
+- Admit Core's confined documentation hook by binding five tracked JSON contracts to
+  their exact published copies.
+- Run source and public-artifact checks around route/search receipt construction before
+  shared publication admission.
+- Reconstruct the installed Glightbox callback from its actual producer version,
+  physical inputs, body and attributes, carrying the same authority into CSP
+  verification.
+- Admit Masterclass's reviewed standalone-course generator variant while retaining the
+  original generator recipe and source identity.
+
+### [#285](https://github.com/bijux/bijux-std/pull/285) — Manual publication, isolated runtimes and foundation routing
+
+- Declare manual documentation publication for all twelve governed repositories, routing
+  Std and IaC to their authored Hub destinations and rejecting standalone deployment for
+  those routed entrypoints.
+- Bind documentation authority to the committed bijux-docs.sha pointer and an
+  independently fetched accepted Std tree, allowing Masterclass to retain its separate
+  program runtime.
+- Install exact hashed wheels in three frozen Linux documentation runtimes and
+  authenticate the actual interpreter, standard library, startup and installed package
+  bytes.
+- Build source-only minifiers with a separately frozen toolchain and independently
+  reproduce their approved wheel bytes before installation.
+- Preserve committed symlink metadata in complete source custody while rejecting linked
+  renderer inputs; admit only finite reviewed scientific-download, custom-domain and
+  media-plugin callback capabilities.
+- Qualify affected runtime recipes on human PRs and bind the complete retained
+  Masterclass source tree before its finite documentation overlay; observations and
+  source acceptance do not dispatch publication.
+
+### [#284](https://github.com/bijux/bijux-std/pull/284) — Preserve usable drawer viewports and qualify reader state
+
+- Keep complete drawer navigation inside admitted safe insets, qualify short and
+  changing viewport heights, and verify shell lifecycle equivalence plus persistent
+  automatic and explicit theme choices across real browser journeys.
+- Qualify native cached navigation responses through exact owned fixture identity,
+  destination and reader state while preserving normal browser revalidation.
+
+### [#283](https://github.com/bijux/bijux-std/pull/283) — Verified dependency tools and Masterclass action promotion
+
+- Install the existing Genomics cargo-deny 0.18.3 and cargo-audit 0.22.0 from
+  checksum-verified release binaries, with exact executable/version checks and no
+  source-build fallback.
+- Adopt sccache-action v0.0.11 and its Node24 action runtime.
+- Promote only Masterclass's admitted setup-node and artifact actions through
+  independently accepted policy authority, preserving its fixed runtime, documentation
+  bytes and human execution behavior.
+
+### [#282](https://github.com/bijux/bijux-std/pull/282) — Require owner consolidation for dependency proposals
+
+- Make Dependabot and the identified dependency-lock refresh proposal notification-only
+  across all twelve governed repositories, with one read-only owner notice explicitly
+  stating that verification did not run.
+- Exclude other jobs before runner allocation and give skipped proposal checks distinct
+  unverified names; replace automatic merge with owner-qualified human consolidation
+  PRs.
+- For eleven repositories, reuse accepted human-PR verification on main rather than
+  repeat product suites. Manual publication requires the current normal merge, its exact
+  human PR head, successful required checks, approval and a final main reread.
+- Preserve Masterclass's separate accepted runtime and documentation behavior through
+  bounded dependency-policy promotion that admits all previous managed bytes before
+  mutation.
+
+### [#281](https://github.com/bijux/bijux-std/pull/281) — Enforce distribution checks and release version admission
+
+- Propagate distribution metadata checker failures and log-write failures through build,
+  package-build and standalone artifact checks. Preserve both output streams and handle
+  artifact filenames with spaces without masking failure behind a pipeline.
+- Retain the authored Pollenomics artifact-version validator and require the staged
+  distribution version to match the selected release tag before publication admission.
+
+### [#280](https://github.com/bijux/bijux-std/pull/280) — Retain lint and security for source admission
+
+- Retain automatic formatting checks, strict lint and security auditing for Pollenomics
+  runtime, compatibility, development and LRA packages while its scientific product
+  tests are deferred. Remove duplicate lint execution and unused test/API-toolchain
+  inputs. Require every retained check to succeed before `verification-ready` passes;
+  scientific verification and publication remain separately controlled manual workflows.
+
+### [#279](https://github.com/bijux/bijux-std/pull/279) — Admit action pins and current python workflow execution
+
+- Parse actual workflow job and step references through the canonical Ruby/Psych parser
+  and require immutable SHAs for remote actions and reusable workflows, including named
+  steps and quoted keys. Provision the pinned Ruby 3.3.12 parser runtime in both hosted
+  callers.
+- Render Canon package CI from the current Python workflow definitions so Node 24.21.0
+  and Java 17 execute before package installation. Preserve its package, artifact, input
+  and concurrency contracts; retain repository-level documentation qualification and
+  remove leaf checks without documentation recipes.
+
+### [#278](https://github.com/bijux/bijux-std/pull/278) — Qualify python toolchains and publication surfaces
+
+- Admit all fifteen preserved Proteomics public install surfaces to build, PyPI, and
+  GHCR matrices with explicit runtime, library, and compatibility roles. Verify all
+  sixteen owned package profiles, including development governance, and remove
+  unsupported package documentation defaults while retaining repository documentation
+  publication qualification.
+- Request merge commits for reviewed safe dependency automation, preserving original
+  ancestry under the admitted merge-only repository settings.
+- Verify Python repository governance through its independently fetched, exact GitHub
+  standards pin. Compare canonical projected workflow bytes without rendering, copying,
+  or restoring product files.
+- Use the repository-owned OpenAPI package manifest and lock for strict sandbox
+  installation, reject unreviewed dependency fallback, and invalidate installed tools
+  when either reviewed input changes. Align API workflows with Node 24.21.0, setup-java
+  v6.0.1, and the Redocly 2.58.1 configuration baseline.
+
+### [#277](https://github.com/bijux/bijux-std/pull/277) — Explain publication admission and reconcile accepted history
+
+- Document manual publication admission and accepted documentation-source bootstrap, and
+  reconcile verified merge dates. The delivery changes README and CHANGELOG only; its
+  preserved action-pin ancestry introduces no additional runtime promotion.
+
+### [#275](https://github.com/bijux/bijux-std/pull/275) — Preserve ghcr build families and promote action pins
+
+- Keep shared release build families intact when selecting individual GHCR publication
+  packages. Map Core's public DAG crates to their shared DAG bundle and CLI to its own
+  bundle; validate both matrix shapes and reject malformed configuration. Promote
+  verified setup-node v7.1.0, download-artifact v8.0.2 and upload-artifact v7.0.2 pins
+  through their canonical owners and generated projections.
+
+### [#276](https://github.com/bijux/bijux-std/pull/276) — Admit exact accepted standards before publication builds
+
+- Fetch and admit the repository's immutable GitHub standards pin before documentation
+  setup and build. Reject missing or malformed pins and fetched commit mismatches; pass
+  explicit source authority to guarded build commands without dispatching publication.
+
+### [#274](https://github.com/bijux/bijux-std/pull/274) — Admit source through format lint and dependency audit
+
+- Limit Genomics' canonical history-preservation wrapper to formatting, lint and
+  dependency audit while its unpublished product tests are repaired; remove test,
+  fixture, benchmark and release-readiness jobs from that wrapper.
+- Keep product test commands available locally and retain independent manual publication
+  verification; this source-admission exception does not represent omitted product tests
+  as passed.
+
+### [#273](https://github.com/bijux/bijux-std/pull/273) — Distinguish scientific assets from generated website output
+
+- Allow scientific reference data, fixtures and authored frontend assets at the
+  repository root. Reject actual generated website signatures, including root HTML,
+  search/sitemap output and Material hashed runtime bundles, even through broken
+  symlinks.
+- Keep the boundary in the shared documentation layout validator and source verifier;
+  add focused admission/rejection contracts without relocating consumer data.
+
+### [#272](https://github.com/bijux/bijux-std/pull/272) — Render workflow block scalars without whitespace drift
+
+- Render workflow shell block scalars without indentation-only trailing lines or extra
+  blank lines, preserving executable shell content.
+
+### [#271](https://github.com/bijux/bijux-std/pull/271) — Reject publication in publisher-free foundations
+
+- Declare publisher-free foundation repositories and reject reusable publisher calls or
+  recognizable publication commands in their authored workflows.
+
+### [#270](https://github.com/bijux/bijux-std/pull/270) — Retire generated guides from accepted prior source
+
+- Retire generated documentation guides only when regular, pristine destinations match
+  current canonical bytes or the exact accepted GitHub source identified by the
+  committed prior pin. Admit replacement assets from the new immutable pin.
+- Reuse prior-pin admission for MkDocs asset ordering. Reject authored edits, untracked
+  destinations, symlinks, malformed pins and unavailable prior authority before changing
+  consumer files.
+
+### [#269](https://github.com/bijux/bijux-std/pull/269) — Admit publication only through authenticated iac dispatch
+
+- Expose applicable GitHub, GHCR, crates.io, PyPI and documentation publishers only
+  through authenticated manual IaC dispatch; reject automatic reusable callers and
+  recognizable renamed publishers.
+- Admit the controller App, original and triggering actors, exact current-main commit,
+  applicable release tag and latest successful required checks before jobs receive
+  publication credentials.
+- Keep ordinary CI artifact uploads available and bound qualification-recovery reads to
+  their verified owners; source acceptance remains separate from App configuration and
+  consumer rollout.
+
+### [#268](https://github.com/bijux/bijux-std/pull/268) — Declare owned gates and produce mandatory verification checks
+
+- Produce Pollenomics' missing verification-ready aggregate and require all declared
+  repository/package checks, including dependency and documentation PRs at this point in
+  the policy history.
+- Declare IaC contracts, read-only plan and governance aggregate as canonical required
+  product checks.
+- Align generated main rules with default-branch selection, enforcement on creation, no
+  bypass and GitHub Actions check bindings; live enforcement still requires IaC and
+  observed check producers.
+
+### [#267](https://github.com/bijux/bijux-std/pull/267) — Cancel viewport history writes before cached departure
+
+- Cancel pending native viewport-history work before cross-document departure or
+  browser-cache entry, and resume fresh work after trusted cached restoration or
+  cancelled departure. Preserve same-document navigation and other readers' history
+  state; bind the owned lifecycle source to the reproduced Material runtime and exercise
+  its cancellation boundaries.
+
+### [#266](https://github.com/bijux/bijux-std/pull/266) — Require hub diagram rendering in the standards report
+
+- Require the hub-owned rendered diagram gate in the shared contracts job, including
+  dependency pull requests. Prepare pinned browser/build runtimes, retain diagram
+  evidence, and fail the existing required standards report when the complete reader
+  check fails.
+
+### [#265](https://github.com/bijux/bijux-std/pull/265) — Promote setup-uv and rust-toolchain action pins
+
+- Promote setup-uv v10.2.0 and the accepted rust-toolchain commit into shared
+  publishers, manifest wrappers and standards gates. Keep the installed uv version at
+  0.11.17.
+- Regenerate source snapshots and checksum manifests so downstream repositories consume
+  the dependency changes through canonical refresh.
+
+### [#264](https://github.com/bijux/bijux-std/pull/264) — Recover attempts after queued job cancellation
+
+- Preserve canceled, unassigned jobs as verified nonexecution audit records, admit only
+  newer actual executions, and refuse stale success or artifact ownership after an
+  unsuperseded cancellation. Reconcile repeated attempts and copied cancellation
+  projections without relaxing runner, step, check or source authority.
+
+### [#263](https://github.com/bijux/bijux-std/pull/263) — Verify source-owned workflow execution policy
+
+- Admit typed, source-controlled workflow execution policy rather than trusting
+  configuration digests alone; preserve default repository behavior unless an explicit
+  policy selects a change.
+- Project owned manual publication entrypoints and restrict selected documentation
+  publication to main.
+- Gate dependency PRs before runner allocation while retaining independently declared
+  event and publisher boundaries.
+- Independently reconstruct managed workflow projections from finite canonical source
+  helpers, snapshots and exact source identity before execution; integrating already
+  accepted reader/performance changes does not constitute new consumer activation.
+
+### [#260](https://github.com/bijux/bijux-std/pull/260) — Separate publication validation responsibilities
+
+- Give HTML parsing, destination authority, redirect graphs, stylesheet/SVG resources
+  and sitemap reconciliation explicit module ownership while preserving the public
+  qualification command and diagnostics.
+
+### [#262](https://github.com/bijux/bijux-std/pull/262) — Recover exact source-owned qualification attempts
+
+- Admit retained immutable fixtures before partition planning and resolve artifacts
+  through their actual source-bound producer jobs.
+- Reconcile runner, check and step identity across sparse reruns so provider-created job
+  projections cannot impersonate new executions or change the original producer attempt.
+- Collect exact artifact bytes and require the complete latest execution union across
+  browser, renderer, publication and fault owners; reject collisions, forged admission
+  and stale sources.
+- Cancel superseded PR qualification runs while retaining failed evidence, ordinary
+  first-attempt downloads, complete case coverage and unchanged whole-job limits.
+
+### [#259](https://github.com/bijux/bijux-std/pull/259) — Govern shared stylesheet precedence and token ownership
+
+- Validate shared declaration priority and the finite reviewed exceptions; remove
+  unnecessary footer priority flags through normal cascade precedence.
+- Require shared stylesheets to remain unlayered and enforce a closed canonical import
+  graph.
+- Bind token references to their exact owned definition scopes rather than accepting an
+  arbitrary same-named custom property.
+- Retain source-owned refusal controls and existing stylesheet behavior while
+  integrating separately accepted public-destination and performance contracts.
+
+### [#261](https://github.com/bijux/bijux-std/pull/261) — Measure attributable website performance populations
+
+- Account for served payload bytes and navigation regions/destinations before making
+  website optimization claims.
+- Measure controlled cold/warm diagram transport and viewport performance distributions
+  with source, fixture, configuration, runtime and profile identity.
+- Time ordinary reader interactions through the maintained browser input paths rather
+  than synthetic command duration.
+- Compare only compatible complete populations and retain unavailable or failed
+  observations explicitly; these measurements do not grant production performance
+  acceptance.
+
+### [#257](https://github.com/bijux/bijux-std/pull/257) — Validate public artifact destinations
+
+- Validate actual refresh destinations and reject redirect cycles or private targets
+  after hostname normalization, including Unicode hostname forms.
+- Resolve responsive alternative assets and stylesheet URL tokens against real public
+  output instead of validating only their literal spelling.
+- Validate SVG resources and local symbol references, preserving harmless scientific
+  metadata while rejecting internal entity authority.
+- Retain syntax-aware negative controls for each destination surface and the existing
+  source-bound publication checks.
+
+### [#253](https://github.com/bijux/bijux-std/pull/253) — Retain reader context through native history and layout
+
+- Restore an authored reading anchor after asynchronous diagram disclosure/layout
+  changes without overriding trusted reader input.
+- Reacquire the owning history entry on a persisted return and wait for pageshow before
+  restoring reader position.
+- Yield deferred palette scroll callbacks to actual reader input instead of reclaiming
+  provisional coordinates.
+- Preserve diagram-source inspection through genuine cached native Back navigation using
+  a private entry-bound snapshot, and require the full Chromium cache journey alongside
+  the unchanged three-engine history cases.
+
+### [#258](https://github.com/bijux/bijux-std/pull/258) — Deliver owned interactive reports through python make
+
+- Select interactive-report ownership from committed configuration consistently through
+  Python Make, selected rendering and publication dispatch.
+- Validate literal Make selection and strict source descriptors before renderer
+  preparation or output cleanup, preserving previously verified output when admission
+  fails.
+- Require actual Make-renderer qualification and derive its complete control inventory
+  from the source owner.
+- Distribute renderer and Make duties across seven disjoint bounded execution groups
+  while keeping all groups mandatory.
+
+### [#256](https://github.com/bijux/bijux-std/pull/256) — Reconstruct committed interactive report ownership
+
+- Render explicitly selected committed interactive report recipes and independently
+  reconstruct their resource, bootstrap and provider authority. Execute captured
+  processor source bytes to preserve provenance across stale bytecode caches.
+
+### [#254](https://github.com/bijux/bijux-std/pull/254) — Qualify independent storage denial journeys
+
+- Require getter, read and write denial independently through initial load, session
+  theme, instant navigation and cross-site reading across all three engines.
+
+### [#255](https://github.com/bijux/bijux-std/pull/255) — Bound authored navigation journeys by ancestry
+
+- Give every authored root, section and nested route a bounded disjoint journey in all
+  three phone engines while preserving the original overview case and existing
+  deadlines.
+
+### [#252](https://github.com/bijux/bijux-std/pull/252) — Require rendered authored content coverage
+
+- Require the existing rich-content assertions in all nine engine and viewport
+  combinations through the existing semantics jobs.
+
+### [#251](https://github.com/bijux/bijux-std/pull/251) — Cover authored phone navigation destinations
+
+- Reach every authored fixture destination from the phone root drawer and bind expected
+  routes and headings to the source graph, while retaining all existing navigation case
+  identities.
+
+### [#250](https://github.com/bijux/bijux-std/pull/250) — Assign native search template ownership
+
+- Name the shared native search presentation owner and Material provider boundary, and
+  link the existing site-scope and escaping checks in the executable contract trace.
+
+### [#248](https://github.com/bijux/bijux-std/pull/248) — Independently render source-owned passive readers
 
 - Require a typed revalidated in-process reader owner before document-script admission.
-- Preserve production-profile admission and refuse passive ownership of catalogue virtual configuration.
-- Qualify the actual independent passive render and source-derived 123 installed controls; full interactive-report and consumer publication duties remain separate.
-- Commit an isolated verification-only test profile for the actual renderer environment and independently refuse production admission without widening canonical profiles.
-- Verify retained reader lifetime through actual Document identity after footer navigation and Back; retain timestamp observations and reject real native navigation across all three engines.
-- Partition installed passive-reader reconstruction from the remaining renderer units, with separately required three-minute jobs and a strict source-derived disjoint evidence union.
+- Preserve production-profile admission and refuse passive ownership of catalogue
+  virtual configuration.
+- Qualify the actual independent passive render and source-derived 123 installed
+  controls; full interactive-report and consumer publication duties remain separate.
+- Commit an isolated verification-only test profile for the actual renderer environment
+  and independently refuse production admission without widening canonical profiles.
+- Verify retained reader lifetime through actual Document identity after footer
+  navigation and Back; retain timestamp observations and reject real native navigation
+  across all three engines.
+- Partition installed passive-reader reconstruction from the remaining renderer units,
+  with separately required three-minute jobs and a strict source-derived disjoint
+  evidence union.
 
-#### 2026-10-09T14:40:31Z — [#249](https://github.com/bijux/bijux-std/pull/249) — fix(docs): preserve reader position during startup palette restore
+### [#249](https://github.com/bijux/bijux-std/pull/249) — Preserve reader position during startup palette restore
 
-Leave native and diagram history restoration in control when startup applies the persisted palette.
+- Prevent startup frame/timer callbacks from reclaiming provisional scroll coordinates
+  or overriding trusted reader input.
+- Preserve explicit palette and cross-tab position retention; prove the competing
+  callback order with actual script closures.
+- Retain eight added unit controls and unchanged native/history browser journeys;
+  qualify the original consumer failure separately.
 
-- Prevent startup frame/timer callbacks from reclaiming provisional scroll coordinates or overriding trusted reader input.
-- Preserve explicit palette and cross-tab position retention; prove the competing callback order with actual script closures.
-- Retain eight added unit controls and unchanged native/history browser journeys; qualify the original consumer failure separately.
+### [#247](https://github.com/bijux/bijux-std/pull/247) — Guard reader publication and retained recovery
 
-#### 2026-10-09T14:09:38Z — [#247](https://github.com/bijux/bijux-std/pull/247) — feat(docs): guard reader publication and retained recovery
+- Enforce exact descriptor versions, committed input identities and independent
+  composition; reject forged qualification fields and changed receipts.
+- Keep strict schema-two reconstruction by default and provide explicit bytes-only
+  recovery for bounded historical monitoring.
+- Preserve catalogue configuration guards, schema-one checks and separate
+  production-profile, manual and live qualification.
+- Give every renderer unit a separate mandatory source-bound CI receipt with owned
+  module resolution and strict physical runtime identity, preserving all cases and the
+  three-minute whole-job limit while removing fixture-production contention.
 
-Verify explicitly owned passive reports before publication and compare retained historical bundle bytes without granting new source or deployment authority.
+### [#246](https://github.com/bijux/bijux-std/pull/246) — Bump pip from 26.1 to 26.2 in /tests/bijux-docs/catalogue
 
-- Enforce exact descriptor versions, committed input identities and independent composition; reject forged qualification fields and changed receipts.
-- Keep strict schema-two reconstruction by default and provide explicit bytes-only recovery for bounded historical monitoring.
-- Preserve catalogue configuration guards, schema-one checks and separate production-profile, manual and live qualification.
-- Give every renderer unit a separate mandatory source-bound CI receipt with owned module resolution and strict physical runtime identity, preserving all cases and the three-minute whole-job limit while removing fixture-production contention.
+- Match both release hashes to published package files and retain the exact
+  43-distribution runtime guard.
+- Preserve the default renderer lock and frozen historical admission profiles;
+  verification remains separate from production approval.
 
-#### 2026-10-09T13:43:49Z — [#246](https://github.com/bijux/bijux-std/pull/246) — chore(deps): bump pip from 26.1 to 26.2 in /tests/bijux-docs/catalogue
+### [#245](https://github.com/bijux/bijux-std/pull/245) — Integrate source-owned standalone reader discovery
 
-Use pip 26.2 in the active isolated catalogue verification environment.
+- Bind exact tracked purposes to real delivered native targets; independently rederive
+  search, sitemap and gzip composition.
+- Retain original report body bytes and restrictive CSP; unknown or mutated standalone
+  routes remain rejected.
+- Correct ordinary filenames ending in index.html and qualify six current three-engine
+  reader journeys without claiming full consumer publication.
 
-- Match both release hashes to published package files and retain the exact 43-distribution runtime guard.
-- Preserve the default renderer lock and frozen historical admission profiles; verification remains separate from production approval.
+### [#243](https://github.com/bijux/bijux-std/pull/243) — Qualify committed catalogue reader sources
 
-#### 2026-10-09T12:59:14Z — [#245](https://github.com/bijux/bijux-std/pull/245) — feat(docs): integrate source-owned standalone reader discovery
+- Distinguish tracked configuration ownership from derived render configuration and
+  reject alternate Git stores, grafts and stale generated inputs.
+- Carry source attribution through capture, rendering, reconstruction, redirects, CSP
+  and publication checks.
+- Require all 58 catalogue controls in four bounded CI groups while preserving default
+  and historical dependency recipes.
+- Reuse distribution membership within each fresh capture and own the pinned
+  verification interpreter; retain per-module checks and independent receipt
+  verification.
+- Derive the complete job inventory from the catalogue registry and enforce whole-job
+  budgets for every required group.
 
-Make passive report notices reachable through native documentation Return/Search links and source-owned search/sitemap entries.
+### [#244](https://github.com/bijux/bijux-std/pull/244) — Admit passive source-owned reader reports
 
-- Bind exact tracked purposes to real delivered native targets; independently rederive search, sitemap and gzip composition.
-- Retain original report body bytes and restrictive CSP; unknown or mutated standalone routes remain rejected.
-- Correct ordinary filenames ending in index.html and qualify six current three-engine reader journeys without claiming full consumer publication.
+- Require an exact passive descriptor and finite HTML/CSS vocabulary; reject scripts,
+  providers and automatic resources.
+- Preserve existing interactive report admission and tracked report bytes; retain
+  meaningful attribute, CSS and policy-widening controls.
 
-#### 2026-10-09T12:24:07Z — [#243](https://github.com/bijux/bijux-std/pull/243) — feat(docs): qualify committed catalogue reader sources
+### [#242](https://github.com/bijux/bijux-std/pull/242) — Retain delayed rendering frame observations
 
-Bind generated catalogue pages to reviewed generators and committed originals while retaining their public routes and native source/history identity.
+- Keep a genuine pending rendering-frame callback alive across timer observations
+  instead of cancelling every frame delayed beyond 100 milliseconds.
+- Require three actual stable frames and the correct open-drawer endpoint within the
+  unchanged two-second deadline, without changing focus, animation or paint assertions.
+- Retain delayed, absent, translated, timer-only and intermediate-change refusal
+  controls and release the observer on success or failure.
 
-- Distinguish tracked configuration ownership from derived render configuration and reject alternate Git stores, grafts and stale generated inputs.
-- Carry source attribution through capture, rendering, reconstruction, redirects, CSP and publication checks.
-- Require all 58 catalogue controls in four bounded CI groups while preserving default and historical dependency recipes.
-- Reuse distribution membership within each fresh capture and own the pinned verification interpreter; retain per-module checks and independent receipt verification.
-- Derive the complete job inventory from the catalogue registry and enforce whole-job budgets for every required group.
+### [#241](https://github.com/bijux/bijux-std/pull/241) — Retain native diagram reader history position
 
-#### 2026-10-09T11:29:05Z — [#244](https://github.com/bijux/bijux-std/pull/244) — feat(docs): admit passive source-owned reader reports
+- Bind position to the owned history entry, full URL and validated record without
+  replacing unrelated state, fragments or instant navigation.
+- Preserve native targets and keyboard links; cancel deferred restoration on trusted
+  input and document lifecycle changes.
+- Add nine bounded production Material journeys and retain the complete diagram,
+  history, registry and contrast coverage.
 
-Admit explicitly reviewed non-executable report notices with source-bound ownership and restrictive independent CSP verification.
+### [#240](https://github.com/bijux/bijux-std/pull/240) — Expose accessible desktop registry overflow controls
 
-- Require an exact passive descriptor and finite HTML/CSS vocabulary; reject scripts, providers and automatic resources.
-- Preserve existing interactive report admission and tracked report bytes; retain meaningful attribute, CSS and policy-widening controls.
+- Reveal complete destinations through pointer, keyboard and touch while retaining
+  native link and compact drawer ownership.
+- Detect intrinsic label-size changes, keep truthful endpoint state and dispose
+  scrolling observers with the document lifetime.
+- Exercise all eleven destinations, Space boundaries, RTL direction and focus recovery
+  without reducing qualification coverage or limits.
 
-#### 2026-10-09T10:53:55Z — [#242](https://github.com/bijux/bijux-std/pull/242) — test(docs): retain delayed rendering frame observations
+### [#239](https://github.com/bijux/bijux-std/pull/239) — Bound concurrent browser container provisioning
 
-Keep a pending rendering-frame request across timer observations so delayed callbacks can qualify stable focused controls.
+- Limit the unchanged browser matrix to twelve concurrent jobs per run to reduce cold
+  container-initialization pressure while retaining all engines, profiles, cases and
+  runtime pins.
+- Keep provider startup failures distinct from frontend assertion failures; preserve
+  strict whole-job limits and complete failure-rejecting aggregation rather than
+  claiming a measured speed guarantee.
 
-- Require three actual stable frames, the correct open-drawer endpoint and the unchanged two-second deadline.
-- Retain passive rendering diagnostics and meaningful delayed, absent, translated and intermediate-change controls.
-- Preserve ordinary input and paint assertions; current unit and complete contrast matrices pass before hosted qualification.
+### [#237](https://github.com/bijux/bijux-std/pull/237) — Retain authored labels for reused navigation pages
 
-#### 2026-10-09T10:21:52Z — [#241](https://github.com/bijux/bijux-std/pull/241) — fix(docs): retain native diagram reader history position
+- Match the authored parent and source before recovering aliases such as Overview
+  instead of a reused Home title.
+- Preserve provider Link labels and single-Page titles, using one occurrence census in
+  the existing shared macros.
+- Cover reused-page aliases, mismatched parents and provider controls in focused
+  regressions.
 
-Return native browser history to the diagram reader's departure point after asynchronous layout settles, while trusted reader input owns any subsequent position.
+### [#238](https://github.com/bijux/bijux-std/pull/238) — Bound contrast jobs by viewport ownership
 
-- Bind position to the owned history entry, full URL and validated record without replacing unrelated state, fragments or instant navigation.
-- Preserve native targets and keyboard links; cancel deferred restoration on trusted input and document lifecycle changes.
-- Add nine bounded production Material journeys and retain the complete diagram, history, registry and contrast coverage.
+- Preserve all 39 contrast cases and all 645 canonical cases, with five phone and four
+  compact/desktop cases per engine.
+- Require complete disjoint profile ownership and all 81 exact suite receipts; retain
+  missing, overlapping and cancelled-result rejection.
+- Keep the existing time limit, runtime pins, case assertions and full source/artifact
+  qualification.
 
-#### 2026-10-09T09:44:33Z — [#240](https://github.com/bijux/bijux-std/pull/240) — feat(docs): expose accessible desktop registry overflow controls
+### [#236](https://github.com/bijux/bijux-std/pull/236) — Separate frozen renderer provenance from dependency candidates
 
-Make overflowed desktop site destinations discoverable through named native controls and preserve reader focus as the header changes.
-
-- Reveal complete destinations through pointer, keyboard and touch while retaining native link and compact drawer ownership.
-- Detect intrinsic label-size changes, keep truthful endpoint state and dispose scrolling observers with the document lifetime.
-- Exercise all eleven destinations, Space boundaries, RTL direction and focus recovery without reducing qualification coverage or limits.
-
-#### 2026-10-09T08:01:50Z — [#239](https://github.com/bijux/bijux-std/pull/239) — ci(docs): bound concurrent browser container provisioning
-
-Limit concurrent cold browser-container pulls while preserving complete qualification and the three-minute whole-job limit.
-
-- Bound the unchanged browser matrix to 12 concurrent jobs per run.
-- Retain all engines, profiles, 645 cases, runtime pins and failure-rejecting receipts.
-- Record provider startup failures separately from frontend assertion failures; qualify the current source before acceptance.
-
-#### 2026-10-09T07:25:36Z — [#237](https://github.com/bijux/bijux-std/pull/237) — fix(docs): retain authored labels for reused navigation pages
-
-Keep each reused page occurrence’s authored navigation name while preserving its route and content identity.
-
-- Match the authored parent and source before recovering aliases such as Overview instead of a reused Home title.
-- Preserve provider Link labels and single-Page titles, using one occurrence census in the existing shared macros.
-- Verify alias, mismatch and provider controls without closing separate active-ancestor semantics.
-
-#### 2026-10-09T07:06:31Z — [#238](https://github.com/bijux/bijux-std/pull/238) — ci(docs): bound contrast jobs by viewport ownership
-
-Keep contrast qualification within the three-minute whole-job budget by assigning each engine's phone, compact and desktop profiles independently.
-
-- Preserve all 39 contrast cases and all 645 canonical cases, with five phone and four compact/desktop cases per engine.
-- Require complete disjoint profile ownership and all 81 exact suite receipts; retain missing, overlapping and cancelled-result rejection.
-- Keep the existing time limit, runtime pins, case assertions and full source/artifact qualification.
-
-#### 2026-10-09T06:31:01Z — [#236](https://github.com/bijux/bijux-std/pull/236) — fix(ci): separate frozen renderer provenance from dependency candidates
-
-Preserve the exact Canon renderer observation snapshot while keeping dependency automation on active package candidates.
-
-- Move the unchanged 36-package snapshot into its owned recipe boundary and update explicit observer/workflow references.
-- Retain source, lock digest and package provenance; reject changed snapshots even when a caller changes the expected digest.
+- Move the unchanged 36-package snapshot into its owned recipe boundary and update
+  explicit observer/workflow references.
+- Retain source, lock digest and package provenance; reject changed snapshots even when
+  a caller changes the expected digest.
 - Keep actual consumer security upgrades and production profile qualification separate.
 
-#### 2026-10-09T06:10:24Z — [#235](https://github.com/bijux/bijux-std/pull/235) — fix(docs): retain reader focus and desktop disclosure hit surfaces
+### [#235](https://github.com/bijux/bijux-std/pull/235) — Retain reader focus and desktop disclosure hit surfaces
+
+- Recover focus only when a replaced reading subtree loses its active node; respect
+  surviving controls and intentional blur.
+- Give the complete desktop sidebar intrinsic height while retaining its bounded
+  scrolling area.
+- Exercise real branch disclosures, history focus and deep reload across all maintained
+  history profiles.
+
+### [#232](https://github.com/bijux/bijux-std/pull/232) — Preserve native palette keyboard and focus continuity
+
+- Replace keyboard-inaccessible native theme labels with buttons while preserving
+  Material palette radios, storage and automatic/light/dark ownership.
+- Provide native Enter/Space activation, prevent focus from landing on hidden radios and
+  recover prior pointer focus without taking reader focus.
+- Exercise native/enhanced utility focus, forced colors and no-script fallback through
+  existing three-engine contrast journeys.
+
+### [#228](https://github.com/bijux/bijux-std/pull/228) — Observe exact history renderer dependencies on linux
+
+- Keep the canonical fixture environment unchanged and bind all 36 dependency pins to
+  reviewed source/lock provenance.
+- Reuse physical package, runtime, startup and callback observers in a read-only
+  3-minute job; retain actual source/run/attempt evidence.
+- Compare cached numeric constants by exact IEEE representation and preserve
+  non-reflexive reference graphs, rejecting altered values, aliases and executable
+  fields.
+- Keep profile approval, consumer acceptance, authored build and publication separate;
+  the prerequisite #226 is accepted.
+- Compare legitimate large unordered constant sets with explicit search frames while
+  preserving NaN reference bijections, typed payloads, multiplicity and the fail-closed
+  search budget.
+- Preserve initial API job rows and fetch only incomplete exact job identities once
+  within a bounded observation window; terminal failures and strict duration checks
+  remain unchanged.
+
+### [#231](https://github.com/bijux/bijux-std/pull/231) — Bind reviewed historical asset migration to source evidence
+
+- Bind both full predecessor refs (44e9153 and 10f073d) and each twelve-file source
+  digest set to the reviewed registry.
+- Select the committed Core predecessor without widening fallback to unknown or
+  customized asset lists.
+- Distinguish nine shared destinations from the authored external-link predecessor;
+  preserve rejection of custom order, comments, attributes and unknown missing
+  baselines.
+
+### [#229](https://github.com/bijux/bijux-std/pull/229) — Preserve enlarged compact masthead identity
+
+- Own logical title spacing above Material and allow intrinsic wrapping with natural
+  height.
+- Preserve the native fallback focus-ring backdrop with an intrinsic minimum while
+  retaining ordinary no-script navigation and strict contrast assertions.
+- Check complete utility census, glyph clipping, pointer targets and supplemental
+  breakpoints while retaining the 126 navigation cases.
+- Keep physical zoom, assistive/device and consumer qualification separate; the
+  prerequisite #227 is accepted.
+- Keep enlarged native Navigation text beside its checkbox and give the complete long
+  identity natural row space; retain the 54 px normal minimum and add maintained
+  three-engine 200% text/spacing regression journeys.
+
+### [#230](https://github.com/bijux/bijux-std/pull/230) — Compress complete public fault evidence for transport
+
+- Compress the complete public-fault upload at level 1, retaining every member and exact
+  payload hash.
+- Guard the full upload/download paths, failure evidence and unchanged three-minute job
+  limit.
+
+### [#227](https://github.com/bijux/bijux-std/pull/227) — Verify native drawer activation and registry input
+
+- Observe native events and expanded-state transitions; qualify current and last
+  registry targets through keyboard and touch input.
+- Retain 126 canonical navigation identities, real destination/heading checks and
+  existing assertions; keep physical touch-pan and manual qualification explicit.
+
+### [#226](https://github.com/bijux/bijux-std/pull/226) — Retain source-equivalent revision date capability
+
+- Admit revision-date-localized 1.5.1 after payload comparison with the reviewed 1.5.3
+  implementation.
+- Test version boundaries, registered callback inputs and tracked-history ownership;
+  keep renderer-profile approval separate.
+
+### [#225](https://github.com/bijux/bijux-std/pull/225) — Require source-bound frontend fault rejection in navigation CI
+
+- Add bounded engine controls for hidden ribbons, blocked native activation and uncaught
+  runtime errors, plus real missing-search and loopback-metadata artifact controls.
+- Bind each expected failure to its exact executed case and keep the unmodified
+  ordinary-input control passing.
+- Retain all 645 canonical rendered cases and require source/run-bound fault receipts
+  within the existing strict job budgets.
+
+### [#223](https://github.com/bijux/bijux-std/pull/223) — Bind publication source and callback inputs to committed git
+
+- Verify tracked paths, HEAD blobs and executable modes independently of index flags,
+  and reject source changes during capture.
+- Require reviewed callback source and every declared asset input to match committed
+  captured bytes before rendering and revalidation.
+- Retain verification fixtures and all renderer, shared authority, public output and
+  approved-profile checks.
+
+### [#224](https://github.com/bijux/bijux-std/pull/224) — Verify authored reader history policy inheritance
+
+- Verify actual MkDocs list replacement while retaining theme settings, plugins and
+  required capabilities.
+- Preserve deliberate tracking opt-ins and qualify exact Back/Forward URLs separately
+  from visible reading context.
 
-Keep keyboard reading continuity through Back/Forward and make the visible complete desktop tree respond to ordinary pointer input.
+### [#221](https://github.com/bijux/bijux-std/pull/221) — Verify compact reading space and control geometry
 
-- Recover focus only when a replaced reading subtree loses its active node; respect surviving controls and intentional blur.
-- Give the complete desktop sidebar intrinsic height while retaining its bounded scrolling area.
-- Exercise real branch disclosures, history focus and deep reload across all maintained history profiles.
-
-#### 2026-10-09T05:46:46Z — [#232](https://github.com/bijux/bijux-std/pull/232) — fix(docs): preserve native palette keyboard and focus continuity
-
-Make native Material palette actions reachable by keyboard and retain focus on the next visible action after theme changes.
-
-- Preserve palette radio ownership, persistence and native Enter/Space activation; prevent hidden-radio focus and recover prior pointer focus without taking reader focus.
-- Exercise native and enhanced utility focus through existing contrast journeys across three browser engines, including forced-colour and no-script fallback coverage.
-
-#### 2026-10-09T05:24:47Z — [#228](https://github.com/bijux/bijux-std/pull/228) — ci(docs): observe exact history renderer dependencies on linux
-
-Capture the actual hosted Linux runtime for Canon's exact documentation dependency recipe before independent publication-profile review.
-
-- Keep the canonical fixture environment unchanged and bind all 36 dependency pins to reviewed source/lock provenance.
-- Reuse physical package, runtime, startup and callback observers in a read-only 3-minute job; retain actual source/run/attempt evidence.
-- Compare cached numeric constants by exact IEEE representation and preserve non-reflexive reference graphs, rejecting altered values, aliases and executable fields.
-- Keep profile approval, consumer acceptance, authored build and publication separate; the prerequisite #226 is accepted.
-- Compare legitimate large unordered constant sets with explicit search frames while preserving NaN reference bijections, typed payloads, multiplicity and the fail-closed search budget.
-- Preserve initial API job rows and fetch only incomplete exact job identities once within a bounded observation window; terminal failures and strict duration checks remain unchanged.
-
-#### 2026-10-09T05:04:52Z — [#231](https://github.com/bijux/bijux-std/pull/231) — fix(docs): bind reviewed historical asset migration to source evidence
-
-Allow the explicitly reviewed historical script-list migrations when their standard predates the canonical baseline file.
-
-- Bind both full predecessor refs (44e9153 and 10f073d) and each twelve-file source digest set to the reviewed registry.
-- Select the committed Core predecessor without widening fallback to unknown or customized asset lists.
-- Distinguish nine shared destinations from the authored external-link predecessor; preserve rejection of custom order, comments, attributes and unknown missing baselines.
-
-#### 2026-10-09T04:43:58Z — [#229](https://github.com/bijux/bijux-std/pull/229) — fix(docs): preserve enlarged compact masthead identity
-
-Keep the complete site identity and utility controls visible when compact readers enlarge text or apply spacing.
-
-- Own logical title spacing above Material and allow intrinsic wrapping with natural height.
-- Preserve the native fallback focus-ring backdrop with an intrinsic minimum while retaining ordinary no-script navigation and strict contrast assertions.
-- Check complete utility census, glyph clipping, pointer targets and supplemental breakpoints while retaining the 126 navigation cases.
-- Keep physical zoom, assistive/device and consumer qualification separate; the prerequisite #227 is accepted.
-- Keep enlarged native Navigation text beside its checkbox and give the complete long identity natural row space; retain the 54 px normal minimum and add maintained three-engine 200% text/spacing regression journeys.
-
-#### 2026-10-09T04:14:27Z — [#230](https://github.com/bijux/bijux-std/pull/230) — ci(docs): compress complete public fault evidence for transport
-
-Reduce artifact download cost without changing retained source or fault evidence.
-
-- Compress the complete public-fault upload at level 1, retaining every member and exact payload hash.
-- Guard the full upload/download paths, failure evidence and unchanged three-minute job limit.
-
-#### 2026-10-09T03:45:10Z — [#227](https://github.com/bijux/bijux-std/pull/227) — test(docs): verify native drawer activation and registry input
-
-Require ordinary pointer, trusted touch, Space and Enter to open the drawer once and Escape to restore its trigger.
-
-- Observe native events and expanded-state transitions; qualify current and last registry targets through keyboard and touch input.
-- Retain 126 canonical navigation identities, real destination/heading checks and existing assertions; keep physical touch-pan and manual qualification explicit.
-
-#### 2026-10-09T03:07:07Z — [#226](https://github.com/bijux/bijux-std/pull/226) — fix(docs): retain source-equivalent revision date capability
-
-Preserve the existing Canon revision-date plugin while validating its real Git history and callback ownership.
-
-- Admit revision-date-localized 1.5.1 after payload comparison with the reviewed 1.5.3 implementation.
-- Test version boundaries, registered callback inputs and tracked-history ownership; keep renderer-profile approval separate.
-
-#### 2026-10-09T02:38:35Z — [#225](https://github.com/bijux/bijux-std/pull/225) — test(docs): require source-bound frontend fault rejection in navigation ci
-
-Make real frontend regressions fail required CI before promotion.
-
-- Add bounded engine controls for hidden ribbons, blocked native activation and uncaught runtime errors, plus real missing-search and loopback-metadata artifact controls.
-- Bind each expected failure to its exact executed case and keep the unmodified ordinary-input control passing.
-- Retain all 645 canonical rendered cases and require source/run-bound fault receipts within the existing strict job budgets.
-
-#### 2026-10-09T02:01:13Z — [#223](https://github.com/bijux/bijux-std/pull/223) — fix(docs): bind publication source and callback inputs to committed git
-
-Bind publication inputs to their exact committed Git bytes without treating ignored run caches as source.
-
-- Verify tracked paths, HEAD blobs and executable modes independently of index flags, and reject source changes during capture.
-- Require reviewed callback source and every declared asset input to match committed captured bytes before rendering and revalidation.
-- Retain verification fixtures and all renderer, shared authority, public output and approved-profile checks.
-
-#### 2026-10-09T01:46:38Z — [#224](https://github.com/bijux/bijux-std/pull/224) — test(docs): verify authored reader history policy inheritance
-
-Make the product-owned reader URL policy explicit when a legacy inherited feature list enables anchor tracking.
-
-- Verify actual MkDocs list replacement while retaining theme settings, plugins and required capabilities.
-- Preserve deliberate tracking opt-ins and qualify exact Back/Forward URLs separately from visible reading context.
-
-#### 2026-10-09T01:32:43Z — [#221](https://github.com/bijux/bijux-std/pull/221) — test(docs): verify compact reading space and control geometry
-
-Require useful first-screen reading space and unobstructed compact controls in existing browser journeys.
-
-- Check actual heading/text visibility, utility names/targets/hits, hidden helper spans, and drawer logo/name/Close geometry.
-- Preserve canonical cases and the runtime-error guard; retain exact counterexamples and wider viewport/manual qualification limits.
-
-#### 2026-10-09T01:13:15Z — [#222](https://github.com/bijux/bijux-std/pull/222) — fix(docs): resolve redirect canonicals before route qualification
-
-Resolve relative redirect canonicals against their source route before checking the built destination and sitemap.
-
-- Preserve exact absolute canonicals for content pages and reject foreign, missing, escaped or query/fragment redirect targets.
-- Validate nested redirect controls and the unchanged real Canon corpus of 371 routes and 2,292 search entries.
-
-#### 2026-10-09T00:59:18Z — [#217](https://github.com/bijux/bijux-std/pull/217) — fix(docs): contain focus paint within navigation boundaries
-
-Keep the visible focus ring inside disclosure scroll bounds and masthead repository controls.
-
-- Measure actual clipping and adjacent paint through ordinary keyboard focus and Auto theme transitions.
-- Retain every existing contrast case and detect the historical clipped-ring regression.
-- Admit focus geometry only after passive layout and finite-transition settlement; retain raw samples and strict clipping assertions.
-
-#### 2026-10-09T00:47:06Z — [#218](https://github.com/bijux/bijux-std/pull/218) — test(docs): keep shell acceptance executable and reject runtime errors
-
-Bind shell behaviour to executable reader cases and reject uncaught runtime failures in every shell journey.
-
-- Reference the actual parametrized local-reader acceptance without adding a duplicate gate.
-- Reuse the shared automatic runtime-error guard, preserving all canonical case identities and browser coverage.
-
-#### 2026-10-09T00:33:52Z — [#213](https://github.com/bijux/bijux-std/pull/213) — fix(docs): adopt exact source-bound legacy script defaults
-
-Refresh the complete previous canonical script list from its committed accepted standard source.
-
-- Preserve authored order, attributes, comments, configuration and capabilities outside the exact plain default.
-- Resolve prior ownership from the exact official GitHub authority only when an order conflict needs it.
-
-#### 2026-10-09T00:16:26Z — [#220](https://github.com/bijux/bijux-std/pull/220) — fix(github): bind protected path policy to immutable pr source
-
-Keep policy checks bound to the reviewed PR event when main advances.
-
-- Compare validated full event base and head commits without shallow-fetching a mutable branch.
-- Reject incomplete identities and history while preserving earlier protected changes; regenerate the canonical managed runtime.
-
-#### 2026-10-09T00:01:42Z — [#219](https://github.com/bijux/bijux-std/pull/219) — fix(docs): restore fragments without redundant native navigation
-
-Keep browser Back from resurrecting the fragment a reader just left.
-
-- Restore only the current history entry through the uniquely admitted Material helper, preserving native target reveal and sequential focus.
-- Bind the readable helper, generated runtime and exact boundary in source-derived provenance; retain race failures and native-semantics comparisons.
-
-#### 2026-10-08T23:36:47Z — [#216](https://github.com/bijux/bijux-std/pull/216) — fix(docs): expose one contextual navigation surface
-
-Keep the complete sidebar as the visible local navigation when duplicate contextual ribbons are unnecessary.
-
-- Preserve the closed compact header and native Material fallback; opening the native compact drawer exposes one local navigation surface.
-- Verify ordinary keyboard reading routes, Back and no-script navigation in the maintained browser matrix.
-
-#### 2026-10-08T23:19:00Z — [#214](https://github.com/bijux/bijux-std/pull/214) — fix(docs): preserve visible focus through navigation handoff
-
-Keep a usable Menu fallback when navigation is aborted and bring reopened drawer focus into view.
-
-- Give matching instant destinations heading focus while preserving fragments, downloads and other browsing contexts.
-- Revoke stale reading intent on explicit controls or disposal; verify aborted-request keyboard and search recovery.
-
-#### 2026-10-08T22:58:03Z — [#212](https://github.com/bijux/bijux-std/pull/212) — fix(docs): expose one site registry and isolate modal navigation
-
-Use one owned desktop site registry and keep compact modal navigation isolated.
-
-- Preserve native Material navigation and restore header inert state on close, resize and disposal.
-- Test every nine-site and eleven-entry growth destination; bind retained-document focus checks to actual document identity.
-
-#### 2026-10-08T22:39:40Z — [#215](https://github.com/bijux/bijux-std/pull/215) — ci(docs): partition browser execution by viewport ownership
-
-Keep all canonical browser cases while assigning navigation and search scope to smaller viewport jobs.
-
-- Declare exact engine/profile ownership and reject missing, duplicate, moved or nonterminal receipts.
-- Preserve the strict three-minute whole-job limit and bind duration evidence to all registry dependencies.
-
-#### 2026-10-08T21:46:17Z — [#211](https://github.com/bijux/bijux-std/pull/211) — test(docs): bind rendered fixtures to effective configuration bytes
-
-Bind each generated scenario and browser report to the exact effective MkDocs YAML.
-
-- Reject changed, missing or malformed configuration identity and stale success manifests.
-- Preserve private producer inputs while transporting digest-bound metadata and unchanged public files.
-
-#### 2026-10-08T21:30:31Z — [#210](https://github.com/bijux/bijux-std/pull/210) — ci(docs): require complete rendered navigation qualification
-
-Require successful rendered navigation before the protected standards report can pass.
-
-- Cover every standards PR author and reject missing, skipped, failed or cancelled prerequisite checks.
-- Validate all 54 frontend jobs against the current workflow source and attempt, including execution and cleanup under three minutes; record queue time separately.
-
-#### 2026-10-08T20:10:09Z — [#194](https://github.com/bijux/bijux-std/pull/194) — feat(docs): observe static publication delivery safely
-
-Provide a bounded HTTP smoke check for deployed documentation and retain source-bound observations.
-
-- Check the configured root and deep reader routes, search metadata, published assets and missing-route behavior.
-- Bound response bytes, redirect scope and request deadlines; avoid ambient proxy configuration and reject output paths outside artifacts.
-- Document the distinction between delivery observations, browser qualification and operational availability.
-
-#### 2026-10-08T19:36:02Z — [#209](https://github.com/bijux/bijux-std/pull/209) — docs(changelog): keep pull request history in one file
-
-Keep reviewed PR history directly in this file and remove fragment-based maintenance.
+- Check actual heading/text visibility, utility names/targets/hits, hidden helper spans,
+  and drawer logo/name/Close geometry.
+- Preserve canonical cases and the runtime-error guard; retain exact counterexamples and
+  wider viewport/manual qualification limits.
+
+### [#222](https://github.com/bijux/bijux-std/pull/222) — Resolve redirect canonicals before route qualification
+
+- Preserve exact absolute canonicals for content pages and reject foreign, missing,
+  escaped or query/fragment redirect targets.
+- Validate nested redirect controls and the unchanged real Canon corpus of 371 routes
+  and 2,292 search entries.
+
+### [#217](https://github.com/bijux/bijux-std/pull/217) — Contain focus paint within navigation boundaries
+
+- Place the two-pixel focus ring inside navigation scroll bounds and the masthead
+  repository control, measuring its actual clipping and adjacent paint.
+- Preserve ordinary keyboard input and focused Auto-theme changes across all existing
+  contrast cases, with a historical clipped-ring negative control.
+- Observe real rendering frames and require the open drawer's transform to settle before
+  measurement; retain raw samples and the existing deadline without forcing animation or
+  semantic state.
+
+### [#218](https://github.com/bijux/bijux-std/pull/218) — Keep shell acceptance executable and reject runtime errors
+
+- Reference the actual parametrized local-reader acceptance without adding a duplicate
+  gate.
+- Reuse the shared automatic runtime-error guard, preserving all canonical case
+  identities and browser coverage.
+
+### [#213](https://github.com/bijux/bijux-std/pull/213) — Adopt exact source-bound legacy script defaults
+
+- Preserve authored order, attributes, comments, configuration and capabilities outside
+  the exact plain default.
+- Resolve prior ownership from the exact official GitHub authority only when an order
+  conflict needs it.
+
+### [#220](https://github.com/bijux/bijux-std/pull/220) — Bind protected path policy to immutable pr source
+
+- Compare validated full event base and head commits without shallow-fetching a mutable
+  branch.
+- Reject incomplete identities and history while preserving earlier protected changes;
+  regenerate the canonical managed runtime.
+
+### [#219](https://github.com/bijux/bijux-std/pull/219) — Restore fragments without redundant native navigation
+
+- Restore only the current history entry through the uniquely admitted Material helper,
+  preserving native target reveal and sequential focus.
+- Bind the readable helper, generated runtime and exact boundary in source-derived
+  provenance; retain race failures and native-semantics comparisons.
+
+### [#216](https://github.com/bijux/bijux-std/pull/216) — Expose one contextual navigation surface
+
+- Preserve the closed compact header and native Material fallback; opening the native
+  compact drawer exposes one local navigation surface.
+- Verify ordinary keyboard reading routes, Back and no-script navigation in the
+  maintained browser matrix.
+
+### [#214](https://github.com/bijux/bijux-std/pull/214) — Preserve visible focus through navigation handoff
+
+- Keep a connected visible Menu fallback when native drawer navigation hands off or
+  aborts, then give a successful matching instant destination heading focus.
+- Scroll the drawer's initial focus target into its panel and bind pending reading
+  intent to the exact destination.
+- Revoke stale intent on explicit drawer/search input or disposal, preserve
+  fragments/downloads/other contexts, and exercise aborted-request keyboard and search
+  recovery.
+
+### [#212](https://github.com/bijux/bijux-std/pull/212) — Expose one site registry and isolate modal navigation
+
+- Make the owned desktop header the single enhanced site registry while preserving the
+  complete native Material/no-script registry.
+- Lease owned header navigation inert while the compact modal drawer is open and restore
+  each previous value on close, resize and document disposal.
+- Exercise every canonical and growth-registry destination with ordinary input and bind
+  focus-continuity checks to the actual retained Document.
+
+### [#215](https://github.com/bijux/bijux-std/pull/215) — Partition browser execution by viewport ownership
+
+- Split navigation and native search by exact viewport ownership, with
+  drawer/preferences/repository work in a separate companion group.
+- Drive execution, engine/profile selection and receipt placement from one registry;
+  reject missing, duplicate, moved, empty or nonterminal assignments.
+- Preserve all 645 cases and 21 inventories through complete aggregation, with setup and
+  finalization inside the unchanged three-minute whole-job limit.
+
+### [#211](https://github.com/bijux/bijux-std/pull/211) — Bind rendered fixtures to effective configuration bytes
+
+- Capture each fixture's exact effective MkDocs YAML bytes and bind configuration
+  digests through rendering, immutable transport and browser reporting.
+- Reject changed, missing or malformed configuration identity and invalidate stale
+  success metadata before a failed build.
+- Keep private YAML inputs producer-owned while transporting digest-bound metadata and
+  unchanged public assets.
+
+### [#210](https://github.com/bijux/bijux-std/pull/210) — Require complete rendered navigation qualification
+
+- Make the required std / report aggregate wait for successful source and rendered
+  navigation qualification so a failed browser journey cannot coexist with green merge
+  gates.
+- Keep fast standards/contracts independent and require rendered verification for every
+  Std PR author at this point in the policy history.
+- Validate every frontend job against the exact workflow source and attempt, including
+  execution and cleanup under three minutes; record queue time separately and reject
+  missing or unsuccessful prerequisites.
+
+### [#194](https://github.com/bijux/bijux-std/pull/194) — Observe static publication delivery safely
+
+- Check the configured root and deep reader routes, search metadata, published assets
+  and missing-route behavior.
+- Bound response bytes, redirect scope and request deadlines; avoid ambient proxy
+  configuration and reject output paths outside artifacts.
+- Document the distinction between delivery observations, browser qualification and
+  operational availability.
+
+### [#209](https://github.com/bijux/bijux-std/pull/209) — Keep pull request history in one file
 
 - Purge the changelog directory, validators, fragment tests and Make rendering targets.
-- Remove the changelog CI gate and duplicate standards invocation; ask authors for a concise direct entry.
-- Retain all verified merged PR history and preceding-main-history notices without a separate history directory.
+- Remove the changelog CI gate and duplicate standards invocation; ask authors for a
+  concise direct entry.
+- Retain all verified merged PR history and preceding-main-history notices without a
+  separate history directory.
 
-#### 2026-10-08T19:15:45Z — [#203](https://github.com/bijux/bijux-std/pull/203) — docs\(changelog\): record documentation shell history
+### [#203](https://github.com/bijux/bijux-std/pull/203) — Record documentation shell history
 
-Record 16 reviewed historical PRs concerning docs shell.
+- Record 16 historical PRs covering responsive navigation, storage/privacy choices,
+  configuration, search traversal and native history.
 
-- responsive navigation, storage/privacy choices, configuration, search traversal and native history.
-- Preserve original reviewed titles, verified merge dates and source-history distinctions while retaining all prior PR records.
+### [#202](https://github.com/bijux/bijux-std/pull/202) — Record consumer standards history
 
-#### 2026-10-08T19:10:10Z — [#202](https://github.com/bijux/bijux-std/pull/202) — docs\(changelog\): record consumer standards history
+- Record 14 historical PRs covering managed consumer capabilities, selected standard
+  pins and authored configuration projection.
 
-Record 14 reviewed historical PRs concerning consumer standards.
+### [#201](https://github.com/bijux/bijux-std/pull/201) — Record standards tooling history
 
-- managed consumer capabilities, selected standard pins and authored configuration projection.
-- Preserve original reviewed titles, verified merge dates and source-history distinctions while retaining all prior PR records.
+- Record 13 historical PRs covering repository automation, aliases, environment
+  readiness, contract validation and exact source integrity.
 
-#### 2026-10-08T19:07:13Z — [#201](https://github.com/bijux/bijux-std/pull/201) — docs\(changelog\): record standards tooling history
+### [#200](https://github.com/bijux/bijux-std/pull/200) — Record dependency revisions history
 
-Record 13 reviewed historical PRs concerning standards tooling.
+- Record 16 historical PRs covering immutable action runtime pins and the declared GNSS
+  toolchain revision.
 
-- repository automation, aliases, environment readiness, contract validation and exact source integrity.
-- Preserve original reviewed titles, verified merge dates and source-history distinctions while retaining all prior PR records.
+### [#199](https://github.com/bijux/bijux-std/pull/199) — Record Python verification history
 
-#### 2026-10-08T19:05:18Z — [#200](https://github.com/bijux/bijux-std/pull/200) — docs\(changelog\): record dependency revisions history
+- Record 12 historical PRs covering Python delivery gates, installed distribution
+  families, security/SBOM evidence and renderer observation.
 
-Record 16 reviewed historical PRs concerning dependency revisions.
+### [#198](https://github.com/bijux/bijux-std/pull/198) — Record CI execution history
 
-- immutable action runtime pins and the declared GNSS toolchain revision.
-- Preserve original reviewed titles, verified merge dates and source-history distinctions while retaining all prior PR records.
+- Record 16 historical PRs covering prerequisite scheduling, bounded worktrees,
+  foundational Rust checks and source-bound browser jobs.
 
-#### 2026-10-08T19:02:54Z — [#199](https://github.com/bijux/bijux-std/pull/199) — docs\(changelog\): record Python verification history
+### [#197](https://github.com/bijux/bijux-std/pull/197) — Record managed configuration history
 
-Record 12 reviewed historical PRs concerning python verification.
+- Record 16 historical PRs covering generated manifests, labeler/Dependabot schemas,
+  control digests and renderer parity.
 
-- Python delivery gates, installed distribution families, security/SBOM evidence and renderer observation.
-- Preserve original reviewed titles, verified merge dates and source-history distinctions while retaining all prior PR records.
+### [#196](https://github.com/bijux/bijux-std/pull/196) — Record maintainer trust history
 
-#### 2026-10-08T19:01:02Z — [#198](https://github.com/bijux/bijux-std/pull/198) — docs\(changelog\): record CI execution history
+- Record 12 historical PRs covering CODEOWNERS, trusted auto-merge author classes,
+  eligibility retries and owner-controlled approval.
 
-Record 16 reviewed historical PRs concerning ci execution.
+### [#195](https://github.com/bijux/bijux-std/pull/195) — Present concise pull request history
 
-- prerequisite scheduling, bounded worktrees, foundational Rust checks and source-bound browser jobs.
-- Preserve original reviewed titles, verified merge dates and source-history distinctions while retaining all prior PR records.
+- Replace the version-organized central changelog with the simple repository header and
+  truthful pending/merged PR sections.
+- Keep all 43 previous material statements and verified source/tag distinctions in the
+  foundation archive; historical PR imports and preceding main-history notices remain
+  separately reviewed.
 
-#### 2026-10-08T18:54:53Z — [#197](https://github.com/bijux/bijux-std/pull/197) — docs\(changelog\): record managed configuration history
+### [#192](https://github.com/bijux/bijux-std/pull/192) — Enforce exact pull request change records
 
-Record 16 reviewed historical PRs concerning managed configuration.
+- Add a bounded changelog job and invoke the same checker inside the existing mandatory
+  standards gate, including standards-repository bot authors.
+- Carry author instructions through shared PR templates and expose Make targets without
+  modifying release or deployment workflows.
 
-- generated manifests, labeler/Dependabot schemas, control digests and renderer parity.
-- Preserve original reviewed titles, verified merge dates and source-history distinctions while retaining all prior PR records.
+### [#193](https://github.com/bijux/bijux-std/pull/193) — Settle native drawer before pointer input
 
-#### 2026-10-08T18:52:28Z — [#196](https://github.com/bijux/bijux-std/pull/196) — docs\(changelog\): record maintainer trust history
+- Reuse the existing passive ancestor-animation observer without forcing semantic state
+  or cancelling animations.
+- Verify ordinary no-script drawer opening, summary activation and actual destination
+  navigation in the maintained phone/tablet/desktop journeys.
 
-Record 12 reviewed historical PRs concerning maintainer trust.
+### [#191](https://github.com/bijux/bijux-std/pull/191) — Validate repository pull request change records
 
-- CODEOWNERS, trusted auto-merge author classes, eligibility retries and owner-controlled approval.
-- Preserve original reviewed titles, verified merge dates and source-history distinctions while retaining all prior PR records.
+- Add the offline standard-library validator and shared mirror with managed ownership
+  and meaningful negative controls.
+- Keep existing historical notes intact outside the generated section; workflow
+  enforcement and the full historical import remain separate reviews.
 
-#### 2026-10-08T18:47:29Z — [#195](https://github.com/bijux/bijux-std/pull/195) — docs\(changelog\): present concise pull request history
+### [#189](https://github.com/bijux/bijux-std/pull/189) — Preserve accessible reader controls and literal input
 
-Use a concise PR-led changelog with newest review identities first and preserve historical source notes separately.
+- Use the scheme-aware foreground on search metadata and an escaped site-specific
+  primary navigation label.
+- Remove global character-only search activation while retaining named Search controls,
+  editable typing, native result keys, modifiers, Escape and Back.
+- Parse the full generated runtime before emission and require source-bound
+  accessibility and shortcut browser groups.
 
-- Replace the version-organized central changelog with the simple repository header and truthful pending/merged PR sections.
-- Keep all 43 previous material statements and verified source/tag distinctions in the foundation archive; historical PR imports and preceding main-history notices remain separately reviewed.
+### [#188](https://github.com/bijux/bijux-std/pull/188) — Preserve footer new-tab indication without scripts
 
-#### 2026-10-08T18:05:54Z — [#192](https://github.com/bijux/bijux-std/pull/192) — ci\(governance\): enforce exact pull request change records
+- Author descriptions and tooltips for all four profile links while preserving platform
+  names, destinations and noopener.
+- Keep one runtime annotation and test ordinary script-enabled and no-script navigation,
+  leaving the original document intact and isolating its opener.
 
-Check actual PR records and projection in CI and document the repository author workflow.
+### [#187](https://github.com/bijux/bijux-std/pull/187) — Qualify scientific diagram meaning and renderer isolation
 
-- Add a bounded changelog job and invoke the same checker inside the existing mandatory standards gate, including standards-repository bot authors.
-- Carry author instructions through shared PR templates and expose Make targets without modifying release or deployment workflows.
+- Check mathematical, nested and state labels with accessible descriptions in both
+  themes and preserve exact authored source.
+- Reject structured configuration, nested resources and image shapes, and contain
+  malformed or excessive diagrams so valid diagrams, Retry and navigation remain usable.
 
-#### 2026-10-08T17:41:36Z — [#193](https://github.com/bijux/bijux-std/pull/193) — test\(docs\): settle native drawer before pointer input
+### [#185](https://github.com/bijux/bijux-std/pull/185) — Public origins, publication commands and executable source custody
 
-Sample native pointer targets after finite drawer transitions and retain the open drawer through summary activation.
-
-- Reuse the existing passive ancestor-animation observer without forcing semantic state or cancelling animations.
-- Verify ordinary no-script drawer opening, summary activation and actual destination navigation in the maintained phone/tablet/desktop journeys.
-
-#### 2026-10-08T17:24:44Z — [#191](https://github.com/bijux/bijux-std/pull/191) — feat\(governance\): validate repository pull request change records
-
-Validate exact PR change records and generate a reproducible history without replacing existing release notes.
-
-- Add the offline standard-library validator and shared mirror with managed ownership and meaningful negative controls.
-- Keep existing historical notes intact outside the generated section; workflow enforcement and the full historical import remain separate reviews.
-
-#### 2026-10-08T16:47:44Z — [#189](https://github.com/bijux/bijux-std/pull/189) — fix\(docs\): preserve accessible reader controls and literal input
-
-Keep search metadata readable, distinguish navigation landmarks, and preserve ordinary character input outside focused search.
-
-- Use the scheme-aware foreground on search metadata and an escaped site-specific primary navigation label.
-- Remove global character-only search activation while retaining named Search controls, editable typing, native result keys, modifiers, Escape and Back.
-- Parse the full generated runtime before emission and require source-bound accessibility and shortcut browser groups.
-
-#### 2026-10-08T16:21:36Z — [#188](https://github.com/bijux/bijux-std/pull/188) — fix\(docs\): preserve footer new-tab indication without scripts
-
-Footer profile links describe new-tab behavior before JavaScript runs.
-
-- Author descriptions and tooltips for all four profile links while preserving platform names, destinations and noopener.
-- Keep one runtime annotation and test ordinary script-enabled and no-script navigation, leaving the original document intact and isolating its opener.
-
-#### 2026-10-08T16:14:31Z — [#187](https://github.com/bijux/bijux-std/pull/187) — test\(docs\): qualify scientific diagram meaning and renderer isolation
-
-Maintained diagram fixtures verify scientific meaning and isolate renderer failures.
-
-- Check mathematical, nested and state labels with accessible descriptions in both themes and preserve exact authored source.
-- Reject structured configuration, nested resources and image shapes, and contain malformed or excessive diagrams so valid diagrams, Retry and navigation remain usable.
-
-#### 2026-10-08T15:31:49Z — [#185](https://github.com/bijux/bijux-std/pull/185) — fix\(docs\): qualify public origins and publication command boundaries
-
-Public documentation commands validate origin and publication boundaries before mutation.
-
-- Build and check use the authored public origin, empty overrides preserve the MkDocs fallback, and local development serving remains explicit.
-- Validate renderer source/runtime command boundaries before bootstrap or public-output changes, with independent receipts for three actual command journeys.
-- Document public-site data flows; unsupported Linux producer profiles remain unapproved and reject before public artifact mutation.
-
-#### 2026-10-08T15:22:01Z — [#186](https://github.com/bijux/bijux-std/pull/186) — fix\(docs\): preserve drawer traversal and reader focus on short screens
-
-Short-screen drawers keep hidden links out of Tab order and focused actions visible.
-
-- Exclude descendants of closed disclosures while preserving the first summary and expanded destinations, then scroll each focused action within its owning container.
-- Retain maintained landscape, RTL, modal-resize, new-page focus and fragment/history reader journeys as an independently required group.
-
-#### 2026-10-08T15:09:46Z — [#182](https://github.com/bijux/bijux-std/pull/182) — fix\(docs\): constrain native search opening to the viewport
-
-Native search opening remains within the viewport at phone and tablet boundaries.
-
-- Constrain overlay geometry and remove scale/translation that inflates the root during opening without changing native query or result behavior.
-- Keep real hit areas, reader navigation and backdrop dismissal, with phone, tablet and desktop checks in separate bounded jobs.
-
-#### 2026-10-08T14:32:45Z — [#184](https://github.com/bijux/bijux-std/pull/184) — feat\(docs\): bind embedded readers to native search boundaries
-
-Embedded-reader composition and native search respect the document capability boundary.
-
-- Verify report resources and reconstruction policy, and make native search replace the Document when crossing its initial partition.
-- Deliver the admitted element resize subscriber through its owned frame lifecycle; generated assets, templates and compiler provenance remain reproducible.
-- Unsupported embedded production admission and default public enablement remain closed.
-
-#### 2026-10-08T14:11:21Z — [#176](https://github.com/bijux/bijux-std/pull/176) — fix\(docs\): bind navigation dialogs and product search scope
-
-Navigation controls bind to their actual dialogs and expose product-local search scope.
-
-- Lease and restore authored popup identities, preserve accessible query names and identify the current product site in native search.
-- Wire native drawer opening and dismissal through its checkbox-owned surface while retaining keyboard and no-script fallback.
-- This grouped main change incorporates the search-scope work from PR \#179; the topic-only merge is recorded separately.
-
-#### 2026-10-08T13:49:36Z — [#179](https://github.com/bijux/bijux-std/pull/179) — feat\(docs\): describe native search scope on every product site
-
-Native search visibly describes its local product-site scope.
-
-- Preserve the licensed Material partial, owned heading/description relationships and native worker/query/result protocol across consumer-root fixtures.
-- This PR merged into the navigation topic branch, not directly into main; its changes reached main through PR \#176.
-
-#### 2026-10-08T13:49:22Z — [#183](https://github.com/bijux/bijux-std/pull/183) — ci\(docs\): bound browser jobs with immutable fixture transport
-
-Browser CI transports deduplicated immutable fixtures and separates search workloads.
-
-- Store each unique fixture payload once, restore exact manifest/site bytes without links and preserve downloaded diagnostic logs.
-- Give native query and invoker journeys separate engine jobs while retaining all 471 cases and producer/run/source/JUnit identity checks.
-
-#### 2026-10-08T13:35:06Z — [#180](https://github.com/bijux/bijux-std/pull/180) — ci\(docs\): separate diagram and contrast browser budgets
-
-Diagram and contrast browser suites have separate execution budgets.
-
-- Keep both rendering suites required while giving each engine/suite its own bounded job, including report finalization.
-- Preserve existing case identities and complete aggregation rather than treating a successful partial job as matrix completion.
-
-#### 2026-10-08T13:25:42Z — [#177](https://github.com/bijux/bijux-std/pull/177) — feat\(docs\): verify immutable publication resources and receipts
-
-The optional publication library verifies immutable resources and reconstruction receipts.
-
-- Separate route, redirect, passive-asset, CSP, native worker/index and bundle-receipt validation while binding source, configuration and renderer identity.
-- The library remains opt-in and does not approve a runtime or enable deployment; command-before-render guards are a separate delivery boundary.
-
-#### 2026-10-08T13:14:33Z — [#181](https://github.com/bijux/bijux-std/pull/181) — fix\(docs\): preserve native history restoration by default
-
-Shared defaults preserve native Back URL restoration.
-
-- Exclude optional navigation.tracking from the default while retaining instant navigation, authored anchors, TOC following and consumer-authored opt-ins.
-- Maintain separate history journeys for direct routes, Back/Forward and document continuity.
-
-#### 2026-10-08T13:01:24Z — [#174](https://github.com/bijux/bijux-std/pull/174) — fix\(docs\): preserve authored external link intent
-
-External-link enhancement preserves authored navigation, download and accessible-name intent.
-
-- Add opener protection and visible new-tab descriptions through document-owned annotation leases, retaining authored targets and relation tokens.
-- Dispose owned annotations with the document and retire the historical producer during consumer projection; same-window, download and no-script behavior remain supported.
-
-#### 2026-10-08T12:43:44Z — [#178](https://github.com/bijux/bijux-std/pull/178) — fix\(docs\): retain readable utility and search recovery colors
-
-Light-theme utility tabs and search recovery states retain readable color pairs.
-
-- Use qualified foreground/background combinations for inactive utilities and pending, unavailable and Retry search states.
-- Keep native search behavior and retain unresolved automated findings and manual qualification limits separately from measured color contrast.
-
-#### 2026-10-08T12:25:06Z — [#175](https://github.com/bijux/bijux-std/pull/175) — feat\(docs\): bind renderer admission to owned runtime source
-
-Renderer admission requires reviewed physical source and explicit callback ownership.
-
-- Match installed files, executable caches, loaded modules, startup sources and registered callbacks to source-owned profiles.
-- Verification-only Darwin profiles do not grant publication permission; unsupported environments and unapproved Linux profiles remain closed.
-
-#### 2026-10-08T12:01:05Z — [#173](https://github.com/bijux/bijux-std/pull/173) — test\(docs\): settle natural drawer transitions before hit measurement
-
-Hit-target measurements wait for natural finite drawer transitions to settle.
-
-- Observe ancestor transforms and opacity before sampling geometry and paint, retaining the existing 44px target and ordinary Space/Escape/focus-return assertions.
+- Admit the authored public origin before documentation bootstrap or output cleanup,
+  preserve MkDocs' fallback for empty overrides and keep development serving explicitly
+  local.
+- Validate actual source, renderer and runtime command boundaries before mutating public
+  output, with independently required bounded build/check command receipts.
+- Bind executable caches to typed runtime/source ownership instead of trusting arbitrary
+  cached constants.
+- Document the website's public data flows and privacy controls without treating command
+  qualification as deployment or live availability approval.
+
+### [#186](https://github.com/bijux/bijux-std/pull/186) — Preserve drawer traversal and reader focus on short screens
+
+- Exclude descendants of closed disclosures while preserving the first summary and
+  expanded destinations, then scroll each focused action within its owning container.
+- Retain maintained landscape, RTL, modal-resize, new-page focus and fragment/history
+  reader journeys as an independently required group.
+
+### [#182](https://github.com/bijux/bijux-std/pull/182) — Constrain native search opening to the viewport
+
+- Constrain overlay geometry and remove scale/translation that inflates the root during
+  opening without changing native query or result behavior.
+- Keep real hit areas, reader navigation and backdrop dismissal, with phone, tablet and
+  desktop checks in separate bounded jobs.
+
+### [#184](https://github.com/bijux/bijux-std/pull/184) — Bind embedded readers to native search boundaries
+
+- Reconstruct embedded-reader composition and its exact resources through a finite
+  source-owned recipe, rejecting forged source or resource claims.
+- Bind native search result destinations to the initial document capability partition so
+  crossing into or out of embedded readers replaces the actual Document.
+- Deliver the admitted element-resize subscriber through its owned frame lifecycle.
+- Reproduce native assets, templates and compiler provenance together while keeping
+  unsupported production capabilities closed.
+
+### [#176](https://github.com/bijux/bijux-std/pull/176) — Bind navigation dialogs and product search scope
+
+- Lease and restore authored popup identities, preserve accessible query names and
+  identify the current product site in native search.
+- Wire native drawer opening and dismissal through its checkbox-owned surface while
+  retaining keyboard and no-script fallback.
+- This grouped main change incorporates the search-scope work from PR #179; the
+  topic-only merge is recorded separately.
+
+### [#179](https://github.com/bijux/bijux-std/pull/179) — Describe native search scope on every product site
+
+- Preserve the licensed Material partial, owned heading/description relationships and
+  native worker/query/result protocol across consumer-root fixtures.
+- This PR merged into the navigation topic branch, not directly into main; its changes
+  reached main through PR #176.
+
+### [#183](https://github.com/bijux/bijux-std/pull/183) — Bound browser jobs with immutable fixture transport
+
+- Transport browser fixtures by immutable content digest, storing repeated payload once
+  and reconstructing exact manifest/site bytes without links.
+- Retain downloaded diagnostic logs and source, producer, run, browser and JUnit
+  identity through worker execution.
+- Give native query and search-invoker journeys separate engine jobs while preserving
+  all 471 cases and the strict three-minute whole-job budget.
+
+### [#180](https://github.com/bijux/bijux-std/pull/180) — Separate diagram and contrast browser budgets
+
+- Keep both rendering suites required while giving each engine/suite its own bounded
+  job, including report finalization.
+- Preserve existing case identities and complete aggregation rather than treating a
+  successful partial job as matrix completion.
+
+### [#177](https://github.com/bijux/bijux-std/pull/177) — Verify immutable publication resources and receipts
+
+- Add opt-in validators for publication routes, redirects, passive assets, CSP, native
+  search worker/index resources and immutable bundle receipts.
+- Bind source, effective configuration and renderer identity to the actual public
+  resources and independently check receipt contents.
+- Separate validation ownership so resource or policy changes cannot be hidden behind a
+  generic successful build.
+- Keep deployment and runtime-profile approval disabled; command-before-cleanup
+  admission is delivered separately.
+
+### [#181](https://github.com/bijux/bijux-std/pull/181) — Preserve native history restoration by default
+
+- Exclude optional navigation.tracking from the default while retaining instant
+  navigation, authored anchors, TOC following and consumer-authored opt-ins.
+- Maintain separate history journeys for direct routes, Back/Forward and document
+  continuity.
+
+### [#174](https://github.com/bijux/bijux-std/pull/174) — Preserve authored external link intent
+
+- Add opener protection and visible new-tab descriptions through document-owned
+  annotation leases, retaining authored targets and relation tokens.
+- Dispose owned annotations with the document and retire the historical producer during
+  consumer projection; same-window, download and no-script behavior remain supported.
+
+### [#178](https://github.com/bijux/bijux-std/pull/178) — Retain readable utility and search recovery colors
+
+- Use qualified foreground/background combinations for inactive utilities and pending,
+  unavailable and Retry search states.
+- Keep native search behavior and retain unresolved automated findings and manual
+  qualification limits separately from measured color contrast.
+
+### [#175](https://github.com/bijux/bijux-std/pull/175) — Bind renderer admission to owned runtime source
+
+- Introduce source-owned renderer profiles and explicit callback capabilities;
+  observation alone cannot grant publication permission.
+- Authenticate physical installed files, executable caches and loaded module ownership
+  against reviewed runtime source.
+- Bind startup sources and registered callback code to the same profile and reject
+  unsupported or altered environments.
+- Keep verification-only Darwin observations separate from approved production/Linux
+  profiles and isolate startup fixtures from ambient interpreter state.
+
+### [#173](https://github.com/bijux/bijux-std/pull/173) — Settle natural drawer transitions before hit measurement
+
+- Observe ancestor transforms and opacity before sampling geometry and paint, retaining
+  the existing 44px target and ordinary Space/Escape/focus-return assertions.
 - The observer does not finish or cancel animations or alter semantic drawer state.
 
-#### 2026-10-08T11:33:09Z — [#172](https://github.com/bijux/bijux-std/pull/172) — ci\(docs\): qualify browser journeys in bounded parallel jobs
+### [#172](https://github.com/bijux/bijux-std/pull/172) — Qualify browser journeys in bounded parallel jobs
 
-The required browser matrix runs in bounded parallel jobs with complete source-bound aggregation.
+- Render admitted production Material fixtures once and distribute exact digest-bound
+  bundles across twelve engine/journey jobs instead of serial browser execution.
+- Keep std / navigation as a complete-coverage aggregate for all 363 cases, binding
+  producer, source, bundle, browser version and JUnit identity.
+- Reject missing, duplicate, failed, skipped or retried coverage and retain diagnostic
+  input/output evidence within each three-minute job.
 
-- Render admitted fixtures once and distribute immutable bundles across twelve engine/journey jobs while retaining all 363 cases.
-- Reject missing, duplicate, failed, skipped or retried coverage and mismatched source, bundle, browser-version or JUnit evidence; instant navigation uses actual Document identity.
+### [#171](https://github.com/bijux/bijux-std/pull/171) — Preserve header traversal around modal search
 
-#### 2026-10-08T11:14:13Z — [#171](https://github.com/bijux/bijux-std/pull/171) — fix\(docs\): preserve header traversal around modal search
+- Expose one modal search invoker in enhanced desktop headers while preserving
+  Material's native inline desktop search and correct compact-breakpoint behavior.
+- Restore usable close actions and modal focus transit without putting negative-tabindex
+  native results into the Tab cycle; retain Arrow/Enter result selection.
+- Qualify native query and invoker journeys with the installed renderer and preserve the
+  reader's document and keyboard focus.
+
+### [#170](https://github.com/bijux/bijux-std/pull/170) — Attribute resolved startup source and native exception hooks
+
+- Attribute loaded startup modules, selected symlink targets and actual interpreter
+  callback origins.
+- Reads reject swapped or changing targets, nonregular inputs and oversized files;
+  observation remains separate from publication permission.
 
-Owned headers expose one modal search invoker and permit keyboard traversal past search.
+### [#169](https://github.com/bijux/bijux-std/pull/169) — Close redirect renderer fixture dependencies
+
+- Pin mkdocs-redirects 1.2.3 and properdocs 1.6.7 alongside the admitted MkDocs/Material
+  renderer.
+- Installed-package ownership and payload checks cover Linux Python 3.12 and Darwin
+  Python 3.14; the resulting 32-pin environment requires its own renderer observation.
 
-- Keep native desktop inline search while removing the duplicate owned query field and compact breakpoint leakage.
-- Restore usable close actions and modal focus transit without placing negative-tabindex native results in the Tab cycle; Arrow/Enter result navigation remains available.
+### [#168](https://github.com/bijux/bijux-std/pull/168) — Constrain documentation publication refs and artifacts
+
+- Allow only the default branch or valid semantic-version tags and consume the exact
+  nonsymlink configured artifact with its required verifier.
+- Limit Pages/OIDC permission to deployment, avoid persisted checkout credentials and
+  validate caller environment data.
 
-#### 2026-10-08T10:51:13Z — [#170](https://github.com/bijux/bijux-std/pull/170) — feat\(docs\): attribute resolved startup source and native exception hooks
+### [#167](https://github.com/bijux/bijux-std/pull/167) — Record browser versions in contrast qualification
 
-Renderer observations identify resolved startup sources and the active exception hook.
+- Capture engine versions before execution so source-bound report validation can reject
+  missing or ambiguous runtime evidence.
 
-- Attribute loaded startup modules, selected symlink targets and actual interpreter callback origins.
-- Reads reject swapped or changing targets, nonregular inputs and oversized files; observation remains separate from publication permission.
+### [#166](https://github.com/bijux/bijux-std/pull/166) — Retain readable controls and reachable reader targets
 
-#### 2026-10-08T10:50:56Z — [#169](https://github.com/bijux/bijux-std/pull/169) — test\(docs\): close redirect renderer fixture dependencies
+- Restore readable utility/search controls, phone footer direction labels, owned footer
+  hit areas and unclipped masthead focus rings.
+- Correct hidden desktop drawer specificity and prevent a transparent sidebar from
+  intercepting footer navigation.
+- Add a 39-case rendered contrast/target gate with actual input, bitmap-backed color
+  observations, light/dark/forced-color states and a historical failing control; retain
+  unresolved gradients, popup findings and manual conformance limits separately.
 
-The fixture lock includes the complete redirect plugin dependency chain.
+### [#165](https://github.com/bijux/bijux-std/pull/165) — Retain physical renderer startup and import fingerprints
 
-- Pin mkdocs-redirects 1.2.3 and properdocs 1.6.7 alongside the admitted MkDocs/Material renderer.
-- Installed-package ownership and payload checks cover Linux Python 3.12 and Darwin Python 3.14; the resulting 32-pin environment requires its own renderer observation.
+- Record interpreter/stdlib bytes, module origins, bytecode, symlinks and sources
+  outside the package lock, rejecting changes across double capture.
+- The expanded observation remains verification-only and does not approve a publisher
+  runtime.
+
+### [#164](https://github.com/bijux/bijux-std/pull/164) — Expose keyboard scrolling for wide reader content
+
+- Find the actual overflowing code or table surface, including numbered code inside a
+  fitting outer table, and give that surface a named keyboard scroll owner.
+- Expose ordinary Arrow/Home/End scrolling while preserving exact source, line anchors,
+  semantic cells, selections and descendant controls; fitting content receives no extra
+  Tab stop.
+- Dispose observers, pending frames, descriptions and annotations on abort or document
+  replacement, and qualify phone, enlarged text, RTL, no-script and
+  instant-navigation/Back behavior.
+
+### [#163](https://github.com/bijux/bijux-std/pull/163) — Validate shell configuration and document consumer extensions
+
+- Reject malformed shell namespaces, truthy non-Boolean flags, YAML shadowing and
+  invalid ordered registry records with source/field diagnostics before rendering.
+- Preserve product-owned fields, plugins, tagged values and legitimate YAML merges.
+- Document authored head/assets/content extensions, token ownership and typed read-only
+  viewport/theme observations with their document-lifetime cleanup boundaries.
+
+### [#162](https://github.com/bijux/bijux-std/pull/162) — Preserve native navigation before shell readiness
+
+- Render a visible native checkbox label and complete in-flow tree until a successful
+  owned mount activates the modal drawer.
+- Restore authored fallback after failed mounting and retain independent native Material
+  header/search behavior.
+
+### [#161](https://github.com/bijux/bijux-std/pull/161) — Admit neutral and rust renderers before preparation
+
+- Use the configured Python launcher for admission and rendering, recheck after source
+  hooks and reject unsupported profiles before cleanup.
+- Explicit native custom runners retain their flags without waiving managed
+  project/configuration ownership.
+
+### [#160](https://github.com/bijux/bijux-std/pull/160) — Retain locked documentation renderer source fingerprints
+
+- Record package, native-wheel, Git, platform and Python identity and reject unsafe or
+  changing inputs before writing artifact evidence.
+- Require committed clean source and double capture; fingerprints remain observation
+  rather than runtime or publication admission.
+
+### [#159](https://github.com/bijux/bijux-std/pull/159) — Bind package audits to candidate source inputs
+
+- Bind selected package/version and project/lock/Make/helper inputs, export frozen
+  offline closures and promote output only after audit and source rechecks.
+- Retain failed output for diagnosis; declared-input provenance does not authenticate an
+  upstream repository or claim a real vulnerability-service scan.
+
+### [#158](https://github.com/bijux/bijux-std/pull/158) — Preserve native search intent and recover bounded transport
+
+- Load the native search index on actual search intent instead of ordinary reading,
+  retaining Material's exact worker, corpus, ranking, highlighting and result protocol.
+- Bound and cancel index/worker transport, coalesce edits behind one in-flight query and
+  provide keyboard Cancel/Retry without losing the query or editing focus.
+- Give native and enhanced headers consistent opener, dismissal and inline focus
+  behavior, including Escape recovery from delayed Material toggles.
+- Admit the native runtime through the actual rendering interpreter before Python
+  commands clean or render, and require dedicated three-engine search qualification
+  alongside the existing shell journeys.
+
+### [#157](https://github.com/bijux/bijux-std/pull/157) — Make repository facts an explicit privacy choice
+
+- Require Boolean extra.bijux.repository_facts opt-in before mounting Material's
+  repository facts requests.
+- Keep repository navigation and meaningful compact accessible names independent of
+  optional provider metadata.
+
+### [#156](https://github.com/bijux/bijux-std/pull/156) — Deliver compact branding with preserved author configuration
+
+- Replace the common header/drawer's 3.75 MB raster request with the existing
+  25,564-byte PNG, declaring intrinsic dimensions and keeping the image decorative
+  inside the named brand link.
+- Migrate only the exact retired common logo setting while preserving authored custom
+  logos, icons, formatting and unrelated configuration; retain the original high-quality
+  asset for cached-page compatibility.
+
+### [#155](https://github.com/bijux/bijux-std/pull/155) — Trim repeated whitespace from complete navigation
+
+- Trim template block-edge whitespace while preserving labels, escaping, disclosure
+  hierarchy and active-state attributes; the tree stays native and static.
+
+### [#154](https://github.com/bijux/bijux-std/pull/154) — Preserve authored configuration when projecting required assets
+
+- Project required CSS, scripts and plugins in canonical order so newly synchronized
+  assets are actually loaded.
+- Preserve authored hooks, options, branding and relative asset order; plan both
+  configurations and reject ambiguous inheritance or execution order before any write.
+- Expose read-only drift checks and retire only the exact obsolete eager Mermaid
+  reference.
+
+### [#153](https://github.com/bijux/bijux-std/pull/153) — Render diagrams with one self-hosted lifecycle
 
-#### 2026-10-08T10:34:52Z — [#168](https://github.com/bijux/bijux-std/pull/168) — fix\(ci\): constrain documentation publication refs and artifacts
+- Replace competing Material/legacy diagram scans with one dedicated fence class and one
+  lazily loaded self-hosted Mermaid 11.17.2 renderer.
+- Serialize rendering, reject stale completions and preserve authored source through
+  palette and history changes.
+- Provide readable source and keyboard Retry after preview failures while bounding
+  source/graph admission and rejecting unsafe resources or source configuration
+  directives.
+- Project the owned fence and remove eager vendor initialization without replacing
+  authored hooks or branding; deliver the reproducible bundle and third-party notices
+  together.
 
-Documentation publication validates the selected ref and immutable artifact boundary.
+### [#152](https://github.com/bijux/bijux-std/pull/152) — Retain usable preferences when browser storage fails
 
-- Allow only the default branch or valid semantic-version tags and consume the exact nonsymlink configured artifact with its required verifier.
-- Limit Pages/OIDC permission to deployment, avoid persisted checkout credentials and validate caller environment data.
+- Validate stored palette records, provide bounded scoped memory fallback and keep
+  Material radio ownership and reader scroll position.
+- Memory fallback covers the current document session; denied storage does not imply
+  persistence across reload.
 
-#### 2026-10-08T10:29:43Z — [#167](https://github.com/bijux/bijux-std/pull/167) — test\(docs\): record browser versions in contrast qualification
+### [#151](https://github.com/bijux/bijux-std/pull/151) — Preserve authored extensions during standard projection
 
-Every contrast test receipt identifies its actual browser version.
+- Record generated documentation ownership against exact accepted GitHub commits,
+  including prior source bytes needed by shallow authority checkouts.
+- Preserve authored root overrides, ignored files, staged work and symlinked paths
+  before generated configuration or asset writes.
+- Project nested shared partials and retire only unchanged generated files, rejecting
+  ambiguous ownership instead of overwriting clean product extensions.
 
-- Capture engine versions before execution so source-bound report validation can reject missing or ambiguous runtime evidence.
+### [#150](https://github.com/bijux/bijux-std/pull/150) — Restore complete responsive navigation and drawer intent
 
-#### 2026-10-08T10:00:59Z — [#166](https://github.com/bijux/bijux-std/pull/166) — fix\(docs\): retain readable controls and reachable reader targets
+- Replace the scoped sidebar with a complete native disclosure tree containing
+  separately reachable overview links, deep destinations and all nine ecosystem sites.
+- Keep inactive ribbons hidden and give compact controls real button behavior,
+  accessible names, focus containment/restoration and protection from delayed Material
+  resets.
+- Build eleven actual MkDocs/Material scenarios and retire handwritten alternate drawer
+  fixtures; qualify ordinary keyboard, pointer and touch input.
+- Adopt the digest-pinned Playwright Noble container and admitted renderer/Node locks
+  for bounded navigation CI, retaining exact fixture and success/failure evidence;
+  verify recursive shared source and applicable consumer projection.
 
-Footer navigation and masthead controls retain readable, reachable targets.
+### [#149](https://github.com/bijux/bijux-std/pull/149) — Reproduce patched diagram dependencies and licenses
 
-- Restore phone footer direction labels, desktop hit areas, complete focus rings and correct hidden-drawer specificity.
-- Maintain rendered contrast and target measurements while keeping unresolved gradient/popup findings and manual conformance limits explicit.
+- Lock Mermaid 11.17.2, DOMPurify 3.4.16 and KaTeX 0.18.2 in a reproducible diagram
+  dependency graph.
+- Provide deterministic browser bundling, complete third-party notices and input/output
+  provenance under artifact-owned installation paths.
+- Select admitted Node 24.21.0 for canonical reproduction while leaving consumer jobs
+  and the website's actual renderer replacement to separate changes.
 
-#### 2026-10-08T09:22:46Z — [#165](https://github.com/bijux/bijux-std/pull/165) — feat\(ci\): retain physical renderer startup and import fingerprints
+### [#148](https://github.com/bijux/bijux-std/pull/148) — Validate source and configured publication evidence
 
-Renderer observations include physical Python startup and import inputs.
+- Require the selected release tag, workflow revision and staged distribution bytes to
+  agree before package publication.
+- Run caller-configured prepublication evidence first and propagate its failure,
+  carrying the selected tag into artifact construction.
+- Preserve the separate GitHub, GHCR, crates and PyPI channel contracts without
+  activating consumer publication in this source change.
 
-- Record interpreter/stdlib bytes, module origins, bytecode, symlinks and sources outside the package lock, rejecting changes across double capture.
-- The expanded observation remains verification-only and does not approve a publisher runtime.
+### [#147](https://github.com/bijux/bijux-std/pull/147) — Verify exact source before preserving managed refresh
 
-#### 2026-10-08T08:47:53Z — [#164](https://github.com/bijux/bijux-std/pull/164) — feat\(docs\): expose keyboard scrolling for wide reader content
+- Resolve a named ref once, record origin/ref/full SHA and reject unavailable revisions
+  or dirty/conflicting managed work.
+- Keep staged, unstaged, untracked and legacy user changes intact; dry runs do not
+  mutate managed files.
 
-Wide reader content has a named keyboard-accessible scroll owner.
+### [#146](https://github.com/bijux/bijux-std/pull/146) — Preserve material palette storage lifecycle
 
-- Find the actual overflowing code/table surface, including inner numbered-code overflow, and expose ordinary Arrow/Home/End scrolling without adding stops to fitting content.
-- Preserve source, line anchors, cells, selections and descendant controls; dispose annotations/observers with the document and exclude decorative permalink text from contextual labels.
+- Persist the selected Material palette option index alongside its color signature so
+  restored and synchronized choices follow the native lifecycle.
+- Recalculate indexes when options reorder and reject detached controls or invalid
+  automatic/light/dark fallback choices.
 
-#### 2026-10-08T08:21:45Z — [#163](https://github.com/bijux/bijux-std/pull/163) — feat\(docs\): validate shell configuration and document consumer extensions
+### [#145](https://github.com/bijux/bijux-std/pull/145) — Skip verification runners for dependabot
 
-Shell configuration rejects ambiguous or incorrectly typed owned fields before rendering.
+- Keep governance and auto-merge checks active while applying the existing author guard
+  to repository verification jobs.
 
-- Validate namespaces, Boolean flags, YAML shadowing and ordered registry records with field-specific diagnostics.
-- Preserve product fields, plugins, tags and legitimate merges and document extension, token, observation and lifecycle ownership.
+### [#144](https://github.com/bijux/bijux-std/pull/144) — Refresh release action pins
 
-#### 2026-10-08T07:56:58Z — [#162](https://github.com/bijux/bijux-std/pull/162) — fix\(docs\): preserve native navigation before shell readiness
+- Select the current deploy-pages v5 revision and action-gh-release 3.0.3 in canonical
+  governance source.
 
-Navigation remains usable before, without or after failed shell enhancement.
+### [#143](https://github.com/bijux/bijux-std/pull/143) — Run verification independently of policy checks
 
-- Render a visible native checkbox label and complete in-flow tree until a successful owned mount activates the modal drawer.
-- Restore authored fallback after failed mounting and retain independent native Material header/search behavior.
+- Remove the one-shot cross-workflow policy preflight from generated verification and
+  auto-merge enablement so independent product checks can start without a readiness
+  race.
+- Retain standards, repository policy and owner approval as separate required merge
+  checks enforced by branch protection.
 
-#### 2026-10-08T07:28:14Z — [#161](https://github.com/bijux/bijux-std/pull/161) — fix\(docs\): admit neutral and rust renderers before preparation
+### [#142](https://github.com/bijux/bijux-std/pull/142) — Shard canon supported python tests
 
-Neutral and Rust documentation commands admit the renderer before preparation.
+- Cover twelve canonical/compatibility packages on Python 3.11-3.14 with twelve-lane
+  concurrency and package-scoped artifacts.
+- Preserve fail-closed supported_python aggregation across all required combinations.
 
-- Use the configured Python launcher for admission and rendering, recheck after source hooks and reject unsupported profiles before cleanup.
-- Explicit native custom runners retain their flags without waiving managed project/configuration ownership.
+### [#141](https://github.com/bijux/bijux-std/pull/141) — Isolate installed family build cache
 
-#### 2026-10-08T07:14:39Z — [#160](https://github.com/bijux/bijux-std/pull/160) — feat\(ci\): retain locked documentation renderer source fingerprints
+- Place ephemeral uv build cache in the per-job runner directory while retaining wheels
+  under repository artifacts.
 
-Documentation CI retains the locked renderer's physical installed-source inventory.
+### [#140](https://github.com/bijux/bijux-std/pull/140) — Treat canon repository as metadata distribution
 
-- Record package, native-wheel, Git, platform and Python identity and reject unsafe or changing inputs before writing artifact evidence.
-- Require committed clean source and double capture; fingerprints remain observation rather than runtime or publication admission.
+- Retain it in the thirteen-distribution build/version contract without importing a
+  nonexistent bijux_canon_repository module.
 
-#### 2026-10-08T06:46:49Z — [#159](https://github.com/bijux/bijux-std/pull/159) — fix\(sbom\): bind package audits to candidate source inputs
+### [#139](https://github.com/bijux/bijux-std/pull/139) — Verify complete canon distribution family
 
-Package SBOM audits bind to candidate source rather than stale environment inputs.
+- Expand Canon installed-family verification from twelve to thirteen built wheels,
+  including the repository workspace distribution, and check installed distribution
+  versions together. Update the renderer contract to retain that family definition.
 
-- Bind selected package/version and project/lock/Make/helper inputs, export frozen offline closures and promote output only after audit and source rechecks.
-- Retain failed output for diagnosis; declared-input provenance does not authenticate an upstream repository or claim a real vulnerability-service scan.
+### [#138](https://github.com/bijux/bijux-std/pull/138) — Fail closed and advance API tooling
 
-#### 2026-10-08T06:29:51Z — [#158](https://github.com/bijux/bijux-std/pull/158) — fix\(docs\): preserve native search intent and recover bounded transport
+- Propagate failed Python package builders and preserve the first error from recursive
+  Make sequences instead of reporting a later successful command.
+- Advance canonical OpenAPI tooling to Generator CLI 2.41.0 and Redocly 2.47.0, with
+  regression controls for both failure paths.
 
-Native search loads bounded transport on intent and recovers without stranding readers.
+### [#137](https://github.com/bijux/bijux-std/pull/137) — Scope sibling parity to accepted source
 
-- Preserve the admitted Material worker, corpus, ranking and result protocol while bounding/cancelling index and worker transport.
-- Coalesce pending edits, retain the query and editing focus, and provide keyboard Cancel/Retry and reliable Escape restoration.
+- Keep each consumer's local Python Make mirrors byte-identical to its synchronized
+  source.
+- Compare sibling repositories only when their accepted Std pins match, permitting
+  independent downstream promotion while still rejecting same-pin drift.
 
-#### 2026-10-08T04:36:06Z — [#157](https://github.com/bijux/bijux-std/pull/157) — fix\(docs\): make repository facts an explicit privacy choice
+### [#136](https://github.com/bijux/bijux-std/pull/136) — Resolve synchronized renderer sources
 
-Repository statistics become an explicit authored privacy choice.
+- Use shared in bijux-std and .bijux/shared in consumers, with clear failure when no
+  managed source exists.
 
-- Require Boolean extra.bijux.repository\_facts opt-in before mounting Material's repository facts requests.
-- Keep repository navigation and meaningful compact accessible names independent of optional provider metadata.
+### [#135](https://github.com/bijux/bijux-std/pull/135) — Require unsuppressed Python evidence
 
-#### 2026-10-08T03:58:29Z — [#156](https://github.com/bijux/bijux-std/pull/156) — perf\(docs\): deliver compact branding with preserved author configuration
+- Remove default vulnerability ignore IDs, reject Bandit skips and disabled strict
+  audits, and propagate SBOM pip-audit failures.
 
-Shared branding uses the compact existing PNG instead of the large raster.
+### [#134](https://github.com/bijux/bijux-std/pull/134) — Validate repository-specific status outputs
 
-- Declare intrinsic dimensions and a decorative image inside the named brand link while preserving custom logos and icon fallback.
-- Migrate only the exact retired common scalar and retain the high-quality asset for cached-page compatibility.
+- Retain byte-identical checks for invariant managed files while comparing rulesets and
+  status guidance through their repository renderer.
 
-#### 2026-10-08T03:32:14Z — [#155](https://github.com/bijux/bijux-std/pull/155) — perf\(docs\): trim repeated whitespace from complete navigation
+### [#133](https://github.com/bijux/bijux-std/pull/133) — Python artifact recovery, shared configuration and delivery gates
 
-Complete navigation emits less repeated indentation without changing destinations.
+- Make Python artifact migration recoverable, preserve occupied destinations and define
+  the runtime-state/alias ownership contract.
+- Govern shared configuration semantics, keep generated trees out of configuration scans
+  and enforce parity across the four Python repositories.
+- Centralize MkDocs and package-badge behavior, validate effective inherited
+  configuration and merge inherited mappings without replacing authored values.
+- Add Canon supported-Python and installed-family verification, declaring the
+  then-current twelve-distribution installed and eleven-distribution publication
+  rosters.
+- Require Canon's verification-ready product gate and refresh canonical action
+  references.
+- Keep workflow observation nonblocking while preserving the actual delivery gates;
+  later PRs separately expand and correct the distribution family.
 
-- Trim template block-edge whitespace while preserving labels, escaping, disclosure hierarchy and active-state attributes; the tree stays native and static.
+### [#132](https://github.com/bijux/bijux-std/pull/132) — Trust maturin PyPI publication
 
-#### 2026-10-08T03:08:10Z — [#154](https://github.com/bijux/bijux-std/pull/154) — feat\(docs\): preserve authored configuration when projecting required assets
+- Publish maturin-built distributions through PyPI trusted publishing by default.
+- Retain an explicit custom publish-command override for repositories that intentionally
+  replace the managed publisher.
 
-Consumer configuration loads required shared assets without discarding authored settings.
+### [#131](https://github.com/bijux/bijux-std/pull/131) — Honor consumer standards pins in CI
 
-- Merge canonical CSS/script/plugin lists while preserving hooks, options and relative asset order; reject ambiguous plans before writing.
-- Offer read-only drift checks and retire only the exact obsolete eager Mermaid reference.
-
-#### 2026-10-08T02:39:13Z — [#153](https://github.com/bijux/bijux-std/pull/153) — fix\(docs\): render diagrams with one self-hosted lifecycle
-
-A single self-hosted renderer owns diagram lifecycle and recovery.
-
-- Load the reproducible Mermaid bundle lazily, serialize rendering and preserve authored source through theme and history changes.
-- Reject unsafe resource/configuration directives and stale completions while exposing readable source and keyboard Retry after preview failures.
-
-#### 2026-10-08T01:42:00Z — [#152](https://github.com/bijux/bijux-std/pull/152) — fix\(docs\): retain usable preferences when browser storage fails
-
-Theme and search controls remain usable when browser storage is denied.
-
-- Validate stored palette records, provide bounded scoped memory fallback and keep Material radio ownership and reader scroll position.
-- Memory fallback covers the current document session; denied storage does not imply persistence across reload.
-
-#### 2026-10-08T01:11:00Z — [#151](https://github.com/bijux/bijux-std/pull/151) — fix\(docs\): preserve authored extensions during standard projection
-
-Documentation projection preserves consumer-authored extensions and file ownership.
-
-- Record generated ownership against accepted GitHub source and verify prior bytes before changing templates, assets or configuration.
-- Preserve clean authored overrides, ignored files, staged work and symlinks; retire only unchanged generated files and project nested content recursively.
-
-#### 2026-10-08T00:31:47Z — [#150](https://github.com/bijux/bijux-std/pull/150) — fix\(docs\): restore complete responsive navigation and drawer intent
-
-Compact headers and drawers retain complete, reachable documentation navigation.
-
-- Replace the scoped sidebar with a native disclosure tree containing parent, deep-page and all nine ecosystem destinations.
-- Use named compact buttons, focus containment/restoration and user-intent preservation across delayed Material resets.
-
-#### 2026-10-07T23:45:58Z — [#149](https://github.com/bijux/bijux-std/pull/149) — build\(docs\): reproduce patched diagram dependencies and licenses
-
-Diagram dependencies can be reproduced from an exact licensed graph.
-
-- Lock Mermaid 11.17.2, DOMPurify 3.4.16 and KaTeX 0.18.2 with a deterministic bundler and input/output provenance.
-- Include third-party notices and select admitted Node24.21.0 for canonical reproduction; runtime replacement remains a separate change.
-
-#### 2026-10-07T23:32:41Z — [#148](https://github.com/bijux/bijux-std/pull/148) — fix\(release\): validate source and configured publication evidence
-
-Package publication requires matching source and configured prepublication evidence.
-
-- Bind release tags, workflow revisions and staged distribution bytes, run caller-configured verification first and propagate its failure.
-- Pass the selected tag through artifact construction without activating consumer publication in this standards change.
-
-#### 2026-10-07T23:16:15Z — [#147](https://github.com/bijux/bijux-std/pull/147) — fix\(std\): verify exact source before preserving managed refresh
-
-Managed refresh verifies the exact requested source before changing consumer files.
-
-- Resolve a named ref once, record origin/ref/full SHA and reject unavailable revisions or dirty/conflicting managed work.
-- Keep staged, unstaged, untracked and legacy user changes intact; dry runs do not mutate managed files.
-
-#### 2026-10-07T23:10:08Z — [#146](https://github.com/bijux/bijux-std/pull/146) — fix\(docs\): preserve material palette storage lifecycle
-
-Palette storage retains Material's option identity across restore and synchronization.
-
-- Store and recalculate the native option index when choices reorder, reject detached controls and preserve valid auto/light/dark fallback behavior.
-
-#### 2026-09-07T09:32:23Z — [#145](https://github.com/bijux/bijux-std/pull/145) — fix\(github\): skip verification runners for dependabot
-
-Dependabot changes avoid expensive generated verification runners.
-
-- Keep governance and auto-merge checks active while applying the existing author guard to repository verification jobs.
-
-#### 2026-09-07T07:37:43Z — [#144](https://github.com/bijux/bijux-std/pull/144) — chore\(github\): refresh release action pins
-
-Shared release workflows use refreshed Pages and GitHub release action pins.
-
-- Select the current deploy-pages v5 revision and action-gh-release 3.0.3 in canonical governance source.
-
-#### 2026-08-28T14:09:39Z — [#143](https://github.com/bijux/bijux-std/pull/143) — fix\(github\): run verification independently of policy checks
-
-Verification jobs can start independently of policy prerequisite timing.
-
-- Remove the one-shot preflight from generated verify and auto-merge enablement while retaining separate required standards, policy and approval merge checks.
-
-#### 2026-08-28T13:46:28Z — [#142](https://github.com/bijux/bijux-std/pull/142) — perf\(ci\): shard canon supported python tests
-
-Supported-Python verification is sharded by package and interpreter.
-
-- Cover twelve canonical/compatibility packages on Python 3.11-3.14 with twelve-lane concurrency and package-scoped artifacts.
-- Preserve fail-closed supported\_python aggregation across all required combinations.
-
-#### 2026-08-28T13:39:06Z — [#141](https://github.com/bijux/bijux-std/pull/141) — fix\(ci\): isolate installed family build cache
-
-Concurrent installed-family builds keep mutable cache state outside source.
-
-- Place ephemeral uv build cache in the per-job runner directory while retaining wheels under repository artifacts.
-
-#### 2026-08-28T13:25:06Z — [#140](https://github.com/bijux/bijux-std/pull/140) — fix\(ci\): treat canon repository as metadata distribution
-
-Canon's repository package is treated as metadata-only.
-
-- Retain it in the thirteen-distribution build/version contract without importing a nonexistent bijux\_canon\_repository module.
-
-#### 2026-08-28T13:09:22Z — [#139](https://github.com/bijux/bijux-std/pull/139) — fix\(ci\): verify complete canon distribution family
-
-Canon installed-family verification includes all thirteen built distributions.
-
-- Require built wheels to be installed and version-aligned, including the repository workspace distribution.
-
-#### 2026-08-28T12:46:50Z — [#138](https://github.com/bijux/bijux-std/pull/138) — fix\(python\): fail closed and advance api tooling
-
-Python build and recursive Make failures propagate immediately.
-
-- Preserve the first failed nested command and advance the shared OpenAPI tooling to Generator CLI 2.41.0 and Redocly 2.47.0.
-
-#### 2026-08-25T16:01:25Z — [#137](https://github.com/bijux/bijux-std/pull/137) — fix\(std\): scope sibling parity to accepted source
-
-Sibling parity checks compare repositories only at the same accepted standard SHA.
-
-- Keep local mirrors equal to synchronized source while allowing separately promoted consumer pins without false cross-repository drift reports.
-
-#### 2026-08-25T15:56:50Z — [#136](https://github.com/bijux/bijux-std/pull/136) — fix\(github\): resolve synchronized renderer sources
-
-Governance rendering resolves the actual canonical or consumer shared source.
-
-- Use shared in bijux-std and .bijux/shared in consumers, with clear failure when no managed source exists.
-
-#### 2026-08-25T15:52:39Z — [#135](https://github.com/bijux/bijux-std/pull/135) — fix\(security\): require unsuppressed Python evidence
-
-Python security evidence fails closed without hidden suppressions.
-
-- Remove default vulnerability ignore IDs, reject Bandit skips and disabled strict audits, and propagate SBOM pip-audit failures.
-
-#### 2026-08-25T15:50:03Z — [#134](https://github.com/bijux/bijux-std/pull/134) — fix\(github\): validate repository-specific status outputs
-
-Repository-specific check documentation is validated as rendered output.
-
-- Retain byte-identical checks for invariant managed files while comparing rulesets and status guidance through their repository renderer.
-
-#### 2026-08-25T15:40:36Z — [#133](https://github.com/bijux/bijux-std/pull/133) — feat\(standards\): govern Python repository delivery contracts
-
-Python delivery contracts make repository configuration and artifact ownership explicit.
-
-- Centralize documentation and badge semantics and give Canon supported-Python and installed-family CI.
-- Declare the then-current 12-distribution installed and 11-distribution publication families and the verification-ready product gate.
-
-#### 2026-07-24T12:25:29Z — [#132](https://github.com/bijux/bijux-std/pull/132) — fix\(github\): trust maturin pypi publication
-
-Maturin-built distributions use trusted PyPI publishing by default.
-
-- Preserve an explicit custom publish-command override for repositories that intentionally replace the managed publisher.
-
-#### 2026-07-24T02:20:24Z — [#131](https://github.com/bijux/bijux-std/pull/131) — fix\(github\): honor consumer standards pins in CI
-
-Consumer CI checks the repository's selected standard commit.
-
-- Reject malformed pins before fetching and compare synchronized content against the checked-in SHA rather than an incidental standard revision.
+- Reject malformed pins before fetching and compare synchronized content against the
+  checked-in SHA rather than an incidental standard revision.
 - Advance generated Python workflows to setup-uv 9.0.0.
 
-#### 2026-07-24T02:03:19Z — [#130](https://github.com/bijux/bijux-std/pull/130) — fix\(github\): preserve stable required check identities
+### [#130](https://github.com/bijux/bijux-std/pull/130) — Preserve stable required check identities
 
-Branch protection retains the check names that workflows actually emit.
+- Align rulesets and required-check guidance while preserving descriptive workflow
+  titles, avoiding a renamed-check migration deadlock.
 
-- Align rulesets and required-check guidance while preserving descriptive workflow titles, avoiding a renamed-check migration deadlock.
+### [#129](https://github.com/bijux/bijux-std/pull/129) — Refresh PyPI publisher runtime pin
 
-#### 2026-07-24T00:09:33Z — [#129](https://github.com/bijux/bijux-std/pull/129) — chore\(github\): refresh PyPI publisher runtime pin
+- Pin both trusted-publisher and token-bootstrap PyPI action paths to the reviewed
+  1.14.1 revision and refresh canonical governance integrity.
 
-Both trusted and explicit bootstrap PyPI publishing use the 1.14.1 action revision.
+### [#128](https://github.com/bijux/bijux-std/pull/128) — Preserve capability manifest ownership
 
-- Keep the shared publisher runtime pin consistent without triggering a release.
+- Prevent governance synchronization from restoring unselected language libraries and
+  document the source selection boundary.
 
-#### 2026-07-23T23:57:13Z — [#128](https://github.com/bijux/bijux-std/pull/128) — fix\(std\): preserve capability manifest ownership
+### [#127](https://github.com/bijux/bijux-std/pull/127) — Refresh shared action runtime pins
 
-The shared updater retains ownership of capability-scoped manifests.
+- Pin checkout 7.0.1 and setup-python 7.0.0 across canonical workflows and consumer
+  manifests, rejecting stale generated revisions through the shared contract.
 
-- Prevent governance synchronization from restoring unselected language libraries and document the source selection boundary.
+### [#126](https://github.com/bijux/bijux-std/pull/126) — Refresh python CI setup actions
 
-#### 2026-07-23T23:44:55Z — [#127](https://github.com/bijux/bijux-std/pull/127) — chore\(github\): refresh shared action runtime pins
+- Select setup-uv 8.3.2, setup-node 7.0.0 and setup-java 5.6.0 with contracts that
+  reject stale generated revisions.
 
-Shared and generated workflows select checkout 7.0.1 and setup-python 7.0.0.
+### [#125](https://github.com/bijux/bijux-std/pull/125) — Preserve canonical hub registry order
 
-- Keep immutable action revisions consistent across source workflows, consumer manifests and managed checksums.
+- Render desktop and mobile destinations directly from hub-links.json and remove
+  duplicate validator/template ordering rules.
 
-#### 2026-07-23T21:50:59Z — [#126](https://github.com/bijux/bijux-std/pull/126) — chore\(github\): refresh python ci setup actions
+### [#124](https://github.com/bijux/bijux-std/pull/124) — Preserve configured release command quoting
 
-Managed Python and API jobs use refreshed setup action revisions.
+- Pass command strings through step environments before evaluation across crates, GitHub
+  and PyPI publication paths.
 
-- Select setup-uv 8.3.2, setup-node 7.0.0 and setup-java 5.6.0 with contracts that reject stale generated revisions.
+### [#123](https://github.com/bijux/bijux-std/pull/123) — Set GNSS Rust baseline to 1.88
 
-#### 2026-07-19T21:33:30Z — [#125](https://github.com/bijux/bijux-std/pull/125) — fix\(docs\): preserve canonical hub registry order
+- Generate matching CI, GitHub and crates publication defaults from the repository's
+  workspace baseline.
 
-Hub navigation follows the canonical registry's membership and order.
+### [#122](https://github.com/bijux/bijux-std/pull/122) — Isolate concurrent pinned gates
 
-- Render desktop and mobile destinations directly from hub-links.json and remove duplicate validator/template ordering rules.
+- Give each pinned Make gate an immutable checkout and its own artifact tree so
+  concurrent source, Cargo and benchmark output cannot interfere.
+- Preserve shared launcher status while rejecting reused dirty inputs and retaining
+  concurrent/repeated-run regression coverage.
 
-#### 2026-07-19T21:09:09Z — [#124](https://github.com/bijux/bijux-std/pull/124) — fix\(github\): preserve configured release command quoting
+### [#121](https://github.com/bijux/bijux-std/pull/121) — Identify prerequisite workflows by path
 
-Configured release commands retain package-list and shell quoting.
+- Identify runs by stable workflow path, retain name compatibility and use the approval
+  path for auto-merge gating.
 
-- Pass command strings through step environments before evaluation across crates, GitHub and PyPI publication paths.
+### [#120](https://github.com/bijux/bijux-std/pull/120) — Upgrade release publishing action
 
-#### 2026-07-19T20:24:10Z — [#123](https://github.com/bijux/bijux-std/pull/123) — chore\(std\): set GNSS Rust baseline to 1.88
+- Pin action-gh-release 3.0.2 in the canonical GitHub publisher and refresh its shared
+  governance digest for downstream adoption.
 
-GNSS build and release toolchains align on Rust 1.88.
+### [#119](https://github.com/bijux/bijux-std/pull/119) — Distinguish workflow and check names
 
-- Generate matching CI, GitHub and crates publication defaults from the repository's workspace baseline.
+- Give repository policy and owner approval distinct durable names and regenerate their
+  governed configurations.
 
-#### 2026-07-19T20:07:10Z — [#122](https://github.com/bijux/bijux-std/pull/122) — fix\(automation\): isolate concurrent pinned gates
+### [#118](https://github.com/bijux/bijux-std/pull/118) — Govern Genomics fast Rust lanes
 
-Concurrent pinned Make gates use independent immutable worktrees and artifacts.
+- Remove Genomics' slow-tier workflow and manual slow-tier input while aligning every CI
+  job with its governed Rust 1.95 toolchain.
+- Initialize sccache in the foundational formatting, lint, audit and test lanes and
+  enforce the fast-lane shape in the renderer contract.
 
-- Preserve launcher status while isolating source, Cargo and benchmark outputs and rejecting reused dirty inputs.
+### [#117](https://github.com/bijux/bijux-std/pull/117) — Unify foundational Rust repository gates
 
-#### 2026-07-19T19:50:31Z — [#121](https://github.com/bijux/bijux-std/pull/121) — fix\(github\): identify prerequisite workflows by path
+- Expose explicit repository formatting, lint, audit and test jobs for Atlas, Core,
+  Genomics and GNSS, replacing opaque or legacy gate aliases.
+- Invoke each repository's public Make targets while preserving its own toolchain and
+  dependency setup.
 
-Prerequisite workflow matching survives display-name changes.
+### [#116](https://github.com/bijux/bijux-std/pull/116) — Enforce foundational Rust repository gates
 
-- Identify runs by stable workflow path, retain name compatibility and use the approval path for auto-merge gating.
+- Expose foundational formatting, lint, audit and test jobs for Genomics and GNSS
+  through their public Make gates.
+- Keep Genomics domain checks, require foundational jobs in its fast aggregate and
+  correct the malformed expression that previously prevented job creation.
 
-#### 2026-07-19T19:02:06Z — [#120](https://github.com/bijux/bijux-std/pull/120) — chore\(github\): upgrade release publishing action
+### [#115](https://github.com/bijux/bijux-std/pull/115) — Validate contracts in consumer repositories
 
-GitHub release publishing selects the immutable action-gh-release 3.0.2 revision.
+- Replace consumers' dependency on the Std-only contract-tests target with a
+  synchronized shared shell/Python/JSON validator that works in both source layouts.
+- Keep Std's complete unit-contract lane and remove the unused divergent workflow copy.
 
-- Keep the release action and canonical governance digest aligned for downstream synchronization.
-
-#### 2026-07-19T18:51:11Z — [#119](https://github.com/bijux/bijux-std/pull/119) — fix\(github\): distinguish workflow and check names
-
-Workflow display names and required-check identities are documented separately.
-
-- Give repository policy and owner approval distinct durable names and regenerate their governed configurations.
-
-#### 2026-07-19T16:24:26Z — [#118](https://github.com/bijux/bijux-std/pull/118) — fix\(ci\): govern Genomics fast Rust lanes
-
-Genomics fast CI uses its governed Rust 1.95 toolchain and cache setup.
-
-- Remove the slow-tier workflow and dispatch input and initialize sccache in the foundational jobs.
-
-#### 2026-07-19T16:11:11Z — [#117](https://github.com/bijux/bijux-std/pull/117) — fix\(ci\): unify foundational Rust repository gates
-
-Atlas, Core, Genomics and GNSS share explicit foundational gate identities.
-
-- Call public Make contracts in each format/lint/audit/test job while retaining repository-specific toolchain and dependency setup.
-
-#### 2026-07-19T15:54:46Z — [#116](https://github.com/bijux/bijux-std/pull/116) — fix\(ci\): enforce foundational Rust repository gates
-
-Genomics and GNSS expose explicit foundational Rust CI gates.
-
-- Invoke public format, lint, audit and test Make targets and repair the Genomics aggregate expression that prevented job creation.
-
-#### 2026-07-19T15:37:53Z — [#115](https://github.com/bijux/bijux-std/pull/115) — fix\(std\): validate contracts in consumer repositories
-
-Consumer repositories validate shared contracts without a standards-only Make target.
-
-- Check managed shell/Python/JSON syntax in both canonical and consumer layouts while keeping the standards repository's full unit-contract lane.
-
-#### 2026-07-19T15:11:56Z — [#114](https://github.com/bijux/bijux-std/pull/114) — chore\(github\): refresh shared workflow runtime pins
-
-Shared setup actions use refreshed uv and Node runtime revisions.
+### [#114](https://github.com/bijux/bijux-std/pull/114) — Refresh shared workflow runtime pins
 
 - Select setup-uv 8.3.2 and setup-node 7.0.0 in governed workflow sources.
 
-#### 2026-07-19T12:37:45Z — [#113](https://github.com/bijux/bijux-std/pull/113) — feat\(std\): publish shared repository contracts
+### [#113](https://github.com/bijux/bijux-std/pull/113) — Publish shared repository contracts
 
-Repository contracts centralize Rust test defaults and documentation hub ownership.
+- Default complete Rust Nextest gates to eight workers while preserving explicit
+  repository overrides.
+- Centralize the documentation Hub registry and migrate managed projects to inherited
+  navigation.
+- Document capability selection, exact-SHA adoption, integrity checks and standards
+  ownership, and refresh generated governance from that source.
+- Reject runtime-cache checksum drift through the shared source contract.
 
-- Default complete nextest gates to eight workers with explicit overrides preserved and make managed documentation inherit the canonical hub registry.
-- Document capability selection, exact-SHA adoption, integrity checks and standards ownership.
+### [#112](https://github.com/bijux/bijux-std/pull/112) — Preserve Rust gate evidence and align core releases
 
-#### 2026-07-19T09:36:42Z — [#112](https://github.com/bijux/bijux-std/pull/112) — fix\(standards\): preserve Rust gate evidence and align core releases
+- Preserve complete Rust gate summaries and frozen-reference aliases, including
+  workspace-bound artifact locations.
+- Restore inactive frozen source safely across repeated pinned runs instead of deleting
+  or reusing mutable inputs.
+- Align Core's release toolchain, shared binary families, crate publication order and
+  allowlists with its repository contract.
 
-Pinned Rust gates preserve immutable sources and complete evidence.
+### [#111](https://github.com/bijux/bijux-std/pull/111) — Add shared common and Rust automation contracts
 
-- Keep inactive frozen inputs safe across repeated runs and align Core's release toolchain, binary families, crate order and allowlists.
+- Introduce common Make contracts for environment readiness, guards, help, entrypoints,
+  documentation and pinned gate execution.
+- Add a Rust library for Cargo formatting, lint, tests, security, coverage and
+  documentation gates alongside the existing Python library.
+- Synchronize only explicitly selected capabilities from exact source commits,
+  preserving consumer Make graphs and existing Python behavior.
+- Enforce the shared Make behavior through repository contracts and canonical CI.
 
-#### 2026-07-18T21:51:12Z — [#111](https://github.com/bijux/bijux-std/pull/111) — feat\(makes\): add shared common and Rust automation contracts
+### [#110](https://github.com/bijux/bijux-std/pull/110) — Register bijux-gnss and enable publication
 
-Common and Rust Make libraries provide capability-selected repository automation.
+- Register bijux-gnss as the canonical managed identity and resolve nonstandard checkout
+  locations consistently in manifest generation, rendering and synchronization.
+- Configure GitHub, crates.io and GHCR delivery for its six crates while keeping PyPI
+  disabled.
 
-- Add governed environment, guards, entrypoints, pinned gates and Cargo format/lint/test/security/coverage/docs surfaces.
-- Synchronize only selected language capabilities and preserve existing Python behavior and consumer Make graphs.
+### [#109](https://github.com/bijux/bijux-std/pull/109) — Repair managed labels and shared workflow pins
 
-#### 2026-07-18T19:54:07Z — [#110](https://github.com/bijux/bijux-std/pull/110) — fix\(standards\): register bijux-gnss and enable publication
+- Align Dependabot labels with the governance taxonomy and refresh setup revisions in
+  documentation and release workflows.
 
-GNSS uses its canonical managed identity and declared publication channels.
+### [#108](https://github.com/bijux/bijux-std/pull/108) — Enforce shared PyPI toolchain inheritance
 
-- Resolve nonstandard checkout locations explicitly and configure GitHub, crates.io and GHCR delivery for its six crates while keeping PyPI disabled.
+- Remove a duplicated workflow toolchain and validate the explicit fallback/inheritance
+  contract.
 
-#### 2026-07-08T23:47:09Z — [#109](https://github.com/bijux/bijux-std/pull/109) — fix\(github\): repair managed labels and shared workflow pins
+### [#107](https://github.com/bijux/bijux-std/pull/107) — Drop legacy PyPI token overrides
 
-Managed dependency labels and setup-uv pins follow shared policy.
+- Remove legacy token-publish overrides from managed PyPI package matrices and normalize
+  matrix parsing so standards refresh preserves trusted-publisher defaults.
 
-- Align Dependabot labels with the governance taxonomy and refresh setup revisions in documentation and release workflows.
+### [#106](https://github.com/bijux/bijux-std/pull/106) — Preserve local environment aliases and workflow path checks
 
-#### 2026-07-08T08:47:39Z — [#108](https://github.com/bijux/bijux-std/pull/108) — fix\(github\): enforce shared pypi toolchain inheritance
+- Keep existing .venv, .tox, .hypothesis and .benchmarks directories and validate
+  workflow shell preambles through consumer shared paths.
 
-PyPI release Rust toolchains inherit shared release defaults.
+### [#105](https://github.com/bijux/bijux-std/pull/105) — Align shared setup-python pins
 
-- Remove a duplicated workflow toolchain and validate the explicit fallback/inheritance contract.
+- Align immutable setup revisions so downstream workflow-pin checks compare against the
+  same canonical source.
 
-#### 2026-07-04T23:10:12Z — [#107](https://github.com/bijux/bijux-std/pull/107) — fix\(release\): drop legacy pypi token overrides
+### [#103](https://github.com/bijux/bijux-std/pull/103) — Python suite overrides and documentation policy
 
-Managed PyPI matrices no longer restore legacy token publishing overrides.
+- Preserve downstream full-suite package overrides in shared Python test targets.
+- Canonicalize the documentation Hub strip and Mermaid policy against shared source
+  ownership, refreshing the corresponding documentation integrity record.
 
-- Normalize package matrix metadata so standards refresh preserves trusted-publisher defaults.
+### [#102](https://github.com/bijux/bijux-std/pull/102) — Require venv interpreters in python make readiness
 
-#### 2026-07-04T18:10:19Z — [#106](https://github.com/bijux/bijux-std/pull/106) — fix\(std\): preserve local environment aliases and workflow path checks
+- Depend on VENV_PYTHON rather than a directory that artifact alias setup can create
+  before the interpreter exists.
 
-Alias setup preserves repository-owned environment directories.
+### [#101](https://github.com/bijux/bijux-std/pull/101) — Render release env commands safely
 
-- Keep existing .venv, .tox, .hypothesis and .benchmarks directories and validate workflow shell preambles through consumer shared paths.
+- Quote string commands for shell sourcing and parse them back into manifests without
+  retaining wrapper quotes.
 
-#### 2026-07-04T17:45:05Z — [#105](https://github.com/bijux/bijux-std/pull/105) — fix\(github\): align shared setup-python pins
+### [#100](https://github.com/bijux/bijux-std/pull/100) — Restore workflow trigger authority
 
-Shared documentation and release workflows use the setup-python 6.3.0 pin.
+- Restore direct GitHub policy execution instead of waiting on cross-workflow
+  prerequisites.
+- Ignore wrong-event and zero-job matches for the same revision and exclude Dependabot
+  proposals from expensive managed CI at this point in the policy history.
 
-- Align immutable setup revisions so downstream workflow-pin checks compare against the same canonical source.
+### [#99](https://github.com/bijux/bijux-std/pull/99) — Avoid redundant wrapper reruns
 
-#### 2026-07-04T15:30:23Z — [#103](https://github.com/bijux/bijux-std/pull/103) — fix\(governance\): refresh shared docs manifest
+- Run managed CI wrappers on pull_request and merge_group instead of repeating them on
+  push after an accepted PR.
+- Split Genomics' fast prerequisites into parallel lanes with a short completion
+  aggregate rather than one serial job.
 
-Shared tests preserve consumer full-suite overrides.
+### [#98](https://github.com/bijux/bijux-std/pull/98) — Refresh shared uv workflow pins
 
-- Align canonical hub-strip and Mermaid checks with shared documentation ownership and refresh the matching source digest.
+- Promote setup-uv 8.2.0 in shared workflow sources and refresh the canonical GitHub
+  governance digest.
 
-#### 2026-06-28T23:37:39Z — [#102](https://github.com/bijux/bijux-std/pull/102) — fix\(std\): require venv interpreters in python make readiness
+### [#97](https://github.com/bijux/bijux-std/pull/97) — Materialize artifact aliases via setup
 
-Python Make readiness requires an actual virtual-environment interpreter.
+- Generate artifact alias links for Python repository and package roots through the
+  shared setup target.
+- Wire environment preparation through setup and replace tracked local aliases with
+  generated ignored links.
 
-- Depend on VENV\_PYTHON rather than a directory that artifact alias setup can create before the interpreter exists.
+### [#96](https://github.com/bijux/bijux-std/pull/96) — Verification triggers, action pins and tracked-source checksums
 
-#### 2026-06-28T20:16:22Z — [#101](https://github.com/bijux/bijux-std/pull/101) — fix\(github\): render release env commands safely
+- Normalize verification path filters so .github and .bijux governance changes trigger
+  consumer verification.
+- Apply prerequisite gating to both generated CI and verify wrappers and remove the
+  duplicated Genomics fast-tier wrapper.
+- Promote checkout v7 across canonical/active workflow sources and realign repository
+  policy with its owner.
+- Hash managed trees from tracked files when Git ownership is available, avoiding
+  runtime-cache pollution of source identity; supersede the narrower #95 proposal.
 
-Generated release environments preserve executable command quoting.
+### [#93](https://github.com/bijux/bijux-std/pull/93) — Execute managed workflow commands
 
-- Quote string commands for shell sourcing and parse them back into manifests without retaining wrapper quotes.
+- Correct malformed shell preambles and add a standards guard against invalid set -euo
+  pipefail command rendering.
 
-#### 2026-06-28T13:00:54Z — [#100](https://github.com/bijux/bijux-std/pull/100) — fix\(ci\): restore workflow trigger authority
+### [#92](https://github.com/bijux/bijux-std/pull/92) — Fail fast on prerequisite policy failures
 
-Workflow prerequisites distinguish authoritative runs from unrelated events.
+- Continue waiting for in-flight runs but reject unsuccessful approval and stale events
+  that could unlock work for the same SHA.
 
-- Run GitHub policy directly, ignore wrong-event or zero-job matches and exclude Dependabot-authored PRs from expensive managed CI execution.
+### [#91](https://github.com/bijux/bijux-std/pull/91) — Gate managed workflows behind prerequisite checks
 
-#### 2026-06-28T12:05:21Z — [#99](https://github.com/bijux/bijux-std/pull/99) — fix\(ci\): avoid redundant wrapper reruns
+- Add a shared prerequisite helper and wire standards and owner-approval readiness into
+  generated workflows.
 
-Managed wrappers avoid rerunning reviewed work after main merges.
+### [#90](https://github.com/bijux/bijux-std/pull/90) — Align phylogenetic alias package metadata
 
-- Use pull\_request and merge\_group instead of push and split Genomics fast prerequisites into parallel lanes with a short aggregator.
+- Use the phylogenetic package slug without changing consumer runtime or shared workflow
+  logic.
 
-#### 2026-06-26T23:32:59Z — [#98](https://github.com/bijux/bijux-std/pull/98) — fix\(github\): refresh shared uv workflow pins
+### [#89](https://github.com/bijux/bijux-std/pull/89) — Restrict main branch merges to merge commits
 
-Shared CI setup uses the setup-uv 8.2.0 revision.
+- Disable ordinary squash/rebase delivery while retaining the documented emergency
+  owner/admin path outside normal PR merging.
 
-- Advance canonical workflow references and their governance directory digest together.
+### [#88](https://github.com/bijux/bijux-std/pull/88) — Align shared governance baseline and pages pipeline
 
-#### 2026-06-26T23:24:19Z — [#97](https://github.com/bijux/bijux-std/pull/97) — feat\(std\): materialize artifact aliases via setup
+- Align the common required-check floor on policy / github, policy / pr approval, std /
+  standard and std / report.
+- Publish the owner-approval workflow, regenerate governance mirrors and refresh the
+  Pages action references needed by consumers.
 
-Setup materializes ignored artifact aliases for repositories and packages.
+### [#86](https://github.com/bijux/bijux-std/pull/86) — Fallback to runner event payload path in pr approval policy
 
-- Generate local links through the shared setup target instead of requiring tracked artifact symlinks in Python consumers.
+- Use GH_EVENT_PATH with GITHUB_EVENT_PATH fallback and fail clearly if neither exists.
 
-#### 2026-06-26T22:59:23Z — [#96](https://github.com/bijux/bijux-std/pull/96) — fix\(github\): normalize verify triggers and refresh checkout pins
+### [#84](https://github.com/bijux/bijux-std/pull/84) — Enforce owner-gated pr approval policy
 
-Verify wrappers react to governed changes and use refreshed checkout pins.
+- Require owner-self-signoff for bijux-authored PRs and an approving bijux review for
+  other authors through a managed approval workflow.
 
-- Normalize path filters, select checkout v7 and align the active repository policy workflow with shared source.
-- This merged correction supersedes the narrower PR \#95 proposal.
+### [#83](https://github.com/bijux/bijux-std/pull/83) — Add bijux-phylogenetics repo manifest support
 
-#### 2026-05-13T21:12:41Z — [#93](https://github.com/bijux/bijux-std/pull/93) — fix\(github\): execute managed workflow commands
+- Generate its release, dependency-update and workflow-wrapper configuration through the
+  standard build and synchronization paths.
 
-Generated install, test, lint and repository-check commands actually execute.
+### [#82](https://github.com/bijux/bijux-std/pull/82) — Harden rewritten-history policy diff and ignore artifacts dir
 
-- Correct malformed shell preambles and add a standards guard against invalid set -euo pipefail command rendering.
+- Compute changed paths safely after history rewriting and keep the repository artifacts
+  directory out of tracked changes.
 
-#### 2026-05-13T19:52:39Z — [#92](https://github.com/bijux/bijux-std/pull/92) — fix\(github\): fail fast on prerequisite policy failures
+### [#81](https://github.com/bijux/bijux-std/pull/81) — Render multiline workflow commands safely
 
-Failed approval prerequisites stop dependent jobs promptly.
+- Emit YAML block scalars so manifest-driven commands do not fold into corrupted shell
+  programs.
 
-- Continue waiting for in-flight runs but reject unsuccessful approval and stale events that could unlock work for the same SHA.
+### [#80](https://github.com/bijux/bijux-std/pull/80) — Remove main branch bypass actors
 
-#### 2026-05-13T16:22:42Z — [#91](https://github.com/bijux/bijux-std/pull/91) — feat\(github\): gate managed workflows behind prerequisite checks
+**Earlier main-branch change**
 
-Expensive managed PR jobs wait for their prerequisite checks.
+- Export the configured ARTIFACTS_DIR to generated Python post-test validation steps,
+  keeping those validators in the caller-selected output directory.
 
-- Add a shared prerequisite helper and wire standards and owner-approval readiness into generated workflows.
+**Pull request changes**
 
-#### 2026-05-10T21:13:53Z — [#90](https://github.com/bijux/bijux-std/pull/90) — fix\(github\): align phylogenetic alias package metadata
+- Remove the shared main ruleset's bypass actor so normal integration follows the
+  protected PR path.
+- Align required-check guidance with that policy.
 
-Phylogenetics release metadata names its actual alias distribution.
-
-- Use the phylogenetic package slug without changing consumer runtime or shared workflow logic.
-
-#### 2026-05-02T17:39:40Z — [#89](https://github.com/bijux/bijux-std/pull/89) — fix\(github\): restrict main branch merges to merge commits
-
-The shared main-branch contract permits merge commits only.
-
-- Disable ordinary squash/rebase delivery while retaining the documented emergency owner/admin path outside normal PR merging.
-
-#### 2026-05-02T17:30:45Z — [#88](https://github.com/bijux/bijux-std/pull/88) — feat\(github\): align shared governance baseline and pages pipeline
-
-Shared governance requires the intended policy, approval and standards checks.
-
-- Publish the approval workflow and align branch-protection status identities and Pages action pins in generated consumers.
-
-#### 2026-05-01T23:11:37Z — [#86](https://github.com/bijux/bijux-std/pull/86) — fix\(github\): fallback to runner event payload path in pr approval policy
-
-PR approval reads the actual GitHub runner event payload.
-
-- Use GH\_EVENT\_PATH with GITHUB\_EVENT\_PATH fallback and fail clearly if neither exists.
-
-#### 2026-05-01T21:30:22Z — [#84](https://github.com/bijux/bijux-std/pull/84) — feat\(github\): enforce owner-gated pr approval policy
-
-PR approval is explicitly controlled by the repository owner.
-
-- Require owner-self-signoff for bijux-authored PRs and an approving bijux review for other authors through a managed approval workflow.
-
-#### 2026-05-01T21:15:46Z — [#83](https://github.com/bijux/bijux-std/pull/83) — feat\(standards\): add bijux-phylogenetics repo manifest support
-
-Phylogenetics joins the managed repository catalog.
-
-- Generate its release, dependency-update and workflow-wrapper configuration through the standard build and synchronization paths.
-
-#### 2026-05-01T18:47:26Z — [#82](https://github.com/bijux/bijux-std/pull/82) — fix\(github\): harden rewritten-history policy diff and ignore artifacts dir
-
-Policy checks handle rewritten push ancestry and ignore local run artifacts.
-
-- Compute changed paths safely after history rewriting and keep the repository artifacts directory out of tracked changes.
-
-#### 2026-04-29T13:46:30Z — [#81](https://github.com/bijux/bijux-std/pull/81) — fix\(github\): render multiline workflow commands safely
-
-Generated multiline workflow commands retain their shell structure.
-
-- Emit YAML block scalars so manifest-driven commands do not fold into corrupted shell programs.
-- Original GitHub merge d5283516774e6a2a9abddfd89ee38c3d4c82a68a is distinct from rewritten main-history delivery ce7cd4d4af4430686bfd7735f681262afa4860cc; the merge date is the verified GitHub date.
-
-#### 2026-04-29T11:53:14Z — [#80](https://github.com/bijux/bijux-std/pull/80) — fix\(github\): remove main branch bypass actors
-
-The managed main-branch ruleset no longer includes a bypass actor.
-
-- State that normal main changes merge through pull requests and keep required-check guidance aligned with that policy.
-- Original GitHub merge 9ca9ec98985e03b805e9f9bca91bbc55af424d90 is distinct from rewritten main-history delivery 2ddfe4ee843832440b6b68b131469369bfa036f8; the merge date is the verified GitHub date.
-- Notice: 1 preceding main-history commit occur before this PR in the current first-parent graph. Rewritten history does not establish direct pushes or that this PR first published them.
-- The preceding main-history change exported ARTIFACTS\_DIR for post-test validation and refreshed the matching managed manifest.
-- Preceding source commit: https://github.com/bijux/bijux-std/commit/917dbcda23aad48a84d8c639daed247144400e28
-
-#### 2026-04-29T09:06:13Z — [#79](https://github.com/bijux/bijux-std/pull/79) — docs\(license\): align root licensing with mit metadata
-
-Root licensing files match the repository's MIT declaration.
+### [#79](https://github.com/bijux/bijux-std/pull/79) — Align root licensing with mit metadata
 
 - Replace Apache-2.0 metadata with MIT text and restore the corresponding NOTICE file.
-- Original GitHub merge 6c2774cbb9e832b35123d1375155961291026ec6 is distinct from rewritten main-history delivery 7916807c0b4e8f0bc50ba88041ac0f7d92574d54; the merge date is the verified GitHub date.
 
-#### 2026-04-28T11:51:50Z — [#78](https://github.com/bijux/bijux-std/pull/78) — fix\(github\): align managed workflow action pins
+### [#78](https://github.com/bijux/bijux-std/pull/78) — Align managed workflow action pins
 
-Managed Codecov, Labeler and Pages action revisions remain aligned.
+- Align Codecov, Labeler and Pages action pins in shared governance and generated
+  repository copies.
+- Remove stale active workflow copies whose ownership belongs in the shared source and
+  refresh both integrity manifests.
 
-- Refresh shared sources and generated copies, and remove stale active copies that belong to shared governance ownership.
-- Original GitHub merge 8259f570a298527385d786a74b23294d0a6465a2 is distinct from rewritten main-history delivery 04ae756ab3f1cf0539609d03102e028a7cc80544; the merge date is the verified GitHub date.
+### [#77](https://github.com/bijux/bijux-std/pull/77) — Rewrite repo narrative in direct voice
 
-#### 2026-04-28T11:35:25Z — [#77](https://github.com/bijux/bijux-std/pull/77) — docs\(readme\): rewrite repo narrative in direct voice
+- Retain the operational content while simplifying the repository narrative and
+  top-level description.
 
-The root README explains repository operations in direct language.
+### [#76](https://github.com/bijux/bijux-std/pull/76) — Move live governance to bijux-iac
 
-- Retain the operational content while simplifying the repository narrative and top-level description.
-- Original GitHub merge b94662abad6607d25bae01f3ed9a7f2f1fffb383 is distinct from rewritten main-history delivery 6e1eb14b23d2aa938d3de1eb78579cf81d3fe6fd; the merge date is the verified GitHub date.
+- Move the embedded GitHub Terraform control plane out of Std and establish bijux-iac as
+  the live repository-administration owner.
+- Register IaC in the standards manifest/synchronization catalog and redirect governance
+  documentation while keeping versioned engineering standards in Std.
 
-#### 2026-04-28T11:09:11Z — [#76](https://github.com/bijux/bijux-std/pull/76) — feat\(github\): move live governance to bijux-iac
+### [#75](https://github.com/bijux/bijux-std/pull/75) — Place telecom CI linux deps in compile jobs
 
-Live GitHub governance moves to the dedicated bijux-iac authority.
+- Keep formatting and security lanes free of unnecessary Linux package setup while
+  preserving compile prerequisites.
 
-- Remove the embedded Terraform control plane, register the infrastructure repository and direct governance documentation to its ownership boundary.
-- Original GitHub merge 1324a0915511fc60fa4b8c30f998e0e6274b11b1 is distinct from rewritten main-history delivery df9015910f452218d2f563c1b1cf3d1ef8b370af; the merge date is the verified GitHub date.
+### [#74](https://github.com/bijux/bijux-std/pull/74) — Install telecom CI linux build deps
 
-#### 2026-04-28T10:16:13Z — [#75](https://github.com/bijux/bijux-std/pull/75) — fix\(github\): place telecom ci linux deps in compile jobs
+- Provide pkg-config, fontconfig and freetype dependencies through its managed workflow
+  instead of consumer-specific patches.
 
-Telecom build dependencies are installed only in jobs that compile.
+### [#73](https://github.com/bijux/bijux-std/pull/73) — Restore telecom pr CI wrapper
 
-- Keep formatting and security lanes free of unnecessary Linux package setup while preserving compile prerequisites.
-- Original GitHub merge 44a77e32edc759e92b95feb63b2988ff90f0ca59 is distinct from rewritten main-history delivery a5bec69c280d9f0ed80a82ee404c39db9797b6fe; the merge date is the verified GitHub date.
+- Run the repository's ci-pr target on pull requests and main pushes using the shared
+  standards definition.
 
-#### 2026-04-28T10:12:10Z — [#74](https://github.com/bijux/bijux-std/pull/74) — fix\(github\): install telecom ci linux build deps
+### [#72](https://github.com/bijux/bijux-std/pull/72) — Normalize local shared manifest lookups
 
-Telecom CI installs the Linux headers needed by compile jobs.
+- Normalize local lookups to the shared/... entries recorded in the directory manifest,
+  avoiding false source-of-truth mismatch reports.
 
-- Provide pkg-config, fontconfig and freetype dependencies through its managed workflow instead of consumer-specific patches.
-- Original GitHub merge e7ca7bc1cd60471d01b60cf0a79a7c8cf7cf1c15 is distinct from rewritten main-history delivery ae04582964e695194bcfe341fe0b3f640d769d8b; the merge date is the verified GitHub date.
+### [#71](https://github.com/bijux/bijux-std/pull/71) — Advance pages workflow action pins
 
-#### 2026-04-28T10:05:59Z — [#73](https://github.com/bijux/bijux-std/pull/73) — fix\(github\): restore telecom pr ci wrapper
+- Promote configure-pages 6.0.0 and upload/deploy-pages 5.0.0 in the canonical
+  documentation publisher.
+- Admit the root shared-directory manifest as governance control metadata alongside the
+  updated workflow source.
 
-Telecom regains a governed PR CI wrapper for its native Rust lane.
+### [#70](https://github.com/bijux/bijux-std/pull/70) — Preserve package artifact aliases in shared makes
 
-- Run the repository's ci-pr target on pull requests and main pushes using the shared standards definition.
-- Original GitHub merge 7468e2271e7bd211b0b1b7d98482c29cd4e939a8 is distinct from rewritten main-history delivery c5f7b4a3a8100450524f01168bd9d8ec5d95feee; the merge date is the verified GitHub date.
+- Avoid deleting tracked .hypothesis symlinks and keep package artifact links intact
+  across Make clean targets.
 
-#### 2026-04-28T09:20:47Z — [#72](https://github.com/bijux/bijux-std/pull/72) — fix\(docs\): normalize local shared manifest lookups
+### [#69](https://github.com/bijux/bijux-std/pull/69) — Align governance checks with rendered repo config
 
-Shared documentation verification resolves canonical manifest paths correctly.
+- Render consumer governance during synchronization and validate that rendered surface
+  during standard checks, including Dependabot configuration.
 
-- Normalize local lookups to the shared/... entries recorded in the directory manifest, avoiding false source-of-truth mismatch reports.
-- Original GitHub merge a44a4e85b09714ce8863c9573ef1059e843b5e8e is distinct from rewritten main-history delivery fd6620e031a4c3349b99251c635f9d0bfb0b4c30; the merge date is the verified GitHub date.
+### [#68](https://github.com/bijux/bijux-std/pull/68) — Repair managed manifest checksum
 
-#### 2026-04-28T08:46:31Z — [#71](https://github.com/bijux/bijux-std/pull/71) — fix\(github\): advance pages workflow action pins
+- Update the managed manifest digest to match the repository configuration delivered by
+  PR #67.
 
-Shared Pages deployment uses refreshed immutable action revisions.
+### [#67](https://github.com/bijux/bijux-std/pull/67) — Update managed CI node toolchain pin
 
-- Select configure-pages 6.0.0 and upload/deploy-pages 5.0.0 in the canonical deployment workflow.
-- Original GitHub merge 5d4059e207559a51ed40dac1384693c57347018f is distinct from rewritten main-history delivery aae17bc8df75997d142cf5b06e60706ab1cd5a26; the merge date is the verified GitHub date.
+- Pin setup-node 6.4.0 in manifest-generated CI wrappers so consumer action references
+  match the shared source.
 
-#### 2026-04-27T20:06:01Z — [#70](https://github.com/bijux/bijux-std/pull/70) — fix\(std\): preserve package artifact aliases in shared makes
+### [#66](https://github.com/bijux/bijux-std/pull/66) — Allow std pin as workflow sync control
 
-Shared cleanup preserves package-root artifact aliases.
+- Allow protected managed workflow changes accompanied by
+  .github/standards/bijux-std.sha while retaining rejection when no approved control
+  file changes.
 
-- Avoid deleting tracked .hypothesis symlinks and keep package artifact links intact across Make clean targets.
-- Original GitHub merge 214f8c6e8881a97a258e57c450badb74a5fb7b5c is distinct from rewritten main-history delivery 61c178422a23cb4336863d8b49395a8493f9d5a3; the merge date is the verified GitHub date.
+### [#65](https://github.com/bijux/bijux-std/pull/65) — Align dependabot renderers
 
-#### 2026-04-27T19:26:51Z — [#69](https://github.com/bijux/bijux-std/pull/69) — fix\(std\): align governance checks with rendered repo config
+- Render repository Dependabot configuration through the same shape as the shared
+  governance renderer, regenerate Std's own configuration and refresh its managed
+  checksum.
 
-Local and hosted standards checks use the same repository configuration renderer.
+### [#64](https://github.com/bijux/bijux-std/pull/64) — Align shared governance source with managed standards
 
-- Render consumer governance during synchronization and validate that rendered surface during standard checks, including Dependabot configuration.
-- Original GitHub merge a13a185b4a5bb7ae211b7da68c2e369143134c15 is distinct from rewritten main-history delivery f279a158c42ee7eb357967cdbb857bae365c48ce; the merge date is the verified GitHub date.
+- Align automation identity, required-check names and main-branch rules with their
+  top-level rendered copies.
 
-#### 2026-04-27T18:46:10Z — [#68](https://github.com/bijux/bijux-std/pull/68) — fix\(std\): repair managed manifest checksum
+### [#63](https://github.com/bijux/bijux-std/pull/63) — Repair governance plan and managed workflow pins
 
-The standards checksum includes the already-merged CI toolchain metadata.
+- Promote managed Codecov, Labeler and Terraform action pins through canonical sources
+  and generated copies.
+- Stop branch-protection plans from querying repository metadata that fails on the
+  documentation Hub's Pages lookup.
+- Repair shared governance integrity and supersede the unsuccessful #60, #61 and #62
+  proposals.
 
-- Update the managed manifest digest to match the repository configuration delivered by PR \#67.
-- Original GitHub merge 9612247bcc489065ded6fa9ff6fb7b870ae12185 is distinct from rewritten main-history delivery 93bd94411ddc9e13df6075341921a7ea37218c39; the merge date is the verified GitHub date.
+### [#59](https://github.com/bijux/bijux-std/pull/59) — Allow admin bypass with preserved review gate
 
-#### 2026-04-27T18:42:26Z — [#67](https://github.com/bijux/bijux-std/pull/67) — fix\(github\): update managed ci node toolchain pin
+- Make enforce_admins configurable and default it off while retaining one required
+  approving review for non-admin contributors.
 
-Generated CI wrappers select the managed setup-node 6.4.0 pin.
+### [#58](https://github.com/bijux/bijux-std/pull/58) — Harden labeler schema generation and workflow checks
 
-- Bring manifest-derived wrappers into alignment with the shared action revision rather than leaving downstream dependency drift.
-- Original GitHub merge e97902f821e8170177c374bfe9e7704c1545f142 is distinct from rewritten main-history delivery a534639834184aafca47abdf95525944725f4e1c; the merge date is the verified GitHub date.
+- Render actions/labeler v5-compatible rule arrays while preserving permitted top-level
+  scalar options.
+- Validate the explicit labeler configuration path before executing the action, and
+  reject malformed generated schemas.
 
-#### 2026-04-27T17:53:26Z — [#66](https://github.com/bijux/bijux-std/pull/66) — fix\(github\): allow std pin as workflow sync control
+### [#57](https://github.com/bijux/bijux-std/pull/57) — Load import targets without readonly env override
 
-The exact standard pin is an approved control path for workflow synchronization.
+- Load Terraform import targets explicitly before the loop instead of assigning a
+  readonly TFVARS_PATH through an environment override.
+- Use provider-scoped repository import identities so the intended protection plan/apply
+  flow can proceed.
 
-- Allow protected managed workflow changes accompanied by .github/standards/bijux-std.sha while retaining rejection when no approved control file changes.
-- Original GitHub merge ca42c91bced2f226cd16d1c6159775d7dffad225 is distinct from rewritten main-history delivery 0cc2bf56b2c83967a081b7037c25ba70db3dd211; the merge date is the verified GitHub date.
+### [#56](https://github.com/bijux/bijux-std/pull/56) — Import existing protections before terraform apply
 
-#### 2026-04-27T17:20:09Z — [#65](https://github.com/bijux/bijux-std/pull/65) — fix\(github\): align dependabot renderers
+- Import existing remote main-branch protection before Terraform apply instead of
+  attempting to recreate already owned resources.
+- Fail on genuine import errors while permitting an absent remote protection to be
+  created during bootstrap.
 
-Both governance renderers produce the same Dependabot structure.
+### [#55](https://github.com/bijux/bijux-std/pull/55) — Main protection and labeler integration
 
-- Regenerate the standards repository configuration through the corrected repository renderer.
-- Original GitHub merge 71bb7e1cbf2802b151147716dc810bab18c5748b is distinct from rewritten main-history delivery 2e674afa8b79d552310e6fdfb5ccbf97c6aa306a; the merge date is the verified GitHub date.
+- Add Terraform main protection for Std and the documentation Hub, requiring one review
+  and resolved conversations while rejecting administrator bypass, force pushes and
+  deletion.
+- Introduce PR planning and main/manual application workflows with
+  import-before-plan/apply operation and no persistent Terraform backend.
+- Centralize the managed repository targets and format the protection module.
+- Repair generated labeler v5 rule arrays and use the PR merge configuration when
+  applying labels.
 
-#### 2026-04-27T17:10:02Z — [#64](https://github.com/bijux/bijux-std/pull/64) — fix\(github\): align shared governance source with managed standards
+### [#54](https://github.com/bijux/bijux-std/pull/54) — Shared standards, Rust dependency policy and licensing
 
-Shared governance source matches the managed repository baseline.
+- Align shared governance and generated consumer configuration with canonical directory
+  and managed-file integrity records.
+- Define a shared Rust cargo-deny baseline for advisories, licenses and sources, with
+  explicit owner, reason, expiry and review requirements for repository deviations.
+- Change root licensing to Apache-2.0 and add its NOTICE at this point in history; #79
+  later restores the repository's MIT metadata.
 
-- Align automation identity, required-check names and main-branch rules with their top-level rendered copies.
-- Original GitHub merge 82c887c4d3d4bb548b1f2741fee0af9a184aa5e2 is distinct from rewritten main-history delivery d3cabb3fb8120bc052e16d22cf23eccf9b5e7b83; the merge date is the verified GitHub date.
+### [#53](https://github.com/bijux/bijux-std/pull/53) — Require explicit trigger for docs deployment
 
-#### 2026-04-27T16:42:59Z — [#63](https://github.com/bijux/bijux-std/pull/63) — fix\(github\): repair governance plan and managed workflow pins
+- Remove automatic main push deployment while retaining workflow_dispatch and
+  workflow_call entrypoints.
 
-Governance planning avoids unnecessary Pages metadata resolution.
+### [#52](https://github.com/bijux/bijux-std/pull/52) — Prune stale generated wrapper files
 
-- Refresh managed Codecov, Labeler and Terraform pins and repair the shared governance digest.
-- Replace the unsuccessful \#60, \#61 and \#62 proposals with this merged correction.
-- Original GitHub merge 488da259e867c9947ca36312bea61672685d76ea is distinct from rewritten main-history delivery 863808f456444d0356b56f342bb6e6b479d05e18; the merge date is the verified GitHub date.
+- Remove wrappers with standard provenance only, preserving authored workflow files when
+  definitions are absent.
 
-#### 2026-04-25T09:37:49Z — [#59](https://github.com/bijux/bijux-std/pull/59) — fix\(governance\): allow admin bypass with preserved review gate
+### [#51](https://github.com/bijux/bijux-std/pull/51) — Prune stale generated workflow wrappers
 
-Branch protection distinguishes administrator bypass from contributor review requirements.
+- Prune obsolete managed CI and verify wrappers so consumers do not retain workflows
+  absent from their standards configuration.
 
-- Make enforce\_admins configurable and default it off while retaining one required approving review for non-admin contributors.
-- Original GitHub merge 05d63cd12b4d96afe4b74dbda1cd1e27bee344e5 is distinct from rewritten main-history delivery a623f872ceb6cf4ba15bc4f6827c68dadbafe64b; the merge date is the verified GitHub date.
+### [#50](https://github.com/bijux/bijux-std/pull/50) — Disable generated CI wrapper for telecom
 
-#### 2026-04-25T09:36:42Z — [#58](https://github.com/bijux/bijux-std/pull/58) — fix\(github\): harden labeler schema generation and workflow checks
+- Stop generating the CI wrapper until the repository exposes the required Make CI
+  entrypoints.
 
-Managed labeler configuration is checked against its action schema.
+### [#49](https://github.com/bijux/bijux-std/pull/49) — Remove telecom python-cache assumptions
 
-- Render v5-compatible rule arrays, preserve allowed scalar options and validate the explicit configuration path before labeler execution.
-- Original GitHub merge 3b3098f8a398362dc53da0460c99310cae3e864e is distinct from rewritten main-history delivery 758a3ef5540539e4bfea15e3509b8310e25b300c; the merge date is the verified GitHub date.
+- Remove pip cache assumptions and pip Dependabot directories that are absent from the
+  Rust repository.
 
-#### 2026-04-23T18:35:11Z — [#57](https://github.com/bijux/bijux-std/pull/57) — fix\(governance\): load import targets without readonly env override
-
-Governance import scripts load their target list without overriding a readonly variable.
-
-- Pass the explicit target configuration before the import loop so Terraform can run the intended plan/apply sequence.
-- Original GitHub merge ba0cb9422e16c0d152135bdb529b0e34461bbef7 is distinct from rewritten main-history delivery a4fb77fbe0f529f3c6601128c50a19f0151b46e7; the merge date is the verified GitHub date.
-
-#### 2026-04-23T18:32:10Z — [#56](https://github.com/bijux/bijux-std/pull/56) — fix\(governance\): import existing protections before terraform apply
-
-Branch protection is imported with the correct owner/repository:branch identity.
-
-- Fail on genuine import errors while allowing absent remote protection to be created during bootstrap.
-- Original GitHub merge b86ab8ee35baab9015e9a541db0ad9013ba60428 is distinct from rewritten main-history delivery ea6a8541a84775cfe918b8f98979750b136cec27; the merge date is the verified GitHub date.
-
-#### 2026-04-23T18:29:44Z — [#55](https://github.com/bijux/bijux-std/pull/55) — feat\(governance\): manage main branch protection from bijux-std
-
-Terraform manages main-branch protection for the standards and hub repositories.
-
-- Declare the PR-only review, conversation-resolution and force-push/deletion restrictions for both repositories.
-- Plan/apply workflows import existing protection before operating without a persistent Terraform backend.
-- Original GitHub merge c4a84947d436c8f810f5dca3b71eb475fcea6f9d is distinct from rewritten main-history delivery 705137f9b1e092109e8f758e9bcde2238f1119cc; the merge date is the verified GitHub date.
-- Notice: 6 preceding main-history commits occur before this PR in the current first-parent graph. Rewritten history does not establish direct pushes or that this PR first published them.
-- Preceding main-history changes recorded an Apache-2.0/NOTICE state, documented the Rust deny baseline and deviations, applied/reverted/reapplied generated governance, and refreshed its checksum. Later licensing and standards records remain authoritative.
-- Historical PR \#54 has no distinct rewritten first-parent delivery anchor; its separately recorded API merge and 32-file historical equivalence do not establish direct-push publication.
-- Preceding main-history endpoints: https://github.com/bijux/bijux-std/commit/8e27a497092343a6f5d0d42563cdb1166a094b5e through https://github.com/bijux/bijux-std/commit/143a5ba41d69e432cb30e64894f9e5a01246f927
-
-#### 2026-04-23T17:29:01Z — [#54](https://github.com/bijux/bijux-std/pull/54) — chore\(github\): sync shared standards and checksum metadata
-
-A local standards delivery queue is incorporated through the PR workflow.
-
-- Align shared governance and generated configuration changes with their directory and managed-file digests.
-- The audited original API merge and historical rewritten ancestor have 32 matching changed-file postimages; that comparison does not identify the current main tip.
-- Original GitHub merge 53d969f919a09c4212702eb15f5ca8873ee04267 is not the rewritten historical ancestor 143a5ba41d69e432cb30e64894f9e5a01246f927 or the audited main tip.
-
-#### 2026-04-22T09:01:13Z — [#53](https://github.com/bijux/bijux-std/pull/53) — fix\(workflows\): require explicit trigger for docs deployment
-
-Documentation deployment requires explicit operator or reusable-workflow intent.
-
-- Remove automatic main push deployment while retaining workflow\_dispatch and workflow\_call entrypoints.
-- Original GitHub merge ffee8987815a5bacaaca6106e2f8415db9a50872 is distinct from rewritten main-history delivery c570da947f91530e2864efdd33bbd58d78da8a5b; the merge date is the verified GitHub date.
-
-#### 2026-04-21T17:24:29Z — [#52](https://github.com/bijux/bijux-std/pull/52) — fix\(standards\): prune stale generated wrapper files
-
-Stale workflow cleanup respects generated-file ownership.
-
-- Remove wrappers with standard provenance only, preserving authored workflow files when definitions are absent.
-- Original GitHub merge ec396e27ab0d964a39cce0e0d4553242ac9d08a2 is distinct from rewritten main-history delivery 444557b8e8fc53d374f0ffa993ac5365705ecb0a; the merge date is the verified GitHub date.
-
-#### 2026-04-21T17:21:20Z — [#51](https://github.com/bijux/bijux-std/pull/51) — fix\(standards\): prune stale generated workflow wrappers
-
-Removed wrapper definitions retire stale generated workflow files.
-
-- Prune obsolete managed CI and verify wrappers so consumers do not retain workflows absent from their standards configuration.
-- Original GitHub merge d7a9ba45ae05c8a13e9e1f6d6ff79262baba0079 is distinct from rewritten main-history delivery c65373d35a1a0f3a6ea51e0e93124633e44bb2ac; the merge date is the verified GitHub date.
-
-#### 2026-04-21T17:19:37Z — [#50](https://github.com/bijux/bijux-std/pull/50) — fix\(standards\): disable generated ci wrapper for telecom
-
-Telecom keeps policy workflows without an undefined generated CI wrapper.
-
-- Stop generating the CI wrapper until the repository exposes the required Make CI entrypoints.
-- Original GitHub merge 9208eca7639e3768cfa18ab3ac14a7ab994cd233 is distinct from rewritten main-history delivery fd895ee11fc55c36e99df8641e34c02241732095; the merge date is the verified GitHub date.
-
-#### 2026-04-21T17:16:37Z — [#49](https://github.com/bijux/bijux-std/pull/49) — fix\(standards\): remove telecom python-cache assumptions
-
-Telecom's generated CI and dependency policies omit nonexistent Python paths.
-
-- Remove pip cache assumptions and pip Dependabot directories that are absent from the Rust repository.
-- Original GitHub merge 01d55270518d321e15686dc676a3ca07842b7350 is distinct from rewritten main-history delivery ae3ba0fb9016fda4f5ed32cd6f2d903e6863e311; the merge date is the verified GitHub date.
-
-#### 2026-04-21T17:09:07Z — [#48](https://github.com/bijux/bijux-std/pull/48) — fix\(github\): restore shared checksum manifest format
-
-The governance checksum manifest has valid, verifiable entries.
+### [#48](https://github.com/bijux/bijux-std/pull/48) — Restore shared checksum manifest format
 
 - Restore the canonical managed file digests in sha256sum-compatible format.
-- Original GitHub merge 95842490b6a5d0e5d993e6f08b0e84987b76d0f4 is distinct from rewritten main-history delivery 7bc4d440e5dfb02f6ce5dbc6af0867095ca8c8f7; the merge date is the verified GitHub date.
 
-#### 2026-04-21T17:04:05Z — [#47](https://github.com/bijux/bijux-std/pull/47) — chore\(standards\): align rust release registry channels
+### [#47](https://github.com/bijux/bijux-std/pull/47) — Configure Rust registry publication by repository
 
-Rust publication registry channels are aligned in shared configuration.
+- Enable GHCR publication for Atlas and Core, add their package matrices and workflow
+  entrypoints, and declare the Atlas release-bundle build matrix.
+- Explicitly disable GitHub and registry publication for Genomics and Telecom; remove
+  the inherited Telecom release commands and publisher workflows.
+- Refresh the generated repository manifest and managed-file checksum for downstream
+  adoption.
 
-- Keep downstream release metadata consistent with the selected Rust registry channels during standards refresh.
-- Original GitHub merge 2da425054a4da3cf8fe792e5ba8b2ca53e31e9e7 is distinct from rewritten main-history delivery 0777827bf3fb59eae77cae18b12b3469ceef02a6; the merge date is the verified GitHub date.
+### [#46](https://github.com/bijux/bijux-std/pull/46) — Disable deploy-docs wrapper for bijux-genomics
 
-#### 2026-04-21T14:23:08Z — [#46](https://github.com/bijux/bijux-std/pull/46) — fix\(standards\): disable deploy-docs wrapper for bijux-genomics
+- Remove deploy-docs from its allowlist while preserving the managed GitHub policy
+  workflow.
 
-Genomics no longer receives an incompatible documentation deployment wrapper.
+### [#45](https://github.com/bijux/bijux-std/pull/45) — Recognize bot author aliases in automerge
 
-- Remove deploy-docs from its allowlist while preserving the managed GitHub policy workflow.
-- Original GitHub merge 0a4b2d886dd646495b3805c19a2597d3b78d42d3 is distinct from rewritten main-history delivery b4cef70646de36b53fe2cdefd870f158923fbebb; the merge date is the verified GitHub date.
+- Treat the @dependabot\[bot\] and @github-actions\[bot\] forms consistently with the
+  existing trusted-bot set.
 
-#### 2026-04-21T14:03:27Z — [#45](https://github.com/bijux/bijux-std/pull/45) — chore\(github\): recognize bot author aliases in automerge
+### [#44](https://github.com/bijux/bijux-std/pull/44) — Register bijux-genomics as managed consumer
 
-Auto-merge recognizes the managed bot author aliases.
+- Add its workflow allowlist, dependency-update policy and default synchronization
+  target to the repository catalog.
 
-- Treat the @dependabot\[bot\] and @github-actions\[bot\] forms consistently with the existing trusted-bot set.
-- Original GitHub merge caacc0fa75d845cbbfdd27ee47ec9c5007b23f10 is distinct from rewritten main-history delivery 7f7ec7da5d1e6b1b1466dcfaadc6ca8dcc97ec11; the merge date is the verified GitHub date.
+### [#43](https://github.com/bijux/bijux-std/pull/43) — Include bijux-telecom in manifest and sync targets
 
-#### 2026-04-21T14:01:57Z — [#44](https://github.com/bijux/bijux-std/pull/44) — feat\(standards\): register bijux-genomics as managed consumer
+- Generate its standards metadata through the same manifest and synchronization tooling
+  as existing consumers.
 
-Genomics becomes a managed standards consumer.
+### [#42](https://github.com/bijux/bijux-std/pull/42) — Restore bijux-core release workflow contract
 
-- Add its workflow allowlist, dependency-update policy and default synchronization target to the repository catalog.
-- Original GitHub merge 5b94a984fd7a481eeca95f8627cdd2adc3cabcb9 is distinct from rewritten main-history delivery 538de90a37e3e35e25bc1c887c20584f0ad89798; the merge date is the verified GitHub date.
+- Restore its release environment and allowlist entries for artifact, crates, GitHub and
+  PyPI publication workflows.
 
-#### 2026-04-21T12:54:11Z — [#43](https://github.com/bijux/bijux-std/pull/43) — chore\(standards\): include bijux-telecom in manifest and sync targets
+### [#41](https://github.com/bijux/bijux-std/pull/41) — Normalize dependabot schedule time format
 
-Telecom is included in the managed repository and default synchronization catalogs.
+- Normalize generated Dependabot schedule times to GitHub's HH:MM format before
+  validating consumer dependency-update configurations.
 
-- Generate its standards metadata through the same manifest and synchronization tooling as existing consumers.
-- Original GitHub merge d59319f9fe61125505ed91b393b18f90eb00cfdd is distinct from rewritten main-history delivery af98f2182ab0bfd3ded3ba6b447cc21599ac7b92; the merge date is the verified GitHub date.
+### [#40](https://github.com/bijux/bijux-std/pull/40) — Harden merge governance and standard checks
 
-#### 2026-04-21T11:28:16Z — [#42](https://github.com/bijux/bijux-std/pull/42) — fix\(standards\): restore bijux-core release workflow contract
+- Allow auto-merge only for the admitted safe-bot class rather than all protected, bot
+  and product proposals.
+- Add merge-group policy handling and standardize required identities as std / standard
+  and std / report.
+- Generate descriptive repository CI/verify wrappers and their merge-group triggers from
+  the canonical manifest.
 
-Core's managed release workflows survive standards refresh.
+### [#39](https://github.com/bijux/bijux-std/pull/39) — Enforce PR trust classes and merge-group readiness
 
-- Restore its release environment and allowlist entries for artifact, crates, GitHub and PyPI publication workflows.
-- Original GitHub merge af42c48d386fe5af0eb4c4f45041d1ab4d14b634 is distinct from rewritten main-history delivery b83d7df41ce16cbcdaa79f39cc4c2d5717975fde; the merge date is the verified GitHub date.
+- Classify protected governance, safe-bot and product PRs, admitting auto-merge only for
+  trusted bots and the strict safe path allowlist.
+- Reject branches behind their base and select squash for the then-current auto-merge
+  method; later policy changes retain their own history.
+- Run required standards checks on merge_group events so merge queues can obtain the
+  declared contexts.
 
-#### 2026-04-21T10:10:45Z — [#41](https://github.com/bijux/bijux-std/pull/41) — fix\(github\): normalize dependabot schedule time format
+### [#38](https://github.com/bijux/bijux-std/pull/38) — Tighten trust gates and disable direct merge fallback
 
-Rendered Dependabot schedule times use GitHub's HH:MM format.
+- Require pull_request events and an explicit automerge label, remove direct-merge
+  fallback and reduce workflow contents permission to read.
+- Resolve Std authority from its canonical repository instead of assuming a sibling
+  checkout.
+- Refresh pinned release action references and their managed integrity records.
 
-- Normalize generated values before GitHub validates consumer dependency-update configurations.
-- Original GitHub merge 76f4f93ff8bc5f851b14ff2153dabbaefa7ca055 is distinct from rewritten main-history delivery a2ff572a0ac361669130cecf1433ad21d3aaf166; the merge date is the verified GitHub date.
+### [#37](https://github.com/bijux/bijux-std/pull/37) — Bump actions/checkout from 5.0.0 to 6.0.2
 
-#### 2026-04-21T09:58:23Z — [#40](https://github.com/bijux/bijux-std/pull/40) — feat\(github\): harden merge governance and standard checks
+- Upgrade the checkout action from 5.0.0 to 6.0.2 in repository verification and refresh
+  its managed checksum.
 
-Shared merge governance and required check identities are standardized.
+### [#36](https://github.com/bijux/bijux-std/pull/36) — Bump actions/github-script from 8.0.0 to 9.0.0
 
-- Enforce safe-bot-only automation, add merge-group policy support and align standards and rendered wrapper check names.
-- Original GitHub merge 97f3c4c67aeffa828956d6bb25e47074d19094c4 is distinct from rewritten main-history delivery 6b1e1d093602e46d45746acdce1ccdfd06b153fc; the merge date is the verified GitHub date.
+- Upgrade github-script from 8.0.0 to 9.0.0 in auto-merge automation and refresh its
+  managed checksum.
 
-#### 2026-04-21T09:43:10Z — [#39](https://github.com/bijux/bijux-std/pull/39) — fix\(automerge\): enforce PR trust classes and merge-group readiness
+### [#35](https://github.com/bijux/bijux-std/pull/35) — Add bijux-std dependabot workflow updates
 
-Auto-merge eligibility is limited to trusted bot changes on allowed paths.
+- Render the managed dependency-update configuration from the repository manifest with
+  the GitHub Actions ecosystem enabled.
 
-- Classify protected governance, safe bot and product changes, reject branches behind their base and use squash for the then-current auto-merge mode.
-- Add merge\_group handling so required standards checks work with merge queues.
-- Original GitHub merge ddcfaea4e5a15ec5905e3d82eb3e804472b9725c is distinct from rewritten main-history delivery 5fa39fc8eb0856a3c0a95617b13165f643564bb7; the merge date is the verified GitHub date.
+### [#34](https://github.com/bijux/bijux-std/pull/34) — Make automerge retries check-suite aware
 
-#### 2026-04-20T22:36:17Z — [#38](https://github.com/bijux/bijux-std/pull/38) — ci\(automerge\): tighten trust gates and disable direct merge fallback
+- Resolve the PR from check_suite pull requests so automation can act after required
+  checks become successful.
 
-Auto-merge requires explicit opt-in and avoids privileged direct fallback merging.
+### [#33](https://github.com/bijux/bijux-std/pull/33) — Fail manual no-op release and docs dispatches
 
-- Use pull\_request events, require the automerge label, remove direct merge fallback and reduce contents permission to read.
-- Original GitHub merge 10b534a32d71434d3fafe5c03ad87ea7c225441a is distinct from rewritten main-history delivery 291a08c11d7e130c793ebe3d856e3dc63cd24a7d; the merge date is the verified GitHub date.
+- Reject resolved no-op release lanes and nondeployable documentation refs instead of
+  reporting a misleading green dispatch.
 
-#### 2026-04-20T20:07:32Z — [#37](https://github.com/bijux/bijux-std/pull/37) — chore\(deps\): bump actions/checkout from 5.0.0 to 6.0.2
+### [#32](https://github.com/bijux/bijux-std/pull/32) — Allow shared manifest as control path
 
-Repository checkout advances from actions/checkout 5.0.0 to 6.0.2.
+- Accept the canonical shared-directory manifest while retaining the policy requirement
+  for approved accompanying control metadata.
 
-- The merged dependency update changes the checkout action used by workflows, with its upstream release information retained in the original PR.
-- Original GitHub merge 2b4a7e5f51b0537b1ffa8513b7af1af64752f41c is distinct from rewritten main-history delivery b19edb1f74499fbb5718f1b9037f2b59e7fa09c4; the merge date is the verified GitHub date.
+### [#31](https://github.com/bijux/bijux-std/pull/31) — Make release-pypi token checks parse-safe
 
-#### 2026-04-20T20:07:30Z — [#36](https://github.com/bijux/bijux-std/pull/36) — chore\(deps\): bump actions/github-script from 8.0.0 to 9.0.0
+- Derive a Boolean from secret presence instead of referencing secrets directly in step
+  if expressions.
 
-Workflow scripting advances from actions/github-script 8.0.0 to 9.0.0.
+### [#30](https://github.com/bijux/bijux-std/pull/30) — Correct verify clean-worktree shell command
 
-- The merged dependency update selects the new action revision; it is distinct from repository-specific script behavior changes.
-- Original GitHub merge 52c5ac9651b2b26611ac42f528ee8be5d8e7ad1c is distinct from rewritten main-history delivery 9bcfb333ee8b6b8026487238c2c41af54e5089ce; the merge date is the verified GitHub date.
+- Repair the shell command in generated Pollenomics repository-contract verification so
+  its clean-worktree check can execute.
 
-#### 2026-04-20T19:58:43Z — [#35](https://github.com/bijux/bijux-std/pull/35) — chore\(github\): add bijux-std dependabot workflow updates
-
-Dependabot covers GitHub Actions updates in bijux-std.
-
-- Render the managed dependency-update configuration from the repository manifest with the GitHub Actions ecosystem enabled.
-- Original GitHub merge 69bb293bf753255b186c35b4c49609e4999c8da9 is distinct from rewritten main-history delivery 64e8712f06853059eeb5d082fb35ad30ae3eba4e; the merge date is the verified GitHub date.
-
-#### 2026-04-20T01:34:05Z — [#34](https://github.com/bijux/bijux-std/pull/34) — fix\(github\): make automerge retries check-suite aware
-
-Auto-merge enablement retries when a check suite completes.
-
-- Resolve the PR from check\_suite pull requests so automation can act after required checks become successful.
-- Original GitHub merge d35733591734dd43bc8e5286d87f3a3b48c8d472 is distinct from rewritten main-history delivery 6c84f61f9a5a915c429439c657852fd4fd2a74a4; the merge date is the verified GitHub date.
-
-#### 2026-04-19T23:48:39Z — [#33](https://github.com/bijux/bijux-std/pull/33) — fix\(workflows\): fail manual no-op release and docs dispatches
-
-Manual release and documentation dispatches fail when they cannot perform their requested action.
-
-- Reject resolved no-op release lanes and nondeployable documentation refs instead of reporting a misleading green dispatch.
-- Original GitHub merge c0a18541d1b15ca60abf212a155eee051f108406 is distinct from rewritten main-history delivery 4c45330f1490167481eef9b78c66c40652f1453a; the merge date is the verified GitHub date.
-
-#### 2026-04-19T23:04:35Z — [#32](https://github.com/bijux/bijux-std/pull/32) — fix\(policy\): allow shared manifest as control path
-
-Protected workflow changes can use the shared manifest as their control path.
-
-- Accept the canonical shared-directory manifest while retaining the policy requirement for approved accompanying control metadata.
-- Original GitHub merge 0b8bad88644697e3233a5ff2987ed5d7a09acaaf is distinct from rewritten main-history delivery 708ee14ad4264211484b2ccc604a590425256809; the merge date is the verified GitHub date.
-
-#### 2026-04-19T23:01:15Z — [#31](https://github.com/bijux/bijux-std/pull/31) — fix\(ci\): make release-pypi token checks parse-safe
-
-PyPI token-bootstrap conditions use a parse-safe environment value.
-
-- Derive a Boolean from secret presence instead of referencing secrets directly in step if expressions.
-- Original GitHub merge 05c3de825d760403c8447b0d6b4fc34545d12cbf is distinct from rewritten main-history delivery be77a589bc7b7eb9679283e4496b427466392ba0; the merge date is the verified GitHub date.
-
-#### 2026-04-19T22:40:10Z — [#30](https://github.com/bijux/bijux-std/pull/30) — fix\(github\): correct verify clean-worktree shell command
-
-The generated Pollenomics clean-worktree step parses as valid shell.
-
-- Repair command rendering so repository-contract verification can execute its clean-worktree check.
-- Original GitHub merge 4bd925585176abb83310a87a7a197764fd6db7dd is distinct from rewritten main-history delivery 9f058063457e6ab7dbe4c4a76c0a7c47ea1e0f26; the merge date is the verified GitHub date.
-
-#### 2026-04-19T22:39:00Z — [#29](https://github.com/bijux/bijux-std/pull/29) — fix\(github\): align verify reusable workflow reference for pollenomics
-
-The Pollenomics verify wrapper refers to its generated reusable workflow path.
+### [#29](https://github.com/bijux/bijux-std/pull/29) — Align verify reusable workflow reference for pollenomics
 
 - Correct the source mapping that previously named a nonexistent workflow entrypoint.
-- Original GitHub merge c5e8eeee3e981a1e917361c4557a30b5d242311d is distinct from rewritten main-history delivery 698ddb3e344cec430a7c975111b4c4c255865d94; the merge date is the verified GitHub date.
 
-#### 2026-04-19T22:22:00Z — [#28](https://github.com/bijux/bijux-std/pull/28) — fix\(github\): sync shared hash manifest to consumers
+### [#28](https://github.com/bijux/bijux-std/pull/28) — Sync shared hash manifest to consumers
 
-Consumers receive the shared directory checksum manifest during synchronization.
+- Copy the manifest into .bijux/shared so governance-tree validation uses the same
+  canonical digest contract.
 
-- Copy the manifest into .bijux/shared so governance-tree validation uses the same canonical digest contract.
-- Original GitHub merge 9944cfa899518bc659a3f90e20eb6b7da1224675 is distinct from rewritten main-history delivery eab1091c93a6d35708771c04d520c036deb0adc9; the merge date is the verified GitHub date.
+### [#27](https://github.com/bijux/bijux-std/pull/27) — Refresh shared bijux-gh directory hash
 
-#### 2026-04-19T22:20:13Z — [#27](https://github.com/bijux/bijux-std/pull/27) — fix\(github\): refresh shared bijux-gh directory hash
+- Refresh the canonical directory manifest so standards drift checks compare against the
+  delivered governance source.
 
-The shared governance directory digest matches the revised release triggers.
+### [#26](https://github.com/bijux/bijux-std/pull/26) — Refresh standards controls for release workflow sync
 
-- Refresh the canonical directory manifest so standards drift checks compare against the delivered governance source.
-- Original GitHub merge 286f40191cca5ff79b9986984347bec0dd07c79a is distinct from rewritten main-history delivery 508d0bce5d218fae7be6ca3b4e90b89d809c4398; the merge date is the verified GitHub date.
+- Regenerate the manifest and checksum records required to synchronize protected
+  workflow changes into consumers.
 
-#### 2026-04-19T22:18:10Z — [#26](https://github.com/bijux/bijux-std/pull/26) — chore\(github\): refresh standards controls for release workflow sync
+### [#25](https://github.com/bijux/bijux-std/pull/25) — Disable push triggers for shared release workflows
 
-Release-trigger policy changes carry refreshed managed control metadata.
+- Remove automatic tag-push triggers from GitHub, PyPI, GHCR and crates release
+  templates while retaining manual and reusable-workflow entrypoints.
 
-- Regenerate the manifest and checksum records required to synchronize protected workflow changes into consumers.
-- Original GitHub merge 450a75422154d7531de3a8e32a477322be03bb1a is distinct from rewritten main-history delivery e388e2f1f936d56b2e893a3ced1de4f72e8e7fcb; the merge date is the verified GitHub date.
+### [#24](https://github.com/bijux/bijux-std/pull/24) — Pin verify actions in standards manifest
 
-#### 2026-04-19T22:15:43Z — [#25](https://github.com/bijux/bijux-std/pull/25) — fix\(github\): disable push triggers for shared release workflows
+- Replace tagged action references in the standards manifest so consumer wrappers
+  satisfy the pinned-action policy.
 
-Shared release workflows use explicit dispatch or reusable invocation.
+### [#23](https://github.com/bijux/bijux-std/pull/23) — Stabilize standards rendering and automerge triggers
 
-- Remove automatic tag push triggers from GitHub, PyPI, GHCR and crates release templates.
-- Original GitHub merge 7768cbd38d5af2cad5e017e919fd5253c124bf13 is distinct from rewritten main-history delivery 3ab19d58941cbb38baa475209d68459dc6938d99; the merge date is the verified GitHub date.
+- Export ARTIFACTS_DIR for post-test validation so Canon's shared command does not fail
+  on an unbound variable.
+- Stop configuration rendering from overwriting the repository's selected Std SHA.
+- Remove auto-merge's workflow_run trigger to avoid redundant main-branch activity.
 
-#### 2026-04-19T22:09:35Z — [#24](https://github.com/bijux/bijux-std/pull/24) — fix\(github\): pin verify actions in standards manifest
+### [#22](https://github.com/bijux/bijux-std/pull/22) — Remove reusable workflow entrypoints
 
-Generated verify workflows use immutable action revisions.
+- Remove reusable-* runtime and source workflow entrypoints from inventories and
+  consumer allowlists.
+- Inline Canon, Proteomics and Atlas CI jobs in manifest-generated wrappers, removing
+  their runtime dependency on the retired entrypoints.
 
-- Replace tagged action references in the standards manifest so consumer wrappers satisfy the pinned-action policy.
-- Original GitHub merge 679c0f66e76b57dc31bac96c538f04a561a838a0 is distinct from rewritten main-history delivery 081110c8b5a01dec8117aa13c967a8e238164afc; the merge date is the verified GitHub date.
+### [#21](https://github.com/bijux/bijux-std/pull/21) — Release admission, PyPI bootstrap and managed workflow provenance
 
-#### 2026-04-19T22:06:03Z — [#23](https://github.com/bijux/bijux-std/pull/23) — fix\(github\): stabilize standards rendering and automerge triggers
+- Probe PyPI for the actual staged distribution name, distinguish confirmed
+  presence/absence from an indeterminate response and reject unresolved probe failures.
+- Keep trusted publishing first and allow configured token bootstrap after its failure
+  only for a positively missing project; require token credentials and a successful
+  final publisher outcome.
+- Validate enabled release tag prefixes and remove unnecessary package-write permission
+  from GitHub release publication.
+- Enable Proteomics' release suite and route/pin its verification bootstrap through the
+  managed workflow definitions.
+- Allow documentation release-tag deployment and fail push builds when the configured
+  site artifact is missing, correcting the earlier skip-only behavior.
+- Add source-of-truth provenance to shared workflow and generated configuration files,
+  and make managed checksum verification portable.
+- Remove the forced maturin environment claim while preserving explicitly resolved
+  environment behavior in the applicable matrix publisher.
 
-Rendering preserves standards pins and exposes post-test artifact paths.
+### [#20](https://github.com/bijux/bijux-std/pull/20) — Node24 artifact action and push-aware workflows
 
-- Export ARTIFACTS\_DIR for validation steps and stop the renderer from overwriting the selected standard SHA.
-- Remove the auto-merge workflow\_run trigger to avoid unnecessary main-branch automation activity.
-- Original GitHub merge e5a57189cfb796fe65b44eae6a646a9ea3e41e56 is distinct from rewritten main-history delivery 37828e40e19ce18664ac17a4d5491ea81d694fd4; the merge date is the verified GitHub date.
+- Promote the standards upload-artifact action to its Node24-ready revision.
+- Add release-tag documentation builds, gate site verification/upload/deployment on
+  actual artifact availability and expose missing artifacts as skipped deployment at
+  this point in history.
+- Handle main/tag push events in repository policy separately from protected PR-change
+  checks, and ignore non-PR workflow_run events in auto-merge.
+- Render empty workflow-dispatch mappings correctly and bind the maturin job to its
+  resolved environment; #21 subsequently revises missing-artifact and environment
+  behavior.
 
-#### 2026-04-19T17:46:26Z — [#22](https://github.com/bijux/bijux-std/pull/22) — refactor\(workflows\): remove reusable workflow entrypoints
+### [#19](https://github.com/bijux/bijux-std/pull/19) — Avoid artifact workflow cancellation across channels
 
-Managed CI wrappers carry their job definitions without reusable workflow entrypoints.
+- Include caller workflow and ref in the concurrency key so identical package slugs can
+  publish through separate channels safely.
 
-- Remove reusable IDs from inventories and allowlists and inline the selected Canon, Proteomics and Atlas CI jobs in generated wrappers.
-- Original GitHub merge ba1e2541d383876553af81eea52cd2f0258e979a is distinct from rewritten main-history delivery d674bdb649e3eb7a89c147ab5fcd1f9fd0d656d8; the merge date is the verified GitHub date.
+### [#18](https://github.com/bijux/bijux-std/pull/18) — Migrate upload-artifact to node24 runtime
 
-#### 2026-04-19T17:38:31Z — [#21](https://github.com/bijux/bijux-std/pull/21) — chore\(release\): harden publish flows and refresh shared hashes
+- Advance upload-artifact pins in canonical templates and the active reusable CI
+  entrypoint.
 
-Shared release workflows validate tags and narrow their publication permissions.
+### [#17](https://github.com/bijux/bijux-std/pull/17) — Publish reusable workflow entrypoints
 
-- Clarify trusted-publisher versus explicit token fallback behavior and add source-of-truth provenance to generated files.
-- Original GitHub merge c2cb40f46fd47f8c5e9472fb41d5f495f2a4ef4f is distinct from rewritten main-history delivery eb61b38e8cff95338a72c486c81ef5a1f9a3daf7; the merge date is the verified GitHub date.
+- Expose runtime copies under .github/workflows while retaining canonical workflow
+  source ownership under shared/bijux-gh/workflows.
 
-#### 2026-04-19T16:18:19Z — [#20](https://github.com/bijux/bijux-std/pull/20) — fix\(github\): upgrade upload-artifact pin to node24-ready sha
+### [#16](https://github.com/bijux/bijux-std/pull/16) — Resolve release matrix heredoc parsing
 
-The standards verification workflow uses the Node24-ready artifact upload pin.
+- Correct YAML indentation for GitHub, GHCR and PyPI workflows so Bash receives the
+  intended validator scripts.
 
-- Keep the managed checksum aligned with the action revision inherited by downstream standards copies.
-- Original GitHub merge c3360be49ad83cfa2f2aa4ea3b789dbe94f756a4 is distinct from rewritten main-history delivery 0a40bc070a478747d07215255c0e9a9504ea2c84; the merge date is the verified GitHub date.
+### [#15](https://github.com/bijux/bijux-std/pull/15) — Rename release artifacts workflow and align canon CI wrappers
 
-#### 2026-04-19T14:10:38Z — [#19](https://github.com/bijux/bijux-std/pull/19) — fix\(release\): avoid artifact workflow cancellation across channels
+- Use release-artifacts.yml at call sites and retire its historical
+  build-release-artifacts path during managed synchronization.
+- Canon's CI and verify wrappers consume the shared definitions selected by the
+  manifest.
 
-Independent release channels no longer cancel each other's artifact orchestration.
+### [#14](https://github.com/bijux/bijux-std/pull/14) — Align artifact orchestration with canonical publish toggles
 
-- Include caller workflow and ref in the concurrency key so identical package slugs can publish through separate channels safely.
-- Original GitHub merge c240e0629f69cabe675d4bb43f75e8a072e69cec is distinct from rewritten main-history delivery 3f1a796de5c1d2226b37bc5a058f9a06be374739; the merge date is the verified GitHub date.
+- Derive artifact-orchestrator PyPI, GHCR and GitHub channel defaults from canonical
+  publication toggles.
+- Disable duplicate direct tag publication while orchestration owns those channels.
+- Enable Canon's declared release channels in the standards manifest rather than through
+  divergent workflow defaults.
 
-#### 2026-04-19T14:01:43Z — [#18](https://github.com/bijux/bijux-std/pull/18) — fix\(workflows\): migrate upload-artifact to node24 runtime
+### [#13](https://github.com/bijux/bijux-std/pull/13) — Restore transitive reusable workflow allowlist
 
-Shared artifact uploads use the Node24 action runtime.
+- Resolve ci-package references when deriving the reusable workflow set so
+  synchronization does not omit required Python package CI entrypoints.
 
-- Advance upload-artifact pins in canonical templates and the active reusable CI entrypoint.
-- Original GitHub merge 9707f77e0d656a83eb8f3482f41d9926d75c7771 is distinct from rewritten main-history delivery 9e61f45c9c5f14240e0ec8bcac2758f8aaa60602; the merge date is the verified GitHub date.
+### [#12](https://github.com/bijux/bijux-std/pull/12) — Keep trusted publisher default for PyPI
 
-#### 2026-04-19T13:55:01Z — [#17](https://github.com/bijux/bijux-std/pull/17) — fix\(workflows\): publish reusable workflow entrypoints
+- Restore trusted publishing as the default shared PyPI authentication mode.
+- Keep token bootstrap behind an explicit package-matrix or environment override.
 
-Consumer workflow\_call references resolve published reusable entrypoints.
+### [#11](https://github.com/bijux/bijux-std/pull/11) — Align artifact publishing and wrapper manifest generation
 
-- Expose runtime copies under .github/workflows while retaining canonical workflow source ownership under shared/bijux-gh/workflows.
-- Original GitHub merge 008ff6bf6ee3f22bd0f0884c5b323830a9a12f46 is distinct from rewritten main-history delivery 05b01d55bb2fe7743aef173c163284538666a9c7; the merge date is the verified GitHub date.
+**Earlier main-branch changes**
 
-#### 2026-04-19T13:49:42Z — [#16](https://github.com/bijux/bijux-std/pull/16) — fix\(workflows\): resolve release matrix heredoc parsing
-
-Release matrix validators use shell-safe heredoc delimiters.
-
-- Correct YAML indentation for GitHub, GHCR and PyPI workflows so Bash receives the intended validator scripts.
-- Original GitHub merge e2da42f9e462e82488fd1d1f6f6b9c1427b810cd is distinct from rewritten main-history delivery 10e228f33f0fa4dd0396c91e7ca25f5074152868; the merge date is the verified GitHub date.
-
-#### 2026-04-19T13:23:44Z — [#15](https://github.com/bijux/bijux-std/pull/15) — refactor\(workflows\): rename release artifacts workflow and align canon CI wrappers
-
-Release artifact workflow names and Canon wrappers share one canonical contract.
-
-- Use release-artifacts.yml at call sites and retire its historical build-release-artifacts path during managed synchronization.
-- Canon's CI and verify wrappers consume the shared definitions selected by the manifest.
-- Original GitHub merge ae8762de0a883f6882f5ff206e5dc6573ebb3026 is distinct from rewritten main-history delivery 699751ac281dab468c7e515bb1a1f1b84a788f5a; the merge date is the verified GitHub date.
-
-#### 2026-04-19T12:19:21Z — [#14](https://github.com/bijux/bijux-std/pull/14) — fix\(release\): align artifact orchestration with canonical publish toggles
-
-Artifact orchestration derives publication lanes from canonical release toggles.
-
-- Prevent duplicate direct tag publication when orchestration owns PyPI, GHCR and GitHub release delivery.
-- Configure Canon's release channels in the standards manifest rather than through divergent workflow defaults.
-- Original GitHub merge 9f7d6ba07d8fa791c26a28570f127366b6e1c213 is distinct from rewritten main-history delivery 5f04c26fef471b6f57855757a1ab2dbbc1573df7; the merge date is the verified GitHub date.
-
-#### 2026-04-19T12:02:11Z — [#13](https://github.com/bijux/bijux-std/pull/13) — fix\(standards\): restore transitive reusable workflow allowlist
-
-Workflow allowlists retain transitive CI package dependencies.
-
-- Resolve ci-package references when deriving the reusable workflow set so synchronization does not omit required Python package CI entrypoints.
-- Original GitHub merge cb6e9789fd9d266ba11b0f885c87b7e90e4b28ce is distinct from rewritten main-history delivery d57ebf5473a88ea0e5ceaf88dbde6c6e29e2aa3b; the merge date is the verified GitHub date.
-
-#### 2026-04-19T11:58:52Z — [#12](https://github.com/bijux/bijux-std/pull/12) — fix\(release\): keep trusted publisher default for PyPI
-
-Trusted publishing is restored as the default PyPI authentication mode.
-
-- Keep token bootstrap available only through an explicit matrix or environment override.
-- Original GitHub merge e2669297a3506f2468de49f2d04c52861d63f8f7 is distinct from rewritten main-history delivery 999472cfd2358bc403469cf86412bed94ee148d3; the merge date is the verified GitHub date.
-
-#### 2026-04-19T11:57:34Z — [#11](https://github.com/bijux/bijux-std/pull/11) — fix\(release\): align artifact publishing and wrapper manifest generation
-
-Artifact publication and generated workflow event keys remain executable.
-
-- Use token authentication for the then-current artifact PyPI mode and retain trusted publishing for the other mode.
-- Preserve YAML on keys in generated wrappers and advance the shared artifact-download action pin.
-- Original GitHub merge 0956c7085623b82195ef908997595898a41a7ce0 is distinct from rewritten main-history delivery d2e2ee174289917df3ce796c90c9c7e67db59a92; the merge date is the verified GitHub date.
-- Notice: 13 preceding main-history commits occur before this PR in the current first-parent graph. Rewritten history does not establish direct pushes or that this PR first published them.
-- Preceding main-history changes honored configured release triggers, preserved Canon release/environment contracts, corrected reusable caller permissions and checkout order, retained matrix JSON and Boolean input semantics, and refreshed artifact pins/checksums.
-- Preceding main-history endpoints: https://github.com/bijux/bijux-std/commit/9e6898c8e9b6a603f6b34466d29d691525fce5e2 through https://github.com/bijux/bijux-std/commit/78c980d4245d3f9c45456cdb5cfde74090405183
-
-#### 2026-04-18T23:26:21Z — [#10](https://github.com/bijux/bijux-std/pull/10) — docs\(github\): document clean-status direct merge fallback
-
-Auto-merge guidance records the historical clean-status direct merge fallback.
-
-- Describe the then-current workflow\_run and fallback behavior; later trust-policy changes are recorded in their own PR entries.
-- Original GitHub merge b09ae203a52fef4e75d01c9301598ce38bc7d298 is distinct from rewritten main-history delivery fa5862ff95b5432579916011c01d2e3b873a7f28; the merge date is the verified GitHub date.
-
-#### 2026-04-18T23:25:34Z — [#9](https://github.com/bijux/bijux-std/pull/9) — docs\(github\): align automerge behavior with workflow\_run retry path
-
-Auto-merge guidance identifies the workflow\_run retry path.
-
-- Explain how completed workflow activity can retry auto-merge enablement after the initial PR event.
-- Original GitHub merge 854ebf46ec9c343df4d2ff5b930b282034aae5f0 is distinct from rewritten main-history delivery 638d7f318d81811c2caea3b31b86d0fad97828fb; the merge date is the verified GitHub date.
-
-#### 2026-04-18T23:23:14Z — [#8](https://github.com/bijux/bijux-std/pull/8) — docs\(github\): note bounded retries for unstable automerge
-
-Auto-merge guidance records bounded retries for unstable PR state.
-
-- Explain the retry behavior used to make enablement reliable without an unbounded waiting loop.
-- Original GitHub merge 93d931ec432ae99d8d0be97c17b42bc1cd18ae9f is distinct from rewritten main-history delivery 76440a40f30ed87b26a5f07421ae861f8982b10b; the merge date is the verified GitHub date.
-
-#### 2026-04-18T23:18:24Z — [#7](https://github.com/bijux/bijux-std/pull/7) — docs\(github\): describe stable-state wait before automerge
-
-Auto-merge guidance covers stable-state waiting and token permissions.
-
-- Describe the bounded wait before enabling auto-merge when GitHub has not yet settled the PR state.
-- Original GitHub merge 904b249982176a51e0d88aa9893f4758e8bf78a3 is distinct from rewritten main-history delivery b24f81c3d960058350ce75c529ba314d6ace615a; the merge date is the verified GitHub date.
-
-#### 2026-04-18T23:14:04Z — [#6](https://github.com/bijux/bijux-std/pull/6) — docs\(github\): document codeowner-author automerge policy
-
-Auto-merge guidance describes the trusted CODEOWNER-author policy.
-
-- Document the required-check condition for enabling auto-merge on eligible owner-authored changes.
-- Original GitHub merge 128e8496069bc658bcfa56a2014fffa048889922 is distinct from rewritten main-history delivery 594401a470fdf968ed442efac46537ae75889435; the merge date is the verified GitHub date.
-
-#### 2026-04-18T23:12:08Z — [#5](https://github.com/bijux/bijux-std/pull/5) — docs\(github\): clarify pull\_request\_target workflow source
-
-Workflow documentation explains when pull\_request\_target changes become effective.
-
-- Readers can distinguish the base-branch workflow source from an unmerged PR's proposed automation changes.
-- Original GitHub merge 8fe527d612057d233529acb81373fa501e41a22d is distinct from rewritten main-history delivery 42e44f85ebced88d7f3a40e3e35703ce7a29f200; the merge date is the verified GitHub date.
-
-#### 2026-04-18T23:09:33Z — [#4](https://github.com/bijux/bijux-std/pull/4) — fix: harden standards sync and governance checks
-
-Standards synchronization and auto-merge checks handle changing repository state safely.
-
-- Resolve non-sibling roots, report YAML failures clearly and include the managed auto-merge workflow in normal synchronization.
-- Match approvals to the current head and live PR state while handling stale workflow directories safely.
-- The original title has no scope; the fragment scope identifies editorial ownership without changing that historical title.
-- Original GitHub merge d66f87e3319765adb2de66e9102c3fdeee201aa1 is distinct from rewritten main-history delivery f4050194f723ed021cf7a25b632db3b31acd729f; the merge date is the verified GitHub date.
-
-#### 2026-04-18T22:52:52Z — [#3](https://github.com/bijux/bijux-std/pull/3) — fix: support .bijux-only consumer layout
-
-Consumers use the managed .bijux/shared layout consistently.
-
-- Prefer consumer shared paths, remove root-governance hash coupling and reject obsolete root shared directories during compliance checks.
-- The original title has no scope; the fragment scope identifies editorial ownership without changing that historical title.
-- Original GitHub merge 22c0efda72b7a2515b4775294aaad1096d9b0c2f is distinct from rewritten main-history delivery 2b60ba816693b39dc122a597bbf3f7a22d83dcb4; the merge date is the verified GitHub date.
-
-#### 2026-04-18T21:51:27Z — [#2](https://github.com/bijux/bijux-std/pull/2) — feat\(github\): add CODEOWNERS and align main PR gate for auto-merge
-
-Managed CODEOWNERS participates in standards synchronization and merge policy.
-
-- Carry ownership rules through protected-change checks and allow the configured solo-maintainer auto-merge gate to rely on required checks.
-- Original GitHub merge 7b916ec99c6d67d1c9c71e3d3a09c14dc2e4b660 is distinct from rewritten main-history delivery 26ae5a7d2c3dc7e53ca5003ba2ccf592935d6902; the merge date is the verified GitHub date.
-
-#### 2026-04-18T21:45:42Z — [#1](https://github.com/bijux/bijux-std/pull/1) — refactor\(github\): move shared workflow templates out of active workflows
-
-Shared workflow sources are separated from active repository workflows.
-
-- Keep canonical consumer templates under the shared governance tree while limiting the standards repository's activated workflow surface.
-- Original GitHub merge 78caf80e1f9377c2140d91d6fd506a350faeee90 is distinct from rewritten main-history delivery a453971c39bb596326cd0b68c38622c265180ab3; the merge date is the verified GitHub date.
-- Notice: 277 preceding main-history commits occur before this PR in the current first-parent graph. Rewritten history does not establish direct pushes or that this PR first published them.
-- Preceding main-history changes established shared manifests and source/consumer checks, safer repository automation and artifact-owned UI test execution.
-- They developed viewport/drawer navigation, site switching, native controls and local/live regression harnesses, and introduced diagram initialization and site branding. These are historical introductions, not current qualification receipts.
-- They introduced managed governance and release templates, typed repository configuration, action-pin checks and repository documentation/licensing foundations.
-- Preceding main-history endpoints: https://github.com/bijux/bijux-std/commit/c2c5df7df73aeb76340893a609cef7c2d90e8070 through https://github.com/bijux/bijux-std/commit/5f1aeaa7a65160838a582bf4838dcb2b206b71d7
+- Honor tag-push release flags across artifact and registry publishers, restore Canon
+  release settings and Dependabot policy in generated configuration, and align reusable
+  caller actions and packages permissions.
+- Check out the repository before resolving release settings; preserve JSON matrix
+  inputs and explicit false Boolean inputs independently of event names.
+- Pin download-artifact to a valid 4.3.0 revision and refresh the managed manifests and
+  checksums. The PR then advances the action to 8.0.1.
+
+**Pull request changes**
+
+- Default the then-current artifact-mode PyPI path to token authentication while
+  retaining trusted publishing for non-artifact publication.
+- Preserve YAML on event keys in generated manifests and promote download-artifact 8.0.1
+  in shared release workflows.
+
+### [#10](https://github.com/bijux/bijux-std/pull/10) — Document clean-status direct merge fallback
+
+- Describe the then-current workflow_run and fallback behavior; later trust-policy
+  changes are recorded in their own PR entries.
+
+### [#9](https://github.com/bijux/bijux-std/pull/9) — Clean-state direct auto-merge fallback
+
+- Add a direct merge fallback when the auto-merge API reports a clean state, while
+  leaving unstable requests for a later event.
+- Document the then-current workflow_run retry path; #38 later removes direct-merge
+  fallback.
+
+### [#8](https://github.com/bijux/bijux-std/pull/8) — Auto-merge retries after successful CI
+
+- Retry auto-merge enablement after successful bijux-std workflow_run events, resolving
+  the linked PR and ignoring failed or non-PR runs.
+- Replace the preceding in-event retry loop with event-driven retry and document that
+  behavior.
+
+### [#7](https://github.com/bijux/bijux-std/pull/7) — Bounded retries for unstable auto-merge requests
+
+- Retry the enable-auto-merge mutation for unstable-status responses with a bounded
+  twenty-four-attempt, five-second interval.
+- Stop retrying other errors and document the resulting stable-state behavior.
+
+### [#6](https://github.com/bijux/bijux-std/pull/6) — Stable-state waiting before auto-merge
+
+- Wait for a live PR to leave unstable merge state before enabling auto-merge, stopping
+  if it closes or the bounded wait expires.
+- Document required-check behavior for the then-current trusted CODEOWNER-author policy.
+
+### [#5](https://github.com/bijux/bijux-std/pull/5) — Auto-merge permissions and base-branch workflow guidance
+
+- Grant the auto-merge workflow contents-write permission required by its then-current
+  implementation.
+- Explain that pull_request_target loads workflow changes from the accepted base branch,
+  so proposed automation changes take effect after merging.
+
+### [#4](https://github.com/bijux/bijux-std/pull/4) — Harden standards sync and governance checks
+
+- Include auto-merge in managed synchronization and resolve source/consumer roots
+  without a sibling-checkout assumption.
+- Report YAML parse failures and strict drift paths clearly instead of masking the
+  actual failure.
+- Recheck live PR state and require approval of the current head before enabling
+  auto-merge.
+- Handle stale runtime workflow directories safely during synchronization.
+
+### [#3](https://github.com/bijux/bijux-std/pull/3) — .bijux-only consumers and approval-bound auto-merge
+
+- Prefer .bijux/shared in consumers, stage its generated destinations and retire
+  obsolete root shared directories without root-workflow hash coupling.
+- Render managed configuration in consumer CI and scan workflow directories recursively
+  for immutable action references.
+- Protect both auto-merge workflow changes and managed .bijux content through the
+  governance policy.
+- Introduce CODEOWNERS-gated auto-merge and reject approvals superseded by later
+  reviews.
+- Clean empty legacy shared roots and enforce the .bijux-only consumer layout during
+  compliance checks.
+
+### [#2](https://github.com/bijux/bijux-std/pull/2) — Add CODEOWNERS and align main PR gate for auto-merge
+
+- Add canonical CODEOWNERS and its shared copy to synchronization and protected-change
+  ownership.
+- Use a checks-only PR gate for the then-current solo-maintainer auto-merge policy.
+
+### [#1](https://github.com/bijux/bijux-std/pull/1) — Canonical workflows and shared repository foundations
+
+**Earlier main-branch foundations**
+
+- Establish canonical shared trees, directory manifests and GitHub source verification,
+  with policy-driven consumer checks and a guarded standards refresh.
+- Develop hub and product navigation: flattened detail rows, directory/page trees,
+  active selection, wrapper-route deduplication, empty/root fallbacks and responsive
+  drawer navigation.
+- Centralize phone, tablet and desktop viewport ownership, including resize,
+  orientation, visual-viewport and page-restoration handling, synchronized document
+  state and diagnostics.
+- Restore header search and drawer controls, unique control identities, accessible
+  labels and tap targets; refine desktop and compact site ribbons and the mobile Sites
+  registry.
+- Introduce responsive Playwright fixtures and local/live navigation gates across the
+  historical seven-site set, with tablet/desktop and duplicate-wrapper checks. These are
+  historical test foundations, rather than current device qualification.
+- Centralize Mermaid initialization, shared logos/icons and documentation tooling;
+  organize Make entrypoints and place generated browser runtimes, dependencies and
+  reports under artifacts.
+- Add shared Python checks, OpenAPI 3.1/Schemathesis flag compatibility and a
+  source-check report registry, with repository-root asset resolution and
+  generated-cache exclusions.
+- Establish the canonical bijux-gh governance pack, typed repository manifests,
+  dependency-update generation, drift checks, automation identity, protected-main
+  guidance and issue/PR templates.
+- Add documentation Pages deployment and configurable GitHub, PyPI, crates and GHCR
+  publishers, centralized release settings, package allowlists and artifact
+  orchestration, with source/digest parity checks.
+- Document standards adoption and repository ownership, with the initial MIT licensing
+  foundation.
+
+**Pull request changes**
+
+- Move consumer workflow templates into shared canonical source and document which
+  repository-local workflows remain active.
+- Introduce the workflow inventory and per-repository allowlists, synchronizing enabled
+  runtime entrypoints and validating pinned actions against that managed set.
+- Repair the crates publish-command fallback and restore complete shared checksum
+  entries.
+- Pin the documentation setup-uv action to an actually resolvable 8.1.0 revision.
