@@ -146,6 +146,64 @@ class DocumentationComponentTests(unittest.TestCase):
         result = subprocess.run(["bash", str(GUARD)], cwd=self.consumer, env=dict(self.env, **values), capture_output=True, text=True)
         return result
 
+    def run_source_guard(self, **values):
+        script = self.consumer / '.bijux/shared/bijux-docs/tooling/scripts/verify_bijux_docs_source_of_truth.sh'
+        env = dict(self.env, BIJUX_STD_ROOT=str(self.docs_source), BIJUX_STD_REF=self.docs_sha)
+        env.update(values)
+        return subprocess.run(['bash', str(script)], cwd=self.consumer, env=env, capture_output=True, text=True)
+
+    def test_source_entry_accepts_split_sources_without_changing_provenance(self):
+        projection = self.consumer / '.bijux/docs-projection.json'
+        before = projection.read_bytes()
+        result = self.run_source_guard(BIJUX_STD_CAPABILITIES='docs',
+                                       BIJUX_STD_CONFIG=str(self.consumer / 'absent-config.yml'),
+                                       BIJUX_STD_STRICT_REMOTE='0', BIJUX_STD_REQUIRE_REMOTE_MATCH='0')
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertIn('passed against both exact accepted component sources', result.stdout)
+        for name in NAMES:
+            self.assertIn(f'.bijux/shared/{name} matches expected manifest', result.stdout)
+        self.assertEqual(projection.read_bytes(), before)
+
+    def test_node_component_is_verified_through_both_entries(self):
+        (self.consumer / '.bijux/shared/bijux-makes-node/workspace.mk').write_text('unaccepted Node tooling\n')
+        self.manifest(self.consumer / '.bijux/shared')
+        self.commit(self.consumer)
+        for run in (self.run_guard, self.run_source_guard):
+            with self.subTest(entry=run.__name__):
+                result = run(BIJUX_STD_CAPABILITIES='docs', BIJUX_STD_REQUIRE_REMOTE_MATCH='0')
+                self.assertNotEqual(result.returncode, 0, result.stdout)
+                self.assertIn('local manifest drift', result.stdout + result.stderr)
+
+    def test_source_entry_preserves_single_source_with_or_without_documentation_pin(self):
+        relative = 'shared/bijux-gh/README.md'
+        (self.consumer / '.bijux' / relative).write_bytes((self.docs_source / relative).read_bytes())
+        (self.consumer / '.github/standards/bijux-std.sha').write_text(self.docs_sha + '\n')
+        self.manifest(self.consumer / '.bijux/shared')
+        self.commit(self.consumer)
+        for separate_pin in (True, False):
+            with self.subTest(documentation_pin=separate_pin):
+                if not separate_pin:
+                    (self.consumer / '.github/standards/bijux-docs.sha').unlink()
+                result = self.run_source_guard()
+                self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+
+    def test_source_entry_preserves_explicit_local_verification(self):
+        scripts = self.consumer / '.bijux/shared/bijux-docs/tooling/scripts'
+        env = dict(self.env, BIJUX_STD_LOCAL_VERIFY='1', BIJUX_DOCS_SOURCE_MODE='local-verification')
+        subprocess.run([sys.executable, str(scripts / 'project_bijux_docs.py'), str(self.consumer),
+                        str(scripts.parents[1])], env=env, check=True, capture_output=True, text=True)
+        (self.consumer / '.github/standards/bijux-std.sha').unlink()
+        result = self.run_source_guard(BIJUX_STD_LOCAL_VERIFY='1')
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertIn('local candidate source-of-truth checks passed', result.stdout)
+        self.assertIn('accepted rollout was not verified', result.stdout)
+
+    def test_source_entry_propagates_site_failure(self):
+        result = self.run_source_guard(DOCS_SITE_DIR=str(self.consumer / 'artifacts/missing-site'),
+                                       SITE_URL='https://bijux.io/bijux-core/')
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn('public bundle: selected directory is missing', result.stdout + result.stderr)
+
     def refuse(self, needle, **values):
         result = self.run_guard(**values)
         self.assertNotEqual(result.returncode, 0, result.stdout)
