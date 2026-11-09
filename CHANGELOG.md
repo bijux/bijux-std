@@ -12,6 +12,7 @@ Changes awaiting integration into GitHub's `main` branch.
 
 Adopt verified Ruby setup and GitHub release action pins, and declare the Atlas
 Rust 1.89 baseline needed for patched bundled SQLite and constant-time utilities.
+Refresh Atlas advisory parsers to admit current CVSS 4 records.
 
 #### [#331](https://github.com/bijux/bijux-std/pull/331) — fix(docs): separate navigation labels from link warnings
 

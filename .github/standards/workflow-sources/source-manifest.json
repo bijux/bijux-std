@@ -32,7 +32,7 @@
     ".github/scripts/workflow_execution/verification.py": "94ee88caecb282b74c42ba84b7978d4956482b10631c3c9aa7978145dfae288f",
     ".github/scripts/workflow_execution/yaml_io.py": "0ce0b2dcda55b4a1764b2e73dba510d44ff3af40961b142f91e91fed9fde68aa",
     ".github/standards/node-workspaces.json": "da7999bef94d98407795af7ff711b3de8b17b0a6403562558912c08f05255617",
-    ".github/standards/repo-config.manifest.json": "f9a77fcfb965fd4ddd5378bc5d25b6eddb0263b712d516eaa6e28a011047b847",
+    ".github/standards/repo-config.manifest.json": "5d0a275b056b5ba5edc713d5dc80964b97e185d3e2015b83826ea6c2f3e1c07e",
     ".github/standards/workflow-inventory.json": "ea9bbe1b48edd6b4658ae57d2e8b2ce4bb7aff4cb8dec949bb79a82b3a75d08c",
     ".github/standards/workflow-sources/bijux-std.yml": "a6d6a98b7b3f12da015939d0af6921b8b437581f1130aafc1e2886a89d23f2b8",
     ".github/workflows/automerge-pr.yml": "6a406ea3f222d2c36243bea74b7fdf1416052213a20312f13cd5d5caee113e12",
