@@ -2,6 +2,13 @@
 
 Repository changes are recorded by pull request, newest merge first.
 
+### [#336](https://github.com/bijux/bijux-std/pull/336) — Live native publication admission
+
+- Combine rendering and admission while retaining the live independently reconstructed
+  producer and reference, preserving source, policy, runtime and full-site checks.
+- Select producer modules from canonical source bytes, reject incompatible contexts
+  and serialized authority, and keep standalone verification reconstructing.
+
 ### [#335](https://github.com/bijux/bijux-std/pull/335) — Shared documentation source verification
 
 - Route documentation source checks with a declared documentation pin through the
