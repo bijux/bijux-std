@@ -64,7 +64,9 @@ class DocumentationComponentTests(unittest.TestCase):
         cls.seed = cls.base / "seed"
         cls.seed.mkdir()
         shutil.copytree(cls.source / ".github", cls.seed / ".github")
-        shutil.copytree(cls.source / "shared", cls.seed / ".bijux/shared")
+        (cls.seed / ".bijux/shared").mkdir(parents=True)
+        for name in NAMES:
+            shutil.copytree(cls.source / "shared" / name, cls.seed / ".bijux/shared" / name)
         (cls.source / "shared/bijux-gh/README.md").write_text("# Reviewed common component fixture\n")
         cls.manifest(cls.source / "shared")
         cls.git(cls.source, "add", "shared")
@@ -132,7 +134,12 @@ class DocumentationComponentTests(unittest.TestCase):
     @staticmethod
     def manifest(shared):
         rows = []
-        for name in NAMES:
+        config = shared / "bijux-checks/bijux-std-checks.yml"
+        directories = subprocess.check_output(
+            [str(CHECKS / "scripts/resolve-shared-directories.sh"), "--all", str(config)], text=True
+        ).splitlines()
+        for relative in directories:
+            name = relative.removeprefix("shared/")
             if (shared / name).is_dir():
                 digest = subprocess.check_output([str(CHECKS / "scripts/directory-tree-sha256.sh"), str(shared / name)], text=True).strip()
                 rows.append(f"{digest} shared/{name}\n")
@@ -163,6 +170,30 @@ class DocumentationComponentTests(unittest.TestCase):
         for name in NAMES:
             self.assertIn(f'.bijux/shared/{name} matches expected manifest', result.stdout)
         self.assertEqual(projection.read_bytes(), before)
+
+    def install_gitlab_component(self):
+        shutil.copytree(self.source / "shared/bijux-gitlab", self.consumer / ".bijux/shared/bijux-gitlab")
+        self.manifest(self.consumer / ".bijux/shared")
+        self.commit(self.consumer)
+
+    def test_installed_gitlab_component_is_verified_through_both_entries(self):
+        self.install_gitlab_component()
+        for run in (self.run_guard, self.run_source_guard):
+            with self.subTest(entry=run.__name__):
+                result = run()
+                self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+                self.assertIn('.bijux/shared/bijux-gitlab matches expected manifest', result.stdout)
+
+    def test_rehashed_gitlab_component_cannot_bypass_either_source_entry(self):
+        self.install_gitlab_component()
+        (self.consumer / '.bijux/shared/bijux-gitlab/CONTRACT.md').write_text('unaccepted native CI source\n')
+        self.manifest(self.consumer / '.bijux/shared')
+        self.commit(self.consumer)
+        for run in (self.run_guard, self.run_source_guard):
+            with self.subTest(entry=run.__name__):
+                result = run()
+                self.assertNotEqual(result.returncode, 0, result.stdout)
+                self.assertIn('local manifest drift', result.stdout + result.stderr)
 
     def test_node_component_is_verified_through_both_entries(self):
         (self.consumer / '.bijux/shared/bijux-makes-node/workspace.mk').write_text('unaccepted Node tooling\n')

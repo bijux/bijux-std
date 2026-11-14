@@ -24,6 +24,8 @@ Available capabilities are declared in `bijux-std-checks.yml`:
 - `python`: Python Make modules.
 - `rust`: Rust Make modules.
 - `node`: private-root npm workspace Make contracts.
+- `gitlab`: canonical standards CI execution and native evidence admission.
+  This capability is opt-in; existing consumer profiles do not enable it.
 
 When capabilities are explicitly selected, the updater removes unselected
 managed directories and writes a manifest containing only selected directories.

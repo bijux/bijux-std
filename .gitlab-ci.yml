@@ -1,0 +1,2 @@
+include:
+  - local: shared/bijux-gitlab/ci/standards.yml

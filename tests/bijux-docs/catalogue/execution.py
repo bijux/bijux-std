@@ -23,6 +23,10 @@ GROUPS = {'source': ('test_recipe_sources', 'test_source_checkpoint', 'test_inpu
           'renderer': ('test_native_sources', 'test_renderer_authority'),
           'typed-entrypoint': ('test_entrypoints.CatalogueEntrypoints.test_actual_typed_renderer_reconstructs_originals_without_publication_approval',),
           'tracked-entrypoint': ('test_entrypoints.CatalogueEntrypoints.test_actual_tracked_renderer_uses_the_unchanged_default_dependency_lock',)}
+ARTIFACT_PATHS = {'source': (), 'renderer': ('catalogue-native-sources',),
+    'typed-entrypoint': ('catalogue-entrypoint-tests/typed-sites', 'catalogue-entrypoint-tests/typed-entrypoint.json'),
+    'tracked-entrypoint': ('catalogue-entrypoint-tests/tracked-sites', 'catalogue-entrypoint-tests/tracked-entrypoint.json',
+                           'catalogue-entrypoint-tests/tracked-entrypoint.log')}
 LOCK = HERE / 'requirements.lock.txt'
 
 
@@ -75,10 +79,7 @@ def expected(group):
 
 
 def artifacts(group):
-    locations = {'source': (), 'renderer': ('catalogue-native-sources',),
-        'typed-entrypoint': ('catalogue-entrypoint-tests/typed-sites', 'catalogue-entrypoint-tests/typed-entrypoint.json'),
-        'tracked-entrypoint': ('catalogue-entrypoint-tests/tracked-sites', 'catalogue-entrypoint-tests/tracked-entrypoint.json',
-                               'catalogue-entrypoint-tests/tracked-entrypoint.log')}[group]
+    locations = ARTIFACT_PATHS[group]
     result = {}
     for name in locations:
         path = ROOT / 'artifacts' / name
