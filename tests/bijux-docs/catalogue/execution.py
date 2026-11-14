@@ -93,13 +93,13 @@ def artifacts(group):
 
 def verify(receipt, group, source, selected_runtime, workflow=None):
     wanted = expected(group)
+    helpers.verify_workflow(receipt.get('workflow'), workflow)
     if (receipt.get('schema') != 1 or receipt.get('group') != group
             or receipt.get('expected_ids') != wanted or receipt.get('executed_ids') != wanted
             or receipt.get('failed_ids') or receipt.get('skipped_ids') or not receipt.get('passed')
             or receipt.get('source_before') != source or receipt.get('source_after') != source
             or receipt.get('runtime_before') != selected_runtime or receipt.get('runtime_after') != selected_runtime
-            or receipt.get('publication_approval') is not False
-            or receipt.get('workflow') != (helpers.workflow_identity() if workflow is None else workflow)):
+            or receipt.get('publication_approval') is not False):
         raise ValueError('Catalogue controls failed or source/runtime/case identity changed')
 
 

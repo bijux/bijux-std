@@ -166,6 +166,7 @@ class InputPlanningMutationTests(unittest.TestCase):
 
     def test_actual_cli_uses_current_source_bytes_despite_forged_unchecked_bytecode(self):
         shutil.copytree(PACKAGE, self.repo / 'tests/bijux-docs/execution/input_planning', dirs_exist_ok=True)
+        shutil.copyfile(PACKAGE.parent / 'ci_context.py', self.repo / 'tests/bijux-docs/execution/ci_context.py')
         self.put('.gitignore', 'artifacts/\n__pycache__/\n')
         self.commit('test(ci): retain executable source planner')
         self.base = self.git('rev-parse', 'HEAD')

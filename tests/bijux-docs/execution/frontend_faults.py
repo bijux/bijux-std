@@ -37,6 +37,11 @@ def write(path: Path, data):
     path.write_text(json.dumps(data, indent=2) + '\n')
 
 
+def receipt_identity():
+    context = load(TESTS / 'execution/ci_context.py', 'bijux_fault_ci_context')
+    return {'ci_context': context.execution_identity()} if context.gitlab() else context.workflow_identity()
+
+
 def hashes(root: Path):
     return {p.relative_to(root).as_posix(): hashlib.sha256(p.read_bytes()).hexdigest()
             for p in sorted(root.rglob('*')) if p.is_file()}
@@ -138,8 +143,7 @@ def browser(engine: str):
     if source() != before:
         raise ValueError('Source changed during fault execution')
     write(folder / 'receipt.json', {'schema': 1, 'source': before, 'engine': engine,
-          'workflow_run_id': os.environ.get('GITHUB_RUN_ID'),
-          'workflow_attempt': os.environ.get('GITHUB_RUN_ATTEMPT'),
+          **receipt_identity(),
           'commands': commands, 'files': hashes(folder), 'status': 'passed'})
     controllers.record_execution(folder, 'fault-' + engine, producer)
 
@@ -207,11 +211,14 @@ def public(python: Path):
     if source() != before:
         raise ValueError('Source changed during public fault execution')
     write(folder / 'receipt.json', {'schema': 1, 'source': before, 'status': 'passed',
-          'workflow_run_id': os.environ.get('GITHUB_RUN_ID'), 'workflow_attempt': os.environ.get('GITHUB_RUN_ATTEMPT'),
+          **receipt_identity(),
           'verification_only': True, 'publication_admission': False, 'commands': commands, 'files': hashes(folder)})
 
 
 def qualify(collection=None, *, original_source=None, output=None, workflows=None):
+    context = load(TESTS / 'execution/ci_context.py', 'bijux_fault_ci_context')
+    if collection is not None and context.gitlab():
+        context.refuse_retained_proof()
     if collection is not None:
         load(TESTS / 'execution/workflow_controllers.py', 'fault_workflow_controllers').require_collection(collection)
     current = source() if original_source is None else original_source
@@ -222,8 +229,10 @@ def qualify(collection=None, *, original_source=None, output=None, workflows=Non
     for owner in (*ENGINES, 'public'):
         folder = output / owner
         receipt = json.loads((folder / 'receipt.json').read_text())
-        identity = workflows[owner] if workflows is not None else collection.inputs['fault-public' if owner == 'public' else 'fault-' + owner].workflow_identity() if collection is not None else {
-            'workflow_run_id': os.environ.get('GITHUB_RUN_ID'), 'workflow_attempt': os.environ.get('GITHUB_RUN_ATTEMPT')}
+        if context.gitlab():
+            identity = {'ci_context': context.verify_workflow(receipt.get('ci_context'), workflows[owner] if workflows is not None else None)}
+        else:
+            identity = workflows[owner] if workflows is not None else collection.inputs['fault-public' if owner == 'public' else 'fault-' + owner].workflow_identity() if collection is not None else context.workflow_identity()
         if receipt['source'] != current or receipt['status'] != 'passed' or any(receipt[key] != value for key, value in identity.items()):
             raise ValueError('Current source/run fault receipt is required: ' + owner)
         for name, expected in receipt['files'].items():

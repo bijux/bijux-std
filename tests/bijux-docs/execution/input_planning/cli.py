@@ -27,6 +27,16 @@ require_results, selection_observation, verify_plan = (qualification.require_res
     qualification.selection_observation, qualification.verify_plan)
 
 ROOT = Path(__file__).resolve().parents[4]
+_context_path = PACKAGE.parent / 'ci_context.py'
+CI = ModuleType('bijux_input_planning_ci_context')
+CI.__file__ = str(_context_path)
+exec(compile(_context_path.read_bytes(), str(_context_path), 'exec'), CI.__dict__)
+
+
+def write_selection(frontend):
+    target = 'BIJUX_CI_OUTPUT' if CI.gitlab() else 'GITHUB_OUTPUT'
+    with open(os.environ[target], 'a') as stream:
+        stream.write('frontend=' + str(frontend).lower() + '\n')
 
 
 def load(path):
@@ -65,12 +75,20 @@ def main():
     parser.add_argument('--output', type=Path, default=ROOT / 'artifacts/bijux-docs/input-plan/qualification.json')
     args = parser.parse_args()
     mode = os.environ.get('VERIFICATION_MODE') or 'full'
-    head, baseline, event = (os.environ.get(key) for key in ('GITHUB_SHA', 'EXPECTED_BASELINE', 'GITHUB_EVENT_NAME'))
+    if CI.gitlab():
+        CI.execution_identity()
+        if mode != 'full' or args.accepted_proof or args.selection_only or args.consumer_platform:
+            CI.refuse_retained_proof()
+        head, baseline, event = (os.environ.get(key) for key in ('CI_COMMIT_SHA', 'EXPECTED_BASELINE', 'CI_PIPELINE_SOURCE'))
+        # GitLab always selects every family; an affected-input omission cannot
+        # acquire authority through another provider's event names.
+        event = 'gitlab:' + (event or 'unknown')
+    else:
+        head, baseline, event = (os.environ.get(key) for key in ('GITHUB_SHA', 'EXPECTED_BASELINE', 'GITHUB_EVENT_NAME'))
     if args.operation == 'plan':
         plan = capture(ROOT, head, baseline, event, mode)
         write(args.plan, plan)
-        with open(os.environ['GITHUB_OUTPUT'], 'a') as stream:
-            stream.write('frontend=' + str(plan['frontend']).lower() + '\n')
+        write_selection(plan['frontend'])
         return
     plan = verify_plan(load(args.plan), ROOT, head, baseline, event, mode)
     if args.consumer_platform and not plan['frontend'] and (args.operation == 'select' or
@@ -85,14 +103,12 @@ def main():
             write(args.selection, selected)
         if args.operation == 'select':
             selected = load(args.selection)
-            with open(os.environ['GITHUB_OUTPUT'], 'a') as stream:
-                stream.write('frontend=' + str(selected['frontend']).lower() + '\n')
+            write_selection(selected['frontend'])
         return
     if args.operation == 'select':
         selected = continuity().select(ROOT, plan)
         write(args.selection, selected)
-        with open(os.environ['GITHUB_OUTPUT'], 'a') as stream:
-            stream.write('frontend=' + str(selected['frontend']).lower() + '\n')
+        write_selection(selected['frontend'])
         return
     selected, proof = plan['frontend'], None
     if args.accepted_proof:

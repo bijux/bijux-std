@@ -67,7 +67,12 @@ class ExecutionDeclarationTests(unittest.TestCase):
 
     def test_local_nonworkflow_runs_keep_existing_artifact_layout(self):
         os.environ.clear()
-        with patch.object(CONTROLLERS, 'load', side_effect=AssertionError('Unexpected admission import')):
+        native_context = CONTROLLERS.load('ci_context')
+        def local_import(name):
+            if name == 'ci_context':
+                return native_context
+            raise AssertionError('Unexpected admission import')
+        with patch.object(CONTROLLERS, 'load', side_effect=local_import):
             self.assertIsNone(self.declare())
         self.assertFalse((self.folder / 'execution.json').exists())
 
@@ -153,7 +158,8 @@ class RecoverySelectionTests(unittest.TestCase):
             guard = Mock()
             with patch.object(CONTROLLERS, 'ARTIFACTS', folder), patch.dict(os.environ,
                     {'GITHUB_REPOSITORY': 'bijux/bijux-std', 'GITHUB_RUN_ATTEMPT': '2'}, clear=True), \
-                    patch.object(CONTROLLERS, 'load', return_value=SimpleNamespace(verify_producer_envelope=guard)):
+                    patch.object(CONTROLLERS, 'load', return_value=SimpleNamespace(
+                        gitlab=lambda: False, verify_producer_envelope=guard)):
                 self.assertTrue(CONTROLLERS.retained_producer())
                 guard.assert_not_called()
                 (folder / 'producer-envelope.json').write_text('{"workflow_attempt":"2"}')

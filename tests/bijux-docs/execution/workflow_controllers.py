@@ -49,6 +49,10 @@ def load(name: str):
 
 
 def recovery() -> bool:
+    context = load('ci_context')
+    if context.gitlab():
+        context.execution_identity()
+        return False
     if os.environ.get('GITHUB_REPOSITORY') != 'bijux/bijux-std':
         return False
     attempt = os.environ.get('GITHUB_RUN_ATTEMPT', '1')
@@ -73,6 +77,7 @@ def retained_producer() -> bool:
 
 
 def collect(stage: str, *, caller=None):
+    load('ci_context').refuse_retained_proof()
     require(recovery(), 'Retained inputs require an owning-repository recovery execution')
     collection = load('workflow_collection')
     token = os.environ.get('GH_TOKEN')
@@ -99,7 +104,9 @@ def producer_record(producer: dict) -> dict:
     path = ARTIFACTS / 'producer-envelope.json'
     data = path.read_bytes()
     require(json.loads(data) == producer, 'Physical producer envelope differs from verified input')
-    return {key: producer[key] for key in ('source_head', 'workflow_run_id', 'workflow_attempt', 'artifact_digests')} | {
+    context = load('ci_context')
+    identity_keys = ('ci_context',) if context.gitlab() else ('workflow_run_id', 'workflow_attempt')
+    return {key: producer[key] for key in ('source_head', *identity_keys, 'artifact_digests')} | {
         'envelope_sha256': hashlib.sha256(data).hexdigest()}
 
 
@@ -125,7 +132,9 @@ def require_collection(collection) -> None:
 
 def record_execution(folder: Path, role: str, producer: dict) -> dict | None:
     """Write a declaration after terminal-success; this never creates admission."""
-    if os.environ.get('GITHUB_RUN_ID') is None and os.environ.get('GITHUB_RUN_ATTEMPT') is None:
+    context = load('ci_context')
+    native = context.execution_identity() if context.gitlab() else None
+    if native is None and os.environ.get('GITHUB_RUN_ID') is None and os.environ.get('GITHUB_RUN_ATTEMPT') is None:
         return None
     require(isinstance(role, str) and re.fullmatch(r'[a-z][a-z0-9-]*', role) is not None,
             'Canonical controller role is required')
@@ -144,16 +153,22 @@ def record_execution(folder: Path, role: str, producer: dict) -> dict | None:
     if spec['subtree'] is not None:
         owner /= spec['subtree']
     require(folder.absolute() == owner.absolute(), 'Execution declaration differs from canonical role destination')
-    run, attempt = os.environ.get('GITHUB_RUN_ID'), os.environ.get('GITHUB_RUN_ATTEMPT')
-    require(isinstance(run, str) and re.fullmatch(r'[1-9][0-9]*', run) is not None
-            and isinstance(attempt, str) and re.fullmatch(r'[1-9][0-9]*', attempt) is not None,
-            'Actual workflow execution identity is required')
     head = subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=ROOT, text=True).strip()
     require(producer.get('source_head') == head, 'Producer does not bind this executor source')
-    require(producer.get('workflow_run_id') == run, 'Producer does not bind this workflow run')
-    require(isinstance(producer.get('workflow_attempt'), str)
-            and re.fullmatch(r'[1-9][0-9]*', producer['workflow_attempt']) is not None
-            and int(producer['workflow_attempt']) <= int(attempt), 'Producer attempt is invalid or newer than executor')
+    if native is not None:
+        context.verify_workflow(producer.get('ci_context'))
+        require(native['commit_sha'] == head, 'GitLab executor checkout differs from native commit identity')
+        executor_identity = {'ci_context': native}
+    else:
+        run, attempt = os.environ.get('GITHUB_RUN_ID'), os.environ.get('GITHUB_RUN_ATTEMPT')
+        require(isinstance(run, str) and re.fullmatch(r'[1-9][0-9]*', run) is not None
+                and isinstance(attempt, str) and re.fullmatch(r'[1-9][0-9]*', attempt) is not None,
+                'Actual workflow execution identity is required')
+        require(producer.get('workflow_run_id') == run, 'Producer does not bind this workflow run')
+        require(isinstance(producer.get('workflow_attempt'), str)
+                and re.fullmatch(r'[1-9][0-9]*', producer['workflow_attempt']) is not None
+                and int(producer['workflow_attempt']) <= int(attempt), 'Producer attempt is invalid or newer than executor')
+        executor_identity = {'workflow_run_id': run, 'workflow_attempt': attempt}
     require(folder.resolve().is_relative_to(ARTIFACTS.resolve()), 'Execution declaration belongs under owned artifacts')
     require(folder.absolute().is_relative_to(ARTIFACTS.absolute()), 'Execution path must belong to the canonical artifact tree')
     for ancestor in (folder, *folder.parents):
@@ -163,7 +178,7 @@ def record_execution(folder: Path, role: str, producer: dict) -> dict | None:
     target = folder / 'execution.json'
     require(not target.exists() and not target.is_symlink(), 'Preserve existing execution declaration')
     record = {'schema': 1, 'executor': {'role': role, 'source_head': head,
-              'workflow_run_id': run, 'workflow_attempt': attempt},
+              **executor_identity},
               'producer': producer_record(producer), 'files_sha256': file_hashes(folder)}
     descriptor = os.open(target, os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW, 0o644)
     with os.fdopen(descriptor, 'w') as stream:
