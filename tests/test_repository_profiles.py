@@ -96,6 +96,8 @@ class RepositoryProfileTests(unittest.TestCase):
 
     def test_ontology_sync_preserves_authored_product_ci_and_tracks_profile_checksums(self):
         manifest = json.loads((ROOT / '.github/standards/repo-config.manifest.json').read_text())
+        ontology = next(entry for entry in manifest['repositories'] if entry['name'] == 'bijux-ontology')
+        self.assertEqual(ontology['workflow_execution_policy'].get('main_verification'), 'existing-events')
         with tempfile.TemporaryDirectory(dir=ROOT / 'artifacts') as directory:
             consumer = Path(directory)
             workflow = consumer / '.github/workflows/verify.yml'

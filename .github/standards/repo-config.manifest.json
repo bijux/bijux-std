@@ -5592,7 +5592,8 @@
         "schema": 1,
         "dependency_pull_requests": "notification-only",
         "dependency_merge": "owner-consolidation",
-        "publication_entrypoints": {}
+        "publication_entrypoints": {},
+        "main_verification": "existing-events"
       }
     }
   ]
