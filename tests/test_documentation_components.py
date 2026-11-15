@@ -249,6 +249,52 @@ class DocumentationComponentTests(unittest.TestCase):
         self.assertEqual(before, marker.read_bytes())
         self.assertIn("passed against both exact accepted component sources", result.stdout)
 
+    def test_prior_documentation_guard_is_admitted_from_its_own_source(self):
+        relative = "shared/bijux-docs/tooling/scripts/verify_bijux_docs_source_of_truth.sh"
+        self.git(self.source, "checkout", "-q", "--detach", self.docs_sha)
+        try:
+            guard = self.source / relative
+            body = guard.read_bytes()
+            start = body.index(b"# A declared documentation component")
+            end = body.index(b"fi\n\n", start) + len(b"fi\n\n")
+            guard.write_bytes(body[:start] + body[end:])
+            self.manifest(self.source / "shared")
+            self.git(self.source, "add", "shared")
+            self.git(self.source, "commit", "-qm", "test(docs): retain accepted prior guard")
+            legacy_sha = self.git(self.source, "rev-parse", "HEAD").stdout.strip()
+            self.git(self.source, "branch", "accepted-prior-guard", legacy_sha)
+        finally:
+            self.git(self.source, "checkout", "-q", "--detach", self.std_sha)
+
+        legacy_source = self.base / "accepted-prior-documentation"
+        self.git(self.base, "clone", "-q", str(self.source), str(legacy_source))
+        self.git(legacy_source, "remote", "set-url", "origin", "https://github.com/bijux/bijux-std.git")
+        self.git(legacy_source, "checkout", "-q", "--detach", legacy_sha)
+        shared = self.consumer / ".bijux/shared"
+        shutil.rmtree(shared / "bijux-docs")
+        shutil.copytree(legacy_source / "shared/bijux-docs", shared / "bijux-docs")
+        (self.consumer / ".github/standards/bijux-docs.sha").write_text(legacy_sha + "\n")
+        self.manifest(shared)
+        self.commit(self.consumer)
+        scripts = shared / "bijux-docs/tooling/scripts"
+        env = dict(self.env, BIJUX_STD_ROOT=str(legacy_source), BIJUX_STD_REF=legacy_sha)
+        for name in ("project_bijux_docs.py", "sync_mkdocs_hub.py"):
+            result = subprocess.run(
+                ["bash", "-c", 'set -e; source "$1/docs_source_authority.sh"; verify_docs_authority "$2" "$3"; "$4" "$1/$5" "$2" "$3"',
+                 "fixture", str(scripts), str(self.consumer), str(scripts.parents[1]), sys.executable, name],
+                env=env, capture_output=True, text=True,
+            )
+            self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.commit(self.consumer)
+        projection = self.consumer / ".bijux/docs-projection.json"
+        before = projection.read_bytes()
+
+        result = self.run_guard()
+
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertIn("passed against both exact accepted component sources", result.stdout)
+        self.assertEqual(projection.read_bytes(), before)
+
     def test_python_only_installed_profile_is_complete(self):
         shutil.rmtree(self.consumer / ".bijux/shared/bijux-makes-rs")
         self.manifest(self.consumer / ".bijux/shared")
