@@ -8,6 +8,8 @@ import subprocess
 import sys
 from pathlib import Path
 import unittest
+from types import ModuleType
+from unittest.mock import patch
 
 ROOT=Path(__file__).resolve().parents[2]
 
@@ -17,6 +19,20 @@ def module(path,name):
 
 
 class PublicationDeliveryTests(unittest.TestCase):
+    def test_entrypoint_loads_its_owned_modules_without_rebinding_documentation_publication(self):
+        foreign = ModuleType('publication')
+        foreign.__file__ = str(ROOT / 'shared/bijux-docs/tooling/quality/publication/__init__.py')
+        previous_path = list(sys.path)
+        with patch.dict(sys.modules, {'publication': foreign}):
+            try:
+                cli = module(ROOT / 'shared/bijux-gitlab/publication/cli.py', 'isolated_publication_cli')
+            except ImportError as error:
+                self.fail(f'The entrypoint must load its own modules despite a documentation package: {error}')
+            for name in ('admission', 'coordinator', 'github', 'refs'):
+                self.assertEqual(Path(getattr(cli, name).__file__), ROOT / f'shared/bijux-gitlab/publication/{name}.py')
+            self.assertIs(sys.modules['publication'], foreign)
+        self.assertEqual(sys.path, previous_path)
+
     def test_publication_uses_a_child_bridge_after_completed_report(self):
         pipeline=module(ROOT/'shared/bijux-gitlab/pipeline.py','delivery_pipeline')
         result=pipeline.compose(ROOT)

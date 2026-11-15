@@ -16,6 +16,8 @@ Repository changes are recorded by pull request or merge request, newest first.
 - Select the reusable GitLab capability explicitly for IaC adoption and document
   publisher configuration, credential rotation and retained evidence. Product
   package releases and automatic tag publication remain outside this contract.
+- Load the publisher's adjacent source modules independently of documentation
+  tooling so complete contract discovery cannot rebind its publication package.
 
 ### [!1](https://gitlab.com/bijux-oss/bijux-std/-/merge_requests/1) — Canonical GitLab standards preparation
 

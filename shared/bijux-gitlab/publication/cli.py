@@ -11,12 +11,20 @@ import sys
 import tempfile
 import uuid
 import re
+from types import ModuleType
 from urllib.error import HTTPError, URLError
 from urllib.request import ProxyHandler, Request, build_opener
 
-if not __package__:
-    sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-from publication import admission, coordinator, github, refs
+def owned_module(name):
+    path = Path(__file__).resolve().with_name(name + '.py')
+    result = ModuleType('bijux_gitlab_publication_' + name)
+    result.__file__ = str(path)
+    exec(compile(path.read_bytes(), str(path), 'exec'), result.__dict__)
+    return result
+
+
+admission, coordinator, github, refs = (
+    owned_module(name) for name in ('admission', 'coordinator', 'github', 'refs'))
 
 GITLAB_HOST_KEY = 'gitlab.com ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIAfuCHKVTjquxvt6CM6tdG4SLp1Btn/nOeHHE5UOzRdf\n'
 MIRRORS = {88949531: 'bijux/bijux-std', 88950131: 'bijux/bijux-iac'}
