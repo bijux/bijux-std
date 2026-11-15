@@ -2,6 +2,16 @@
 
 Repository changes are recorded by pull request or merge request, newest first.
 
+### [!5](https://gitlab.com/bijux-oss/bijux-std/-/merge_requests/5) — Qualified Python tooling baseline
+
+- Qualify OpenAPI Generator CLI 2.42.1 and Redocly 2.77.0 consistently in the
+  Python configuration policy and both maintained Node bootstrap defaults.
+- Keep deterministic bootstrap behavior and regenerate shared runtime integrity
+  records so products can consume their reviewed dependency proposals.
+- Use the ambient Python interpreter for root governance when the named Python
+  3.11 executable is absent, matching package interpreter discovery and preserving
+  explicit caller overrides.
+
 ### [!4](https://gitlab.com/bijux-oss/bijux-std/-/merge_requests/4) — Canon workspace and Java action
 
 - Verify the twelve real Canon distributions without an artificial repository wheel.
