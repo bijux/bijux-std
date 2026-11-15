@@ -2,6 +2,12 @@
 
 Repository changes are recorded by pull request or merge request, newest first.
 
+### [!4](https://gitlab.com/bijux-oss/bijux-std/-/merge_requests/4) — Canon workspace and Java action
+
+- Verify the twelve real Canon distributions without an artificial repository wheel.
+- Pin shared Java setup declarations to the reviewed 6.2.0 action commit.
+- Regenerate source provenance and managed checksums for consumer adoption.
+
 ### [!3](https://gitlab.com/bijux-oss/bijux-std/-/merge_requests/3) — Reviewed Rust installer action
 
 - Pin Core and Genomics installer steps to the reviewed taiki-e/install-action
