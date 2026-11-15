@@ -16,6 +16,8 @@ Repository changes are recorded by pull request or merge request, newest first.
   coverage of complete discovery before accepting the validation report.
 - Add a canonical-branch internal CI runtime builder with ephemeral registry
   authentication and digest receipts, preserving existing browser/runtime gates.
+- Make runtime mutation fixtures independent of filesystem timestamp resolution
+  while retaining the production observation checks.
 - Preserve GitHub execution compatibility and imported commit history while
   keeping authority cutover and automated mirror publication gated on hosted
   qualification and restricted publication credentials.

@@ -190,10 +190,14 @@ class RuntimeObservationTests(unittest.TestCase):
     def test_target_change_after_open_is_rejected(self):
         target = self.root / "external.py"
         target.write_text("value=1")
+        initial = target.stat()
         original = runtime.os.open
         def changed(path, flags):
             descriptor = original(path, flags)
             target.write_text("value=2")
+            # Same-size writes can share timestamps on coarse-resolution filesystems.
+            runtime.os.utime(target, ns=(initial.st_atime_ns, initial.st_mtime_ns + 1_000_000_000))
+            self.assertNotEqual(target.stat().st_mtime_ns, initial.st_mtime_ns)
             return descriptor
         with patch.object(runtime.os, "open", side_effect=changed):
             with self.assertRaises(runtime.RuntimeObservationError):
