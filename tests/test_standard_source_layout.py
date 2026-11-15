@@ -11,7 +11,7 @@ HELPER = ROOT / "shared/bijux-checks/scripts/standard-source-layout.sh"
 
 
 class StandardSourceLayoutTests(unittest.TestCase):
-    def classify(self, remote: str, *, layout: str = "source") -> int:
+    def classify(self, remote: str, *, layout: str = "source", runner_transport=False, additional_remote=None) -> int:
         owner = ROOT / "artifacts/tests/source-layout"
         owner.mkdir(parents=True, exist_ok=True)
         with tempfile.TemporaryDirectory(dir=owner) as directory:
@@ -22,6 +22,13 @@ class StandardSourceLayoutTests(unittest.TestCase):
                 ["git", "-C", str(root), "remote", "add", "origin", remote],
                 check=True,
             )
+            if runner_transport:
+                subprocess.run(["git", "-C", str(root), "config",
+                    "url.https://gitlab-ci-token:fixture@gitlab.com/.insteadOf",
+                    "https://gitlab.com/"], check=True)
+            if additional_remote is not None:
+                subprocess.run(["git", "-C", str(root), "config", "--add",
+                                "remote.origin.url", additional_remote], check=True)
             if layout != "consumer":
                 (root / "shared").mkdir()
                 if layout != "missing-checks":
@@ -62,6 +69,17 @@ class StandardSourceLayoutTests(unittest.TestCase):
         ):
             with self.subTest(remote=remote):
                 self.assertEqual(self.classify(remote), 0)
+
+    def test_runner_transport_rewrite_does_not_change_configured_source_identity(self):
+        self.assertEqual(self.classify("https://gitlab.com/bijux-oss/bijux-std.git", runner_transport=True), 0)
+        self.assertNotEqual(self.classify("https://gitlab.com/bijux/bijux-std.git", runner_transport=True), 0)
+
+    def test_multiple_configured_origins_are_ambiguous_even_when_one_is_canonical(self):
+        canonical = "https://gitlab.com/bijux-oss/bijux-std.git"
+        mirror = "https://gitlab.com/bijux/bijux-std.git"
+        for first, second in ((mirror, canonical), (canonical, mirror), (canonical, canonical), (canonical, "")):
+            with self.subTest(first=first, second=second):
+                self.assertNotEqual(self.classify(first, additional_remote=second), 0)
 
     def test_mirrors_unrelated_repositories_and_lookalike_urls_are_not_sources(self):
         for remote in (
