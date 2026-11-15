@@ -160,3 +160,34 @@ unrelated MR, missing approval, direct main push, squash/rebase substitution or
 mismatched head cannot establish this admission. Tag/release authorization and
 unsupported manual/scheduled review contexts fail explicitly. Every successful
 policy receipt still records `publication_authorization: false`.
+
+
+## Internal CI runtime construction
+
+Push and web pipelines on `ci/gitlab-runtime` select `ci/runtime.yml`; all
+merge requests, including those from that branch, retain the full standards
+include. Other refs retain the standards include. Only canonical project 88948041 push or explicit web
+pipelines on that exact branch may build the project-internal `ci-runtime`
+image. Merge requests, publication mirrors and other destinations are refused.
+
+The Dockerfile inherits the existing immutable Playwright image and installs
+only the system packages already required by the native pipeline. No tests,
+source checkout, locks, credentials or product outputs are copied into it.
+The builder follows [GitLab's rootless BuildKit workflow](https://docs.gitlab.com/ci/docker/using_buildkit/),
+using an immutable official `moby/buildkit` digest, no Docker service and no
+local or separately registered runner. Registry authentication uses only the
+ephemeral native job token. Its private config stays under artifacts, is removed
+by the exit trap, and is excluded from artifact uploads.
+
+Each build pushes a unique `job-<native job ID>` tag under the canonical
+project's `ci-runtime` repository and retains the actual image digest, builder
+identity, exact source SHA and Dockerfile/script hashes. Consumers must pin the
+verified immutable digest after an independent registry read-back. Building
+this image does not change frontend parallelism, timing limits, profile
+approvals or validation evidence, and is not a product release.
+
+`runtime/image.lock.json` binds the verified image digest to its Dockerfile,
+build script and canonical native builder. The composer checks those source
+hashes and uses the prepared image for frontend jobs, which begin without
+repeating system-package installation. Node, Python environments and fixture
+archives retain their job-owned installation or provenance checks.

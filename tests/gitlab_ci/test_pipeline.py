@@ -1,7 +1,9 @@
 from pathlib import Path
 import importlib.util
 import json
+import shutil
 import subprocess
+import tempfile
 import unittest
 
 
@@ -74,6 +76,36 @@ class GitLabPipelineTests(unittest.TestCase):
         target = ROOT / "shared/bijux-gitlab/ci/standards.yml"
         self.assertTrue(target.is_file(), "Generated GitLab include is required")
         self.assertEqual(json.loads(target.read_text()), module.compose(ROOT))
+
+    def test_frontend_jobs_use_the_verified_prepared_runtime_without_system_installs(self):
+        module = self.module()
+        pipeline = module.compose(ROOT)
+        self.assertTrue(module.PLAYWRIGHT_IMAGE.startswith('registry.gitlab.com/bijux-oss/bijux-std/ci-runtime@sha256:'))
+        for name, contract in module.job_contracts(ROOT).items():
+            if contract['frontend']:
+                self.assertEqual(pipeline[name]['before_script'], [])
+                self.assertEqual(pipeline[name]['timeout'], '3 minutes')
+
+    def test_runtime_pin_rejects_changed_inputs_and_foreign_registry_or_builder(self):
+        module = self.module()
+        self.assertTrue(hasattr(module, 'runtime_image'), 'Runtime image pins must bind their verified recipe')
+        with tempfile.TemporaryDirectory(dir=ROOT / 'artifacts') as directory:
+            root = Path(directory)
+            target = root / 'shared/bijux-gitlab/runtime'
+            shutil.copytree(ROOT / 'shared/bijux-gitlab/runtime', target)
+            lock = target / 'image.lock.json'
+            original = json.loads(lock.read_text())
+            self.assertEqual(module.runtime_image(root), module.PLAYWRIGHT_IMAGE)
+            for changes in ({'image':'registry.example.invalid/other@sha256:' + 'a' * 64},
+                            {'dockerfile_sha256':'a' * 64}, {'build_script_sha256':'b' * 64},
+                            {'builder':{**original['builder'],'project_id':1}},
+                            {'builder':{**original['builder'],'job_id':True}}):
+                lock.write_text(json.dumps({**original, **changes}))
+                with self.subTest(changes=changes), self.assertRaises(ValueError):
+                    module.runtime_image(root)
+            lock.write_text(json.dumps(original))
+            (target / 'Dockerfile').write_text((target / 'Dockerfile').read_text() + '\n# changed recipe\n')
+            with self.assertRaises(ValueError): module.runtime_image(root)
 
     def test_gitlab_package_is_governed_and_explicitly_selected(self):
         resolver = ROOT / "shared/bijux-checks/scripts/resolve-shared-directories.sh"

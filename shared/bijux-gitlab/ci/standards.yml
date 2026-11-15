@@ -49,11 +49,9 @@
   },
   "std / input plan": {
     "stage": "planning",
-    "image": "mcr.microsoft.com/playwright@sha256:6446946a1d9fd62d9ae501312a2d76a43ee688542b21622056a372959b65d63d",
+    "image": "registry.gitlab.com/bijux-oss/bijux-std/ci-runtime@sha256:33fdff28a20a70fda96b0171e6cc3c03400bcfb2041b515cac106acf9eeca34a",
     "timeout": "20 minutes",
-    "before_script": [
-      "apt-get update && apt-get install --yes --no-install-recommends python3 python3-venv python3-yaml git make curl ca-certificates perl shellcheck xz-utils jq"
-    ],
+    "before_script": [],
     "script": [
       "python3 -B shared/bijux-gitlab/execute.py --job 'std / input plan'"
     ],
@@ -202,11 +200,9 @@
   },
   "policy / canonical review": {
     "stage": "validation",
-    "image": "mcr.microsoft.com/playwright@sha256:6446946a1d9fd62d9ae501312a2d76a43ee688542b21622056a372959b65d63d",
+    "image": "registry.gitlab.com/bijux-oss/bijux-std/ci-runtime@sha256:33fdff28a20a70fda96b0171e6cc3c03400bcfb2041b515cac106acf9eeca34a",
     "timeout": "20 minutes",
-    "before_script": [
-      "apt-get update && apt-get install --yes --no-install-recommends python3 python3-venv python3-yaml git make curl ca-certificates perl shellcheck xz-utils jq"
-    ],
+    "before_script": [],
     "script": [
       "python3 -B shared/bijux-gitlab/execute.py --job 'policy / canonical review'"
     ],
@@ -221,11 +217,9 @@
   },
   "std / catalogue source": {
     "stage": "validation",
-    "image": "mcr.microsoft.com/playwright@sha256:6446946a1d9fd62d9ae501312a2d76a43ee688542b21622056a372959b65d63d",
+    "image": "registry.gitlab.com/bijux-oss/bijux-std/ci-runtime@sha256:33fdff28a20a70fda96b0171e6cc3c03400bcfb2041b515cac106acf9eeca34a",
     "timeout": "3 minutes",
-    "before_script": [
-      "apt-get update && apt-get install --yes --no-install-recommends python3 python3-venv python3-yaml git make curl ca-certificates perl shellcheck xz-utils jq"
-    ],
+    "before_script": [],
     "script": [
       "python3 -B shared/bijux-gitlab/execute.py --job 'std / catalogue source'"
     ],
@@ -243,11 +237,9 @@
   },
   "std / catalogue renderer": {
     "stage": "validation",
-    "image": "mcr.microsoft.com/playwright@sha256:6446946a1d9fd62d9ae501312a2d76a43ee688542b21622056a372959b65d63d",
+    "image": "registry.gitlab.com/bijux-oss/bijux-std/ci-runtime@sha256:33fdff28a20a70fda96b0171e6cc3c03400bcfb2041b515cac106acf9eeca34a",
     "timeout": "3 minutes",
-    "before_script": [
-      "apt-get update && apt-get install --yes --no-install-recommends python3 python3-venv python3-yaml git make curl ca-certificates perl shellcheck xz-utils jq"
-    ],
+    "before_script": [],
     "script": [
       "python3 -B shared/bijux-gitlab/execute.py --job 'std / catalogue renderer'"
     ],
@@ -266,11 +258,9 @@
   },
   "std / catalogue typed-entrypoint": {
     "stage": "validation",
-    "image": "mcr.microsoft.com/playwright@sha256:6446946a1d9fd62d9ae501312a2d76a43ee688542b21622056a372959b65d63d",
+    "image": "registry.gitlab.com/bijux-oss/bijux-std/ci-runtime@sha256:33fdff28a20a70fda96b0171e6cc3c03400bcfb2041b515cac106acf9eeca34a",
     "timeout": "3 minutes",
-    "before_script": [
-      "apt-get update && apt-get install --yes --no-install-recommends python3 python3-venv python3-yaml git make curl ca-certificates perl shellcheck xz-utils jq"
-    ],
+    "before_script": [],
     "script": [
       "python3 -B shared/bijux-gitlab/execute.py --job 'std / catalogue typed-entrypoint'"
     ],
@@ -290,11 +280,9 @@
   },
   "std / catalogue tracked-entrypoint": {
     "stage": "validation",
-    "image": "mcr.microsoft.com/playwright@sha256:6446946a1d9fd62d9ae501312a2d76a43ee688542b21622056a372959b65d63d",
+    "image": "registry.gitlab.com/bijux-oss/bijux-std/ci-runtime@sha256:33fdff28a20a70fda96b0171e6cc3c03400bcfb2041b515cac106acf9eeca34a",
     "timeout": "3 minutes",
-    "before_script": [
-      "apt-get update && apt-get install --yes --no-install-recommends python3 python3-venv python3-yaml git make curl ca-certificates perl shellcheck xz-utils jq"
-    ],
+    "before_script": [],
     "script": [
       "python3 -B shared/bijux-gitlab/execute.py --job 'std / catalogue tracked-entrypoint'"
     ],
@@ -315,11 +303,9 @@
   },
   "std / publication commands": {
     "stage": "validation",
-    "image": "mcr.microsoft.com/playwright@sha256:6446946a1d9fd62d9ae501312a2d76a43ee688542b21622056a372959b65d63d",
+    "image": "registry.gitlab.com/bijux-oss/bijux-std/ci-runtime@sha256:33fdff28a20a70fda96b0171e6cc3c03400bcfb2041b515cac106acf9eeca34a",
     "timeout": "3 minutes",
-    "before_script": [
-      "apt-get update && apt-get install --yes --no-install-recommends python3 python3-venv python3-yaml git make curl ca-certificates perl shellcheck xz-utils jq"
-    ],
+    "before_script": [],
     "script": [
       "python3 -B shared/bijux-gitlab/execute.py --job 'std / publication commands'"
     ],
@@ -337,11 +323,9 @@
   },
   "std / renderer controls / renderer": {
     "stage": "validation",
-    "image": "mcr.microsoft.com/playwright@sha256:6446946a1d9fd62d9ae501312a2d76a43ee688542b21622056a372959b65d63d",
+    "image": "registry.gitlab.com/bijux-oss/bijux-std/ci-runtime@sha256:33fdff28a20a70fda96b0171e6cc3c03400bcfb2041b515cac106acf9eeca34a",
     "timeout": "3 minutes",
-    "before_script": [
-      "apt-get update && apt-get install --yes --no-install-recommends python3 python3-venv python3-yaml git make curl ca-certificates perl shellcheck xz-utils jq"
-    ],
+    "before_script": [],
     "script": [
       "python3 -B shared/bijux-gitlab/execute.py --job 'std / renderer controls / renderer'"
     ],
@@ -359,11 +343,9 @@
   },
   "std / renderer controls / passive-reader": {
     "stage": "validation",
-    "image": "mcr.microsoft.com/playwright@sha256:6446946a1d9fd62d9ae501312a2d76a43ee688542b21622056a372959b65d63d",
+    "image": "registry.gitlab.com/bijux-oss/bijux-std/ci-runtime@sha256:33fdff28a20a70fda96b0171e6cc3c03400bcfb2041b515cac106acf9eeca34a",
     "timeout": "3 minutes",
-    "before_script": [
-      "apt-get update && apt-get install --yes --no-install-recommends python3 python3-venv python3-yaml git make curl ca-certificates perl shellcheck xz-utils jq"
-    ],
+    "before_script": [],
     "script": [
       "python3 -B shared/bijux-gitlab/execute.py --job 'std / renderer controls / passive-reader'"
     ],
@@ -381,11 +363,9 @@
   },
   "std / renderer controls / interactive-reports": {
     "stage": "validation",
-    "image": "mcr.microsoft.com/playwright@sha256:6446946a1d9fd62d9ae501312a2d76a43ee688542b21622056a372959b65d63d",
+    "image": "registry.gitlab.com/bijux-oss/bijux-std/ci-runtime@sha256:33fdff28a20a70fda96b0171e6cc3c03400bcfb2041b515cac106acf9eeca34a",
     "timeout": "3 minutes",
-    "before_script": [
-      "apt-get update && apt-get install --yes --no-install-recommends python3 python3-venv python3-yaml git make curl ca-certificates perl shellcheck xz-utils jq"
-    ],
+    "before_script": [],
     "script": [
       "python3 -B shared/bijux-gitlab/execute.py --job 'std / renderer controls / interactive-reports'"
     ],
@@ -403,11 +383,9 @@
   },
   "std / renderer controls / interactive-make-dispatch": {
     "stage": "validation",
-    "image": "mcr.microsoft.com/playwright@sha256:6446946a1d9fd62d9ae501312a2d76a43ee688542b21622056a372959b65d63d",
+    "image": "registry.gitlab.com/bijux-oss/bijux-std/ci-runtime@sha256:33fdff28a20a70fda96b0171e6cc3c03400bcfb2041b515cac106acf9eeca34a",
     "timeout": "3 minutes",
-    "before_script": [
-      "apt-get update && apt-get install --yes --no-install-recommends python3 python3-venv python3-yaml git make curl ca-certificates perl shellcheck xz-utils jq"
-    ],
+    "before_script": [],
     "script": [
       "python3 -B shared/bijux-gitlab/execute.py --job 'std / renderer controls / interactive-make-dispatch'"
     ],
@@ -425,11 +403,9 @@
   },
   "std / renderer controls / interactive-make-refusal": {
     "stage": "validation",
-    "image": "mcr.microsoft.com/playwright@sha256:6446946a1d9fd62d9ae501312a2d76a43ee688542b21622056a372959b65d63d",
+    "image": "registry.gitlab.com/bijux-oss/bijux-std/ci-runtime@sha256:33fdff28a20a70fda96b0171e6cc3c03400bcfb2041b515cac106acf9eeca34a",
     "timeout": "3 minutes",
-    "before_script": [
-      "apt-get update && apt-get install --yes --no-install-recommends python3 python3-venv python3-yaml git make curl ca-certificates perl shellcheck xz-utils jq"
-    ],
+    "before_script": [],
     "script": [
       "python3 -B shared/bijux-gitlab/execute.py --job 'std / renderer controls / interactive-make-refusal'"
     ],
@@ -447,11 +423,9 @@
   },
   "std / renderer controls / interactive-make-docs": {
     "stage": "validation",
-    "image": "mcr.microsoft.com/playwright@sha256:6446946a1d9fd62d9ae501312a2d76a43ee688542b21622056a372959b65d63d",
+    "image": "registry.gitlab.com/bijux-oss/bijux-std/ci-runtime@sha256:33fdff28a20a70fda96b0171e6cc3c03400bcfb2041b515cac106acf9eeca34a",
     "timeout": "3 minutes",
-    "before_script": [
-      "apt-get update && apt-get install --yes --no-install-recommends python3 python3-venv python3-yaml git make curl ca-certificates perl shellcheck xz-utils jq"
-    ],
+    "before_script": [],
     "script": [
       "python3 -B shared/bijux-gitlab/execute.py --job 'std / renderer controls / interactive-make-docs'"
     ],
@@ -469,11 +443,9 @@
   },
   "std / renderer controls / interactive-make-docs-check": {
     "stage": "validation",
-    "image": "mcr.microsoft.com/playwright@sha256:6446946a1d9fd62d9ae501312a2d76a43ee688542b21622056a372959b65d63d",
+    "image": "registry.gitlab.com/bijux-oss/bijux-std/ci-runtime@sha256:33fdff28a20a70fda96b0171e6cc3c03400bcfb2041b515cac106acf9eeca34a",
     "timeout": "3 minutes",
-    "before_script": [
-      "apt-get update && apt-get install --yes --no-install-recommends python3 python3-venv python3-yaml git make curl ca-certificates perl shellcheck xz-utils jq"
-    ],
+    "before_script": [],
     "script": [
       "python3 -B shared/bijux-gitlab/execute.py --job 'std / renderer controls / interactive-make-docs-check'"
     ],
@@ -491,11 +463,9 @@
   },
   "std / navigation fixtures": {
     "stage": "fixtures",
-    "image": "mcr.microsoft.com/playwright@sha256:6446946a1d9fd62d9ae501312a2d76a43ee688542b21622056a372959b65d63d",
+    "image": "registry.gitlab.com/bijux-oss/bijux-std/ci-runtime@sha256:33fdff28a20a70fda96b0171e6cc3c03400bcfb2041b515cac106acf9eeca34a",
     "timeout": "3 minutes",
-    "before_script": [
-      "apt-get update && apt-get install --yes --no-install-recommends python3 python3-venv python3-yaml git make curl ca-certificates perl shellcheck xz-utils jq"
-    ],
+    "before_script": [],
     "script": [
       "python3 -B shared/bijux-gitlab/execute.py --job 'std / navigation fixtures'"
     ],
@@ -519,11 +489,9 @@
   },
   "std / navigation navigation-links / chromium": {
     "stage": "browsers",
-    "image": "mcr.microsoft.com/playwright@sha256:6446946a1d9fd62d9ae501312a2d76a43ee688542b21622056a372959b65d63d",
+    "image": "registry.gitlab.com/bijux-oss/bijux-std/ci-runtime@sha256:33fdff28a20a70fda96b0171e6cc3c03400bcfb2041b515cac106acf9eeca34a",
     "timeout": "3 minutes",
-    "before_script": [
-      "apt-get update && apt-get install --yes --no-install-recommends python3 python3-venv python3-yaml git make curl ca-certificates perl shellcheck xz-utils jq"
-    ],
+    "before_script": [],
     "script": [
       "python3 -B shared/bijux-gitlab/execute.py --job 'std / navigation navigation-links / chromium'"
     ],
@@ -541,11 +509,9 @@
   },
   "std / navigation navigation-links / firefox": {
     "stage": "browsers",
-    "image": "mcr.microsoft.com/playwright@sha256:6446946a1d9fd62d9ae501312a2d76a43ee688542b21622056a372959b65d63d",
+    "image": "registry.gitlab.com/bijux-oss/bijux-std/ci-runtime@sha256:33fdff28a20a70fda96b0171e6cc3c03400bcfb2041b515cac106acf9eeca34a",
     "timeout": "3 minutes",
-    "before_script": [
-      "apt-get update && apt-get install --yes --no-install-recommends python3 python3-venv python3-yaml git make curl ca-certificates perl shellcheck xz-utils jq"
-    ],
+    "before_script": [],
     "script": [
       "python3 -B shared/bijux-gitlab/execute.py --job 'std / navigation navigation-links / firefox'"
     ],
@@ -563,11 +529,9 @@
   },
   "std / navigation navigation-links / webkit": {
     "stage": "browsers",
-    "image": "mcr.microsoft.com/playwright@sha256:6446946a1d9fd62d9ae501312a2d76a43ee688542b21622056a372959b65d63d",
+    "image": "registry.gitlab.com/bijux-oss/bijux-std/ci-runtime@sha256:33fdff28a20a70fda96b0171e6cc3c03400bcfb2041b515cac106acf9eeca34a",
     "timeout": "3 minutes",
-    "before_script": [
-      "apt-get update && apt-get install --yes --no-install-recommends python3 python3-venv python3-yaml git make curl ca-certificates perl shellcheck xz-utils jq"
-    ],
+    "before_script": [],
     "script": [
       "python3 -B shared/bijux-gitlab/execute.py --job 'std / navigation navigation-links / webkit'"
     ],
@@ -585,11 +549,9 @@
   },
   "std / navigation navigation-phone / chromium": {
     "stage": "browsers",
-    "image": "mcr.microsoft.com/playwright@sha256:6446946a1d9fd62d9ae501312a2d76a43ee688542b21622056a372959b65d63d",
+    "image": "registry.gitlab.com/bijux-oss/bijux-std/ci-runtime@sha256:33fdff28a20a70fda96b0171e6cc3c03400bcfb2041b515cac106acf9eeca34a",
     "timeout": "3 minutes",
-    "before_script": [
-      "apt-get update && apt-get install --yes --no-install-recommends python3 python3-venv python3-yaml git make curl ca-certificates perl shellcheck xz-utils jq"
-    ],
+    "before_script": [],
     "script": [
       "python3 -B shared/bijux-gitlab/execute.py --job 'std / navigation navigation-phone / chromium'"
     ],
@@ -607,11 +569,9 @@
   },
   "std / navigation navigation-phone / firefox": {
     "stage": "browsers",
-    "image": "mcr.microsoft.com/playwright@sha256:6446946a1d9fd62d9ae501312a2d76a43ee688542b21622056a372959b65d63d",
+    "image": "registry.gitlab.com/bijux-oss/bijux-std/ci-runtime@sha256:33fdff28a20a70fda96b0171e6cc3c03400bcfb2041b515cac106acf9eeca34a",
     "timeout": "3 minutes",
-    "before_script": [
-      "apt-get update && apt-get install --yes --no-install-recommends python3 python3-venv python3-yaml git make curl ca-certificates perl shellcheck xz-utils jq"
-    ],
+    "before_script": [],
     "script": [
       "python3 -B shared/bijux-gitlab/execute.py --job 'std / navigation navigation-phone / firefox'"
     ],
@@ -629,11 +589,9 @@
   },
   "std / navigation navigation-phone / webkit": {
     "stage": "browsers",
-    "image": "mcr.microsoft.com/playwright@sha256:6446946a1d9fd62d9ae501312a2d76a43ee688542b21622056a372959b65d63d",
+    "image": "registry.gitlab.com/bijux-oss/bijux-std/ci-runtime@sha256:33fdff28a20a70fda96b0171e6cc3c03400bcfb2041b515cac106acf9eeca34a",
     "timeout": "3 minutes",
-    "before_script": [
-      "apt-get update && apt-get install --yes --no-install-recommends python3 python3-venv python3-yaml git make curl ca-certificates perl shellcheck xz-utils jq"
-    ],
+    "before_script": [],
     "script": [
       "python3 -B shared/bijux-gitlab/execute.py --job 'std / navigation navigation-phone / webkit'"
     ],
@@ -651,11 +609,9 @@
   },
   "std / navigation navigation-compact / chromium": {
     "stage": "browsers",
-    "image": "mcr.microsoft.com/playwright@sha256:6446946a1d9fd62d9ae501312a2d76a43ee688542b21622056a372959b65d63d",
+    "image": "registry.gitlab.com/bijux-oss/bijux-std/ci-runtime@sha256:33fdff28a20a70fda96b0171e6cc3c03400bcfb2041b515cac106acf9eeca34a",
     "timeout": "3 minutes",
-    "before_script": [
-      "apt-get update && apt-get install --yes --no-install-recommends python3 python3-venv python3-yaml git make curl ca-certificates perl shellcheck xz-utils jq"
-    ],
+    "before_script": [],
     "script": [
       "python3 -B shared/bijux-gitlab/execute.py --job 'std / navigation navigation-compact / chromium'"
     ],
@@ -673,11 +629,9 @@
   },
   "std / navigation navigation-compact / firefox": {
     "stage": "browsers",
-    "image": "mcr.microsoft.com/playwright@sha256:6446946a1d9fd62d9ae501312a2d76a43ee688542b21622056a372959b65d63d",
+    "image": "registry.gitlab.com/bijux-oss/bijux-std/ci-runtime@sha256:33fdff28a20a70fda96b0171e6cc3c03400bcfb2041b515cac106acf9eeca34a",
     "timeout": "3 minutes",
-    "before_script": [
-      "apt-get update && apt-get install --yes --no-install-recommends python3 python3-venv python3-yaml git make curl ca-certificates perl shellcheck xz-utils jq"
-    ],
+    "before_script": [],
     "script": [
       "python3 -B shared/bijux-gitlab/execute.py --job 'std / navigation navigation-compact / firefox'"
     ],
@@ -695,11 +649,9 @@
   },
   "std / navigation navigation-compact / webkit": {
     "stage": "browsers",
-    "image": "mcr.microsoft.com/playwright@sha256:6446946a1d9fd62d9ae501312a2d76a43ee688542b21622056a372959b65d63d",
+    "image": "registry.gitlab.com/bijux-oss/bijux-std/ci-runtime@sha256:33fdff28a20a70fda96b0171e6cc3c03400bcfb2041b515cac106acf9eeca34a",
     "timeout": "3 minutes",
-    "before_script": [
-      "apt-get update && apt-get install --yes --no-install-recommends python3 python3-venv python3-yaml git make curl ca-certificates perl shellcheck xz-utils jq"
-    ],
+    "before_script": [],
     "script": [
       "python3 -B shared/bijux-gitlab/execute.py --job 'std / navigation navigation-compact / webkit'"
     ],
@@ -717,11 +669,9 @@
   },
   "std / navigation navigation-desktop / chromium": {
     "stage": "browsers",
-    "image": "mcr.microsoft.com/playwright@sha256:6446946a1d9fd62d9ae501312a2d76a43ee688542b21622056a372959b65d63d",
+    "image": "registry.gitlab.com/bijux-oss/bijux-std/ci-runtime@sha256:33fdff28a20a70fda96b0171e6cc3c03400bcfb2041b515cac106acf9eeca34a",
     "timeout": "3 minutes",
-    "before_script": [
-      "apt-get update && apt-get install --yes --no-install-recommends python3 python3-venv python3-yaml git make curl ca-certificates perl shellcheck xz-utils jq"
-    ],
+    "before_script": [],
     "script": [
       "python3 -B shared/bijux-gitlab/execute.py --job 'std / navigation navigation-desktop / chromium'"
     ],
@@ -739,11 +689,9 @@
   },
   "std / navigation navigation-desktop / firefox": {
     "stage": "browsers",
-    "image": "mcr.microsoft.com/playwright@sha256:6446946a1d9fd62d9ae501312a2d76a43ee688542b21622056a372959b65d63d",
+    "image": "registry.gitlab.com/bijux-oss/bijux-std/ci-runtime@sha256:33fdff28a20a70fda96b0171e6cc3c03400bcfb2041b515cac106acf9eeca34a",
     "timeout": "3 minutes",
-    "before_script": [
-      "apt-get update && apt-get install --yes --no-install-recommends python3 python3-venv python3-yaml git make curl ca-certificates perl shellcheck xz-utils jq"
-    ],
+    "before_script": [],
     "script": [
       "python3 -B shared/bijux-gitlab/execute.py --job 'std / navigation navigation-desktop / firefox'"
     ],
@@ -761,11 +709,9 @@
   },
   "std / navigation navigation-desktop / webkit": {
     "stage": "browsers",
-    "image": "mcr.microsoft.com/playwright@sha256:6446946a1d9fd62d9ae501312a2d76a43ee688542b21622056a372959b65d63d",
+    "image": "registry.gitlab.com/bijux-oss/bijux-std/ci-runtime@sha256:33fdff28a20a70fda96b0171e6cc3c03400bcfb2041b515cac106acf9eeca34a",
     "timeout": "3 minutes",
-    "before_script": [
-      "apt-get update && apt-get install --yes --no-install-recommends python3 python3-venv python3-yaml git make curl ca-certificates perl shellcheck xz-utils jq"
-    ],
+    "before_script": [],
     "script": [
       "python3 -B shared/bijux-gitlab/execute.py --job 'std / navigation navigation-desktop / webkit'"
     ],
@@ -783,11 +729,9 @@
   },
   "std / navigation navigation-controls / chromium": {
     "stage": "browsers",
-    "image": "mcr.microsoft.com/playwright@sha256:6446946a1d9fd62d9ae501312a2d76a43ee688542b21622056a372959b65d63d",
+    "image": "registry.gitlab.com/bijux-oss/bijux-std/ci-runtime@sha256:33fdff28a20a70fda96b0171e6cc3c03400bcfb2041b515cac106acf9eeca34a",
     "timeout": "3 minutes",
-    "before_script": [
-      "apt-get update && apt-get install --yes --no-install-recommends python3 python3-venv python3-yaml git make curl ca-certificates perl shellcheck xz-utils jq"
-    ],
+    "before_script": [],
     "script": [
       "python3 -B shared/bijux-gitlab/execute.py --job 'std / navigation navigation-controls / chromium'"
     ],
@@ -805,11 +749,9 @@
   },
   "std / navigation navigation-controls / firefox": {
     "stage": "browsers",
-    "image": "mcr.microsoft.com/playwright@sha256:6446946a1d9fd62d9ae501312a2d76a43ee688542b21622056a372959b65d63d",
+    "image": "registry.gitlab.com/bijux-oss/bijux-std/ci-runtime@sha256:33fdff28a20a70fda96b0171e6cc3c03400bcfb2041b515cac106acf9eeca34a",
     "timeout": "3 minutes",
-    "before_script": [
-      "apt-get update && apt-get install --yes --no-install-recommends python3 python3-venv python3-yaml git make curl ca-certificates perl shellcheck xz-utils jq"
-    ],
+    "before_script": [],
     "script": [
       "python3 -B shared/bijux-gitlab/execute.py --job 'std / navigation navigation-controls / firefox'"
     ],
@@ -827,11 +769,9 @@
   },
   "std / navigation navigation-controls / webkit": {
     "stage": "browsers",
-    "image": "mcr.microsoft.com/playwright@sha256:6446946a1d9fd62d9ae501312a2d76a43ee688542b21622056a372959b65d63d",
+    "image": "registry.gitlab.com/bijux-oss/bijux-std/ci-runtime@sha256:33fdff28a20a70fda96b0171e6cc3c03400bcfb2041b515cac106acf9eeca34a",
     "timeout": "3 minutes",
-    "before_script": [
-      "apt-get update && apt-get install --yes --no-install-recommends python3 python3-venv python3-yaml git make curl ca-certificates perl shellcheck xz-utils jq"
-    ],
+    "before_script": [],
     "script": [
       "python3 -B shared/bijux-gitlab/execute.py --job 'std / navigation navigation-controls / webkit'"
     ],
@@ -849,11 +789,9 @@
   },
   "std / navigation search-modality / chromium": {
     "stage": "browsers",
-    "image": "mcr.microsoft.com/playwright@sha256:6446946a1d9fd62d9ae501312a2d76a43ee688542b21622056a372959b65d63d",
+    "image": "registry.gitlab.com/bijux-oss/bijux-std/ci-runtime@sha256:33fdff28a20a70fda96b0171e6cc3c03400bcfb2041b515cac106acf9eeca34a",
     "timeout": "3 minutes",
-    "before_script": [
-      "apt-get update && apt-get install --yes --no-install-recommends python3 python3-venv python3-yaml git make curl ca-certificates perl shellcheck xz-utils jq"
-    ],
+    "before_script": [],
     "script": [
       "python3 -B shared/bijux-gitlab/execute.py --job 'std / navigation search-modality / chromium'"
     ],
@@ -871,11 +809,9 @@
   },
   "std / navigation search-modality / firefox": {
     "stage": "browsers",
-    "image": "mcr.microsoft.com/playwright@sha256:6446946a1d9fd62d9ae501312a2d76a43ee688542b21622056a372959b65d63d",
+    "image": "registry.gitlab.com/bijux-oss/bijux-std/ci-runtime@sha256:33fdff28a20a70fda96b0171e6cc3c03400bcfb2041b515cac106acf9eeca34a",
     "timeout": "3 minutes",
-    "before_script": [
-      "apt-get update && apt-get install --yes --no-install-recommends python3 python3-venv python3-yaml git make curl ca-certificates perl shellcheck xz-utils jq"
-    ],
+    "before_script": [],
     "script": [
       "python3 -B shared/bijux-gitlab/execute.py --job 'std / navigation search-modality / firefox'"
     ],
@@ -893,11 +829,9 @@
   },
   "std / navigation search-modality / webkit": {
     "stage": "browsers",
-    "image": "mcr.microsoft.com/playwright@sha256:6446946a1d9fd62d9ae501312a2d76a43ee688542b21622056a372959b65d63d",
+    "image": "registry.gitlab.com/bijux-oss/bijux-std/ci-runtime@sha256:33fdff28a20a70fda96b0171e6cc3c03400bcfb2041b515cac106acf9eeca34a",
     "timeout": "3 minutes",
-    "before_script": [
-      "apt-get update && apt-get install --yes --no-install-recommends python3 python3-venv python3-yaml git make curl ca-certificates perl shellcheck xz-utils jq"
-    ],
+    "before_script": [],
     "script": [
       "python3 -B shared/bijux-gitlab/execute.py --job 'std / navigation search-modality / webkit'"
     ],
@@ -915,11 +849,9 @@
   },
   "std / navigation search-invoker / chromium": {
     "stage": "browsers",
-    "image": "mcr.microsoft.com/playwright@sha256:6446946a1d9fd62d9ae501312a2d76a43ee688542b21622056a372959b65d63d",
+    "image": "registry.gitlab.com/bijux-oss/bijux-std/ci-runtime@sha256:33fdff28a20a70fda96b0171e6cc3c03400bcfb2041b515cac106acf9eeca34a",
     "timeout": "3 minutes",
-    "before_script": [
-      "apt-get update && apt-get install --yes --no-install-recommends python3 python3-venv python3-yaml git make curl ca-certificates perl shellcheck xz-utils jq"
-    ],
+    "before_script": [],
     "script": [
       "python3 -B shared/bijux-gitlab/execute.py --job 'std / navigation search-invoker / chromium'"
     ],
@@ -937,11 +869,9 @@
   },
   "std / navigation search-invoker / firefox": {
     "stage": "browsers",
-    "image": "mcr.microsoft.com/playwright@sha256:6446946a1d9fd62d9ae501312a2d76a43ee688542b21622056a372959b65d63d",
+    "image": "registry.gitlab.com/bijux-oss/bijux-std/ci-runtime@sha256:33fdff28a20a70fda96b0171e6cc3c03400bcfb2041b515cac106acf9eeca34a",
     "timeout": "3 minutes",
-    "before_script": [
-      "apt-get update && apt-get install --yes --no-install-recommends python3 python3-venv python3-yaml git make curl ca-certificates perl shellcheck xz-utils jq"
-    ],
+    "before_script": [],
     "script": [
       "python3 -B shared/bijux-gitlab/execute.py --job 'std / navigation search-invoker / firefox'"
     ],
@@ -959,11 +889,9 @@
   },
   "std / navigation search-invoker / webkit": {
     "stage": "browsers",
-    "image": "mcr.microsoft.com/playwright@sha256:6446946a1d9fd62d9ae501312a2d76a43ee688542b21622056a372959b65d63d",
+    "image": "registry.gitlab.com/bijux-oss/bijux-std/ci-runtime@sha256:33fdff28a20a70fda96b0171e6cc3c03400bcfb2041b515cac106acf9eeca34a",
     "timeout": "3 minutes",
-    "before_script": [
-      "apt-get update && apt-get install --yes --no-install-recommends python3 python3-venv python3-yaml git make curl ca-certificates perl shellcheck xz-utils jq"
-    ],
+    "before_script": [],
     "script": [
       "python3 -B shared/bijux-gitlab/execute.py --job 'std / navigation search-invoker / webkit'"
     ],
@@ -981,11 +909,9 @@
   },
   "std / navigation reader-history / chromium": {
     "stage": "browsers",
-    "image": "mcr.microsoft.com/playwright@sha256:6446946a1d9fd62d9ae501312a2d76a43ee688542b21622056a372959b65d63d",
+    "image": "registry.gitlab.com/bijux-oss/bijux-std/ci-runtime@sha256:33fdff28a20a70fda96b0171e6cc3c03400bcfb2041b515cac106acf9eeca34a",
     "timeout": "3 minutes",
-    "before_script": [
-      "apt-get update && apt-get install --yes --no-install-recommends python3 python3-venv python3-yaml git make curl ca-certificates perl shellcheck xz-utils jq"
-    ],
+    "before_script": [],
     "script": [
       "python3 -B shared/bijux-gitlab/execute.py --job 'std / navigation reader-history / chromium'"
     ],
@@ -1003,11 +929,9 @@
   },
   "std / navigation reader-history / firefox": {
     "stage": "browsers",
-    "image": "mcr.microsoft.com/playwright@sha256:6446946a1d9fd62d9ae501312a2d76a43ee688542b21622056a372959b65d63d",
+    "image": "registry.gitlab.com/bijux-oss/bijux-std/ci-runtime@sha256:33fdff28a20a70fda96b0171e6cc3c03400bcfb2041b515cac106acf9eeca34a",
     "timeout": "3 minutes",
-    "before_script": [
-      "apt-get update && apt-get install --yes --no-install-recommends python3 python3-venv python3-yaml git make curl ca-certificates perl shellcheck xz-utils jq"
-    ],
+    "before_script": [],
     "script": [
       "python3 -B shared/bijux-gitlab/execute.py --job 'std / navigation reader-history / firefox'"
     ],
@@ -1025,11 +949,9 @@
   },
   "std / navigation reader-history / webkit": {
     "stage": "browsers",
-    "image": "mcr.microsoft.com/playwright@sha256:6446946a1d9fd62d9ae501312a2d76a43ee688542b21622056a372959b65d63d",
+    "image": "registry.gitlab.com/bijux-oss/bijux-std/ci-runtime@sha256:33fdff28a20a70fda96b0171e6cc3c03400bcfb2041b515cac106acf9eeca34a",
     "timeout": "3 minutes",
-    "before_script": [
-      "apt-get update && apt-get install --yes --no-install-recommends python3 python3-venv python3-yaml git make curl ca-certificates perl shellcheck xz-utils jq"
-    ],
+    "before_script": [],
     "script": [
       "python3 -B shared/bijux-gitlab/execute.py --job 'std / navigation reader-history / webkit'"
     ],
@@ -1047,11 +969,9 @@
   },
   "std / navigation diagram-assurance / chromium": {
     "stage": "browsers",
-    "image": "mcr.microsoft.com/playwright@sha256:6446946a1d9fd62d9ae501312a2d76a43ee688542b21622056a372959b65d63d",
+    "image": "registry.gitlab.com/bijux-oss/bijux-std/ci-runtime@sha256:33fdff28a20a70fda96b0171e6cc3c03400bcfb2041b515cac106acf9eeca34a",
     "timeout": "3 minutes",
-    "before_script": [
-      "apt-get update && apt-get install --yes --no-install-recommends python3 python3-venv python3-yaml git make curl ca-certificates perl shellcheck xz-utils jq"
-    ],
+    "before_script": [],
     "script": [
       "python3 -B shared/bijux-gitlab/execute.py --job 'std / navigation diagram-assurance / chromium'"
     ],
@@ -1069,11 +989,9 @@
   },
   "std / navigation diagram-assurance / firefox": {
     "stage": "browsers",
-    "image": "mcr.microsoft.com/playwright@sha256:6446946a1d9fd62d9ae501312a2d76a43ee688542b21622056a372959b65d63d",
+    "image": "registry.gitlab.com/bijux-oss/bijux-std/ci-runtime@sha256:33fdff28a20a70fda96b0171e6cc3c03400bcfb2041b515cac106acf9eeca34a",
     "timeout": "3 minutes",
-    "before_script": [
-      "apt-get update && apt-get install --yes --no-install-recommends python3 python3-venv python3-yaml git make curl ca-certificates perl shellcheck xz-utils jq"
-    ],
+    "before_script": [],
     "script": [
       "python3 -B shared/bijux-gitlab/execute.py --job 'std / navigation diagram-assurance / firefox'"
     ],
@@ -1091,11 +1009,9 @@
   },
   "std / navigation diagram-assurance / webkit": {
     "stage": "browsers",
-    "image": "mcr.microsoft.com/playwright@sha256:6446946a1d9fd62d9ae501312a2d76a43ee688542b21622056a372959b65d63d",
+    "image": "registry.gitlab.com/bijux-oss/bijux-std/ci-runtime@sha256:33fdff28a20a70fda96b0171e6cc3c03400bcfb2041b515cac106acf9eeca34a",
     "timeout": "3 minutes",
-    "before_script": [
-      "apt-get update && apt-get install --yes --no-install-recommends python3 python3-venv python3-yaml git make curl ca-certificates perl shellcheck xz-utils jq"
-    ],
+    "before_script": [],
     "script": [
       "python3 -B shared/bijux-gitlab/execute.py --job 'std / navigation diagram-assurance / webkit'"
     ],
@@ -1113,11 +1029,9 @@
   },
   "std / navigation contrast-responsive / chromium": {
     "stage": "browsers",
-    "image": "mcr.microsoft.com/playwright@sha256:6446946a1d9fd62d9ae501312a2d76a43ee688542b21622056a372959b65d63d",
+    "image": "registry.gitlab.com/bijux-oss/bijux-std/ci-runtime@sha256:33fdff28a20a70fda96b0171e6cc3c03400bcfb2041b515cac106acf9eeca34a",
     "timeout": "3 minutes",
-    "before_script": [
-      "apt-get update && apt-get install --yes --no-install-recommends python3 python3-venv python3-yaml git make curl ca-certificates perl shellcheck xz-utils jq"
-    ],
+    "before_script": [],
     "script": [
       "python3 -B shared/bijux-gitlab/execute.py --job 'std / navigation contrast-responsive / chromium'"
     ],
@@ -1135,11 +1049,9 @@
   },
   "std / navigation contrast-responsive / firefox": {
     "stage": "browsers",
-    "image": "mcr.microsoft.com/playwright@sha256:6446946a1d9fd62d9ae501312a2d76a43ee688542b21622056a372959b65d63d",
+    "image": "registry.gitlab.com/bijux-oss/bijux-std/ci-runtime@sha256:33fdff28a20a70fda96b0171e6cc3c03400bcfb2041b515cac106acf9eeca34a",
     "timeout": "3 minutes",
-    "before_script": [
-      "apt-get update && apt-get install --yes --no-install-recommends python3 python3-venv python3-yaml git make curl ca-certificates perl shellcheck xz-utils jq"
-    ],
+    "before_script": [],
     "script": [
       "python3 -B shared/bijux-gitlab/execute.py --job 'std / navigation contrast-responsive / firefox'"
     ],
@@ -1157,11 +1069,9 @@
   },
   "std / navigation contrast-responsive / webkit": {
     "stage": "browsers",
-    "image": "mcr.microsoft.com/playwright@sha256:6446946a1d9fd62d9ae501312a2d76a43ee688542b21622056a372959b65d63d",
+    "image": "registry.gitlab.com/bijux-oss/bijux-std/ci-runtime@sha256:33fdff28a20a70fda96b0171e6cc3c03400bcfb2041b515cac106acf9eeca34a",
     "timeout": "3 minutes",
-    "before_script": [
-      "apt-get update && apt-get install --yes --no-install-recommends python3 python3-venv python3-yaml git make curl ca-certificates perl shellcheck xz-utils jq"
-    ],
+    "before_script": [],
     "script": [
       "python3 -B shared/bijux-gitlab/execute.py --job 'std / navigation contrast-responsive / webkit'"
     ],
@@ -1179,11 +1089,9 @@
   },
   "std / navigation contrast-desktop / chromium": {
     "stage": "browsers",
-    "image": "mcr.microsoft.com/playwright@sha256:6446946a1d9fd62d9ae501312a2d76a43ee688542b21622056a372959b65d63d",
+    "image": "registry.gitlab.com/bijux-oss/bijux-std/ci-runtime@sha256:33fdff28a20a70fda96b0171e6cc3c03400bcfb2041b515cac106acf9eeca34a",
     "timeout": "3 minutes",
-    "before_script": [
-      "apt-get update && apt-get install --yes --no-install-recommends python3 python3-venv python3-yaml git make curl ca-certificates perl shellcheck xz-utils jq"
-    ],
+    "before_script": [],
     "script": [
       "python3 -B shared/bijux-gitlab/execute.py --job 'std / navigation contrast-desktop / chromium'"
     ],
@@ -1201,11 +1109,9 @@
   },
   "std / navigation contrast-desktop / firefox": {
     "stage": "browsers",
-    "image": "mcr.microsoft.com/playwright@sha256:6446946a1d9fd62d9ae501312a2d76a43ee688542b21622056a372959b65d63d",
+    "image": "registry.gitlab.com/bijux-oss/bijux-std/ci-runtime@sha256:33fdff28a20a70fda96b0171e6cc3c03400bcfb2041b515cac106acf9eeca34a",
     "timeout": "3 minutes",
-    "before_script": [
-      "apt-get update && apt-get install --yes --no-install-recommends python3 python3-venv python3-yaml git make curl ca-certificates perl shellcheck xz-utils jq"
-    ],
+    "before_script": [],
     "script": [
       "python3 -B shared/bijux-gitlab/execute.py --job 'std / navigation contrast-desktop / firefox'"
     ],
@@ -1223,11 +1129,9 @@
   },
   "std / navigation contrast-desktop / webkit": {
     "stage": "browsers",
-    "image": "mcr.microsoft.com/playwright@sha256:6446946a1d9fd62d9ae501312a2d76a43ee688542b21622056a372959b65d63d",
+    "image": "registry.gitlab.com/bijux-oss/bijux-std/ci-runtime@sha256:33fdff28a20a70fda96b0171e6cc3c03400bcfb2041b515cac106acf9eeca34a",
     "timeout": "3 minutes",
-    "before_script": [
-      "apt-get update && apt-get install --yes --no-install-recommends python3 python3-venv python3-yaml git make curl ca-certificates perl shellcheck xz-utils jq"
-    ],
+    "before_script": [],
     "script": [
       "python3 -B shared/bijux-gitlab/execute.py --job 'std / navigation contrast-desktop / webkit'"
     ],
@@ -1245,11 +1149,9 @@
   },
   "std / navigation history / chromium": {
     "stage": "browsers",
-    "image": "mcr.microsoft.com/playwright@sha256:6446946a1d9fd62d9ae501312a2d76a43ee688542b21622056a372959b65d63d",
+    "image": "registry.gitlab.com/bijux-oss/bijux-std/ci-runtime@sha256:33fdff28a20a70fda96b0171e6cc3c03400bcfb2041b515cac106acf9eeca34a",
     "timeout": "3 minutes",
-    "before_script": [
-      "apt-get update && apt-get install --yes --no-install-recommends python3 python3-venv python3-yaml git make curl ca-certificates perl shellcheck xz-utils jq"
-    ],
+    "before_script": [],
     "script": [
       "python3 -B shared/bijux-gitlab/execute.py --job 'std / navigation history / chromium'"
     ],
@@ -1267,11 +1169,9 @@
   },
   "std / navigation history / firefox": {
     "stage": "browsers",
-    "image": "mcr.microsoft.com/playwright@sha256:6446946a1d9fd62d9ae501312a2d76a43ee688542b21622056a372959b65d63d",
+    "image": "registry.gitlab.com/bijux-oss/bijux-std/ci-runtime@sha256:33fdff28a20a70fda96b0171e6cc3c03400bcfb2041b515cac106acf9eeca34a",
     "timeout": "3 minutes",
-    "before_script": [
-      "apt-get update && apt-get install --yes --no-install-recommends python3 python3-venv python3-yaml git make curl ca-certificates perl shellcheck xz-utils jq"
-    ],
+    "before_script": [],
     "script": [
       "python3 -B shared/bijux-gitlab/execute.py --job 'std / navigation history / firefox'"
     ],
@@ -1289,11 +1189,9 @@
   },
   "std / navigation history / webkit": {
     "stage": "browsers",
-    "image": "mcr.microsoft.com/playwright@sha256:6446946a1d9fd62d9ae501312a2d76a43ee688542b21622056a372959b65d63d",
+    "image": "registry.gitlab.com/bijux-oss/bijux-std/ci-runtime@sha256:33fdff28a20a70fda96b0171e6cc3c03400bcfb2041b515cac106acf9eeca34a",
     "timeout": "3 minutes",
-    "before_script": [
-      "apt-get update && apt-get install --yes --no-install-recommends python3 python3-venv python3-yaml git make curl ca-certificates perl shellcheck xz-utils jq"
-    ],
+    "before_script": [],
     "script": [
       "python3 -B shared/bijux-gitlab/execute.py --job 'std / navigation history / webkit'"
     ],
@@ -1311,11 +1209,9 @@
   },
   "std / navigation search-scope-responsive / chromium": {
     "stage": "browsers",
-    "image": "mcr.microsoft.com/playwright@sha256:6446946a1d9fd62d9ae501312a2d76a43ee688542b21622056a372959b65d63d",
+    "image": "registry.gitlab.com/bijux-oss/bijux-std/ci-runtime@sha256:33fdff28a20a70fda96b0171e6cc3c03400bcfb2041b515cac106acf9eeca34a",
     "timeout": "3 minutes",
-    "before_script": [
-      "apt-get update && apt-get install --yes --no-install-recommends python3 python3-venv python3-yaml git make curl ca-certificates perl shellcheck xz-utils jq"
-    ],
+    "before_script": [],
     "script": [
       "python3 -B shared/bijux-gitlab/execute.py --job 'std / navigation search-scope-responsive / chromium'"
     ],
@@ -1333,11 +1229,9 @@
   },
   "std / navigation search-scope-responsive / firefox": {
     "stage": "browsers",
-    "image": "mcr.microsoft.com/playwright@sha256:6446946a1d9fd62d9ae501312a2d76a43ee688542b21622056a372959b65d63d",
+    "image": "registry.gitlab.com/bijux-oss/bijux-std/ci-runtime@sha256:33fdff28a20a70fda96b0171e6cc3c03400bcfb2041b515cac106acf9eeca34a",
     "timeout": "3 minutes",
-    "before_script": [
-      "apt-get update && apt-get install --yes --no-install-recommends python3 python3-venv python3-yaml git make curl ca-certificates perl shellcheck xz-utils jq"
-    ],
+    "before_script": [],
     "script": [
       "python3 -B shared/bijux-gitlab/execute.py --job 'std / navigation search-scope-responsive / firefox'"
     ],
@@ -1355,11 +1249,9 @@
   },
   "std / navigation search-scope-responsive / webkit": {
     "stage": "browsers",
-    "image": "mcr.microsoft.com/playwright@sha256:6446946a1d9fd62d9ae501312a2d76a43ee688542b21622056a372959b65d63d",
+    "image": "registry.gitlab.com/bijux-oss/bijux-std/ci-runtime@sha256:33fdff28a20a70fda96b0171e6cc3c03400bcfb2041b515cac106acf9eeca34a",
     "timeout": "3 minutes",
-    "before_script": [
-      "apt-get update && apt-get install --yes --no-install-recommends python3 python3-venv python3-yaml git make curl ca-certificates perl shellcheck xz-utils jq"
-    ],
+    "before_script": [],
     "script": [
       "python3 -B shared/bijux-gitlab/execute.py --job 'std / navigation search-scope-responsive / webkit'"
     ],
@@ -1377,11 +1269,9 @@
   },
   "std / navigation search-scope-overflow / chromium": {
     "stage": "browsers",
-    "image": "mcr.microsoft.com/playwright@sha256:6446946a1d9fd62d9ae501312a2d76a43ee688542b21622056a372959b65d63d",
+    "image": "registry.gitlab.com/bijux-oss/bijux-std/ci-runtime@sha256:33fdff28a20a70fda96b0171e6cc3c03400bcfb2041b515cac106acf9eeca34a",
     "timeout": "3 minutes",
-    "before_script": [
-      "apt-get update && apt-get install --yes --no-install-recommends python3 python3-venv python3-yaml git make curl ca-certificates perl shellcheck xz-utils jq"
-    ],
+    "before_script": [],
     "script": [
       "python3 -B shared/bijux-gitlab/execute.py --job 'std / navigation search-scope-overflow / chromium'"
     ],
@@ -1399,11 +1289,9 @@
   },
   "std / navigation search-scope-overflow / firefox": {
     "stage": "browsers",
-    "image": "mcr.microsoft.com/playwright@sha256:6446946a1d9fd62d9ae501312a2d76a43ee688542b21622056a372959b65d63d",
+    "image": "registry.gitlab.com/bijux-oss/bijux-std/ci-runtime@sha256:33fdff28a20a70fda96b0171e6cc3c03400bcfb2041b515cac106acf9eeca34a",
     "timeout": "3 minutes",
-    "before_script": [
-      "apt-get update && apt-get install --yes --no-install-recommends python3 python3-venv python3-yaml git make curl ca-certificates perl shellcheck xz-utils jq"
-    ],
+    "before_script": [],
     "script": [
       "python3 -B shared/bijux-gitlab/execute.py --job 'std / navigation search-scope-overflow / firefox'"
     ],
@@ -1421,11 +1309,9 @@
   },
   "std / navigation search-scope-overflow / webkit": {
     "stage": "browsers",
-    "image": "mcr.microsoft.com/playwright@sha256:6446946a1d9fd62d9ae501312a2d76a43ee688542b21622056a372959b65d63d",
+    "image": "registry.gitlab.com/bijux-oss/bijux-std/ci-runtime@sha256:33fdff28a20a70fda96b0171e6cc3c03400bcfb2041b515cac106acf9eeca34a",
     "timeout": "3 minutes",
-    "before_script": [
-      "apt-get update && apt-get install --yes --no-install-recommends python3 python3-venv python3-yaml git make curl ca-certificates perl shellcheck xz-utils jq"
-    ],
+    "before_script": [],
     "script": [
       "python3 -B shared/bijux-gitlab/execute.py --job 'std / navigation search-scope-overflow / webkit'"
     ],
@@ -1443,11 +1329,9 @@
   },
   "std / navigation reader-accessibility / chromium": {
     "stage": "browsers",
-    "image": "mcr.microsoft.com/playwright@sha256:6446946a1d9fd62d9ae501312a2d76a43ee688542b21622056a372959b65d63d",
+    "image": "registry.gitlab.com/bijux-oss/bijux-std/ci-runtime@sha256:33fdff28a20a70fda96b0171e6cc3c03400bcfb2041b515cac106acf9eeca34a",
     "timeout": "3 minutes",
-    "before_script": [
-      "apt-get update && apt-get install --yes --no-install-recommends python3 python3-venv python3-yaml git make curl ca-certificates perl shellcheck xz-utils jq"
-    ],
+    "before_script": [],
     "script": [
       "python3 -B shared/bijux-gitlab/execute.py --job 'std / navigation reader-accessibility / chromium'"
     ],
@@ -1465,11 +1349,9 @@
   },
   "std / navigation reader-accessibility / firefox": {
     "stage": "browsers",
-    "image": "mcr.microsoft.com/playwright@sha256:6446946a1d9fd62d9ae501312a2d76a43ee688542b21622056a372959b65d63d",
+    "image": "registry.gitlab.com/bijux-oss/bijux-std/ci-runtime@sha256:33fdff28a20a70fda96b0171e6cc3c03400bcfb2041b515cac106acf9eeca34a",
     "timeout": "3 minutes",
-    "before_script": [
-      "apt-get update && apt-get install --yes --no-install-recommends python3 python3-venv python3-yaml git make curl ca-certificates perl shellcheck xz-utils jq"
-    ],
+    "before_script": [],
     "script": [
       "python3 -B shared/bijux-gitlab/execute.py --job 'std / navigation reader-accessibility / firefox'"
     ],
@@ -1487,11 +1369,9 @@
   },
   "std / navigation reader-accessibility / webkit": {
     "stage": "browsers",
-    "image": "mcr.microsoft.com/playwright@sha256:6446946a1d9fd62d9ae501312a2d76a43ee688542b21622056a372959b65d63d",
+    "image": "registry.gitlab.com/bijux-oss/bijux-std/ci-runtime@sha256:33fdff28a20a70fda96b0171e6cc3c03400bcfb2041b515cac106acf9eeca34a",
     "timeout": "3 minutes",
-    "before_script": [
-      "apt-get update && apt-get install --yes --no-install-recommends python3 python3-venv python3-yaml git make curl ca-certificates perl shellcheck xz-utils jq"
-    ],
+    "before_script": [],
     "script": [
       "python3 -B shared/bijux-gitlab/execute.py --job 'std / navigation reader-accessibility / webkit'"
     ],
@@ -1509,11 +1389,9 @@
   },
   "std / navigation search-reflow-phone / chromium": {
     "stage": "browsers",
-    "image": "mcr.microsoft.com/playwright@sha256:6446946a1d9fd62d9ae501312a2d76a43ee688542b21622056a372959b65d63d",
+    "image": "registry.gitlab.com/bijux-oss/bijux-std/ci-runtime@sha256:33fdff28a20a70fda96b0171e6cc3c03400bcfb2041b515cac106acf9eeca34a",
     "timeout": "3 minutes",
-    "before_script": [
-      "apt-get update && apt-get install --yes --no-install-recommends python3 python3-venv python3-yaml git make curl ca-certificates perl shellcheck xz-utils jq"
-    ],
+    "before_script": [],
     "script": [
       "python3 -B shared/bijux-gitlab/execute.py --job 'std / navigation search-reflow-phone / chromium'"
     ],
@@ -1531,11 +1409,9 @@
   },
   "std / navigation search-reflow-phone / firefox": {
     "stage": "browsers",
-    "image": "mcr.microsoft.com/playwright@sha256:6446946a1d9fd62d9ae501312a2d76a43ee688542b21622056a372959b65d63d",
+    "image": "registry.gitlab.com/bijux-oss/bijux-std/ci-runtime@sha256:33fdff28a20a70fda96b0171e6cc3c03400bcfb2041b515cac106acf9eeca34a",
     "timeout": "3 minutes",
-    "before_script": [
-      "apt-get update && apt-get install --yes --no-install-recommends python3 python3-venv python3-yaml git make curl ca-certificates perl shellcheck xz-utils jq"
-    ],
+    "before_script": [],
     "script": [
       "python3 -B shared/bijux-gitlab/execute.py --job 'std / navigation search-reflow-phone / firefox'"
     ],
@@ -1553,11 +1429,9 @@
   },
   "std / navigation search-reflow-phone / webkit": {
     "stage": "browsers",
-    "image": "mcr.microsoft.com/playwright@sha256:6446946a1d9fd62d9ae501312a2d76a43ee688542b21622056a372959b65d63d",
+    "image": "registry.gitlab.com/bijux-oss/bijux-std/ci-runtime@sha256:33fdff28a20a70fda96b0171e6cc3c03400bcfb2041b515cac106acf9eeca34a",
     "timeout": "3 minutes",
-    "before_script": [
-      "apt-get update && apt-get install --yes --no-install-recommends python3 python3-venv python3-yaml git make curl ca-certificates perl shellcheck xz-utils jq"
-    ],
+    "before_script": [],
     "script": [
       "python3 -B shared/bijux-gitlab/execute.py --job 'std / navigation search-reflow-phone / webkit'"
     ],
@@ -1575,11 +1449,9 @@
   },
   "std / navigation search-reflow-tablet / chromium": {
     "stage": "browsers",
-    "image": "mcr.microsoft.com/playwright@sha256:6446946a1d9fd62d9ae501312a2d76a43ee688542b21622056a372959b65d63d",
+    "image": "registry.gitlab.com/bijux-oss/bijux-std/ci-runtime@sha256:33fdff28a20a70fda96b0171e6cc3c03400bcfb2041b515cac106acf9eeca34a",
     "timeout": "3 minutes",
-    "before_script": [
-      "apt-get update && apt-get install --yes --no-install-recommends python3 python3-venv python3-yaml git make curl ca-certificates perl shellcheck xz-utils jq"
-    ],
+    "before_script": [],
     "script": [
       "python3 -B shared/bijux-gitlab/execute.py --job 'std / navigation search-reflow-tablet / chromium'"
     ],
@@ -1597,11 +1469,9 @@
   },
   "std / navigation search-reflow-tablet / firefox": {
     "stage": "browsers",
-    "image": "mcr.microsoft.com/playwright@sha256:6446946a1d9fd62d9ae501312a2d76a43ee688542b21622056a372959b65d63d",
+    "image": "registry.gitlab.com/bijux-oss/bijux-std/ci-runtime@sha256:33fdff28a20a70fda96b0171e6cc3c03400bcfb2041b515cac106acf9eeca34a",
     "timeout": "3 minutes",
-    "before_script": [
-      "apt-get update && apt-get install --yes --no-install-recommends python3 python3-venv python3-yaml git make curl ca-certificates perl shellcheck xz-utils jq"
-    ],
+    "before_script": [],
     "script": [
       "python3 -B shared/bijux-gitlab/execute.py --job 'std / navigation search-reflow-tablet / firefox'"
     ],
@@ -1619,11 +1489,9 @@
   },
   "std / navigation search-reflow-tablet / webkit": {
     "stage": "browsers",
-    "image": "mcr.microsoft.com/playwright@sha256:6446946a1d9fd62d9ae501312a2d76a43ee688542b21622056a372959b65d63d",
+    "image": "registry.gitlab.com/bijux-oss/bijux-std/ci-runtime@sha256:33fdff28a20a70fda96b0171e6cc3c03400bcfb2041b515cac106acf9eeca34a",
     "timeout": "3 minutes",
-    "before_script": [
-      "apt-get update && apt-get install --yes --no-install-recommends python3 python3-venv python3-yaml git make curl ca-certificates perl shellcheck xz-utils jq"
-    ],
+    "before_script": [],
     "script": [
       "python3 -B shared/bijux-gitlab/execute.py --job 'std / navigation search-reflow-tablet / webkit'"
     ],
@@ -1641,11 +1509,9 @@
   },
   "std / navigation search-reflow-desktop / chromium": {
     "stage": "browsers",
-    "image": "mcr.microsoft.com/playwright@sha256:6446946a1d9fd62d9ae501312a2d76a43ee688542b21622056a372959b65d63d",
+    "image": "registry.gitlab.com/bijux-oss/bijux-std/ci-runtime@sha256:33fdff28a20a70fda96b0171e6cc3c03400bcfb2041b515cac106acf9eeca34a",
     "timeout": "3 minutes",
-    "before_script": [
-      "apt-get update && apt-get install --yes --no-install-recommends python3 python3-venv python3-yaml git make curl ca-certificates perl shellcheck xz-utils jq"
-    ],
+    "before_script": [],
     "script": [
       "python3 -B shared/bijux-gitlab/execute.py --job 'std / navigation search-reflow-desktop / chromium'"
     ],
@@ -1663,11 +1529,9 @@
   },
   "std / navigation search-reflow-desktop / firefox": {
     "stage": "browsers",
-    "image": "mcr.microsoft.com/playwright@sha256:6446946a1d9fd62d9ae501312a2d76a43ee688542b21622056a372959b65d63d",
+    "image": "registry.gitlab.com/bijux-oss/bijux-std/ci-runtime@sha256:33fdff28a20a70fda96b0171e6cc3c03400bcfb2041b515cac106acf9eeca34a",
     "timeout": "3 minutes",
-    "before_script": [
-      "apt-get update && apt-get install --yes --no-install-recommends python3 python3-venv python3-yaml git make curl ca-certificates perl shellcheck xz-utils jq"
-    ],
+    "before_script": [],
     "script": [
       "python3 -B shared/bijux-gitlab/execute.py --job 'std / navigation search-reflow-desktop / firefox'"
     ],
@@ -1685,11 +1549,9 @@
   },
   "std / navigation search-reflow-desktop / webkit": {
     "stage": "browsers",
-    "image": "mcr.microsoft.com/playwright@sha256:6446946a1d9fd62d9ae501312a2d76a43ee688542b21622056a372959b65d63d",
+    "image": "registry.gitlab.com/bijux-oss/bijux-std/ci-runtime@sha256:33fdff28a20a70fda96b0171e6cc3c03400bcfb2041b515cac106acf9eeca34a",
     "timeout": "3 minutes",
-    "before_script": [
-      "apt-get update && apt-get install --yes --no-install-recommends python3 python3-venv python3-yaml git make curl ca-certificates perl shellcheck xz-utils jq"
-    ],
+    "before_script": [],
     "script": [
       "python3 -B shared/bijux-gitlab/execute.py --job 'std / navigation search-reflow-desktop / webkit'"
     ],
@@ -1707,11 +1569,9 @@
   },
   "std / persisted native reader / chromium": {
     "stage": "browsers",
-    "image": "mcr.microsoft.com/playwright@sha256:6446946a1d9fd62d9ae501312a2d76a43ee688542b21622056a372959b65d63d",
+    "image": "registry.gitlab.com/bijux-oss/bijux-std/ci-runtime@sha256:33fdff28a20a70fda96b0171e6cc3c03400bcfb2041b515cac106acf9eeca34a",
     "timeout": "3 minutes",
-    "before_script": [
-      "apt-get update && apt-get install --yes --no-install-recommends python3 python3-venv python3-yaml git make curl ca-certificates perl shellcheck xz-utils jq"
-    ],
+    "before_script": [],
     "script": [
       "python3 -B shared/bijux-gitlab/execute.py --job 'std / persisted native reader / chromium'"
     ],
@@ -1729,11 +1589,9 @@
   },
   "std / frontend fault controls / chromium": {
     "stage": "browsers",
-    "image": "mcr.microsoft.com/playwright@sha256:6446946a1d9fd62d9ae501312a2d76a43ee688542b21622056a372959b65d63d",
+    "image": "registry.gitlab.com/bijux-oss/bijux-std/ci-runtime@sha256:33fdff28a20a70fda96b0171e6cc3c03400bcfb2041b515cac106acf9eeca34a",
     "timeout": "3 minutes",
-    "before_script": [
-      "apt-get update && apt-get install --yes --no-install-recommends python3 python3-venv python3-yaml git make curl ca-certificates perl shellcheck xz-utils jq"
-    ],
+    "before_script": [],
     "script": [
       "python3 -B shared/bijux-gitlab/execute.py --job 'std / frontend fault controls / chromium'"
     ],
@@ -1751,11 +1609,9 @@
   },
   "std / frontend fault controls / firefox": {
     "stage": "browsers",
-    "image": "mcr.microsoft.com/playwright@sha256:6446946a1d9fd62d9ae501312a2d76a43ee688542b21622056a372959b65d63d",
+    "image": "registry.gitlab.com/bijux-oss/bijux-std/ci-runtime@sha256:33fdff28a20a70fda96b0171e6cc3c03400bcfb2041b515cac106acf9eeca34a",
     "timeout": "3 minutes",
-    "before_script": [
-      "apt-get update && apt-get install --yes --no-install-recommends python3 python3-venv python3-yaml git make curl ca-certificates perl shellcheck xz-utils jq"
-    ],
+    "before_script": [],
     "script": [
       "python3 -B shared/bijux-gitlab/execute.py --job 'std / frontend fault controls / firefox'"
     ],
@@ -1773,11 +1629,9 @@
   },
   "std / frontend fault controls / webkit": {
     "stage": "browsers",
-    "image": "mcr.microsoft.com/playwright@sha256:6446946a1d9fd62d9ae501312a2d76a43ee688542b21622056a372959b65d63d",
+    "image": "registry.gitlab.com/bijux-oss/bijux-std/ci-runtime@sha256:33fdff28a20a70fda96b0171e6cc3c03400bcfb2041b515cac106acf9eeca34a",
     "timeout": "3 minutes",
-    "before_script": [
-      "apt-get update && apt-get install --yes --no-install-recommends python3 python3-venv python3-yaml git make curl ca-certificates perl shellcheck xz-utils jq"
-    ],
+    "before_script": [],
     "script": [
       "python3 -B shared/bijux-gitlab/execute.py --job 'std / frontend fault controls / webkit'"
     ],
@@ -1795,11 +1649,9 @@
   },
   "std / frontend public artifact fault controls": {
     "stage": "validation",
-    "image": "mcr.microsoft.com/playwright@sha256:6446946a1d9fd62d9ae501312a2d76a43ee688542b21622056a372959b65d63d",
+    "image": "registry.gitlab.com/bijux-oss/bijux-std/ci-runtime@sha256:33fdff28a20a70fda96b0171e6cc3c03400bcfb2041b515cac106acf9eeca34a",
     "timeout": "3 minutes",
-    "before_script": [
-      "apt-get update && apt-get install --yes --no-install-recommends python3 python3-venv python3-yaml git make curl ca-certificates perl shellcheck xz-utils jq"
-    ],
+    "before_script": [],
     "script": [
       "python3 -B shared/bijux-gitlab/execute.py --job 'std / frontend public artifact fault controls'"
     ],
@@ -1817,11 +1669,9 @@
   },
   "std / navigation": {
     "stage": "qualification",
-    "image": "mcr.microsoft.com/playwright@sha256:6446946a1d9fd62d9ae501312a2d76a43ee688542b21622056a372959b65d63d",
+    "image": "registry.gitlab.com/bijux-oss/bijux-std/ci-runtime@sha256:33fdff28a20a70fda96b0171e6cc3c03400bcfb2041b515cac106acf9eeca34a",
     "timeout": "3 minutes",
-    "before_script": [
-      "apt-get update && apt-get install --yes --no-install-recommends python3 python3-venv python3-yaml git make curl ca-certificates perl shellcheck xz-utils jq"
-    ],
+    "before_script": [],
     "script": [
       "python3 -B shared/bijux-gitlab/execute.py --job 'std / navigation'"
     ],
@@ -1838,11 +1688,9 @@
   },
   "std / report": {
     "stage": "acceptance",
-    "image": "mcr.microsoft.com/playwright@sha256:6446946a1d9fd62d9ae501312a2d76a43ee688542b21622056a372959b65d63d",
+    "image": "registry.gitlab.com/bijux-oss/bijux-std/ci-runtime@sha256:33fdff28a20a70fda96b0171e6cc3c03400bcfb2041b515cac106acf9eeca34a",
     "timeout": "20 minutes",
-    "before_script": [
-      "apt-get update && apt-get install --yes --no-install-recommends python3 python3-venv python3-yaml git make curl ca-certificates perl shellcheck xz-utils jq"
-    ],
+    "before_script": [],
     "script": [
       "python3 -B shared/bijux-gitlab/execute.py --job 'std / report'"
     ],
