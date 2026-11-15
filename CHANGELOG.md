@@ -2,6 +2,14 @@
 
 Repository changes are recorded by pull request or merge request, newest first.
 
+### [!3](https://gitlab.com/bijux-oss/bijux-std/-/merge_requests/3) — Reviewed Rust installer action
+
+- Pin Core and Genomics installer steps to the reviewed taiki-e/install-action
+  2.90.3 commit, preserving tool versions, checksum verification and disabled
+  installer fallback.
+- Regenerate canonical workflow source provenance and managed integrity records
+  so consumers can adopt the accepted action reference through standards refresh.
+
 ### [!2](https://gitlab.com/bijux-oss/bijux-std/-/merge_requests/2) — Accepted GitLab mirror publication
 
 - Publish accepted main commits through a protected, serialized child pipeline
