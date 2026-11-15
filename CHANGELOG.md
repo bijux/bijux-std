@@ -2,6 +2,15 @@
 
 Repository changes are recorded by pull request or merge request, newest first.
 
+### [!7](https://gitlab.com/bijux-oss/bijux-std/-/merge_requests/7) — Retained documentation authority
+
+- Qualify a retained documentation guard against its own independently admitted
+  source instead of the current common standards source.
+- Preserve exact guard matching, component integrity and repository-local checks
+  when documentation and common standards intentionally use different commits.
+- Exercise an older accepted guard through the complete source and projection
+  verification path without changing the retained documentation authority.
+
 ### [!5](https://gitlab.com/bijux-oss/bijux-std/-/merge_requests/5) — Qualified Python tooling baseline
 
 - Qualify OpenAPI Generator CLI 2.42.1 and Redocly 2.77.0 consistently in the
