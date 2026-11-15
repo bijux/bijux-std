@@ -194,7 +194,7 @@ def bootstrap_contracts_python(root, environment, receipt, standalone_python):
     return python
 
 
-def operation_commands(root, contract, *, catalogue_python=None):
+def operation_commands(root, contract, *, catalogue_python=None, job_id=None):
     operation, args = contract['operation'], contract['args']
     python = ['python3','-B']
     docs = 'tests/bijux-docs/'
@@ -210,7 +210,15 @@ def operation_commands(root, contract, *, catalogue_python=None):
                           '.github/standards/repo-config.manifest.json','.github/workflows'],
                 ['make','bijux-std-checks'], python + ['shared/bijux-gitlab/pipeline.py','--check']]
     if operation == 'contracts':
-        return [['make','contract-tests','CONTRACT_UNIT_FLAGS=--failfast']]
+        require(isinstance(args, list) and len(args) == 1 and type(args[0]) is int
+                and 0 <= args[0] < PIPELINE.CONTRACT_PARTITION_COUNT,
+                'Contract operation requires its source-owned partition index')
+        require(isinstance(job_id, str) and re.fullmatch(r'[1-9][0-9]*', job_id),
+                'Contract artifacts require the validated native job ID')
+        return [['make', 'contract-tests' if args[0] == 0 else 'contract-unit-tests',
+                 'CONTRACT_UNIT_PARTITION=' + str(args[0]),
+                 'CONTRACT_UNIT_PARTITION_COUNT=' + str(PIPELINE.CONTRACT_PARTITION_COUNT),
+                 'CONTRACT_ARTIFACT_ROOT=artifacts/gitlab/jobs/' + job_id + '/contracts']]
     if operation == 'policy':
         return [python + ['shared/bijux-gitlab/policy.py']]
     if operation == 'catalogue':
@@ -292,6 +300,77 @@ def validate_context(root, job, environment):
     return identity
 
 
+def contract_coverage(root, identity, admission):
+    """Bind the complete unit union to independently admitted physical owners."""
+    root = Path(root).resolve()
+    identity = CI.validate(identity)
+    require(admission.get('status') == 'passed'
+            and admission.get('project_id') == int(identity['project_id'])
+            and admission.get('pipeline_id') == int(identity['pipeline_id'])
+            and admission.get('commit_sha') == identity['commit_sha'],
+            'Contract coverage requires admitted native project, pipeline and source')
+    runner = source_module(Path(__file__).with_name('contracts.py'), 'contract_coverage')
+    require(runner.PARTITION_COUNT == PIPELINE.CONTRACT_PARTITION_COUNT,
+            'Contract partition declarations disagree')
+    require(runner.source_head(root) == identity['commit_sha'],
+            'Contract coverage checkout differs from its native source')
+    contracts = {name: row for name, row in PIPELINE.job_contracts(root).items() if row['operation'] == 'contracts'}
+    require(len(contracts) == PIPELINE.CONTRACT_PARTITION_COUNT
+            and all(isinstance(row.get('args'), list) and len(row['args']) == 1 and type(row['args'][0]) is int
+                    for row in contracts.values())
+            and {row['args'][0] for row in contracts.values()} == set(range(PIPELINE.CONTRACT_PARTITION_COUNT)),
+            'Every source-owned contract partition is required exactly once')
+    jobs = source_module(Path(__file__).with_name('evidence') / 'jobs.py', 'contract_owners')
+    selected = admission.get('selected_jobs', {})
+    artifacts = admission.get('artifacts', {})
+    union_hashes = admission.get('files_sha256', {})
+    require(isinstance(selected, dict) and isinstance(artifacts, dict) and isinstance(union_hashes, dict),
+            'Contract coverage requires independently admitted artifact hashes')
+    receipts, owners, seen = [], [], set()
+    def unique(pairs):
+        result = {}
+        for key, value in pairs:
+            require(key not in result, 'Duplicate contract receipt JSON key')
+            result[key] = value
+        return result
+    for name, contract in contracts.items():
+        record = selected.get(name, {})
+        job_id = record.get('job_id')
+        require(type(job_id) is int and job_id > 0 and job_id not in seen,
+                'Distinct actual contract executor IDs are required')
+        seen.add(job_id)
+        raw = jobs.validate_identity(record.get('raw_job'), project_id=int(identity['project_id']),
+            pipeline_id=int(identity['pipeline_id']), commit_sha=identity['commit_sha'])
+        require(raw['id'] == job_id and raw['name'] == name and raw.get('status') == 'success'
+                and raw.get('allow_failure') is False, 'Contract executor does not match its successful physical owner')
+        relative = f'artifacts/gitlab/jobs/{job_id}/contracts/unit-results.json'
+        path = root / relative
+        require(not any(parent.is_symlink() for parent in (path, *path.parents))
+                and path.is_file() and path.stat().st_nlink == 1 and 0 < path.stat().st_size <= 16 * 1024 * 1024,
+                'Actual bounded contract partition receipt is missing or aliased')
+        body = path.read_bytes()
+        digest = hashlib.sha256(body).hexdigest()
+        artifact = artifacts.get(name, {})
+        require(isinstance(artifact, dict) and artifact.get('job_id') == job_id
+                and isinstance(artifact.get('files_sha256'), dict)
+                and artifact['files_sha256'].get(relative) == digest and union_hashes.get(relative) == digest,
+                'Contract receipt bytes differ from the admitted native artifact owner')
+        try:
+            receipt = json.loads(body, object_pairs_hook=unique)
+        except (ValueError, UnicodeError):
+            raise ValueError('Contract partition receipt JSON is invalid') from None
+        require(isinstance(receipt, dict) and receipt.get('partition_index') == contract['args'][0],
+                'Contract receipt partition differs from its source-owned physical executor')
+        receipts.append(receipt)
+        owners.append({'partition_index': contract['args'][0], 'job_name': name, 'job_id': job_id,
+                       'receipt_path': relative, 'receipt_sha256': digest})
+    coverage = runner.verify_coverage(receipts, identity['commit_sha'], expected_partitions=PIPELINE.CONTRACT_PARTITION_COUNT)
+    coverage.update(provider='gitlab', server_url=identity['server_url'], project_id=int(identity['project_id']),
+                    project_path=identity['project_path'], pipeline_id=int(identity['pipeline_id']),
+                    native_owners=sorted(owners, key=lambda row: row['partition_index']))
+    return coverage
+
+
 def acceptance_record(root, identity, environment, admission):
     identity = CI.validate(identity)
     require(identity['server_url'] == 'https://gitlab.com' and identity['project_id'] == '88948041'
@@ -314,7 +393,8 @@ def acceptance_record(root, identity, environment, admission):
             'commit_sha':identity['commit_sha'], 'pipeline_id':int(identity['pipeline_id']),
             'pipeline_source':environment['CI_PIPELINE_SOURCE'], 'ref':environment['CI_COMMIT_REF_NAME'],
             'ref_protected':environment['CI_COMMIT_REF_PROTECTED'] == 'true',
-            'validation':{'status':'passed','jobs':admission['selected_jobs']},
+            'validation':{'status':'passed','jobs':admission['selected_jobs'],
+                          'contract_coverage':contract_coverage(root,identity,admission)},
             'publication':{'status':'pending'}}
 
 
@@ -355,7 +435,11 @@ def execute_job(root, job):
             admission = collector.collect(root,exclude_operations=excluded)
             environment.update(result_flags(root,admission,excluded))
             receipt['admitted_jobs'] = {name:row['job_id'] for name,row in admission['selected_jobs'].items()}
-        for argv in operation_commands(root,contracts[job],catalogue_python=catalogue_python):
+            if operation == 'report':
+                coverage = contract_coverage(root,identity,admission)
+                with (folder / 'contract-coverage.json').open('x') as stream:
+                    stream.write(json.dumps(coverage,indent=2) + '\n')
+        for argv in operation_commands(root,contracts[job],catalogue_python=catalogue_python,job_id=identity['job_id']):
             run_command(argv,root,operation_environment(operation,environment),receipt)
             retain()
         if operation == 'report':
@@ -363,6 +447,7 @@ def execute_job(root, job):
             output = root / 'artifacts/gitlab/acceptance'
             output.mkdir(parents=True,exist_ok=True)
             (output / 'acceptance.json').write_text(json.dumps(acceptance,indent=2) + '\n')
+            (output / 'contract-coverage.json').write_text(json.dumps(acceptance['validation']['contract_coverage'],indent=2) + '\n')
         receipt['status'] = 'passed'
     except BaseException as error:
         receipt.update(status='failed',error_type=type(error).__name__)

@@ -69,10 +69,24 @@ admission and runtime receipt retain its actual GitLab context. Frontend
 qualification, source planning, policy, navigation and reporting retain their
 native provider environment.
 
-The complete contract target uses fail-fast unit discovery so hosted failures
-retain their traceback promptly. Successful runs execute the complete unit
-inventory and theme checks. The source contract job has a 30-minute limit;
-frontend jobs retain their separate strict 180-second whole-job limit.
+Unit discovery runs in six mandatory physical jobs. `std / contracts` owns
+partition index zero and runs the complete `contract-tests` target, including
+shared shell/Python/JSON validation and theme checks. The five additional
+`std / contracts / partition` jobs run `contract-unit-tests` for their declared
+indices. Every partition discovers the full unittest inventory from the clean
+checkout, assigns cases deterministically through `contracts.py`, and preserves
+discovery order for module and class fixtures. Failed, errored, skipped or
+unexecuted cases prevent coverage qualification.
+
+The source-owned Make command selects `CONTRACT_UNIT_PARTITION` and
+`CONTRACT_UNIT_PARTITION_COUNT=6`. Its `CONTRACT_ARTIFACT_ROOT` is
+`artifacts/gitlab/jobs/<actual native job ID>/contracts`; temporary files,
+bytecode cache and `unit-results.json` belong to that owner. Partitioned runs do
+not accept ad hoc unit filters. Leaving the partition variable unset preserves
+the existing full unittest discovery command for local and GitHub consumers.
+All six jobs use the same admitted CPython 3.14.4 environment, retain actual
+failure tracebacks, and have a 30-minute limit. The 73 frontend jobs retain
+their separate strict 180-second whole-job limit; the pipeline has 83 jobs.
 
 ## Fresh qualification and acceptance
 
@@ -109,6 +123,19 @@ required check registry through `run-bijux-check-suite.sh`, preserving the
 consumer declaration and `artifacts/bijux-checks` reports before acceptance. A collector failure prevents those
 controller commands from running. The publisher never waits on its own containing
 pipeline; this package does not implement a publisher.
+
+Before running report controllers, the harness reads all six unit receipts from
+the actual selected native owner directories. Each physical file must match the
+hash admitted from that exact job's artifact archive. `verify_coverage` requires
+one receipt per source-declared partition, matching checkout and full discovery
+inventory, and an exact disjoint union of executed passing cases. Green native
+job status cannot replace missing or incomplete case evidence. Unit receipts
+contain no fabricated provider context; the report separately binds their
+partition indices, native job IDs, paths and physical file hashes.
+
+The report retains this coverage under its own job artifacts and rechecks it
+before acceptance. Successful acceptance also retains `contract-coverage.json`
+and embeds the same native ownership proof in `validation.contract_coverage`.
 
 Report emits `artifacts/gitlab/acceptance/acceptance.json` only after successful
 native prerequisite admission and fresh verification. Schema version 1 records

@@ -24,9 +24,24 @@ class GitLabPipelineTests(unittest.TestCase):
         self.assertEqual(len(browsers), 54)
         self.assertIn("std / navigation reader-history / webkit", browsers)
         self.assertEqual(sum(v["frontend"] for v in jobs.values()), 73)
-        self.assertEqual(len(jobs), 78)
+        self.assertEqual(len(jobs), 83)
         self.assertEqual(jobs["std / navigation fixtures"]["image"], module.PLAYWRIGHT_IMAGE)
         self.assertEqual(jobs["std / navigation reader-history / webkit"]["image"], module.PLAYWRIGHT_IMAGE)
+
+    def test_six_fresh_contract_partitions_are_distinct_mandatory_physical_owners(self):
+        module = self.module()
+        contracts = module.job_contracts(ROOT)
+        names = ['std / contracts'] + [f'std / contracts / partition {index}' for index in range(2, 7)]
+        self.assertEqual({name: row['args'] for name, row in contracts.items() if row['operation'] == 'contracts'},
+                         {name: [index] for index, name in enumerate(names)})
+        pipeline = module.compose(ROOT)
+        for name in names:
+            with self.subTest(owner=name):
+                self.assertNotIn('allow_failure', pipeline[name])
+                self.assertEqual(pipeline[name]['stage'], 'validation')
+                self.assertEqual(pipeline[name]['dependencies'], [])
+                self.assertEqual(pipeline[name]['artifacts']['paths'], ['artifacts/gitlab/jobs/$CI_JOB_ID/'])
+        self.assertNotIn('needs', pipeline['std / report'])
 
     def test_pipeline_uses_canonical_guard_and_has_no_mirror_writer(self):
         pipeline = self.module().compose(ROOT)

@@ -10,6 +10,7 @@ import shlex
 
 NODE_VERSION = "24.21.0"
 UV_VERSION = "0.11.17"
+CONTRACT_PARTITION_COUNT = 6
 PLAYWRIGHT_IMAGE = "mcr.microsoft.com/playwright@sha256:6446946a1d9fd62d9ae501312a2d76a43ee688542b21622056a372959b65d63d"
 ROOT = Path(__file__).resolve().parents[2]
 
@@ -40,7 +41,9 @@ def job_contracts(root: Path = ROOT) -> dict:
 
     add("std / input plan", "plan", stage="planning", paths=["artifacts/bijux-docs/input-plan"])
     add("std / standard", "standard")
-    add("std / contracts", "contracts")
+    add("std / contracts", "contracts", args=[0])
+    for index in range(1, CONTRACT_PARTITION_COUNT):
+        add(f"std / contracts / partition {index + 1}", "contracts", args=[index])
     add("policy / canonical review", "policy")
     plan = ["std / input plan"]
     for group in catalogue:

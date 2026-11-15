@@ -7,6 +7,7 @@ import json
 import os
 from pathlib import Path
 import runpy
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -21,6 +22,64 @@ def module():
     if not path.is_file():
         raise AssertionError('the generated pipeline requires its source-owned execution harness')
     return runpy.run_path(str(path))
+
+
+def contract_fixture(root):
+    (root / 'tests').mkdir()
+    cases = ('00', '01', '02', '04', '12', '16')
+    (root / 'tests/test_contract_fixture.py').write_text('import unittest\nclass ContractCases(unittest.TestCase):\n' +
+        ''.join(f' def test_case_{name}(self): self.assertTrue(True)\n' for name in cases))
+    (root / '.gitignore').write_text('artifacts/\n__pycache__/\n')
+    runner = root / 'shared/bijux-gitlab/contracts.py'
+    runner.parent.mkdir(parents=True)
+    shutil.copyfile(ROOT / 'shared/bijux-gitlab/contracts.py', runner)
+    diagrams = root / 'shared/bijux-docs/tooling/diagrams/Makefile'
+    diagrams.parent.mkdir(parents=True)
+    diagrams.write_text('.PHONY: diagrams-install\ndiagrams-install:\n\t@:\n')
+    (root / 'Makefile').write_text('include ' + str(ROOT / 'makes/contracts.mk') + '\n')
+    subprocess.run(['git', 'init', '--quiet', str(root)], check=True)
+    subprocess.run(['git', '-C', str(root), 'remote', 'add', 'origin', 'https://gitlab.com/bijux-oss/bijux-std.git'], check=True)
+    subprocess.run(['git', '-C', str(root), 'add', '.gitignore', 'tests', 'shared', 'Makefile'], check=True)
+    subprocess.run(['git', '-C', str(root), '-c', 'user.name=Bijux tests', '-c', 'user.email=tests@example.invalid',
+                    '-c', 'commit.gpgsign=false', 'commit', '-qm', 'test(contracts): define complete dispatch fixture'], check=True)
+    return subprocess.check_output(['git', '-C', str(root), 'rev-parse', 'HEAD'], text=True).strip()
+
+
+def make_contract_partition(root, index, artifact_root):
+    tools = root / 'artifacts/test-tools'
+    tools.mkdir(parents=True, exist_ok=True)
+    python = tools / 'python3'
+    if not python.exists():
+        python.symlink_to(sys.executable)
+    environment = {**os.environ, 'PATH': str(tools) + os.pathsep + os.environ.get('PATH', '')}
+    return subprocess.run(['make', '--no-print-directory', 'contract-unit-tests',
+        'CONTRACT_UNIT_PARTITION=' + str(index), 'CONTRACT_UNIT_PARTITION_COUNT=6',
+        'CONTRACT_ARTIFACT_ROOT=' + artifact_root], cwd=root, env=environment, text=True, capture_output=True)
+
+
+def acceptance_fixture(root, execute):
+    head = contract_fixture(root)
+    identity = {'provider': 'gitlab', 'server_url': 'https://gitlab.com', 'project_id': '88948041',
+        'project_path': 'bijux-oss/bijux-std', 'commit_sha': head, 'pipeline_id': '123', 'job_id': '999'}
+    contracts = execute['PIPELINE'].job_contracts(ROOT)
+    selected = {name: {'job_id': index, 'raw_job': {'id': index, 'name': name, 'status': 'success', 'allow_failure': False,
+        'pipeline': {'id': 123, 'project_id': 88948041, 'sha': head}, 'commit': {'id': head}}}
+        for index, (name, row) in enumerate(contracts.items(), 1) if row['operation'] != 'report'}
+    admission = {'status': 'passed', 'project_id': 88948041, 'pipeline_id': 123, 'commit_sha': head,
+        'selected_jobs': selected, 'artifacts': {}, 'files_sha256': {}}
+    for name, contract in contracts.items():
+        if contract['operation'] != 'contracts':
+            continue
+        job_id = selected[name]['job_id']
+        artifact_root = f'artifacts/gitlab/jobs/{job_id}/contracts'
+        result = make_contract_partition(root, contract['args'][0], artifact_root)
+        if result.returncode:
+            raise AssertionError(result.stdout + result.stderr)
+        relative = artifact_root + '/unit-results.json'
+        digest = hashlib.sha256((root / relative).read_bytes()).hexdigest()
+        admission['artifacts'][name] = {'job_id': job_id, 'files_sha256': {relative: digest}}
+        admission['files_sha256'][relative] = digest
+    return identity, admission, contracts
 
 
 class ExecutionHarnessTests(unittest.TestCase):
@@ -167,11 +226,11 @@ class ExecutionHarnessTests(unittest.TestCase):
     def test_every_physical_job_has_a_native_argv_plan(self):
         execute = module()
         jobs = execute['PIPELINE'].job_contracts(ROOT)
-        self.assertEqual(len(jobs), 78)
+        self.assertEqual(len(jobs), 83)
         for name, contract in jobs.items():
             with self.subTest(job=name):
                 commands = execute['operation_commands'](ROOT, contract,
-                    catalogue_python=ROOT / 'artifacts/catalogue-cpython/bin/python')
+                    catalogue_python=ROOT / 'artifacts/catalogue-cpython/bin/python', job_id='456')
                 self.assertTrue(commands)
                 for command in commands:
                     self.assertIsInstance(command, list)
@@ -180,6 +239,18 @@ class ExecutionHarnessTests(unittest.TestCase):
                     self.assertNotEqual(command[:2], ['sh','-c'])
                     self.assertFalse(any(part in {'--accepted-proof', '--selection-only', '--consumer-platform', '--package-container'}
                                          for part in command))
+
+    def test_contract_partitions_dispatch_complete_checks_and_owned_unit_receipts(self):
+        execute = module()
+        for index in range(6):
+            with self.subTest(partition=index):
+                commands = execute['operation_commands'](ROOT, {'operation': 'contracts', 'args': [index]}, job_id='456')
+                self.assertEqual(commands, [['make', 'contract-tests' if index == 0 else 'contract-unit-tests',
+                    'CONTRACT_UNIT_PARTITION=' + str(index), 'CONTRACT_UNIT_PARTITION_COUNT=6',
+                    'CONTRACT_ARTIFACT_ROOT=artifacts/gitlab/jobs/456/contracts']])
+        for args, job in (([True], '456'), ([-1], '456'), ([6], '456'), ([], '456'), ([1], '../other'), ([1], '0')):
+            with self.subTest(args=args, job=job), self.assertRaises(ValueError):
+                execute['operation_commands'](ROOT, {'operation': 'contracts', 'args': args}, job_id=job)
 
     def test_fixture_producer_preserves_real_native_packaging_without_docker(self):
         commands = module()['operation_commands'](ROOT, {'operation':'fixtures','args':[]})
@@ -192,7 +263,7 @@ class ExecutionHarnessTests(unittest.TestCase):
 
     def test_catalogue_uses_owned_interpreter_and_locked_make_targets(self):
         commands = module()['operation_commands'](ROOT, {'operation':'catalogue','args':['tracked-entrypoint']},
-            catalogue_python=ROOT / 'artifacts/catalogue-cpython/bin/python')
+            catalogue_python=ROOT / 'artifacts/catalogue-cpython/bin/python', job_id='456')
         self.assertIn('ui-test-install-catalogue', json.dumps(commands))
         self.assertIn('ui-test-install-catalogue-default', json.dumps(commands))
         self.assertIn('UI_CATALOGUE_GROUP=tracked-entrypoint', json.dumps(commands))
@@ -275,24 +346,102 @@ class ExecutionHarnessTests(unittest.TestCase):
                 execute['validate_context'](ROOT,'std / contracts',environment)
 
     def test_acceptance_records_only_admitted_actual_jobs_and_never_publication_success(self):
+        from unittest.mock import patch
         execute = module()
-        identity = {'provider':'gitlab','server_url':'https://gitlab.com',
-                    'project_id':'88948041','project_path':'bijux-oss/bijux-std',
-                    'commit_sha':'a'*40,'pipeline_id':'123','job_id':'999'}
-        selected = {name:{'job_id':index,'raw_job':{'id':index,'name':name,'status':'success','allow_failure':False,
-                     'pipeline':{'id':123,'project_id':88948041,'sha':'a'*40},'commit':{'id':'a'*40}}}
-                    for index,(name,row) in enumerate(execute['PIPELINE'].job_contracts(ROOT).items(),1)
-                    if row['operation'] != 'report'}
-        admission = {'status':'passed','project_id':88948041,'pipeline_id':123,'commit_sha':'a'*40,'selected_jobs':selected}
-        env={'CI_PIPELINE_SOURCE':'push','CI_COMMIT_REF_NAME':'main','CI_COMMIT_REF_PROTECTED':'true'}
-        result = execute['acceptance_record'](ROOT,identity,env,admission)
-        self.assertEqual(result['project_id'],88948041)
-        self.assertEqual(result['validation']['jobs'],selected)
-        self.assertEqual(result['publication'],{'status':'pending'})
-        self.assertIs(result['ref_protected'],True)
-        for changes in ({'commit_sha':'b'*40},{'pipeline_id':124},{'project_id':1},{'status':'failed'}):
-            with self.subTest(changes=changes), self.assertRaises(ValueError):
-                execute['acceptance_record'](ROOT,identity,env,{**admission,**changes})
+        with tempfile.TemporaryDirectory(dir=ROOT / 'artifacts') as directory:
+            root = Path(directory)
+            identity, admission, contracts = acceptance_fixture(root, execute)
+            env = {'CI_PIPELINE_SOURCE': 'push', 'CI_COMMIT_REF_NAME': 'main', 'CI_COMMIT_REF_PROTECTED': 'true'}
+            with patch.object(execute['PIPELINE'], 'job_contracts', return_value=contracts):
+                result = execute['acceptance_record'](root, identity, env, admission)
+                self.assertEqual(result['project_id'], 88948041)
+                self.assertEqual(result['validation']['jobs'], admission['selected_jobs'])
+                coverage = result['validation']['contract_coverage']
+                self.assertEqual(coverage['executed_cases'], 6)
+                self.assertEqual(coverage['partition_count'], 6)
+                self.assertEqual(len(coverage['native_owners']), 6)
+                self.assertEqual(result['publication'], {'status': 'pending'})
+                self.assertIs(result['ref_protected'], True)
+                for changes in ({'commit_sha': 'b' * 40}, {'pipeline_id': 124}, {'project_id': 1}, {'status': 'failed'}):
+                    with self.subTest(changes=changes), self.assertRaises(ValueError):
+                        execute['acceptance_record'](root, identity, env, {**admission, **changes})
+
+    def test_report_refuses_green_native_jobs_without_complete_owned_case_receipts(self):
+        from unittest.mock import patch
+        execute = module()
+        with tempfile.TemporaryDirectory(dir=ROOT / 'artifacts') as directory:
+            root = Path(directory)
+            identity, admission, contracts = acceptance_fixture(root, execute)
+            env = {'CI_PIPELINE_SOURCE': 'push', 'CI_COMMIT_REF_NAME': 'main', 'CI_COMMIT_REF_PROTECTED': 'true'}
+            name = 'std / contracts / partition 6'
+            job_id = admission['selected_jobs'][name]['job_id']
+            relative = f'artifacts/gitlab/jobs/{job_id}/contracts/unit-results.json'
+            path = root / relative
+            original = path.read_bytes()
+            with patch.object(execute['PIPELINE'], 'job_contracts', return_value=contracts):
+                path.unlink()
+                with self.assertRaises(ValueError):
+                    execute['acceptance_record'](root, identity, env, admission)
+                path.write_bytes(original + b'\n')
+                with self.assertRaisesRegex(ValueError, 'admitted native artifact owner'):
+                    execute['acceptance_record'](root, identity, env, admission)
+                path.write_bytes(original)
+                for change in ({'executed_ids': []}, {'skips': [{'id': 'fixture', 'reason': 'omitted'}]}, {'partition_index': 0}):
+                    changed = {**json.loads(original), **change}
+                    path.write_text(json.dumps(changed))
+                    digest = hashlib.sha256(path.read_bytes()).hexdigest()
+                    admission['files_sha256'][relative] = digest
+                    admission['artifacts'][name]['files_sha256'][relative] = digest
+                    with self.subTest(change=change), self.assertRaises(ValueError):
+                        execute['acceptance_record'](root, identity, env, admission)
+
+    def test_report_missing_partition_blocks_controllers_before_acceptance(self):
+        from types import SimpleNamespace
+        from unittest.mock import patch
+        execute = module()
+        namespace = execute['execute_job'].__globals__
+        loader = execute['source_module']
+        with tempfile.TemporaryDirectory(dir=ROOT / 'artifacts') as directory:
+            root = Path(directory)
+            identity, admission, contracts = acceptance_fixture(root, execute)
+            name = 'std / contracts / partition 6'
+            job_id = admission['selected_jobs'][name]['job_id']
+            (root / f'artifacts/gitlab/jobs/{job_id}/contracts/unit-results.json').unlink()
+            marker = root / 'artifacts/controller-started'
+            def sources(path, name):
+                if path.name == 'collect.py':
+                    return SimpleNamespace(collect=lambda *args, **kwargs: admission)
+                return loader(path, name)
+            command = [sys.executable, '-c', 'from pathlib import Path; Path(' + repr(str(marker)) + ').touch()']
+            with patch.object(execute['PIPELINE'], 'job_contracts', return_value=contracts), \
+                    patch.dict(namespace, {'validate_context': lambda *args: identity, 'bootstrap_node': lambda *args: None,
+                        'source_module': sources, 'operation_commands': lambda *args, **kwargs: [command]}), \
+                    contextlib.redirect_stdout(io.StringIO()), self.assertRaisesRegex(ValueError, 'partition receipt'):
+                execute['execute_job'](root, 'std / report')
+            self.assertFalse(marker.exists())
+            self.assertFalse((root / 'artifacts/gitlab/acceptance/acceptance.json').exists())
+
+    def test_partitioned_make_target_executes_the_full_disjoint_fixture_inventory(self):
+        execute = module()
+        runner = execute['source_module'](ROOT / 'shared/bijux-gitlab/contracts.py', 'contract_fixture_coverage')
+        with tempfile.TemporaryDirectory(dir=ROOT / 'artifacts') as directory:
+            root = Path(directory)
+            head = contract_fixture(root)
+            receipts = []
+            for index in range(6):
+                artifact_root = f'artifacts/gitlab/jobs/{100 + index}/contracts'
+                result = make_contract_partition(root, index, artifact_root)
+                self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+                receipts.append(json.loads((root / artifact_root / 'unit-results.json').read_bytes()))
+            coverage = runner.verify_coverage(receipts, head, expected_partitions=6)
+            self.assertEqual(coverage['expected_cases'], 6)
+            self.assertEqual(coverage['executed_cases'], 6)
+            with self.assertRaises(ValueError):
+                runner.verify_coverage(receipts[:-1], head, expected_partitions=6)
+            legacy = make_contract_partition(root, '', 'artifacts/legacy-contracts')
+            self.assertEqual(legacy.returncode, 0, legacy.stdout + legacy.stderr)
+            self.assertIn('Ran 6 tests', legacy.stderr)
+            self.assertFalse((root / 'artifacts/legacy-contracts/unit-results.json').exists())
 
     def test_failed_job_preserves_real_command_exit_and_never_logs_checkout_credentials(self):
         from unittest.mock import patch
