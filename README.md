@@ -5,6 +5,14 @@ across Bijux projects. It publishes versioned documentation infrastructure,
 Make libraries, GitHub governance, and validation tooling so repositories can
 adopt the same contracts without maintaining independent copies.
 
+Development, merge requests and CI are hosted at
+[bijux-oss/bijux-std on GitLab](https://gitlab.com/bijux-oss/bijux-std).
+[GitHub](https://github.com/bijux/bijux-std) and the
+[personal GitLab namespace](https://gitlab.com/bijux/bijux-std) are publication
+mirrors of accepted commits. Submit changes through the canonical GitLab merge
+requests. The [publication runbook](shared/bijux-gitlab/publication/README.md)
+describes the protected publisher and its activation requirements.
+
 This repository is infrastructure for repositories, not a product runtime. Its
 purpose is to make a shared engineering decision once, verify it here, and let
 each consumer adopt an immutable, reviewable snapshot.

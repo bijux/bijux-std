@@ -32,7 +32,8 @@
     "fixtures",
     "browsers",
     "qualification",
-    "acceptance"
+    "acceptance",
+    "publication"
   ],
   "variables": {
     "GIT_DEPTH": "0",
@@ -1705,5 +1706,31 @@
     },
     "dependencies": [],
     "when": "always"
+  },
+  "publish / mirrors": {
+    "stage": "publication",
+    "needs": [
+      "std / report"
+    ],
+    "rules": [
+      {
+        "if": "$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH && $CI_COMMIT_REF_PROTECTED == \"true\" && $BIJUX_MIRROR_PUBLICATION_READY == \"true\""
+      },
+      {
+        "when": "never"
+      }
+    ],
+    "variables": {
+      "BIJUX_PARENT_PIPELINE_ID": "$CI_PIPELINE_ID"
+    },
+    "trigger": {
+      "include": [
+        {
+          "local": "shared/bijux-gitlab/ci/publication.yml"
+        }
+      ],
+      "strategy": "depend"
+    },
+    "interruptible": false
   }
 }

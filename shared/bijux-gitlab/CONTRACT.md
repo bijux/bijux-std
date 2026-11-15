@@ -40,8 +40,8 @@ catalogue dependency target. Its `bin` directory leads the contract child's
 PyYAML imported from that owned environment. The runtime receipt records its
 actual path, resolved executable hash and lock hash separately from the system
 Python that launches the harness and from the standalone recipe. Safe archive
-extraction filters remain enabled. Only the source contract job has its distinct
-longer budget; frontend jobs retain the strict 180-second whole-job limit.
+extraction filters remain enabled. All six contract jobs have a 30-minute
+budget; frontend jobs retain the strict 180-second whole-job limit.
 
 The tracked-entrypoint owner also installs the unchanged default renderer lock
 through its existing catalogue target.
@@ -191,3 +191,38 @@ build script and canonical native builder. The composer checks those source
 hashes and uses the prepared image for frontend jobs, which begin without
 repeating system-package installation. Node, Python environments and fixture
 archives retain their job-owned installation or provenance checks.
+
+## Accepted-reference publication
+
+`publish / mirrors` is a bridge after the successful `std / report`, enabled
+only on protected default-branch execution with the protected activation flag.
+It starts the separate source-owned publication child. The native physical-job
+API excludes bridges, preserving the complete 83-owner validation contract.
+The child requires actual successful prerequisite jobs and the completed report;
+it does not wait for its containing parent pipeline to finish while that parent
+is waiting for the publication child.
+
+The child independently admits canonical project, source, protected main,
+current running physical job, native parent/bridge relationship, latest required
+attempts, actual merged owner-reviewed MR and the report artifact. Its source
+contract requalifies unit coverage before any mirror mutation. The accepted
+pipeline URL and immutable acceptance artifact URL are recorded separately.
+
+Only the child has the `publication` environment. Its protected file variables
+contain the dedicated GitHub App key and destination-specific GitLab SSH key;
+ordinary validation jobs have no matching environment scope. GitHub installation
+tokens expose one fixed repository and expire within one hour. The GitLab
+settings token has only selected-project `read_project` permission. Interactive
+credential helpers, user SSH configuration, agents and redirects are excluded.
+
+The publisher checks both identities and disabled execution before writing,
+previews both Git histories, creates the GitHub publication record before
+advancing main, and independently reads back exact commit identities and native
+indirect-merge acknowledgement. It never force-updates or deletes a ref. A
+partial result retains destination acknowledgements and fails publication; retry
+reuses the same branch and PR and advances only missing accepted work.
+
+Historical tags remain intact. Automatic publication is currently allowlisted
+to `main`; a product release/tag contract requires a separately reviewed explicit
+allowlist. The [runbook](publication/README.md) covers credentials, operation,
+mirror lag, rotation and forward recovery.

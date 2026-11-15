@@ -2,6 +2,23 @@
 
 Repository changes are recorded by pull request or merge request, newest first.
 
+### [!2](https://gitlab.com/bijux-oss/bijux-std/-/merge_requests/2) — Accepted GitLab mirror publication
+
+- Publish accepted main commits through a protected, serialized child pipeline
+  after complete native validation and owner-reviewed canonical merge requests.
+- Requalify the report and all six unit archives against exact source, native
+  job ownership and complete successful case coverage before either mirror moves.
+- Use a dedicated single-repository GitHub App token and destination-specific
+  GitLab credentials, keeping both publication mirrors free of CI execution.
+- Preserve canonical commits through fast-forward publication, create linked
+  GitHub publication records, and retain independent acknowledgements for
+  partial failure, replay and forward recovery.
+- Select the reusable GitLab capability explicitly for IaC adoption and document
+  publisher configuration, credential rotation and retained evidence. Product
+  package releases and automatic tag publication remain outside this contract.
+- Load the publisher's adjacent source modules independently of documentation
+  tooling so complete contract discovery cannot rebind its publication package.
+
 ### [!1](https://gitlab.com/bijux-oss/bijux-std/-/merge_requests/1) — Canonical GitLab standards preparation
 
 - Recognize the canonical GitLab source and verify explicitly selected source
