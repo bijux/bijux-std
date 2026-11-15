@@ -132,7 +132,7 @@ def compose(root: Path = ROOT) -> dict:
             {"if": '$CI_PIPELINE_SOURCE == "web" || $CI_PIPELINE_SOURCE == "schedule"'},
             {"when": "never"},
         ]},
-        "stages": ["planning", "validation", "fixtures", "browsers", "qualification", "acceptance"],
+        "stages": ["planning", "validation", "fixtures", "browsers", "qualification", "acceptance", "publication"],
         "variables": {"GIT_DEPTH": "0", "PYTHONDONTWRITEBYTECODE": "1", "VERIFICATION_MODE": "full",
                       "EXPECTED_FRONTEND": "true", "FF_SCRIPT_SECTIONS": "true"},
         "default": {"tags": ["saas-linux-medium-amd64"], "interruptible": True},
@@ -153,6 +153,13 @@ def compose(root: Path = ROOT) -> dict:
         if contract["operation"] == "report":
             job["when"] = "always"
         pipeline[name] = job
+    pipeline["publish / mirrors"] = {
+        "stage": "publication", "needs": ["std / report"],
+        "rules": [{"if": '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH && $CI_COMMIT_REF_PROTECTED == "true" && $BIJUX_MIRROR_PUBLICATION_READY == "true"'}, {"when": "never"}],
+        "variables": {"BIJUX_PARENT_PIPELINE_ID": "$CI_PIPELINE_ID"},
+        "trigger": {"include": [{"local": "shared/bijux-gitlab/ci/publication.yml"}], "strategy": "depend"},
+        "interruptible": False,
+    }
     return pipeline
 
 
