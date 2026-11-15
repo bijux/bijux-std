@@ -53,7 +53,20 @@ def source_identity() -> dict:
 
 
 def workflow_identity() -> dict:
-    return {'workflow_run_id': os.environ.get('GITHUB_RUN_ID'), 'workflow_attempt': os.environ.get('GITHUB_RUN_ATTEMPT')}
+    return ci_context().workflow_identity()
+
+
+def ci_context():
+    from types import ModuleType
+    path = Path(__file__).with_name('ci_context.py')
+    module = ModuleType('bijux_publication_ci_context')
+    module.__file__ = str(path)
+    exec(compile(path.read_bytes(), str(path), 'exec'), module.__dict__)
+    return module
+
+
+def verify_workflow(supplied: dict, expected: dict | None = None) -> dict:
+    return ci_context().verify_workflow(supplied, expected)
 
 
 def pins() -> dict:
@@ -253,10 +266,10 @@ def validate_case(case: dict, output: Path) -> None:
 def verify(output: Path, current_source: dict | None = None, workflow: dict | None = None) -> dict:
     receipt = json.loads((output / 'command-receipt.json').read_text())
     source = source_identity() if current_source is None else current_source
-    identity = workflow_identity() if workflow is None else workflow
+    verify_workflow(receipt.get('workflow'), workflow)
     if receipt.get('schema') != 1 or receipt.get('status') != 'passed' or receipt.get('verification_only') is not True or receipt.get('publication_approval') is not False:
         raise ValueError('Publication command receipt is not passing verification evidence')
-    if receipt.get('workflow') != identity or receipt.get('source_before') != source or receipt.get('source_after') != source:
+    if receipt.get('source_before') != source or receipt.get('source_after') != source:
         raise ValueError('Publication command workflow/current source identity mismatch')
     if receipt.get('child_exit') != 0 or receipt.get('expected_ids') != list(EXPECTED_IDS) or receipt.get('executed') != 3 or any(receipt.get(name) != 0 for name in ('failed', 'errors', 'skipped')):
         raise ValueError('Publication command execution accounting is incomplete')

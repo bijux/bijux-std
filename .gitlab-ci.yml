@@ -1,0 +1,23 @@
+{
+  "include": [
+    {
+      "local": "shared/bijux-gitlab/ci/runtime.yml",
+      "rules": [
+        {
+          "if": "$CI_COMMIT_BRANCH == \"ci/gitlab-runtime\" && ($CI_PIPELINE_SOURCE == \"push\" || $CI_PIPELINE_SOURCE == \"web\")"
+        }
+      ]
+    },
+    {
+      "local": "shared/bijux-gitlab/ci/standards.yml",
+      "rules": [
+        {
+          "if": "$CI_PIPELINE_SOURCE == \"merge_request_event\""
+        },
+        {
+          "if": "$CI_COMMIT_BRANCH != \"ci/gitlab-runtime\" || ($CI_PIPELINE_SOURCE != \"push\" && $CI_PIPELINE_SOURCE != \"web\")"
+        }
+      ]
+    }
+  ]
+}

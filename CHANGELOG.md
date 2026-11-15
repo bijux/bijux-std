@@ -1,6 +1,26 @@
 # Changelog
 
-Repository changes are recorded by pull request, newest merge first.
+Repository changes are recorded by pull request or merge request, newest first.
+
+### [!1](https://gitlab.com/bijux-oss/bijux-std/-/merge_requests/1) — Canonical GitLab standards preparation
+
+- Recognize the canonical GitLab source and verify explicitly selected source
+  acquisitions without treating a candidate commit as accepted authority.
+- Register Ontology in the fourteen-repository standards family, preserve its
+  authored verification events, and retain RO-Crate Node's existing governance.
+- Add full fresh native GitLab job contracts and source-bound documentation
+  evidence, including physical browser ownership and strict frontend timing.
+- Select verified standalone Python for contracts, isolate renderer bytecode,
+  and retain complete native timing and execution evidence.
+- Run contract cases across six isolated jobs and require exact, disjoint
+  coverage of complete discovery before accepting the validation report.
+- Add a canonical-branch internal CI runtime builder with ephemeral registry
+  authentication and digest receipts, preserving existing browser/runtime gates.
+- Make runtime mutation fixtures independent of filesystem timestamp resolution
+  while retaining the production observation checks.
+- Preserve GitHub execution compatibility and imported commit history while
+  keeping authority cutover and automated mirror publication gated on hosted
+  qualification and restricted publication credentials.
 
 ### [#336](https://github.com/bijux/bijux-std/pull/336) — Live native publication admission
 

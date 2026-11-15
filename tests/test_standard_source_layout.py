@@ -1,26 +1,106 @@
-"""Keep canonical source and consumer paths independent of checkout names."""
+"""Classify authored standards checkouts independently of local directory names."""
+
 from pathlib import Path
 import subprocess
 import tempfile
 import unittest
 
-ROOT=Path(__file__).resolve().parents[1]
-HELPER=ROOT/'shared/bijux-checks/scripts/standard-source-layout.sh'
+
+ROOT = Path(__file__).resolve().parents[1]
+HELPER = ROOT / "shared/bijux-checks/scripts/standard-source-layout.sh"
+
 
 class StandardSourceLayoutTests(unittest.TestCase):
-    def test_checkout_identity_and_authored_layout_both_select_canonical_source(self):
-        owner=ROOT/'artifacts/tests/source-layout';owner.mkdir(parents=True,exist_ok=True)
+    def classify(self, remote: str, *, layout: str = "source", runner_transport=False, additional_remote=None) -> int:
+        owner = ROOT / "artifacts/tests/source-layout"
+        owner.mkdir(parents=True, exist_ok=True)
         with tempfile.TemporaryDirectory(dir=owner) as directory:
-            for name,remote,source,expected in [
-                ('owned-checkout','git@github.com:bijux/bijux-std.git',True,0),
-                ('bijux-std','https://github.com/bijux/bijux-ro-crate-node.git',True,1),
-                ('consumer','https://github.com/bijux/bijux-std.git',False,1),
-            ]:
-                root=Path(directory)/name;root.mkdir()
-                subprocess.run(['git','init','-q',str(root)],check=True)
-                subprocess.run(['git','-C',str(root),'remote','add','origin',remote],check=True)
-                if source:
-                    (root/'shared/bijux-checks').mkdir(parents=True)
-                    (root/'shared/shared-dir-sha256.txt').write_text('source-owned manifest')
-                result=subprocess.run(['bash','-c','source "$1"; is_standard_source_checkout "$2"','fixture',str(HELPER),str(root)])
-                self.assertEqual(result.returncode,expected,name)
+            root = Path(directory) / "owned-checkout"
+            root.mkdir()
+            subprocess.run(["git", "init", "-q", str(root)], check=True)
+            subprocess.run(
+                ["git", "-C", str(root), "remote", "add", "origin", remote],
+                check=True,
+            )
+            if runner_transport:
+                subprocess.run(["git", "-C", str(root), "config",
+                    "url.https://gitlab-ci-token:fixture@gitlab.com/.insteadOf",
+                    "https://gitlab.com/"], check=True)
+            if additional_remote is not None:
+                subprocess.run(["git", "-C", str(root), "config", "--add",
+                                "remote.origin.url", additional_remote], check=True)
+            if layout != "consumer":
+                (root / "shared").mkdir()
+                if layout != "missing-checks":
+                    (root / "shared/bijux-checks").mkdir()
+                if layout != "missing-manifest":
+                    (root / "shared/shared-dir-sha256.txt").write_text(
+                        "source-owned manifest\n", encoding="utf-8"
+                    )
+            result = subprocess.run(
+                [
+                    "bash", "-c",
+                    'source "$1"; is_standard_source_checkout "$2"',
+                    "fixture", str(HELPER), str(root),
+                ],
+                text=True,
+                capture_output=True,
+            )
+            return result.returncode
+
+    def test_canonical_gitlab_transports_admit_authored_source(self):
+        for remote in (
+            "https://gitlab.com/bijux-oss/bijux-std",
+            "https://gitlab.com/bijux-oss/bijux-std.git",
+            "git@gitlab.com:bijux-oss/bijux-std",
+            "git@gitlab.com:bijux-oss/bijux-std.git",
+            "ssh://git@gitlab.com/bijux-oss/bijux-std.git",
+            "ssh://git@gitlab.com:22/bijux-oss/bijux-std.git",
+        ):
+            with self.subTest(remote=remote):
+                self.assertEqual(self.classify(remote), 0)
+
+    def test_existing_github_source_checkouts_remain_compatible(self):
+        for remote in (
+            "https://github.com/bijux/bijux-std",
+            "https://github.com/bijux/bijux-std.git",
+            "git@github.com:bijux/bijux-std",
+            "git@github.com:bijux/bijux-std.git",
+        ):
+            with self.subTest(remote=remote):
+                self.assertEqual(self.classify(remote), 0)
+
+    def test_runner_transport_rewrite_does_not_change_configured_source_identity(self):
+        self.assertEqual(self.classify("https://gitlab.com/bijux-oss/bijux-std.git", runner_transport=True), 0)
+        self.assertNotEqual(self.classify("https://gitlab.com/bijux/bijux-std.git", runner_transport=True), 0)
+
+    def test_multiple_configured_origins_are_ambiguous_even_when_one_is_canonical(self):
+        canonical = "https://gitlab.com/bijux-oss/bijux-std.git"
+        mirror = "https://gitlab.com/bijux/bijux-std.git"
+        for first, second in ((mirror, canonical), (canonical, mirror), (canonical, canonical), (canonical, "")):
+            with self.subTest(first=first, second=second):
+                self.assertNotEqual(self.classify(first, additional_remote=second), 0)
+
+    def test_mirrors_unrelated_repositories_and_lookalike_urls_are_not_sources(self):
+        for remote in (
+            "https://gitlab.com/bijux/bijux-std.git",
+            "git@gitlab.com:bijux/bijux-std.git",
+            "https://gitlab.com/bijux-edu/bijux-std.git",
+            "https://gitlab.com/bijux-oss/bijux-core.git",
+            "https://github.com/bijux/bijux-ro-crate-node.git",
+            "https://gitlab.com.example.invalid/bijux-oss/bijux-std.git",
+            "https://gitlab.com@another.example.invalid/bijux-oss/bijux-std.git",
+            "https://gitlab.com/bijux-oss/bijux-std.git?source=canonical",
+            "https://gitlab.com/bijux-oss/bijux-std.git/another-project",
+        ):
+            with self.subTest(remote=remote):
+                self.assertNotEqual(self.classify(remote), 0)
+
+    def test_matching_remote_requires_both_authored_layout_markers(self):
+        for remote in (
+            "https://gitlab.com/bijux-oss/bijux-std.git",
+            "git@github.com:bijux/bijux-std.git",
+        ):
+            for layout in ("consumer", "missing-checks", "missing-manifest"):
+                with self.subTest(remote=remote, layout=layout):
+                    self.assertNotEqual(self.classify(remote, layout=layout), 0)

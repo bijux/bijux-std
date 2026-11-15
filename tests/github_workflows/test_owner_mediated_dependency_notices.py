@@ -23,16 +23,17 @@ class OwnerMediatedDependencyNoticeTests(unittest.TestCase):
                                   'needs': 'build', 'strategy': {'matrix': {'python': ['3.11', '3.14']}},
                                   'steps': [{'run': 'make lint'}]}}}
 
-    def test_actual_family_has_uniform_notification_and_explicit_master_exception(self):
+    def test_actual_family_has_uniform_notification_and_explicit_authored_workflow_exceptions(self):
         manifest = json.loads((ROOT / '.github/standards/repo-config.manifest.json').read_text())
         repositories = [repo['name'] for repo in manifest['repositories']]
-        self.assertEqual(len(repositories), 13)
+        self.assertEqual(len(repositories), 14)
+        self.assertIn('bijux-ontology', repositories)
         self.assertIn('bijux-ro-crate-node', repositories)
         policies = MODULE.validate_manifest(manifest, repositories)
         for name, policy in policies.items():
             self.assertEqual(policy['dependency_pull_requests'], 'notification-only', name)
             self.assertEqual(policy['dependency_merge'], 'owner-consolidation', name)
-            self.assertEqual(policy['main_verification'], 'existing-events' if name == 'bijux-masterclass' else 'accepted-pull-request', name)
+            self.assertEqual(policy['main_verification'], 'existing-events' if name in {'bijux-masterclass', 'bijux-ontology'} else 'accepted-pull-request', name)
 
     def test_original_bot_author_denies_all_PR_events_without_claiming_required_name(self):
         projected = MODULE.project_dependency_pull_requests('owned', self.source(), POLICY)

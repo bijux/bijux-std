@@ -59,6 +59,15 @@ exit "$result"
 
     def test_rust_component_registers_check_only_and_ci_targets(self) -> None:
         workspace = self.prepare_workspace("make-targets")
+        fixture_bin = workspace / "fixture-bin"
+        fixture_bin.mkdir()
+        cargo = fixture_bin / "cargo"
+        cargo.write_text(
+            "#!/bin/sh\nprintf '%s\\n' 'dispatch fixture must not execute cargo' >&2\nexit 97\n",
+            encoding="utf-8",
+        )
+        cargo.chmod(0o755)
+        environment = {**os.environ, "PATH": f"{fixture_bin}{os.pathsep}{os.environ['PATH']}"}
         gate = workspace / "rust-gate-fixture"
         gate.write_text(
             """#!/usr/bin/env bash
@@ -82,6 +91,7 @@ printf '%s\\n' "$1" >>"${ARTIFACT_ROOT}/fixture/commands.txt"
         result = subprocess.run(
             ["make", "--no-print-directory", "doctor-rs", "ci-fast"],
             cwd=workspace,
+            env=environment,
             check=True,
             text=True,
             capture_output=True,
@@ -97,6 +107,7 @@ printf '%s\\n' "$1" >>"${ARTIFACT_ROOT}/fixture/commands.txt"
         subprocess.run(
             ["make", "--no-print-directory", "format", "ci-docs"],
             cwd=workspace,
+            env=environment,
             check=True,
             text=True,
             capture_output=True,
@@ -111,6 +122,7 @@ printf '%s\\n' "$1" >>"${ARTIFACT_ROOT}/fixture/commands.txt"
         help_output = subprocess.run(
             ["make", "--no-print-directory", "help"],
             cwd=workspace,
+            env=environment,
             check=True,
             text=True,
             capture_output=True,

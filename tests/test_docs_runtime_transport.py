@@ -347,6 +347,7 @@ class RuntimeTransportTests(unittest.TestCase):
 
     def test_fixture_inventory_overlaps_owned_pull_and_pack_requires_success_or_reaped_child(self):
         real_child = CONTAINER.subprocess.Popen
+        real_load = GATE.load_module
         program = """import pathlib, sys, time
 started, release = map(pathlib.Path, sys.argv[1:3])
 started.write_text('started')
@@ -402,7 +403,8 @@ sys.exit(int(sys.argv[3]))
                 with patch.object(CONTAINER.shutil, 'which', return_value='/owned/docker'), \
                      patch.object(CONTAINER.subprocess, 'Popen', side_effect=launch), \
                      patch.object(CONTAINER, 'pack', side_effect=packages), \
-                     patch.object(GATE, 'load_module', return_value=CONTAINER), \
+                     patch.object(GATE, 'load_module', side_effect=lambda path, name: CONTAINER
+                                  if name == 'bijux_runtime_container' else real_load(path, name)), \
                      patch.object(GATE, 'ARTIFACTS', folder), patch.object(GATE, 'SUITES', ('navigation',)), \
                      patch.object(GATE, 'PERSISTED_SUITE', 'persisted'), \
                      patch.object(GATE, 'environment', return_value={}), \

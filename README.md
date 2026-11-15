@@ -272,6 +272,17 @@ Generated output must be changed through its source manifest or generator.
 Hand-editing a synchronized consumer file creates drift and will be rejected by
 the checks.
 
+[Reviewed repository profiles](.github/standards/repository-profiles.json) record
+capabilities and product check ownership when a repository keeps its own CI.
+`bijux-ontology` consumes the common and Python standards for its vocabulary,
+adapter, reasoning, and internal tooling packages. Its authored verification
+workflow remains repository-owned; registration enables governance and its
+Python 3.11/3.13 product checks without assigning documentation or release jobs.
+Run `python3 .github/scripts/build_repo_manifest.py --repository-profiles-only`
+to regenerate reviewed profiles without recapturing unrelated repositories.
+The [Node workspace registry](.github/standards/node-workspaces.json) retains
+`bijux-ro-crate-node` as a single governed repository.
+
 ## CI and Review Governance
 
 The primary workflow,

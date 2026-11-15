@@ -102,10 +102,13 @@ def prepare(*, package_container=False) -> None:
           'archive_bytes': runtime_receipt['archive_bytes'], 'scope': 'Complete inventory and compression; cost only'}))
     write_json(ARTIFACTS / 'browser-packages.json', runtime_receipt)
     paths = [archive, runtime_archive, ARTIFACTS / 'browser-packages.json', ARTIFACTS / 'renderer-source-observation.json'] + [inventory / f'{suite}.json' for suite in (*SUITES, PERSISTED_SUITE)]
+    context = workflow_controllers().load('ci_context')
+    identity = {'ci_context': context.execution_identity()} if context.gitlab() else context.workflow_identity()
+    head = subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=ROOT, text=True).strip()
+    if context.gitlab() and identity['ci_context']['commit_sha'] != head:
+        raise ValueError('GitLab producer checkout differs from native commit identity')
     write_json(ARTIFACTS / 'producer-envelope.json', {
-        'source_head': subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=ROOT, text=True).strip(),
-        'workflow_run_id': os.environ.get('GITHUB_RUN_ID'),
-        'workflow_attempt': os.environ.get('GITHUB_RUN_ATTEMPT'),
+        'source_head': head, **identity,
         'partition_registry_sha256': hashlib.sha256(PARTITIONS.REGISTRY_PATH.read_bytes()).hexdigest(),
         'batch_registry_sha256': hashlib.sha256(OWNERSHIP.REGISTRY_PATH.read_bytes()).hexdigest(),
         'artifact_digests': {str(path.relative_to(ARTIFACTS)): hashlib.sha256(path.read_bytes()).hexdigest() for path in paths},
@@ -119,8 +122,18 @@ def workflow_controllers():
 def verify_producer_envelope(admission=None) -> dict:
     data = (ARTIFACTS / 'producer-envelope.json').read_bytes()
     receipt = json.loads(data)
-    expected = {'source_head': subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=ROOT, text=True).strip(),
-                'workflow_run_id': os.environ.get('GITHUB_RUN_ID'), 'workflow_attempt': os.environ.get('GITHUB_RUN_ATTEMPT')}
+    context = workflow_controllers().load('ci_context')
+    head = subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=ROOT, text=True).strip()
+    expected = {'source_head': head}
+    if context.gitlab():
+        if admission is not None:
+            context.refuse_retained_proof()
+        identity = context.verify_workflow(receipt.get('ci_context'))
+        if identity['commit_sha'] != head:
+            raise ValueError('GitLab producer checkout differs from native commit identity')
+        expected['ci_context'] = identity
+    else:
+        expected.update(context.workflow_identity())
     if admission is not None:
         if (type(admission).__name__ != 'ArtifactInput'
                 or Path(inspect.getfile(type(admission).verify_receipt)).resolve() != TESTS / 'execution/workflow_lineage.py'):

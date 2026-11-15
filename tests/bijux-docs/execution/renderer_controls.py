@@ -381,10 +381,13 @@ def verify_receipt(output: Path, current_source: dict | None = None, workflow: d
                    group: str | None = None, original_source=None) -> dict:
     receipt = json.loads((output / 'renderer-controls.json').read_text())
     source = current_source if current_source is not None else HELPERS.source_identity()
-    identity = workflow if workflow is not None else HELPERS.workflow_identity()
+    try:
+        HELPERS.verify_workflow(receipt.get('workflow'), workflow)
+    except ValueError as error:
+        raise ValueError('Renderer controls lack passing current source/workflow execution') from error
     if (receipt.get('schema') != 1 or receipt.get('group') != group or receipt.get('status') != 'passed'
             or receipt.get('verification_only') is not True or receipt.get('publication_approval') is not False
-            or receipt.get('workflow') != identity or receipt.get('source_before') != source
+            or receipt.get('source_before') != source
             or receipt.get('source_after') != source or receipt.get('child_exit') != 0 or receipt.get('node_exit') != 0):
         raise ValueError('Renderer controls lack passing current source/workflow execution')
     expected = group_python_ids(group)
@@ -426,11 +429,16 @@ def verify_groups(output: Path, current_source: dict | None = None, workflow: di
     source = current_source if current_source is not None else HELPERS.source_identity()
     identity = workflow if workflow is not None else HELPERS.workflow_identity()
     if workflows is not None and (not isinstance(workflows, dict) or set(workflows) != set(GROUPS)
-            or any(not isinstance(value, dict) or set(value) != {'workflow_run_id', 'workflow_attempt'}
-                   or not all(isinstance(item, str) and re.fullmatch(r'[1-9][0-9]*', item) for item in value.values())
-                   for value in workflows.values())):
+            or any(not isinstance(value, dict) for value in workflows.values())):
         raise ValueError('Every source-owned renderer group requires its exact admitted workflow identity')
-    receipts = {group: verify_receipt(output / group, source, workflows[group] if workflows is not None else identity, group, original_source) for group in GROUPS}
+    if workflows is not None:
+        for value in workflows.values():
+            if HELPERS.ci_context().gitlab():
+                HELPERS.verify_workflow(value)
+            elif (set(value) != {'workflow_run_id', 'workflow_attempt'}
+                  or not all(isinstance(item, str) and re.fullmatch(r'[1-9][0-9]*', item) for item in value.values())):
+                raise ValueError('Every source-owned renderer group requires its exact admitted workflow identity')
+    receipts = {group: verify_receipt(output / group, source, workflows[group] if workflows is not None else workflow, group, original_source) for group in GROUPS}
     python_ids = [case['id'] for receipt in receipts.values() for case in receipt['python_cases']]
     if sorted(python_ids) != expected_python_ids() or len(python_ids) != len(set(python_ids)):
         raise ValueError('Renderer group union does not execute every Python source case exactly once')
