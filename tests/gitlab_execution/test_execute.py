@@ -11,6 +11,7 @@ import subprocess
 import sys
 import tempfile
 import unittest
+import zipfile
 
 ROOT = Path(__file__).resolve().parents[2]
 
@@ -23,6 +24,100 @@ def module():
 
 
 class ExecutionHarnessTests(unittest.TestCase):
+    def test_contracts_use_owned_standalone_python_and_hashlocked_catalogue_environment(self):
+        from unittest.mock import patch
+        execute=module()
+        self.assertTrue('bootstrap_contracts_python' in execute,'Contracts need their supported owned Python runtime')
+        namespace=execute['bootstrap_contracts_python'].__globals__
+        with tempfile.TemporaryDirectory(dir=ROOT/'artifacts') as directory:
+            root=Path(directory)
+            standalone=root/'artifacts/standalone/bin/python';standalone.parent.mkdir(parents=True)
+            standalone.write_bytes(b'owned standalone interpreter fixture')
+            lock=root/'tests/bijux-docs/catalogue/requirements.lock.txt';lock.parent.mkdir(parents=True)
+            lock.write_bytes(b'owned hash-locked dependency fixture\n')
+            selected=root/'artifacts/gitlab/contracts/python/bin/python'
+            receipt={'commands':[],'runtimes':{'python':{'version':'3.11.2'},
+                'standalone_python':{'prefix':str(standalone.parents[1])}}}
+            environment={'PATH':'/existing/node/bin:/usr/bin'}
+            def run(argv,working,child,record,*,capture=False):
+                if argv[:2]==['make','ui-test-install-catalogue']:
+                    self.assertIn('UI_CATALOGUE_BASE_PYTHON='+str(standalone),argv)
+                    self.assertIn('UI_CATALOGUE_PYTHON_DIR='+str(selected.parents[1]),argv)
+                    selected.parent.mkdir(parents=True);selected.symlink_to(standalone)
+                    return None
+                self.assertEqual(argv[0],str(selected))
+                return json.dumps({'version':[3,14,4],'implementation':'cpython','executable':str(selected),
+                    'prefix':str(selected.parents[1]),'base_prefix':str(standalone.parents[1]),
+                    'data_filter':True,'yaml_version':'6.0.3','yaml_file':str(selected.parents[1]/'lib/python3.14/site-packages/yaml/__init__.py')})
+            with patch.dict(namespace,{'run_command':run}):
+                result=execute['bootstrap_contracts_python'](root,environment,receipt,standalone)
+            self.assertEqual(result,selected)
+            self.assertTrue(environment['PATH'].startswith(str(selected.parent)+os.pathsep))
+            self.assertEqual(receipt['runtimes']['python']['version'],'3.11.2')
+            child=receipt['runtimes']['contracts_python']
+            self.assertEqual(child['version'],[3,14,4])
+            self.assertTrue(child['data_filter'])
+            self.assertEqual(child['executable_sha256'],hashlib.sha256(b'owned standalone interpreter fixture').hexdigest())
+            self.assertEqual(child['lock_sha256'],hashlib.sha256(lock.read_bytes()).hexdigest())
+
+    def test_contract_runtime_rejects_unsupported_python_or_missing_data_filter(self):
+        from unittest.mock import patch
+        execute=module()
+        self.assertTrue('bootstrap_contracts_python' in execute,'Contracts need their supported owned Python runtime')
+        namespace=execute['bootstrap_contracts_python'].__globals__
+        for change in ({'version':[3,11,2]},{'data_filter':False}):
+            with self.subTest(change=change),tempfile.TemporaryDirectory(dir=ROOT/'artifacts') as directory:
+                root=Path(directory);standalone=root/'artifacts/standalone/bin/python'
+                standalone.parent.mkdir(parents=True);standalone.write_bytes(b'owned interpreter fixture')
+                selected=root/'artifacts/gitlab/contracts/python/bin/python'
+                def run(argv,*args,**kwargs):
+                    if argv[0]=='make':
+                        selected.parent.mkdir(parents=True);selected.symlink_to(standalone);return
+                    return json.dumps({'version':[3,14,4],'implementation':'cpython','executable':str(selected),
+                        'prefix':str(selected.parents[1]),'base_prefix':str(standalone.parents[1]),'data_filter':True,
+                        'yaml_version':'6.0.3','yaml_file':str(selected.parents[1]/'lib/python3.14/site-packages/yaml/__init__.py'),**change})
+                with patch.dict(namespace,{'run_command':run}),self.assertRaises(ValueError):
+                    execute['bootstrap_contracts_python'](root,{'PATH':'/usr/bin'},
+                        {'runtimes':{'standalone_python':{'prefix':str(standalone.parents[1])}}},standalone)
+
+    def test_renderer_install_does_not_inherit_external_bytecode_prefix(self):
+        execute = module()
+        with tempfile.TemporaryDirectory(dir=ROOT / 'artifacts') as directory:
+            root = Path(directory)
+            original = {'PATH':'/owned/bin','PYTHONPYCACHEPREFIX':str(root/'external-cache'),'PYTHONUNBUFFERED':'0'}
+            child = execute['runtime_environment'](root, original)
+            self.assertNotIn('PYTHONPYCACHEPREFIX',child)
+            self.assertEqual(child['PYTHONDONTWRITEBYTECODE'],'1')
+            self.assertEqual(child.get('PYTHONUNBUFFERED'),'1')
+            self.assertEqual(original['PYTHONPYCACHEPREFIX'],str(root/'external-cache'))
+
+    def test_actual_offline_pip_install_keeps_bytecode_record_inside_renderer_environment(self):
+        execute = module()
+        with tempfile.TemporaryDirectory(dir=ROOT / 'artifacts') as directory:
+            root = Path(directory)
+            wheel = root/'bijux_cache_fixture-1.0-py3-none-any.whl'
+            metadata = 'bijux_cache_fixture-1.0.dist-info/'
+            records = {'bijux_cache_fixture.py':b'owned = True\n',
+                metadata+'METADATA':b'Metadata-Version: 2.1\nName: bijux-cache-fixture\nVersion: 1.0\n',
+                metadata+'WHEEL':b'Wheel-Version: 1.0\nGenerator: bijux\nRoot-Is-Purelib: true\nTag: py3-none-any\n'}
+            records[metadata+'RECORD'] = ''.join(name+',,\n' for name in (*records,metadata+'RECORD')).encode()
+            with zipfile.ZipFile(wheel,'w') as archive:
+                for name,body in records.items(): archive.writestr(name,body)
+            base = dict(os.environ);base.pop('PYTHONPYCACHEPREFIX',None)
+            interpreter = root/'artifacts/renderer/python/bin/python'
+            subprocess.run([sys.executable,'-m','venv',str(interpreter.parents[1])],env=base,check=True,
+                           stdout=subprocess.PIPE,stderr=subprocess.PIPE)
+            original = {**base,'PYTHONPYCACHEPREFIX':str(root/'external-cache')}
+            child = execute['runtime_environment'](root,original)
+            subprocess.run([str(interpreter),'-m','pip','install','--disable-pip-version-check','--no-index','--no-deps',str(wheel)],
+                           env=child,check=True,stdout=subprocess.PIPE,stderr=subprocess.PIPE)
+            output = subprocess.check_output([str(interpreter),'-c',
+                'import importlib.metadata,json; print(json.dumps([str(path) for path in importlib.metadata.distribution("bijux-cache-fixture").files]))'],
+                env=child,text=True)
+            installed = json.loads(output)
+            self.assertTrue(any(name.endswith('.pyc') for name in installed), 'Exercise pip explicit compilation rather than disabling it')
+            self.assertFalse(any('..' in Path(name).parts for name in installed),installed)
+
     def test_contract_test_child_runs_legacy_receipt_fixtures_without_inherited_ci_identity(self):
         from unittest.mock import patch
         execute = module()
@@ -42,6 +137,8 @@ class ExecutionHarnessTests(unittest.TestCase):
             with patch.dict(os.environ,native,clear=True), \
                     patch.object(execute['PIPELINE'],'job_contracts',return_value={'std / contracts':{'operation':'contracts','args':[]}}), \
                     patch.dict(namespace,{'validate_context':lambda *args:identity,'bootstrap_node':lambda *args:None,
+                        'bootstrap_standalone_python':lambda *args:Path(sys.executable),
+                        'bootstrap_contracts_python':lambda *args:Path(sys.executable),
                         'operation_commands':lambda *args,**kwargs:[representative]}), contextlib.redirect_stdout(io.StringIO()):
                 result = execute['execute_job'](root,'std / contracts')
                 self.assertEqual(os.environ['CI_JOB_ID'],'456')
@@ -154,8 +251,9 @@ class ExecutionHarnessTests(unittest.TestCase):
             root = Path(name)
             env = execute['runtime_environment'](root, {'PATH':'/usr/bin'})
             self.assertTrue(Path(env['TMPDIR']).is_dir())
-            for key in ('TMPDIR','PIP_CACHE_DIR','UV_CACHE_DIR','NPM_CONFIG_CACHE','PYTHONPYCACHEPREFIX'):
+            for key in ('TMPDIR','PIP_CACHE_DIR','UV_CACHE_DIR','NPM_CONFIG_CACHE'):
                 self.assertTrue(Path(env[key]).is_relative_to(root / 'artifacts'))
+            self.assertNotIn('PYTHONPYCACHEPREFIX',env)
             self.assertFalse(any(key.startswith('GITHUB_') for key in env))
 
     def test_context_rejects_mirror_stale_checkout_and_retained_modes_before_remote_changes(self):
@@ -212,6 +310,8 @@ class ExecutionHarnessTests(unittest.TestCase):
             with patch.object(execute['PIPELINE'],'job_contracts',return_value=jobs), \
                     patch.dict(namespace,{'validate_context':lambda *args:identity,
                         'bootstrap_node':lambda *args:None,
+                        'bootstrap_standalone_python':lambda *args:Path(sys.executable),
+                        'bootstrap_contracts_python':lambda *args:Path(sys.executable),
                         'operation_commands':lambda *args,**kwargs:[[sys.executable,'-c','raise SystemExit(7)']]}), \
                     contextlib.redirect_stdout(output), self.assertRaises(subprocess.CalledProcessError):
                 execute['execute_job'](root,'std / contracts')

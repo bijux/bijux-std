@@ -10,6 +10,8 @@ Repository changes are recorded by pull request or merge request, newest first.
   authored verification events, and retain RO-Crate Node's existing governance.
 - Add full fresh native GitLab job contracts and source-bound documentation
   evidence, including physical browser ownership and strict frontend timing.
+- Select verified standalone Python for contracts, isolate renderer bytecode,
+  and retain complete native timing and execution evidence.
 - Preserve GitHub execution compatibility and imported commit history while
   keeping authority cutover and automated mirror publication gated on hosted
   qualification and restricted publication credentials.

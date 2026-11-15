@@ -26,10 +26,23 @@ including fixture production, run in the same pinned Playwright image.
 Jobs requiring Node download exactly 24.21.0 from its fixed `nodejs.org` release
 URL, verify the archive against that release's official HTTPS `SHASUMS256.txt`,
 extract into `artifacts/gitlab/tools/node` and verify the executable's version.
-Catalogue jobs install exactly uv 0.11.17 into their artifact-owned virtual
-environment, using an artifact-owned pip cache. No global pip installation or
-unverified installer script is used. The existing catalogue Make targets install
-and validate the independent CPython 3.14.4 recipe and its locked dependencies.
+Catalogue and contract jobs install exactly uv 0.11.17 into their artifact-owned
+virtual environment, using an artifact-owned pip cache. No global pip
+installation or unverified installer script is used. A shared bootstrap helper
+runs the existing catalogue Make target and independently reopens the standalone
+CPython 3.14.4 recipe observation. Catalogue behavior and dependency targets are
+unchanged.
+
+Contract tests use a separate environment under
+`artifacts/gitlab/contracts/python`, installed through the existing hash-locked
+catalogue dependency target. Its `bin` directory leads the contract child's
+`PATH`. The child must report exact CPython 3.14.4, the safe tar data filter and
+PyYAML imported from that owned environment. The runtime receipt records its
+actual path, resolved executable hash and lock hash separately from the system
+Python that launches the harness and from the standalone recipe. Safe archive
+extraction filters remain enabled. Only the source contract job has its distinct
+longer budget; frontend jobs retain the strict 180-second whole-job limit.
+
 The tracked-entrypoint owner also installs the unchanged default renderer lock
 through its existing catalogue target.
 
@@ -38,6 +51,9 @@ CA certificates, tar, `xz-utils`, Perl, jq and ShellCheck. Runtime tools, caches
 Python bytecode, temporary files and receipts remain under `artifacts/`.
 Scratch directories are created before exporting `TMPDIR`. Browser binaries
 are the preinstalled `/ms-playwright` image runtime.
+
+Native Python children use unbuffered output so diagnostics emitted before a
+timeout remain available in the provider trace.
 
 Every argv execution emits paired source-owned GitLab trace sections and records
 its command, real exit code and duration in
@@ -52,6 +68,11 @@ fixtures establish their own explicit provider identities. The containing job's
 admission and runtime receipt retain its actual GitLab context. Frontend
 qualification, source planning, policy, navigation and reporting retain their
 native provider environment.
+
+The complete contract target uses fail-fast unit discovery so hosted failures
+retain their traceback promptly. Successful runs execute the complete unit
+inventory and theme checks. The source contract job has a 30-minute limit;
+frontend jobs retain their separate strict 180-second whole-job limit.
 
 ## Fresh qualification and acceptance
 

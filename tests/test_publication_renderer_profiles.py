@@ -140,6 +140,19 @@ class ProfileTests(unittest.TestCase):
     def test_unlisted_startup_pth_fails(self):self.assertRaises(profiles.ProfileError,self.installed_snapshot,'unknown.pth')
     def test_unlisted_native_extension_fails(self):self.assertRaises(profiles.ProfileError,self.installed_snapshot,'unknown.so')
     def test_missing_recorded_dependency_source_fails(self):self.assertRaises(profiles.ProfileError,self.installed_snapshot,None,True)
+    def test_escaped_distribution_record_diagnostic_names_owner_and_path_without_log_injection(self):
+        installed=self.root/'site-packages';installed.mkdir();stdlib=self.root/'stdlib';stdlib.mkdir()
+        record=Path('../../../../external-cache/owned.cpython-312.pyc')
+        distribution=types.SimpleNamespace(metadata={'Name':'owned\ninjected-log'},version='1',
+            files=[record],locate_file=lambda name:installed/str(name))
+        with patch.object(profiles.metadata,'distributions',return_value=[distribution]), \
+                patch.object(profiles.sysconfig,'get_path',side_effect=lambda key:str(stdlib if key=='stdlib' else installed)), \
+                patch.object(profiles.sys,'prefix',str(self.root)), self.assertRaises(profiles.ProfileError) as rejected:
+            REAL_SNAPSHOT()
+        self.assertIn('unknown distribution path escape',str(rejected.exception))
+        self.assertIn('owned\\ninjected-log',str(rejected.exception))
+        self.assertIn(record.as_posix(),str(rejected.exception))
+        self.assertNotIn('\n',str(rejected.exception))
     def cache(self,source='value=1\n',payload=None):
         path=self.root/'owned.py';path.write_text(source);cache=Path(importlib.util.cache_from_source(str(path)));cache.parent.mkdir()
         data=importlib.util.MAGIC_NUMBER+(0).to_bytes(4,'little')+b'\0'*8+marshal.dumps(compile(source,str(path),'exec'))

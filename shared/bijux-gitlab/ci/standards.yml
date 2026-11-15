@@ -89,7 +89,7 @@
   "std / contracts": {
     "stage": "validation",
     "image": "ruby:3.3.12-bookworm",
-    "timeout": "20 minutes",
+    "timeout": "30 minutes",
     "before_script": [
       "apt-get update && apt-get install --yes --no-install-recommends python3 python3-venv python3-yaml git make curl ca-certificates perl shellcheck xz-utils jq"
     ],

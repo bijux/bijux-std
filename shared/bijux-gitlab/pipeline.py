@@ -96,7 +96,7 @@ def compose(root: Path = ROOT) -> dict:
     for name, contract in job_contracts(root).items():
         job = {
             "stage": contract["stage"], "image": contract["image"],
-            "timeout": "3 minutes" if contract["frontend"] else "20 minutes",
+            "timeout": "3 minutes" if contract["frontend"] else "30 minutes" if contract["operation"] == "contracts" else "20 minutes",
             "before_script": ["apt-get update && apt-get install --yes --no-install-recommends python3 python3-venv python3-yaml git make curl ca-certificates perl shellcheck xz-utils jq"],
             "script": ["python3 -B shared/bijux-gitlab/execute.py --job " + shlex.quote(name)],
             "artifacts": {"when": "always", "expire_in": "1 year" if contract["operation"] == "report" else "14 days",

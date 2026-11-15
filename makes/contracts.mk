@@ -1,6 +1,7 @@
 CONTRACT_ARTIFACT_ROOT ?= artifacts/contracts
 CONTRACT_TMPDIR ?= $(CONTRACT_ARTIFACT_ROOT)/process
 CONTRACT_PYCACHE_DIR ?= $(CONTRACT_ARTIFACT_ROOT)/pycache
+CONTRACT_UNIT_FLAGS ?=
 
 include shared/bijux-docs/tooling/diagrams/Makefile
 
@@ -15,6 +16,6 @@ contract-unit-tests: diagrams-install ## Run bijux-std unit contracts with the a
 	@TMPDIR="$(abspath $(CONTRACT_TMPDIR))" \
 		PYTHONPYCACHEPREFIX="$(abspath $(CONTRACT_PYCACHE_DIR))" \
 		BIJUX_DIAGRAM_DEPENDENCIES="$(abspath $(DIAGRAM_DEPENDENCIES))" \
-		python3 -m unittest discover -s tests -p 'test_*.py' -v
+		python3 -m unittest discover -s tests -p 'test_*.py' -v $(CONTRACT_UNIT_FLAGS)
 
 contract-tests: shared-contracts contract-unit-tests docs-theme-tests ## Run complete bijux-std contracts

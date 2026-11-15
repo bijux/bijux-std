@@ -39,8 +39,8 @@ def runtime_environment(root, original):
     scratch.mkdir(parents=True, exist_ok=True)
     require(not scratch.is_symlink() and scratch.resolve().is_relative_to(artifacts.resolve()),
             'Runtime scratch must remain under ordinary repository artifacts')
-    return {**original, 'TMPDIR':str(scratch), 'TMP':str(scratch), 'TEMP':str(scratch),
-            'PYTHONDONTWRITEBYTECODE':'1', 'PYTHONPYCACHEPREFIX':str(artifacts / 'gitlab/pycache'),
+    environment = {**original, 'TMPDIR':str(scratch), 'TMP':str(scratch), 'TEMP':str(scratch),
+            'PYTHONDONTWRITEBYTECODE':'1', 'PYTHONUNBUFFERED':'1',
             'PIP_CACHE_DIR':str(artifacts / 'gitlab/cache/pip'), 'PIP_DISABLE_PIP_VERSION_CHECK':'1',
             'UV_CACHE_DIR':str(artifacts / 'gitlab/cache/uv'),
             'UV_PYTHON_INSTALL_DIR':str(artifacts / 'gitlab/tools/python'),
@@ -48,6 +48,11 @@ def runtime_environment(root, original):
             'XDG_CACHE_HOME':str(artifacts / 'gitlab/cache'),
             'PLAYWRIGHT_BROWSERS_PATH':'/ms-playwright', 'VERIFICATION_MODE':'full',
             'EXPECTED_FRONTEND':'true'}
+    # pip explicitly compiles and records bytecode even when imports do not.
+    # External cache prefixes would move those declared files outside the owned
+    # renderer environment. Contract tests govern their own artifact cache.
+    environment.pop('PYTHONPYCACHEPREFIX',None)
+    return environment
 
 
 def operation_environment(operation, environment):
@@ -143,6 +148,52 @@ def bootstrap_uv(root, environment, receipt):
         'executable_sha256':hashlib.sha256((destination / 'bin/uv').read_bytes()).hexdigest()}
 
 
+def bootstrap_standalone_python(root, environment, receipt):
+    bootstrap_uv(root,environment,receipt)
+    run_command(['make','ui-test-install-catalogue-interpreter'],root,environment,receipt)
+    directory = root / 'artifacts/bijux-docs/catalogue/interpreter'
+    python = Path((directory / 'python-path.txt').read_text().strip())
+    require(python.is_file() and python.resolve().is_relative_to((root / 'artifacts').resolve()),
+            'Standalone recipe interpreter must remain under repository artifacts')
+    source = root / 'tests/bijux-docs/catalogue/python_runtime.py'
+    recipe = source_module(source,'standalone_python_recipe')
+    actual = recipe.observe(python,directory)
+    receipt.setdefault('runtimes',{})['standalone_python'] = {
+        **actual,'recipe_source_sha256':hashlib.sha256(source.read_bytes()).hexdigest(),
+        'uv_version':PIPELINE.UV_VERSION}
+    return python
+
+
+def bootstrap_contracts_python(root, environment, receipt, standalone_python):
+    directory = root / 'artifacts/gitlab/contracts/python'
+    run_command(['make','ui-test-install-catalogue','UI_CATALOGUE_BASE_PYTHON='+str(standalone_python),
+                 'UI_CATALOGUE_PYTHON_DIR='+str(directory)],root,environment,receipt)
+    python = directory / 'bin/python'
+    require(python.is_file() and python.resolve().is_relative_to((root / 'artifacts').resolve()),
+            'Contract interpreter must belong to its artifact-owned standalone recipe')
+    code = ('import inspect,json,sys,tarfile,yaml; print(json.dumps(dict(version=list(sys.version_info[:3]), '
+            'implementation=sys.implementation.name, executable=sys.executable, prefix=sys.prefix, '
+            'base_prefix=sys.base_prefix, yaml_version=yaml.__version__, yaml_file=yaml.__file__, '
+            'data_filter=callable(getattr(tarfile,"data_filter",None)) and '
+            '"filter" in inspect.signature(tarfile.TarFile.extractall).parameters)))')
+    actual = json.loads(run_command([str(python),'-B','-I','-c',code],root,environment,receipt,capture=True))
+    require(actual.get('version') == [3,14,4] and actual.get('implementation') == 'cpython'
+            and actual.get('data_filter') is True,
+            'Contract tests require exact CPython 3.14.4 with the safe tar data filter')
+    require(Path(actual['executable']).absolute() == python.absolute()
+            and Path(actual['prefix']).resolve() == directory.resolve()
+            and Path(actual['base_prefix']).resolve() == Path(receipt['runtimes']['standalone_python']['prefix']).resolve()
+            and Path(actual['base_prefix']).resolve() != directory.resolve()
+            and Path(actual['yaml_file']).resolve().is_relative_to(directory.resolve()),
+            'Contract Python or PyYAML escaped its owned verification environment')
+    receipt['runtimes']['contracts_python'] = {**actual,
+        'resolved_executable':str(python.resolve()),
+        'executable_sha256':hashlib.sha256(python.resolve().read_bytes()).hexdigest(),
+        'lock_sha256':hashlib.sha256((root / 'tests/bijux-docs/catalogue/requirements.lock.txt').read_bytes()).hexdigest()}
+    environment['PATH'] = str(python.parent) + os.pathsep + environment['PATH']
+    return python
+
+
 def operation_commands(root, contract, *, catalogue_python=None):
     operation, args = contract['operation'], contract['args']
     python = ['python3','-B']
@@ -159,7 +210,7 @@ def operation_commands(root, contract, *, catalogue_python=None):
                           '.github/standards/repo-config.manifest.json','.github/workflows'],
                 ['make','bijux-std-checks'], python + ['shared/bijux-gitlab/pipeline.py','--check']]
     if operation == 'contracts':
-        return [['make','contract-tests']]
+        return [['make','contract-tests','CONTRACT_UNIT_FLAGS=--failfast']]
     if operation == 'policy':
         return [python + ['shared/bijux-gitlab/policy.py']]
     if operation == 'catalogue':
@@ -277,7 +328,9 @@ def execute_job(root, job):
     require(not folder.is_symlink(), 'Job runtime receipts must use ordinary artifact directories')
     folder.mkdir(parents=True,exist_ok=True)
     receipt = {'schema_version':1, 'status':'running', 'job':job, 'ci_context':identity, 'commands':[],
-               'runtimes':{'python':{'version':sys.version.split()[0]}}, 'publication_authorization':False}
+               'runtimes':{'python':{'version':sys.version.split()[0], 'executable':sys.executable,
+                   'executable_sha256':hashlib.sha256(Path(sys.executable).resolve().read_bytes()).hexdigest()}},
+               'publication_authorization':False}
     target = folder / 'runtime.json'
     require(not target.exists() and not target.is_symlink(), 'Preserve an existing native job runtime receipt')
     def retain():
@@ -291,12 +344,10 @@ def execute_job(root, job):
         if operation not in {'standard','plan','policy'}:
             bootstrap_node(root,environment,receipt)
         catalogue_python = None
-        if operation == 'catalogue':
-            bootstrap_uv(root,environment,receipt)
-            run_command(['make','ui-test-install-catalogue-interpreter'],root,environment,receipt)
-            catalogue_python = Path((root / 'artifacts/bijux-docs/catalogue/interpreter/python-path.txt').read_text().strip())
-            require(catalogue_python.is_file() and catalogue_python.resolve().is_relative_to((root / 'artifacts').resolve()),
-                    'Catalogue recipe interpreter must remain under repository artifacts')
+        if operation in {'catalogue','contracts'}:
+            catalogue_python = bootstrap_standalone_python(root,environment,receipt)
+            if operation == 'contracts':
+                bootstrap_contracts_python(root,environment,receipt,catalogue_python)
         admission = None
         if operation in {'navigation','report'}:
             excluded = {'navigation','report'} if operation == 'navigation' else {'report'}
