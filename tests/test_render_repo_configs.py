@@ -394,8 +394,8 @@ class RenderRepoConfigsTests(unittest.TestCase):
             'UV_CACHE_DIR="${RUNNER_TEMP}/bijux-installed-family-uv-cache"',
             installed_command,
         )
-        self.assertIn("= 13", installed_command)
-        self.assertIn("bijux-canon-repository", installed_command)
+        self.assertIn("= 12", installed_command)
+        self.assertNotIn("bijux-canon-repository", installed_command)
         self.assertNotIn("bijux_canon_repository", installed_command)
         self.assertIn("uv pip check", installed_command)
         self.assertIn('"${venv_dir}/bin/bijux" --version', installed_command)
@@ -461,7 +461,7 @@ class RenderRepoConfigsTests(unittest.TestCase):
             "actions/setup-python": "6d4fd22b20465ccc0f7354476588e8df7c9ca0e0",
             "astral-sh/setup-uv": "68559e99cc807c1eb7e9238fd43a15bba460eec2",
             "actions/setup-node": "949feb2413d6458794dcd2491c4babbbce0c15c1",
-            "actions/setup-java": "b843ebf9b913146b38da2eaa7aeddf76074ae1ad",
+            "actions/setup-java": "77dd5b2ce225ea11469928ac317850245a74ae78",
         }
 
         for repository in manifest["repositories"]:
@@ -517,7 +517,7 @@ class RenderRepoConfigsTests(unittest.TestCase):
         node = next(step for step in checks if step.get("uses", "").startswith("actions/setup-node@"))
         java = next(step for step in checks if step.get("uses", "").startswith("actions/setup-java@"))
         self.assertEqual(node["with"]["node-version"], "24.21.0")
-        self.assertEqual(java["uses"], "actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad")
+        self.assertEqual(java["uses"], "actions/setup-java@77dd5b2ce225ea11469928ac317850245a74ae78")
         self.assertEqual(node["if"], "${{ contains(fromJson(inputs.api_toolchain_targets), matrix.target) }}")
         install = next(step for step in checks if step.get("name") == "Install package toolchain")
         run = next(step for step in checks if step.get("name") == "Run ${{ matrix.target }}")
