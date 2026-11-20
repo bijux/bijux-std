@@ -2,6 +2,12 @@
 
 Repository changes are recorded by pull request or merge request, newest first.
 
+### [!8](https://gitlab.com/bijux-oss/bijux-std/-/merge_requests/8) — Workflow admission diagnostics
+
+- Identify the workflow and job when a dependency admission guard or required
+  unverified-dependency name prefix differs from the accepted policy.
+- Preserve the existing notification-only admission and naming requirements.
+
 ### [!7](https://gitlab.com/bijux-oss/bijux-std/-/merge_requests/7) — Retained documentation authority
 
 - Qualify a retained documentation guard against its own independently admitted

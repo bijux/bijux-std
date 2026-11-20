@@ -115,6 +115,18 @@ class OwnerMediatedDependencyNoticeTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, 'dependency job admission'):
             MODULE.validate_owned_execution({'.github/workflows/owned.yml': projected}, POLICY)
 
+    def test_owned_workflow_admission_reports_guard_and_name_separately(self):
+        source = self.source(); source['on'].pop('push')
+        projected = MODULE.project_dependency_pull_requests('owned', source, POLICY)
+        unguarded = copy.deepcopy(projected)
+        unguarded['jobs']['check']['if'] = '${{ always() }}'
+        with self.assertRaisesRegex(ValueError, r'dependency job admission guard differs: .*owned[.]yml.*check'):
+            MODULE.validate_owned_execution({'.github/workflows/owned.yml': unguarded}, POLICY)
+        misnamed = copy.deepcopy(projected)
+        misnamed['jobs']['check']['name'] = 'std / standard'
+        with self.assertRaisesRegex(ValueError, r'dependency job admission name prefix missing: .*owned[.]yml.*check'):
+            MODULE.validate_owned_execution({'.github/workflows/owned.yml': misnamed}, POLICY)
+
     def test_owned_workflow_admission_has_no_main_push_path_exemption(self):
         projected = MODULE.project_dependency_pull_requests('dependency-graph', self.source(), POLICY)
         with self.assertRaisesRegex(ValueError, 'duplicate push verification'):
