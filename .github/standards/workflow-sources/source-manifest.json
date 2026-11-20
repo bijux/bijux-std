@@ -19,7 +19,7 @@
     ".github/scripts/wait_for_ci.py": "2389cc611c840da9511297761ffe6e4c6e444dba492fdabf7804177f65082d02",
     ".github/scripts/workflow_execution/__init__.py": "6db9602704a4292c5f92caf054b9f0736bad4639f8fb4d5b326212d0138ce004",
     ".github/scripts/workflow_execution/canonical_sources.py": "90ff6a571995222e03f6df332fda139fcc9fdaf56bb1ce28f57f78e4cb6af849",
-    ".github/scripts/workflow_execution/dependency_prs.py": "d5777ac09e6e16aa331d5c3d8c45689bb14dff80df046ba37ffd7a7cde10bb2a",
+    ".github/scripts/workflow_execution/dependency_prs.py": "fed3f0dd044fe47e32603569f4d1d7435b388efd9478446846e65dab0cd62d1d",
     ".github/scripts/workflow_execution/docs_routing.py": "079215c07133737bf18b68549054d38aa1c786fc961192a4c4861967a945799d",
     ".github/scripts/workflow_execution/events.py": "7dca84056f081a4279d41a2ce1e1419d9db6bf5fc8e8f79a9cdfcde15d0ec968",
     ".github/scripts/workflow_execution/masterclass.py": "14ad5080498410e6c91a3073d7830fb4231a335f54b7bffd030fbb0bbbff8aaf",
