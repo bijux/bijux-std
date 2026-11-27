@@ -2,6 +2,11 @@
 
 Repository changes are recorded by pull request or merge request, newest first.
 
+### [!9](https://gitlab.com/bijux-oss/bijux-std/-/merge_requests/9) — Shared API and Java toolchain
+
+- Update the OpenAPI Generator CLI and Redocly baseline and bootstrap pins.
+- Pin setup-java 6.3.0 while retaining Java problem-matcher annotations.
+
 ### [!8](https://gitlab.com/bijux-oss/bijux-std/-/merge_requests/8) — Workflow admission diagnostics
 
 - Identify the workflow and job when a dependency admission guard or required

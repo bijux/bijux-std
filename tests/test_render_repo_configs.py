@@ -461,7 +461,7 @@ class RenderRepoConfigsTests(unittest.TestCase):
             "actions/setup-python": "6d4fd22b20465ccc0f7354476588e8df7c9ca0e0",
             "astral-sh/setup-uv": "68559e99cc807c1eb7e9238fd43a15bba460eec2",
             "actions/setup-node": "949feb2413d6458794dcd2491c4babbbce0c15c1",
-            "actions/setup-java": "77dd5b2ce225ea11469928ac317850245a74ae78",
+            "actions/setup-java": "d1374f8ac74474200d16ef8ecee22c7ae7a51880",
         }
 
         for repository in manifest["repositories"]:
@@ -476,6 +476,8 @@ class RenderRepoConfigsTests(unittest.TestCase):
                                     f"{name}@{revision}",
                                     f"{repository['name']} uses a stale {name} revision",
                                 )
+                                if name == "actions/setup-java":
+                                    self.assertIs(step["with"].get("problem-matcher"), True)
 
     def test_python_api_node_runtime_satisfies_openapi_baseline(self) -> None:
         import tomllib
@@ -517,7 +519,7 @@ class RenderRepoConfigsTests(unittest.TestCase):
         node = next(step for step in checks if step.get("uses", "").startswith("actions/setup-node@"))
         java = next(step for step in checks if step.get("uses", "").startswith("actions/setup-java@"))
         self.assertEqual(node["with"]["node-version"], "24.21.0")
-        self.assertEqual(java["uses"], "actions/setup-java@77dd5b2ce225ea11469928ac317850245a74ae78")
+        self.assertEqual(java["uses"], "actions/setup-java@d1374f8ac74474200d16ef8ecee22c7ae7a51880")
         self.assertEqual(node["if"], "${{ contains(fromJson(inputs.api_toolchain_targets), matrix.target) }}")
         install = next(step for step in checks if step.get("name") == "Install package toolchain")
         run = next(step for step in checks if step.get("name") == "Run ${{ matrix.target }}")
